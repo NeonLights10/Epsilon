@@ -112,15 +112,6 @@ def _setup_logging():
     fhandler.setLevel(logging.DEBUG)
     log.addHandler(fhandler)
 
-def _gen_embed(command, content):
-        """Provides a basic template for embeds"""
-        e = discord.Embed(colour=0x1abc9c)
-        e.set_author(name="Epsilon v{}".format(BOTVERSION), icon_url=bot.user.avatar_url)
-        e.set_footer(text="Sugoi!")
-        e.title = title
-        e.description = content
-        return e 
-
 _setup_logging()
 
 #db init and first time setup
@@ -198,7 +189,7 @@ async def on_message(message):
             log.info("Found a mention of myself, generating response...")
             msg = await get_msgid(ctx.message)
             log.info(f"Message retrieved: {msg}\n")
-            await ctx.channel.send(content = msg, reference= ctx.message)
+            await ctx.message.reply(content = msg)
 
         await bot.invoke(ctx)
 
@@ -251,4 +242,6 @@ async def get_msgid(message, attempts = 1):
                         await db.msgid.delete_one({"msg_id": mid})
                         return await get_msgid(message, attempts)
 
+bot.load_extension("commands.utility")
+bot.load_extension("commands.errorhandler")
 bot.run(TOKEN)
