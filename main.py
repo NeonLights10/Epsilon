@@ -16,7 +16,7 @@ from discord.ext import commands
 from discord.utils import find, get
 from pymongo import MongoClient
 
-from commands.constants import VERSION as BOTVERSION
+from formatting.constants import VERSION as BOTVERSION
 
 # read config information
 with open("config.json") as file:
@@ -82,37 +82,37 @@ def _setup_logging():
     log.addHandler(shandler)
     dlog.addHandler(shandler)
 
-    log.info(f"Set logging level to {config_json['log_level']}")
-
-    if config_json["debug_mode"] == True:
-        debuglog = logging.getLogger('discord')
-        debuglog.setLevel(logging.DEBUG)
-        dhandler = logging.FileHandler(filename='logs/discord.log', encoding='utf-8', mode='w')
-        dhandler.setFormatter(logging.Formatter('{asctime}:{levelname}:{name}: {message}', style='{'))
-        debuglog.addHandler(dhandler)
-
-    if os.path.isfile("logs/epsilon.log"):
-        log.info("Moving old bot log")
-        try:
-            if os.path.isfile("logs/epsilon.log.last"):
-                os.unlink("logs/epsilon.log.last")
-            os.rename("logs/epsilon.log", "logs/epsilon.log.last")
-        except:
-            pass
-
-    with open("logs/epsilon.log", 'w', encoding='utf8') as f:
-        f.write('\n')
-        f.write(" PRE-RUN CHECK PASSED ".center(80, '#'))
-        f.write('\n\n')
-
-    fhandler = logging.FileHandler("logs/epsilon.log", mode='a')
-    fhandler.setFormatter(logging.Formatter(
-        fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s"
-    ))
-    fhandler.setLevel(logging.DEBUG)
-    log.addHandler(fhandler)
-
 _setup_logging()
+
+log.info(f"Set logging level to {config_json['log_level']}")
+
+if config_json["debug_mode"] == True:
+    debuglog = logging.getLogger('discord')
+    debuglog.setLevel(logging.DEBUG)
+    dhandler = logging.FileHandler(filename='logs/discord.log', encoding='utf-8', mode='w')
+    dhandler.setFormatter(logging.Formatter('{asctime}:{levelname}:{name}: {message}', style='{'))
+    debuglog.addHandler(dhandler)
+
+if os.path.isfile("logs/epsilon.log"):
+    log.info("Moving old bot log")
+    try:
+        if os.path.isfile("logs/epsilon.log.last"):
+            os.unlink("logs/epsilon.log.last")
+        os.rename("logs/epsilon.log", "logs/epsilon.log.last")
+    except:
+        pass
+
+with open("logs/epsilon.log", 'w', encoding='utf8') as f:
+    f.write('\n')
+    f.write(" PRE-RUN CHECK PASSED ".center(80, '#'))
+    f.write('\n\n')
+
+fhandler = logging.FileHandler("logs/epsilon.log", mode='a')
+fhandler.setFormatter(logging.Formatter(
+    fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s"
+))
+fhandler.setLevel(logging.DEBUG)
+log.addHandler(fhandler)
 
 #db init and first time setup
 log.info(f'\nEstablishing connection to MongoDB database {databaseName}')
