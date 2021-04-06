@@ -3,10 +3,12 @@ import asyncio
 import os
 import sys
 import logging
-import time
 
 import re
 import random
+
+import psutil
+import time
 
 import discord
 import colorlog
@@ -35,13 +37,9 @@ intents.members = True
 
 prefix = "^"
 databaseName = config_json["database_name"]
-
-uptime = time.time()
-message_count = 0
-
 ####################
 
-def _get_owner(bot, *, server=None):
+def _get_owner(bot, *, server = None):
     return discord.utils.find(
         lambda m: m.id == bot.owner_id,
         server.members if server else bot.get_all_members()
@@ -89,8 +87,8 @@ log.info(f"Set logging level to {config_json['log_level']}")
 if config_json["debug_mode"] == True:
     debuglog = logging.getLogger('discord')
     debuglog.setLevel(logging.DEBUG)
-    dhandler = logging.FileHandler(filename='logs/discord.log', encoding='utf-8', mode='w')
-    dhandler.setFormatter(logging.Formatter('{asctime}:{levelname}:{name}: {message}', style='{'))
+    dhandler = logging.FileHandler(filename = 'logs/discord.log', encoding = 'utf-8', mode = 'w')
+    dhandler.setFormatter(logging.Formatter('{asctime}:{levelname}:{name}: {message}', style = '{'))
     debuglog.addHandler(dhandler)
 
 if os.path.isfile("logs/epsilon.log"):
@@ -102,12 +100,12 @@ if os.path.isfile("logs/epsilon.log"):
     except:
         pass
 
-with open("logs/epsilon.log", 'w', encoding='utf8') as f:
+with open("logs/epsilon.log", 'w', encoding = 'utf8') as f:
     f.write('\n')
     f.write(" PRE-RUN CHECK PASSED ".center(80, '#'))
     f.write('\n\n')
 
-fhandler = logging.FileHandler("logs/epsilon.log", mode='a')
+fhandler = logging.FileHandler("logs/epsilon.log", mode = 'a')
 fhandler.setFormatter(logging.Formatter(
     fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s"
 ))
@@ -125,6 +123,7 @@ log.info(f'Database loaded.\n')
 async def _initialize_document(guild, id):
     post = {'server_id': id,
             'name': guild.name,
+            'modrole': None,
             'autorole': None,
             'log_channel': None,
             'welcome_channel': None,
@@ -145,12 +144,15 @@ async def _check_document(guild, id):
 
 log.info('Starting Epsilon {}'.format(BOTVERSION))
 
-bot = commands.Bot(command_prefix=prefix, intents=intents, case_insensitive=True)
+bot = commands.Bot(command_prefix = prefix, intents = intents, case_insensitive = True)
 
 try:
     sys.stdout.write("\x1b]2;Epsilon {}\x07".format(BOTVERSION))
 except:
     pass
+
+uptime = time.time()
+message_count = 0
 
 ####################
 
@@ -171,10 +173,12 @@ async def on_ready():
     for s in bot.guilds:
         ser = (f'{s.name} (unavailable)' if s.unavailable else s.name)
         log.info(f" - {ser}")    
-    print(flush=True)
+    print(flush = True)
 
 @bot.event
 async def on_message(message):
+    global message_count
+    message_count += 1
     ctx = await bot.get_context(message)
     post = {'server_id': ctx.guild.id,
             'channel_id': ctx.channel.id,
@@ -242,6 +246,33 @@ async def get_msgid(message, attempts = 1):
                         await db.msgid.delete_one({"msg_id": mid})
                         return await get_msgid(message, attempts)
 
+####################
+
+@bot.command(name = "stats",
+            description = "Gives statistics about the bot.")
+async def stats(ctx):
+    content = discord.Embed(colour = 0x1abc9c)
+    content.set_author(name = "Epsilon v" + BOTVERSION, icon_url = bot.user.avatar_url)
+    content.set_footer(text = "Sugoi!")
+    content.add_field(name = "Author", value = "Neon#5555")
+    content.add_field(name = "BotID", value = bot.user.id)
+    content.add_field(name = "Messages", value = f"{message_count} ({(message_count / ((time.time()-uptime) / 60)):.2f}/min)")
+    process = psutil.Process(os.getpid())
+    mem = process.memory_full_info()
+    mem = mem.uss / 1000000
+    content.add_field(name = "Memory Usage", value = f'{mem:.2f} MB')
+    content.add_field(name = "Servers", value = f"I am running on {str(len(bot.guilds))} servers")
+    ctime = float(time.time()-uptime)
+    day = ctime // (24 * 3600)
+    ctime = ctime % (24 * 3600)
+    hour = ctime // 3600
+    ctime %= 3600
+    minutes = ctime // 60
+    content.add_field(name = "Uptime", value = f"{day:d} days\n{hour:d} hours\n%{minutes:d} minutes")
+    await ctx.send(embed = content)
+
+bot.remove_command('help')
+bot.load_extension("commands.help")
 bot.load_extension("commands.utility")
 bot.load_extension("commands.errorhandler")
 bot.run(TOKEN)

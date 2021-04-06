@@ -1,10 +1,11 @@
 import discord
 import traceback
 import sys
+import traceback
 
 from discord.ext import commands
 from formatting.embed import gen_embed
-
+from __main__ import log
 
 class CommandErrorHandler(commands.Cog):
 
@@ -39,15 +40,19 @@ class CommandErrorHandler(commands.Cog):
             await ctx.send(f'{ctx.command} has been disabled.')
 
         elif isinstance(error, commands.MissingRequiredArgument):
+            log.warning(f"Missing Required Argument - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             params = ' '.join([x for x in ctx.command.clean_params])
-            await ctx.send(embed = gen_embed(title="Invalid parameter(s) entered", content="Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
+            await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
 
         elif isinstance(error, commands.BadArgument):
-            await ctx.send(embed = gen_embed(title="Invalid type of parameter entered", content="Are you sure you entered the right parameter?"))
+            log.warning(f"Bad Argument - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+            await ctx.send(embed = gen_embed(title = "Invalid type of parameter entered", content = "Are you sure you entered the right parameter?"))
 
         else:
-            print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+            print('Ignoring exception in command {}:'.format(ctx.command), file = sys.stderr)
+            traceback.print_exception(type(error), error, error.__traceback__, file = sys.stderr)
 
 def setup(bot):
     bot.add_cog(CommandErrorHandler(bot))
