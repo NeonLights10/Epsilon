@@ -37,13 +37,8 @@ intents.members = True
 
 prefix = "^"
 databaseName = config_json["database_name"]
-####################
 
-def _get_owner(bot, *, server = None):
-    return discord.utils.find(
-        lambda m: m.id == bot.owner_id,
-        server.members if server else bot.get_all_members()
-    )
+####################
 
 #set up fancy format logging
 def _setup_logging():
@@ -165,9 +160,10 @@ async def on_ready():
 
     ####################
 
-    log.info(f"Connected: {bot.user.id}/{bot.user.name}#{bot.user.discriminator}\n")
-    #owner = _get_owner(bot)
-    #log.info(f"Owner: {owner.id}/{owner.name}#{owner.discriminator}\n")
+    log.info(f"Connected: {bot.user.id}/{bot.user.name}#{bot.user.discriminator}")
+    owner = await bot.application_info()
+    owner = owner.owner
+    log.info(f"Owner: {owner.id}/{owner.name}#{owner.discriminator}\n")
 
     log.info("Guild List:")
     for s in bot.guilds:
@@ -213,7 +209,7 @@ async def on_member_join(member):
             await member.add_roles(role)
             log.info("Auto-assigned role to new member in {}".format(member.guild.name))
         else:
-            raise ValueError("Auto-assign role does not exist!")
+            log.error("Auto-assign role does not exist!")
     else:
         pass
 
@@ -275,4 +271,5 @@ bot.remove_command('help')
 bot.load_extension("commands.help")
 bot.load_extension("commands.utility")
 bot.load_extension("commands.errorhandler")
+bot.load_extension("commands.administration")
 bot.run(TOKEN)

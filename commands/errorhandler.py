@@ -40,13 +40,13 @@ class CommandErrorHandler(commands.Cog):
             await ctx.send(f'{ctx.command} has been disabled.')
 
         elif isinstance(error, commands.MissingRequiredArgument):
-            log.warning(f"Missing Required Argument - Traceback below:")
+            log.warning("Missing Required Argument - Traceback below:")
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             params = ' '.join([x for x in ctx.command.clean_params])
             await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
 
         elif isinstance(error, commands.BadArgument):
-            log.warning(f"Bad Argument - Traceback below:")
+            log.warning("Bad Argument - Traceback below:")
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             await ctx.send(embed = gen_embed(title = "Invalid type of parameter entered", content = "Are you sure you entered the right parameter?"))
 
