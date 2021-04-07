@@ -146,7 +146,7 @@ class Administration(commands.Cog):
     @commands.command(name = 'purge',
                     description = 'Deletes the previous # of messages from the channel. Specifying a user will delete the messages for that user. Specifying a time will delete messages from the past x amount of time.',
                     help = 'Usage\n\n^purge <userid/user mention> <num> <time>')
-    async def msgpurge(self, ctx, members: commands.Greedy[discord.Member], num: Optional[int] = None, time: Optional[Union[discord.Message, str]] = None):
+    async def msgpurge(self, ctx, members: commands.Greedy[discord.Member], num: Optional[int], time: Optional[Union[discord.Message, str]]):
         def convert_to_timedelta(s):
                     return timedelta(**{UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val')) for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)})
 
