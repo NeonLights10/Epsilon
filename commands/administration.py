@@ -144,7 +144,7 @@ class Administration(commands.Cog):
             await ctx.send(embed = gen_embed(title='Permissions Error', content = 'You do not have permission to run this command.'))
 
     @commands.command(name = 'purge',
-                    description = 'Deletes the previous # of messages from the channel. Specifying a user will delete the messages for that user. Specifying a time will delete messages from the past x amount of time.',
+                    description = 'Deletes the previous # of messages from the channel. Specifying a user will delete the messages for that user. Specifying a time will delete messages from the past x amount of time. You can also reply to a message to delete messages after the one replied to.',
                     help = 'Usage\n\n^purge <userid/user mention> <num> <time>')
     async def msgpurge(self, ctx, members: commands.Greedy[discord.Member], num: Optional[int], time: Optional[Union[discord.Message, str]]):
         def convert_to_timedelta(s):

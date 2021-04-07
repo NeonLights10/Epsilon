@@ -1,7 +1,6 @@
 import discord
 import traceback
 import sys
-import traceback
 
 from discord.ext import commands
 from formatting.embed import gen_embed
