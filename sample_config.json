@@ -1,0 +1,6 @@
+{
+	"token": "<insert token here>",
+	"log_level": "INFO",
+	"debug_mode": "False",
+	"database_name": "<insert name here>"
+}

@@ -49,6 +49,16 @@ class CommandErrorHandler(commands.Cog):
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             await ctx.send(embed = gen_embed(title = "Invalid type of parameter entered", content = "Are you sure you entered the right parameter?"))
 
+        elif isinstance(error, discord.errors.Forbidden):
+            log.error("PermissionError: Bot does not have sufficient permissions. - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+            await ctx.send(embed = gen_embed(title = 'Bot Permission Error', content = "It seems like I don't have the permissions to do that. Check your server settings."))
+        
+        elif isinstance(error, commands.CheckAnyFailure):
+            log.warning("PermissionError: Insufficient Permissions")
+            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+            await ctx.send(embed = gen_embed(title = 'Permissions Error', content = 'You must have server permissions or moderator role to run this command.'))
+
         else:
             print('Ignoring exception in command {}:'.format(ctx.command), file = sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file = sys.stderr)

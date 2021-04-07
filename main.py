@@ -107,6 +107,8 @@ fhandler.setFormatter(logging.Formatter(
 fhandler.setLevel(logging.DEBUG)
 log.addHandler(fhandler)
 
+####################
+
 #db init and first time setup
 log.info(f'\nEstablishing connection to MongoDB database {databaseName}')
 
