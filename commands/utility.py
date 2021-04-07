@@ -56,7 +56,7 @@ class Utility(commands.Cog):
                 if find_key(TIMEZONE_DICT, timezone):
                     pass
                 else:
-                    log.warning(f"Invalid Timezone")
+                    log.warning("Invalid Timezone")
                     await ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid timezone."))
                     return
             else:
@@ -64,7 +64,7 @@ class Utility(commands.Cog):
                 try:
                     timezone = TIMEZONE_DICT[timezone]
                 except KeyError:
-                    log.warning(f"KeyError: Invalid Timezone")
+                    log.warning("KeyError: Invalid Timezone")
                     await ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid timezone."))
                     return
             #Take care of those pesky 30 or 45 minute intervals that some timezones have (I'm looking at you, NST :/)
@@ -76,7 +76,7 @@ class Utility(commands.Cog):
                     hour = int(timezone_hour[3:len(timezone_hour)])
                     minute = int(timezone_minute)
                 except ValueError:
-                    log.warning(f"ValueError: Invalid Timezone")
+                    log.warning("ValueError: Invalid Timezone")
                     await ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid timezone."))
                     return
                  
@@ -85,7 +85,7 @@ class Utility(commands.Cog):
                 try:
                     hour = int(timezone[3:len(timezone)])
                 except ValueError:
-                    log.warning(f"ValueError: Invalid Timezone")
+                    log.warning("ValueError: Invalid Timezone")
                     ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid timezone."))
                     return
                 current_time = current_time + timedelta(hours = hour)
@@ -107,11 +107,11 @@ class Utility(commands.Cog):
             hour = int(time_parsed[0])
             minute = int(time_parsed[1])
         except ValueError:
-            log.warning(f"ValueError: Invalid Time")
+            log.warning("ValueError: Invalid Time")
             await ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid time."))
             return
         if hour > 23 or hour < 0 or minute > 59 or minute < 0:
-            log.warning(f"UserError: Invalid Time")
+            log.warning("UserError: Invalid Time")
             await ctx.send(embed = gen_embed(title = "Input Error", content = "You entered a time that does not exist! Make sure the hour is not negative or greater than 24, and that minutes are within 00-59."))
             return
 
@@ -122,13 +122,13 @@ class Utility(commands.Cog):
                 if find_key(TIMEZONE_DICT, timezone1):
                     pass
                 else:
-                    log.warning(f"Invalid Timezone")
+                    log.warning("Invalid Timezone")
                     await ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid [from] timezone."))
                     return
             else:
                 timezone1 = TIMEZONE_DICT[timezone1]
         except KeyError:
-            log.warning(f"KeyError: Invalid Timezone")
+            log.warning("KeyError: Invalid Timezone")
             await ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid [from] timezone."))
             return
         if ":" in timezone1:
@@ -144,7 +144,7 @@ class Utility(commands.Cog):
                 elif timezone1_hour == 0:
                     timezone1_combined = 0
             except ValueError:
-                log.warning(f"ValueError: Timezone Dictionary Error")
+                log.warning("ValueError: Timezone Dictionary Error")
                 await ctx.send(embed = gen_embed(title = "Timezone Dictionary Error", content = "There is an error with the timezone dictionary."))
                 return
         else:
@@ -152,7 +152,7 @@ class Utility(commands.Cog):
                 timezone1_hour = int(timezone1[3:len(timezone1)])
                 timezone1_combined = timezone1_hour * 60
             except ValueError:
-                log.warning(f"ValueError: Timezone Parse Error")
+                log.warning("ValueError: Timezone Parse Error")
                 await ctx.send(embed = gen_embed(title = "Parsing Error", content = "Could not parse timezone."))
                 return
         
@@ -163,13 +163,13 @@ class Utility(commands.Cog):
                 if find_key(TIMEZONE_DICT, timezone2):
                     pass
                 else:
-                    log.warning(f"Invalid Timezone")
+                    log.warning("Invalid Timezone")
                     await ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid [to] timezone."))
                     return
             else:
                 timezone2 = TIMEZONE_DICT[timezone2]
         except KeyError:
-            log.warning(f"KeyError: Invalid Timezone")
+            log.warning("KeyError: Invalid Timezone")
             await ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid [to] timezone."))
             return
         if ":" in timezone2:
@@ -185,7 +185,7 @@ class Utility(commands.Cog):
                 elif timezone2_hour == 0:
                     timezone2_combined = 0;
             except ValueError:
-                log.warning(f"ValueError: Timezone Dictionary Error")
+                log.warning("ValueError: Timezone Dictionary Error")
                 await ctx.send(embed = gen_embed(title = "Timezone Dictionary Error", content = "There is an error with the timezone dictionary."))
                 return
         else:
@@ -193,7 +193,7 @@ class Utility(commands.Cog):
                 timezone2_hour = int(timezone2[3:len(timezone2)])
                 timezone2_combined = timezone2_hour * 60
             except ValueError:
-                log.warning(f"ValueError: Timezone Parse Error")
+                log.warning("ValueError: Timezone Parse Error")
                 await ctx.send(embed = gen_embed(title = "Parsing Error", content = "Could not parse timezone."))
                 return
             

@@ -185,6 +185,13 @@ async def on_message(message):
     if ctx.author.bot is False:
         if ctx.prefix:
             log.info(f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
+        if ctx.message.reference:
+            ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
+            if ref_message.author == bot.user:
+                log.info("Found a mention of myself, generating response...")
+                msg = await get_msgid(ctx.message)
+                log.info(f"Message retrieved: {msg}\n")
+                await ctx.message.reply(content = msg)
         elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
             log.info("Found a mention of myself, generating response...")
             msg = await get_msgid(ctx.message)
@@ -210,8 +217,15 @@ async def on_member_join(member):
             log.info("Auto-assigned role to new member in {}".format(member.guild.name))
         else:
             log.error("Auto-assign role does not exist!")
-    else:
-        pass
+    if document['welcome_message'] and document['welcome_channel']:
+        welcome_channel = find(lambda c: c.id == int(document['welcome_channel'], member.guild.text_channels))
+        embed = gen_embed(name=f"{member.name}#{member.discriminator}",
+                        icon_url= member.avatar_url, 
+                        title=f"Welcome to {member.guild.name}", 
+                        content=document['welcome_message'])
+        if document['welcome_banner']:
+            embed.set_image(document['welcome_banner'])
+        await welcome_channel.send(embed = embed)
 
 ###################
 
@@ -223,7 +237,7 @@ async def get_msgid(message, attempts = 1):
                     try:
                         msg = await channel.fetch_message(msgid['msg_id'])
                         #log.info(msg.content)
-                        if (re.match('^%|^\$|^!|@', msg.content) == None) and (re.match(f'<@!?{bot.user.id}>', msg.content) == None) and (len(msg.embeds) == 0) and (msg.author.bot == False):
+                        if (re.match('^%|\^|^\$|^!|@', msg.content) == None) and (re.match(f'<@!?{bot.user.id}>', msg.content) == None) and (len(msg.embeds) == 0) and (msg.author.bot == False):
                             log.info("Attempts taken:{}".format(attempts))
                             log.info("Message ID:{}".format(msg.id))
                             return msg.clean_content
