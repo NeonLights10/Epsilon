@@ -144,12 +144,12 @@ class Administration(commands.Cog):
                     description = 'Deletes a specific message based on message id.',
                     help = 'Usage\n\n^purgeid <message id>')
     @commands.check_any(commands.has_guild_permissions(manage_messages = True), has_modrole())
-    async def msgpurgeid(self, ctx, msg_id: discord.Message):
+    async def msgpurgeid(self, ctx, msg_id: int):
         def id_check(m):
                 return m.id == msg_id
         
         deleted = await ctx.channel.purge(check = id_check)
-        await ctx.send(embed = gen_embed(title = 'purgeid', content = f'Message {ms_gid}'))
+        await ctx.send(embed = gen_embed(title = 'purgeid', content = f'Message {msg_id} deleted.'))
 
     @commands.command(name = 'purge',
                     description = 'Deletes the previous # of messages from the channel. Specifying a user will delete the messages for that user. Specifying a time will delete messages from the past x amount of time. You can also reply to a message to delete messages after the one replied to.',

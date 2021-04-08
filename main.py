@@ -25,6 +25,7 @@ from formatting.constants import NAME
 with open("config.json") as file:
     config_json = json.load(file)
     TOKEN = config_json["token"]
+    DBPASSWORD = config_json['db_password']
 
 
 log = logging.getLogger(__name__)
@@ -113,7 +114,7 @@ log.addHandler(fhandler)
 #db init and first time setup
 log.info(f'\nEstablishing connection to MongoDB database {databaseName}')
 
-mclient = motor.motor_asyncio.AsyncIOMotorClient()
+mclient = motor.motor_asyncio.AsyncIOMotorClient(f"mongodb+srv://admin:{DBPASSWORD}@delphinium.jnxfw.mongodb.net/{databaseName}?retryWrites=true&w=majority")
 db = mclient[databaseName]
 
 log.info(f'Database loaded.\n')
