@@ -4,7 +4,10 @@ import re
 import time
 import validators
 import datetime
+import asyncio
+import pymongo
 
+from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from typing import Union, Optional
 from discord.ext import commands
@@ -90,7 +93,8 @@ class Administration(commands.Cog):
     async def channelconfig(self, ctx, channel_option: str, channel_id: Union[discord.TextChannel, str]):
         valid_options = {'log', 'welcome'}
         if channel_option not in valid_options:
-            await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Accepted options: "log" "welcome"'))
+            params = ' '.join([x for x in valid_options])
+            await ctx.send(embed = gen_embed(title = 'Input Error', content = f'That is not a valid option for this parameter. Accepted options: <{params}>'))
             return
 
         channel_id = channel_id or ctx.message.channel_mentions[0]
@@ -149,7 +153,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'purge',
                     description = 'Deletes the previous # of messages from the channel. Specifying a user will delete the messages for that user. Specifying a time will delete messages from the past x amount of time. You can also reply to a message to delete messages after the one replied to.',
-                    help = 'Usage\n\n^purge <userid/user mention> <num> <time/message id> (optional reply)')
+                    help = 'Usage\n\n^purge <user id/user mention/user name + discriminator (ex: name#0000)> <num> <time/message id>\n(Optionally, you can reply to a message with the command and it will delete ones after that message)')
     @commands.check_any(commands.has_guild_permissions(manage_messages = True), has_modrole())
     async def msgpurge(self, ctx, members: commands.Greedy[discord.Member], num: Optional[int], time: Optional[Union[discord.Message, str]]):
         def convert_to_timedelta(s):
@@ -249,23 +253,113 @@ class Administration(commands.Cog):
     async def removerole(self, ctx, *, role_name: Union[discord.Role, str]):
         role_name = role_name or ctx.message.role_mentions
         await role.delete(reason=f'Deleted by {ctx.author.name}#{ctx.author.discriminator}')
+        await ctx.send(embed = gen_embed(title = 'removerole', content = 'Role has been removed.'))
 
     #adduser
     #removeuser
+    #mute
+    #serverconfig
 
     @commands.command(name = 'kick',
                     description = 'Kick user(s) from the server.',
-                    help = 'Usage\n\n^kick [member mentions] <reason>')
+                    help = 'Usage\n\n^kick [user mentions/user ids] <reason>')
     @commands.check_any(commands.has_guild_permissions(kick_members = True), has_modrole())
-    async def cmd_kick(self, ctx, members: commands.Greedy[discord.Member], * , reason: str):
+    async def cmd_kick(self, ctx, members: commands.Greedy[discord.Member], *, reason: str):
+        kicked = ""
         for member in members:
             await ctx.guild.kick(member, reason = reason)
+            kicked = kicked + f'{member.name}#{member.discriminator} '
+        await ctx.send(embed = gen_embed(title = 'kick', content = f'{kicked}has been kicked.\nReason: {reason}'))
 
     @commands.command(name = 'ban',
                     description = 'Ban user(s) from the server.',
-                    help = 'Usage\n\n^ban [member mentions] <reason>')
-    async
-    
+                    help = 'Usage\n\n^ban [user mentions/user ids] <reason>')
+    @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
+    async def cmd_ban(self, ctx, users: commands.Greedy[discord.User], *, reason: str):
+        banned = ""
+        for user in users:
+            await ctx.guild.ban(user, reason = reason)
+            banned = banned + f'{member.name}#{member.discriminator} '
+        await ctx.send(embed = gen_embed(title = 'ban', content = f'{banned}has been kicked.\nReason: {reason}'))
+
+    @commands.command(name = 'strike',
+                    description = 'Strike a user. After a certain number of strikes, the user is automatically banned. Default is 3, can be changed using severconfig',
+                    help = 'Usage\n\n^warn [user mentions/user ids/user name + discriminator (ex: name#0000)] <reason>')
+    @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
+    async def strike(self, ctx, members: commands.Greedy[discord.Member], message_link: str, *, reason):
+        time = datetime.datetime.utcnow()
+
+        if not validators.url(message_link):
+            await ctx.send(embed = gen_embed(title = 'Input Error', content = "Invalid URL. Check the formatting (https:// prefix is required)"))
+            return
+        for member in members:
+            dm_channel = member.dm_channel
+            if member.dm_channel is None:
+                dm_channel = await member.create_dm()
+
+            post = {
+                'time': time,
+                'server_id': ctx.guild.id,
+                'user_name': f'{member.name}#{member.discriminator}',
+                'user_id': member.id,
+                'message_link': message_link,
+                'reason': reason
+            }
+            await db.warns.insert_one(post)
+
+            dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been given a strike', content = f'Reason: {reason}')
+            dm_embed.set_footer(text = time.ctime())
+            await dm_channel.send(embed = dm_embed)
+
+            embed = gen_embed(name = f'{member.name}#{member.discriminator}', icon_url = member.avatar_url, title='Strike recorded', content = f'{ctx.author.name}#{ctx.author.discriminator} gave a strike to {member.name}#{member.discriminator} | {member.id}')
+            embed.add_field(name = 'Reason', value = f'{reason}\n\n[Go to message/evidence]({message_link})')
+            embed.set_footer(text = time.ctime())
+            await ctx.send(embed = embed)
+
+            #check for number of strikes
+            expire_date = time + relativedelta(months=-2)
+            query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date}}
+            results = await db.warns.count_documents(query)
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if results >= document['max_strike']:
+                max_strike = document['max_strike']
+                await ctx.guild.ban(member, reason = f'You have accumulated {max_strike} strikes and therefore will be banned from the server.')
+
+    @commands.command(name = 'lookup',
+                    description = 'Lookup strikes for a user. Returns all currently active strikes.',
+                    help = 'Usage\n\n^lookup [user mention/user id]')
+    @commands.check_any(commands.has_guild_permissions(view_audit_log = True), has_modrole())
+    async def lookup(self, ctx, member: discord.Member):
+        time = datetime.datetime.utcnow()
+
+        expire_date = time + relativedelta(months=-2)
+        query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date}}
+        results = db.warns.find(query).sort('time', pymongo.DESCENDING)
+        num_strikes = await db.warns.count_documents(query)
+        expired_query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$lt': expire_date}}
+        expired_results = db.warns.find(expired_query).sort('time', pymongo.DESCENDING)
+
+        embed = gen_embed(name = f'{member.name}#{member.discriminator}', icon_url = member.avatar_url, title='Strike Lookup', content= f'Found {num_strikes} active strikes for this user.')
+        async for document in results:
+            stime = document['time']
+            reason = document['reason']
+            message_link = document['message_link']
+            embed.add_field(name = f'Strike | {stime.ctime()}', value = f'Reason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
+        async for document in expired_results:
+            stime = document['time']
+            reason = document['reason']
+            message_link = document['message_link']
+            embed.add_field(name = f'Strike (EXPIRED) | {stime.ctime()}', value = f'Reason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
+        embed.set_footer(text = f'UID: {member.id}')
+        await ctx.send(embed = embed)
+
+    @commands.command(name = 'slowmode',
+                    description = 'Enables slowmode for the channel you are in. Time is in seconds.',
+                    help = 'Usage\n\n^slowmode [time]')
+    @commands.check_any(commands.has_guild_permissions(manage_channels = True), has_modrole())
+    async def slowmode(self, ctx, time : int):
+        await ctx.channel.edit(slowmode_delay = 0)
+        await ctx.send(embed = gen_embed(title = 'slowmode', content = f'Slowmode has been enabled in {ctx.channel.name}\n({time} seconds)'))
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
@@ -326,6 +420,34 @@ class Administration(commands.Cog):
                         content.description = f"**Before:** {before.clean_content}\n**After:** {after.clean_content}"
                         await logChannel.send(embed = content)
         except: pass
+
+    @commands.command(name = 'exec',
+                    description = 'exec',
+                    help = 'dev only')
+    @commands.check(is_owner())
+    async def cmd_debug(self, ctx, *, data):
+        codeblock = "```py\n{}\n```"
+        result = None
+
+        if data.startswith('```') and data.endswith('```'):
+            data = '\n'.join(data.rstrip('`\n').split('\n')[1:])
+
+        code = data.strip('` \n')
+
+        scope = globals().copy()
+        scope.update({'self': self})
+
+        try:
+            result = eval(code, scope)
+        except:
+            try:
+                exec(code, scope)
+            except Exception as e:
+                traceback.print_exc(chain=False)
+                await ctx.send("{}: {}".format(type(e).__name__, e))
+
+        if asyncio.iscoroutine(result):
+            result = await result
 
 def setup(bot):
     bot.add_cog(Administration(bot))

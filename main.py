@@ -19,6 +19,7 @@ from discord.utils import find, get
 from pymongo import MongoClient
 
 from formatting.constants import VERSION as BOTVERSION
+from formatting.constants import NAME
 
 # read config information
 with open("config.json") as file:
@@ -86,21 +87,21 @@ if config_json["debug_mode"] == True:
     dhandler.setFormatter(logging.Formatter('{asctime}:{levelname}:{name}: {message}', style = '{'))
     debuglog.addHandler(dhandler)
 
-if os.path.isfile("logs/epsilon.log"):
+if os.path.isfile(f"logs/{NAME}.log"):
     log.info("Moving old bot log")
     try:
-        if os.path.isfile("logs/epsilon.log.last"):
-            os.unlink("logs/epsilon.log.last")
-        os.rename("logs/epsilon.log", "logs/epsilon.log.last")
+        if os.path.isfile(f"logs/{NAME}.log.last"):
+            os.unlink(f"logs/{NAME}.log.last")
+        os.rename(f"logs/{NAME}.log", f"logs/{NAME}.log.last")
     except:
         pass
 
-with open("logs/epsilon.log", 'w', encoding = 'utf8') as f:
+with open(f"logs/{NAME}.log", 'w', encoding = 'utf8') as f:
     f.write('\n')
     f.write(" PRE-RUN CHECK PASSED ".center(80, '#'))
     f.write('\n\n')
 
-fhandler = logging.FileHandler("logs/epsilon.log", mode = 'a')
+fhandler = logging.FileHandler(f"logs/{NAME}.log", mode = 'a')
 fhandler.setFormatter(logging.Formatter(
     fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s"
 ))
@@ -125,7 +126,10 @@ async def _initialize_document(guild, id):
             'log_channel': None,
             'welcome_channel': None,
             'welcome_message': f"Welcome to the {guild.name}!",
-            'welcome_banner': None
+            'welcome_banner': None,
+            'max_strike': 3,
+            'modmail_channel': None,
+            'fun': False,
             }
     log.info(f"Creating document for {guild.name}...")
     await db.servers.insert_one(post)
@@ -139,12 +143,12 @@ async def _check_document(guild, id):
 
 ####################
 
-log.info('Starting Epsilon {}'.format(BOTVERSION))
+log.info(f'Starting {NAME} {BOTVERSION}')
 
 bot = commands.Bot(command_prefix = prefix, intents = intents, case_insensitive = True)
 
 try:
-    sys.stdout.write("\x1b]2;Epsilon {}\x07".format(BOTVERSION))
+    sys.stdout.write(f"\x1b]2;{NAME} {BOTVERSION}\x07")
 except:
     pass
 
@@ -178,16 +182,20 @@ async def on_message(message):
     global message_count
     message_count += 1
     ctx = await bot.get_context(message)
-    post = {'server_id': ctx.guild.id,
-            'channel_id': ctx.channel.id,
-            'author_id': ctx.author.id,
-            'msg_id': ctx.message.id}
-    await db.msgid.insert_one(post)
+    #change this later once we start doing stuff in DMs
+    if isinstance(ctx.channel, discord.TextChannel):
+        document = await db.servers.find_one({"server_id": ctx.guild.id})
+        if document['fun']:
+            post = {'server_id': ctx.guild.id,
+                    'channel_id': ctx.channel.id,
+                    'author_id': ctx.author.id,
+                    'msg_id': ctx.message.id}
+            await db.msgid.insert_one(post)
 
     if ctx.author.bot is False:
         if ctx.prefix:
             log.info(f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
-        if ctx.message.reference:
+        if ctx.message.reference and document['fun']:
             ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
             if ref_message.author == bot.user:
                 log.info("Found a mention of myself, generating response...")
@@ -206,12 +214,12 @@ async def on_message(message):
 async def on_guild_join(guild):
     general = find(lambda x: x.name == 'general',  guild.text_channels)
     if general and general.permissions_for(guild.me).send_messages:
-        await general.send("Thanks for inviting me!")
+        await general.send("Thanks for inviting me! Make sure to check help for commands, and set me up with serverconfig and channelconfig.")
 
 @bot.event
 async def on_member_join(member):
     log.info(f"A new member joined in {member.guild.name}")
-    document = await dbservers.find_one({"server_id": member.guild.id})
+    document = await db.servers.find_one({"server_id": member.guild.id})
     if document['autorole']:
         role = discord.utils.find(lambda r: r.name == str(document['autorole']), member.guild.roles)
         if role:
@@ -264,7 +272,7 @@ async def get_msgid(message, attempts = 1):
             description = "Gives statistics about the bot.")
 async def stats(ctx):
     content = discord.Embed(colour = 0x1abc9c)
-    content.set_author(name = "Epsilon v" + BOTVERSION, icon_url = bot.user.avatar_url)
+    content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = bot.user.avatar_url)
     content.set_footer(text = "Sugoi!")
     content.add_field(name = "Author", value = "Neon#5555")
     content.add_field(name = "BotID", value = bot.user.id)
