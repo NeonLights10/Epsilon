@@ -59,6 +59,11 @@ class CommandErrorHandler(commands.Cog):
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             await ctx.send(embed = gen_embed(title = 'Permissions Error', content = 'You must have server permissions or moderator role to run this command.'))
 
+        elif isinstance(error, commands.CheckFailure):
+                    log.warning("Error: Disabled Command")
+                    traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+                    await ctx.send(embed = gen_embed(title = 'Disabled Command', content = 'Sorry, this command has been disabled on this server.'))
+
         else:
             print('Ignoring exception in command {}:'.format(ctx.command), file = sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file = sys.stderr)

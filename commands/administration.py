@@ -24,7 +24,9 @@ class Administration(commands.Cog):
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if document['modrole']:
                 role = discord.utils.find(lambda r: r.id == document['modrole'], ctx.guild.roles)
-            return role in ctx.author.roles
+                return role in ctx.author.roles
+            else:
+                return False
         return commands.check(predicate)
 
     def is_owner():
@@ -270,7 +272,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'addrole',
                     description = 'Creates a new role. You can also specify members to add to the role when it is created.',
-                    help = 'Usage\n\n^addrole <user mentions/user ids> <role name>')
+                    help = 'Usage\n\n^addrole <user mentions/user ids/user name + discriminator (ex: name#0000)> <role name>')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def addrole(self, ctx, members: commands.Greedy[discord.Member], *, role_name: str):
         role_permissions = ctx.guild.default_role
@@ -297,32 +299,99 @@ class Administration(commands.Cog):
 
     #adduser
     #removeuser
+
     @commands.command(name = 'mute',
                     description = 'Mute user(s) for a certain amount of time.',
-                    help = 'Ysage\n\n^mute [user mentions/user ids] <time> <reason>')
+                    help = 'Usage\n\n^mute [user mentions/user ids/user name + discriminator (ex: name#0000)] <time> <reason>')
     @commands.check_any(commands.has_guild_permissions(mute_members = True), has_modrole())
-    async def mute(self, ctx, members: commands.Greedy[discord.Member], time: Optional[int], *, reason: Optional[str])
+    async def mute(self, ctx, members: commands.Greedy[discord.Member], time: Optional[str] = None, *, reason: Optional[str]):
+        def convert_to_seconds(s):
+            return int(timedelta(**{
+                UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val'))
+                for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)
+            }).total_seconds())
+        
+        mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
+
+        if not mutedRole:
+            mutedRole = await ctx.guild.create_role(name="Muted")
+
+            for channel in ctx.guild.channels:
+                await channel.set_permissions(mutedRole, speak=False, send_messages=False)
+
+        for member in members:
+            await member.add_roles(mutedRole)
+
+            dm_channel = member.dm_channel
+            if member.dm_channel is None:
+                dm_channel = await member.create_dm()
+
+            if time:
+                seconds = convert_to_seconds(time)
+                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}')
+                dm_embed.set_footer(text = time.ctime())
+                await dm_channel.send(embed = dm_embed)
+
+                await asyncio.sleep(seconds)
+                await member.remove_roles(mutedRole)
+            else:
+                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted', content = f'Reason: {reason}')
+                dm_embed.set_footer(text = time.ctime())
+                await dm_channel.send(embed = dm_embed)
+
+                await ctx.send(embed = gen_embed(title = 'mute', content = f'{member.name}#{member.discriminator} has been muted. \nReason: {reason}'))
+
+    @commands.command(name = 'unmute',
+                    description = 'Unmute a user',
+                    help = 'Usage\n\n ^unmute [user mentions/user ids/user name + discriminator (ex: name#0000)]')
+    @commands.check_any(commands.has_guild_permissions(mute_members = True), has_modrole())
+    async def unmute(self, ctx, members: commands.Greedy[discord.Member]):
+        unmuted = ""
+        for member in members:
+            await member.remove_roles(mutedRole)
+            unmuted = unmuted + f'{member.name}#{member.discriminator} '
+
+        await ctx.send(embed = gen_embed(title = 'kick', content = f'{unmuted}has been unmuted.'))
 
     @commands.command(name = 'kick',
                     description = 'Kick user(s) from the server.',
-                    help = 'Usage\n\n^kick [user mentions/user ids] <reason>')
+                    help = 'Usage\n\n^kick [user mentions/user ids/user name + discriminator (ex: name#0000)] <reason>')
     @commands.check_any(commands.has_guild_permissions(kick_members = True), has_modrole())
     async def cmd_kick(self, ctx, members: commands.Greedy[discord.Member], *, reason: Optional[str]):
         kicked = ""
         for member in members:
+            dm_channel = member.dm_channel
+            if member.dm_channel is None:
+                dm_channel = await member.create_dm()
+
             await ctx.guild.kick(member, reason = reason)
             kicked = kicked + f'{member.name}#{member.discriminator} '
+
+            dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been kicked', content = f'Reason: {reason}')
+            dm_embed.set_footer(text = time.ctime())
+            await dm_channel.send(embed = dm_embed)
+
         await ctx.send(embed = gen_embed(title = 'kick', content = f'{kicked}has been kicked.\nReason: {reason}'))
 
     @commands.command(name = 'ban',
                     description = 'Ban user(s) from the server.',
-                    help = 'Usage\n\n^ban [user mentions/user ids] <reason>')
+                    help = 'Usage\n\n^ban [user mentions/user id/user name + discriminator (ex: name#0000)] <reason>')
     @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
     async def cmd_ban(self, ctx, users: commands.Greedy[discord.User], *, reason: Optional[str]):
         banned = ""
         for user in users:
             await ctx.guild.ban(user, reason = reason)
             banned = banned + f'{member.name}#{member.discriminator} '
+
+            if ctx.guild.get_member(user.id):
+                dm_channel = member.dm_channel
+                if member.dm_channel is None:
+                    dm_channel = await user.create_dm()
+
+                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been banned', content = f'Reason: {reason}')
+                dm_embed.set_footer(text = time.ctime())
+                await dm_channel.send(embed = dm_embed)
+
         await ctx.send(embed = gen_embed(title = 'ban', content = f'{banned}has been kicked.\nReason: {reason}'))
 
     @commands.command(name = 'strike',

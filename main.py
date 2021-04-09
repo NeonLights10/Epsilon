@@ -256,6 +256,7 @@ async def get_msgid(message, attempts = 1):
                             attempts += 1
                             mid = msgid['msg_id']
                             await db.msgid.delete_one({"msg_id": mid})
+                            log.info("Removing entry from db...")
                             return await get_msgid(message, attempts)
 
                     except discord.Forbidden:
@@ -265,6 +266,7 @@ async def get_msgid(message, attempts = 1):
                         attempts += 1
                         mid = msgid['msg_id']
                         await db.msgid.delete_one({"msg_id": mid})
+                        log.info("Removing entry from db...")
                         return await get_msgid(message, attempts)
 
 ####################
@@ -297,4 +299,5 @@ bot.load_extension("commands.help")
 bot.load_extension("commands.utility")
 bot.load_extension("commands.errorhandler")
 bot.load_extension("commands.administration")
+bot.load_extension("commands.fun")
 bot.run(TOKEN)
