@@ -69,7 +69,7 @@ class Administration(commands.Cog):
                 await ctx.send(embed = gen_embed(title = 'Role Not Found', content = 'Please doublecheck the id or try a role mention.'))
             else:
                 log.warning("Error: Invalid input")
-                await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Accepted options: "disable"'))
+                await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Valid options: "disable"'))
         else:
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'autorole': roleid.id}})
             await ctx.send(embed = gen_embed(title = 'autorole', content = f'Enabled autorole with role {roleid.name} for {ctx.guild.name}'))
@@ -88,17 +88,17 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'channelconfig',
                     description = 'Set channel for logs and welcome messages.',
-                    help = 'Usage\n\n^channelconfig [log/welcome] [channel id/channel mention]')
+                    help = 'Usage\n\n^channelconfig [log/welcome/modmail] [channel id/channel mention] OR [disable] to turn off')
     @commands.check_any(commands.has_guild_permissions(manage_guild = True), has_modrole())
     async def channelconfig(self, ctx, channel_option: str, channel_id: Union[discord.TextChannel, str]):
-        valid_options = {'log', 'welcome'}
+        valid_options = {'log', 'welcome', 'modmail'}
+        channel_option = channel_option.lower()
         if channel_option not in valid_options:
             params = ' '.join([x for x in valid_options])
-            await ctx.send(embed = gen_embed(title = 'Input Error', content = f'That is not a valid option for this parameter. Accepted options: <{params}>'))
+            await ctx.send(embed = gen_embed(title = 'Input Error', content = f'That is not a valid option for this parameter. Valid options: <{params}>'))
             return
 
         channel_id = channel_id or ctx.message.channel_mentions[0]
-        channel_option = channel_option.lower()
         if isinstance(channel_id, str):
             channel_id = channel_id.lower()
             if channel_id == "disable":
@@ -108,19 +108,26 @@ class Administration(commands.Cog):
                 elif channel_option == "welcome":
                     await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'welcome_channel': None}})
                     await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Disabled welcome messages for {ctx.guild.name}'))
+                elif channel_option == "modmail":
+                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'modmail_channel': None}})
+                    await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Disabled modmail for {ctx.guild.name}'))
+
             elif not discord.utils.find(lambda c: c.id == channel_id, ctx.guild.text_channels):
                 log.warning("Error: Channel Not Found")
                 await ctx.send(embed = gen_embed(title = 'Channel Not Found', content = 'Please doublecheck the id or try a channel mention.'))
             else:
                 log.warning("Error: Invalid input")
-                await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Accepted options: "disable"'))
+                await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Valid options: "disable"'))
         else:
             if channel_option == "log":
                 await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'log_channel': channel_id.id}})
                 await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Enabled logging in channel {channel_id.mention} for {ctx.guild.name}'))
-            if channel_option == "welcome":
+            elif channel_option == "welcome":
                 await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'welcome_channel': channel_id.id}})
                 await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Enabled logging in channel {channel_id.mention} for {ctx.guild.name}'))
+            elif channel_option == "modmail":
+                await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'modmail_channel': channel_id.id}})
+                await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Enabled modmail in channel {channel_id.mention} for {ctx.guild.name}'))
 
     @commands.command(name = 'welcomeconfig',
                     description = 'Set the welcome message and optional banner. Enclose the message in quotes.',
@@ -139,6 +146,39 @@ class Administration(commands.Cog):
         else:
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'welcome_message': welcome_message}})
             await ctx.send(embed = gen_embed(title = 'welcomeconfig', content = f"Welcome message set for {ctx.guild.name}: {welcome_message}"))
+
+    @commands.command(name = 'serverconfig',
+                    description = 'Set various server config settings.',
+                    help = 'Available settings - max_strike, fun')
+    @commands.check_any(commands.has_guild_permissions(manage_guild = True), has_modrole())
+    async def serverconfig(self, ctx, config_option: str, value: Union[int, str]):
+        valid_options = {'max_strike', 'fun'}
+        valid_values = {'enable', 'disable'}
+        config_option = config_option.lower()
+        value = value.lower()
+        if config_option not in valid_options:
+            params = ' '.join([x for x in valid_options])
+            await ctx.send(embed = gen_embed(title = 'Input Error', content = f'That is not a valid option for this parameter. Valid options: <{params}>'))
+            return
+
+        if config_option == 'max_strike':
+            if value > 0:
+                await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'max_strike': value}})
+                await ctx.send(embed = gen_embed(title = 'serverconfig', content = f'Changed the max number of strikes to {value}'))
+            else:
+                log.warning("Error: Invalid input")
+                await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Please make sure the number > 0'))
+        if config_option == 'fun':
+            if value in valid_values:
+                if value == 'enable':
+                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'fun': True}})
+                    await ctx.send(embed = gen_embed(title = 'serverconfig', content = f'Fun commands have been enabled for {ctx.guild.name}'))
+                if value == 'disable':
+                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'fun': False}})
+                    await ctx.send(embed = gen_embed(title = 'serverconfig', content = f'Fun commands have been disabled for {ctx.guild.name}'))
+            else:
+                log.warning("Error: Invalid input")
+                await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Valid values: "enable" "disable"'))
 
     @commands.command(name = 'purgeid',
                     description = 'Deletes a specific message based on message id.',
@@ -257,14 +297,17 @@ class Administration(commands.Cog):
 
     #adduser
     #removeuser
-    #mute
-    #serverconfig
+    @commands.command(name = 'mute',
+                    description = 'Mute user(s) for a certain amount of time.',
+                    help = 'Ysage\n\n^mute [user mentions/user ids] <time> <reason>')
+    @commands.check_any(commands.has_guild_permissions(mute_members = True), has_modrole())
+    async def mute(self, ctx, members: commands.Greedy[discord.Member], time: Optional[int], *, reason: Optional[str])
 
     @commands.command(name = 'kick',
                     description = 'Kick user(s) from the server.',
                     help = 'Usage\n\n^kick [user mentions/user ids] <reason>')
     @commands.check_any(commands.has_guild_permissions(kick_members = True), has_modrole())
-    async def cmd_kick(self, ctx, members: commands.Greedy[discord.Member], *, reason: str):
+    async def cmd_kick(self, ctx, members: commands.Greedy[discord.Member], *, reason: Optional[str]):
         kicked = ""
         for member in members:
             await ctx.guild.kick(member, reason = reason)
@@ -275,7 +318,7 @@ class Administration(commands.Cog):
                     description = 'Ban user(s) from the server.',
                     help = 'Usage\n\n^ban [user mentions/user ids] <reason>')
     @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
-    async def cmd_ban(self, ctx, users: commands.Greedy[discord.User], *, reason: str):
+    async def cmd_ban(self, ctx, users: commands.Greedy[discord.User], *, reason: Optional[str]):
         banned = ""
         for user in users:
             await ctx.guild.ban(user, reason = reason)

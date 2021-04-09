@@ -130,7 +130,7 @@ async def _initialize_document(guild, id):
             'welcome_banner': None,
             'max_strike': 3,
             'modmail_channel': None,
-            'fun': False,
+            'fun': False
             }
     log.info(f"Creating document for {guild.name}...")
     await db.servers.insert_one(post)
