@@ -44,18 +44,23 @@ class CommandErrorHandler(commands.Cog):
             params = ' '.join([x for x in ctx.command.clean_params])
             await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
 
+        elif isinstance(error, commands.RoleNotFound):
+            log.warning("Role Not Found - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+            await ctx.send(embed = gen_embed(title = "Role not found", content = "Doublecheck the spelling or id of this role!"))
+
         elif isinstance(error, commands.BadArgument):
             log.warning("Bad Argument - Traceback below:")
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             await ctx.send(embed = gen_embed(title = "Invalid type of parameter entered", content = "Are you sure you entered the right parameter?"))
 
         elif isinstance(error, discord.errors.Forbidden):
-            log.error("PermissionError: Bot does not have sufficient permissions. - Traceback below:")
+            log.error("Permission Error: Bot does not have sufficient permissions. - Traceback below:")
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             await ctx.send(embed = gen_embed(title = 'Bot Permission Error', content = "It seems like I don't have the permissions to do that. Check your server settings."))
         
         elif isinstance(error, commands.CheckAnyFailure):
-            log.warning("PermissionError: Insufficient Permissions")
+            log.warning("Permission Error: Insufficient Permissions")
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             await ctx.send(embed = gen_embed(title = 'Permissions Error', content = 'You must have server permissions or moderator role to run this command.'))
 

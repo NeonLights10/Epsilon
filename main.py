@@ -37,7 +37,7 @@ dlog.setLevel(logging.WARNING)
 intents = discord.Intents.default()
 intents.members = True
 
-prefix = "^"
+default_prefix = "^"
 databaseName = config_json["database_name"]
 
 ####################
@@ -130,7 +130,8 @@ async def _initialize_document(guild, id):
             'welcome_banner': None,
             'max_strike': 3,
             'modmail_channel': None,
-            'fun': False
+            'fun': False,
+            'prefix': None,
             }
     log.info(f"Creating document for {guild.name}...")
     await db.servers.insert_one(post)
@@ -141,6 +142,19 @@ async def _check_document(guild, id):
     if await db.servers.find_one({"server_id": id}) == None:
         log.info("Did not find one, creating document...")
         await _initialize_document(guild, id)
+
+####################
+
+#This is a super jenk way of handling the prefix without using the async db connection but it works
+prefix_list = {}
+
+def prefix(bot, message): 
+    results = prefix_list.get(message.guild.id)
+    if results:
+        prefix = results
+    else:
+        prefix = default_prefix
+    return prefix
 
 ####################
 
@@ -163,9 +177,17 @@ async def on_ready():
     for guild in bot.guilds:
         await _check_document(guild, guild.id)
 
+    async for document in db.servers.find({}):
+        server_id = document['server_id']
+        if document['prefix'] is not None:
+            prefix_list[server_id] = document['prefix']
+
     log.info("\n### PRE-STARTUP CHECKS PASSED ###\n")
 
     ####################
+
+    status = discord.Game(f'{default_prefix}help | {len(bot.guilds)} servers')
+    await bot.change_presence(activity = status)
 
     log.info(f"Connected: {bot.user.id}/{bot.user.name}#{bot.user.discriminator}")
     owner = await bot.application_info()
@@ -189,7 +211,6 @@ async def on_message(message):
         if document['fun']:
             post = {'server_id': ctx.guild.id,
                     'channel_id': ctx.channel.id,
-                    'author_id': ctx.author.id,
                     'msg_id': ctx.message.id}
             await db.msgid.insert_one(post)
 
@@ -215,7 +236,11 @@ async def on_message(message):
 async def on_guild_join(guild):
     general = find(lambda x: x.name == 'general',  guild.text_channels)
     if general and general.permissions_for(guild.me).send_messages:
-        await general.send("Thanks for inviting me! Make sure to check help for commands, and set me up with serverconfig and channelconfig.")
+        embed = gen_embed(name=f'{guild.name}',
+                        icon_url = guild.icon_url,
+                        title = 'Thanks for inviting me!',
+                        content = 'You can get started by typing \%help to find the current command list.\nChange the command prefix by typing \%setprefix, and configure server settings with serverconfig and channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555.')
+        await general.send(embed = embed)
 
 @bot.event
 async def on_member_join(member):
@@ -240,6 +265,10 @@ async def on_member_join(member):
 
 ###################
 
+async def generate_invite_link(permissions=discord.Permissions(335932630), guild=None):
+    app_info = await bot.application_info()
+    return discord.utils.oauth_url(app_info.id, permissions=permissions, guild=guild)
+
 async def get_msgid(message, attempts = 1):
     pipeline = [{'$match': {'$and': [{'server_id': message.guild.id}, {'author_id': {'$not': {'$regex': str(bot.user.id)}}}] }}, {'$sample': {'size': 1}}]
     async for msgid in db.msgid.aggregate(pipeline):
@@ -248,7 +277,7 @@ async def get_msgid(message, attempts = 1):
                     try:
                         msg = await channel.fetch_message(msgid['msg_id'])
                         #log.info(msg.content)
-                        if (re.match('^%|\^|^\$|^!|@', msg.content) == None) and (re.match(f'<@!?{bot.user.id}>', msg.content) == None) and (len(msg.embeds) == 0) and (msg.author.bot == False):
+                        if (re.match('^%|^\^|^\$|^!|^\.|@', msg.content) == None) and (re.match(f'<@!?{bot.user.id}>', msg.content) == None) and (len(msg.embeds) == 0) and (msg.author.bot == False):
                             log.info("Attempts taken:{}".format(attempts))
                             log.info("Message ID:{}".format(msg.id))
                             return msg.clean_content
@@ -276,7 +305,7 @@ async def get_msgid(message, attempts = 1):
 async def stats(ctx):
     content = discord.Embed(colour = 0x1abc9c)
     content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = bot.user.avatar_url)
-    content.set_footer(text = "Sugoi!")
+    content.set_footer(text = "Fueee~")
     content.add_field(name = "Author", value = "Neon#5555")
     content.add_field(name = "BotID", value = bot.user.id)
     content.add_field(name = "Messages", value = f"{message_count} ({(message_count / ((time.time()-uptime) / 60)):.2f}/min)")
@@ -291,7 +320,17 @@ async def stats(ctx):
     hour = ctime // 3600
     ctime %= 3600
     minutes = ctime // 60
-    content.add_field(name = "Uptime", value = f"{day:d} days\n{hour:d} hours\n%{minutes:d} minutes")
+    content.add_field(name = "Uptime", value = f"{day:.0f} days\n{hour:.0f} hours\n{minutes:.0f} minutes")
+    await ctx.send(embed = content)
+
+@bot.command(name = 'joinserver',
+            description = 'Creates a link to invite the bot to another server.')
+async def joinserver(ctx):
+    url = await generate_invite_link()
+    content = discord.Embed(colour = 0x1abc9c)
+    content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = bot.user.avatar_url)
+    content.set_footer(text = "Fueee~")
+    content.add_field(name = "Invite Link:", value = url)
     await ctx.send(embed = content)
 
 bot.remove_command('help')

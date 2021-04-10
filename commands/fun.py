@@ -25,7 +25,7 @@ class Fun(commands.Cog):
                 if resp.status == 200:
                     rjson = await resp.json()
                     content = discord.Embed(colour=0x1abc9c)
-                    content.set_footer(text="Sugoi!")
+                    content.set_footer(text="Fueee~")
                     url = rjson.get('url')
                     #something something 2 positional parameters so i have to do this extra variable assignment
                     content.set_image(url=url)

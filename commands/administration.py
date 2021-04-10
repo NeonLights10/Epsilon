@@ -13,7 +13,7 @@ from typing import Union, Optional
 from discord.ext import commands
 from formatting.constants import UNITS
 from formatting.embed import gen_embed
-from __main__ import log, db
+from __main__ import log, db, prefix_list, prefix
 
 class Administration(commands.Cog):
     def __init__(self, bot):
@@ -31,9 +31,33 @@ class Administration(commands.Cog):
 
     def is_owner():
         async def predicate(ctx):
-            is_owner = await self.bot.is_owner(ctx.message.author)
-            return is_owner
+            if ctx.message.author.id == 133048058756726784:
+                return True
+            else:
+                return False
         return commands.check(predicate)
+
+    @commands.command(name = 'setprefix',
+                    description = 'Sets the command prefix that the bot will use for this server.',
+                    help ='Usage:\n\n^setprefix !')
+    @commands.check_any(commands.has_guild_permissions(administrator = True), is_owner())
+    async def setprefix(self, ctx, prefix: str):
+        await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'prefix': prefix}})
+        #ensure the list kept in memory is updated, since we can't pull again from the database
+        prefix_list[ctx.guild.id] = prefix
+        await ctx.send(embed = gen_embed(title = 'Prefix set', content = f'Set prefix to {prefix}'))
+
+    @setprefix.error
+    async def setprefix_error(self, ctx, error):
+        if isinstance(error, commands.CheckAnyFailure):
+            log.warning("PermissionError: Insufficient Permissions")
+            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+            await ctx.send(embed = gen_embed(title = 'Permissions Error', content = 'You must have administrator rights to run this command.'))
+
+        elif isinstance(error, commands.BadArgument):
+            log.warning("Bad Argument - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+            await ctx.send(embed = gen_embed(title = "Invalid type of parameter entered", content = "Are you sure you entered the right parameter?"))
 
     @commands.command(name = 'setmodrole', 
                     description = 'Sets the moderator role for this server. Only mods have access to administration commands.',
@@ -42,6 +66,7 @@ class Administration(commands.Cog):
     async def setmodrole(self, ctx, roleid: discord.Role):
         roleid = roleid or ctx.message.role_reactions[0]
         await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'modrole': roleid.id}})
+        await ctx.send(embed = gen_embed(title = 'Mod role set', content = f'Set mod role to {roleid.name}'))
 
     @setmodrole.error
     async def setmodrole_error(self, ctx, error):
@@ -267,6 +292,7 @@ class Administration(commands.Cog):
             return
         else:
             log.warning("Missing Required Argument")
+            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             params = ' '.join([x for x in ctx.command.clean_params])
             await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
 
@@ -297,8 +323,27 @@ class Administration(commands.Cog):
         await role.delete(reason=f'Deleted by {ctx.author.name}#{ctx.author.discriminator}')
         await ctx.send(embed = gen_embed(title = 'removerole', content = 'Role has been removed.'))
 
-    #adduser
-    #removeuser
+    @commands.command(name = 'adduser',
+                    description = 'Adds user(s) to a role.',
+                    help = 'Usage\n\n^adduser [user mentions/user ids/user name + discriminator (ex: name#0000)] [role name/role mention/role id]')
+    @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
+    async def adduser(self, ctx, members: commands.Greedy[discord.Member], *, role: discord.Role):
+        added = ''
+        for member in members:
+            await member.add_roles(role)
+            added = added + f'{member.mention} '
+        await ctx.send(embed = gen_embed(title = 'adduser', content = f'{added} has been added to role {role.name}.'))
+
+    @commands.command(name = 'removeuser',
+                    description = 'Removes user(s) from a role.',
+                    help = 'Usage\n\n^removeuser [user mentions/user ids/user name + discriminator (ex: name#0000)] [role name/role mention/role id]')
+    @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
+    async def removeuser(self, ctx, members: commands.Greedy[discord.Member], *, role: discord.Role):
+        removed = ''
+        for member in members:
+            await member.remove_roles(role)
+            removed = removed + f'{member.mention} '
+        await ctx.send(embed = gen_embed(title = 'removeuser', content = f'{removed} has been removed from role {role.name}.'))
 
     @commands.command(name = 'mute',
                     description = 'Mute user(s) for a certain amount of time.',
@@ -319,6 +364,7 @@ class Administration(commands.Cog):
             for channel in ctx.guild.channels:
                 await channel.set_permissions(mutedRole, speak=False, send_messages=False)
 
+        muted = ""
         for member in members:
             await member.add_roles(mutedRole)
 
@@ -331,6 +377,7 @@ class Administration(commands.Cog):
                 dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}')
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
+                await ctx.send(embed = gen_embed(title = 'mute', content = f'{member.mention} has been muted. \nReason: {reason}'))
 
                 await asyncio.sleep(seconds)
                 await member.remove_roles(mutedRole)
@@ -338,8 +385,9 @@ class Administration(commands.Cog):
                 dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted', content = f'Reason: {reason}')
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
+                muted = muted + f'{member.mention} '
 
-                await ctx.send(embed = gen_embed(title = 'mute', content = f'{member.name}#{member.discriminator} has been muted. \nReason: {reason}'))
+            await ctx.send(embed = gen_embed(title = 'mute', content = f'{muted} has been muted. \nReason: {reason}'))
 
     @commands.command(name = 'unmute',
                     description = 'Unmute a user',
@@ -349,7 +397,7 @@ class Administration(commands.Cog):
         unmuted = ""
         for member in members:
             await member.remove_roles(mutedRole)
-            unmuted = unmuted + f'{member.name}#{member.discriminator} '
+            unmuted = unmuted + f'{member.mention} '
 
         await ctx.send(embed = gen_embed(title = 'kick', content = f'{unmuted}has been unmuted.'))
 
@@ -473,6 +521,19 @@ class Administration(commands.Cog):
         await ctx.channel.edit(slowmode_delay = 0)
         await ctx.send(embed = gen_embed(title = 'slowmode', content = f'Slowmode has been enabled in {ctx.channel.name}\n({time} seconds)'))
 
+    @commands.command(name = 'shutdown',
+                    description = 'Shuts down the bot. Only owner can use this command.')
+    @is_owner()
+    async def shutdown(self, ctx):
+        await close()
+
+    @shutdown.error
+    async def shutdown_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure):
+            log.warning("Error: Permission Error")
+            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+            await ctx.send(embed = gen_embed(title = 'Permission Error', content = "Sorry, you don't have access to this command."))
+
     @commands.Cog.listener()
     async def on_message_delete(self, message):
         document = await db.servers.find_one({"server_id": message.guild.id})
@@ -480,7 +541,8 @@ class Administration(commands.Cog):
             if document['log_channel']:
                 msglog = int(document['log_channel'])
                 if not message.author.id == self.bot.user.id and message.author.bot == False:
-                    if re.match('^\{}'.format(self.bot.command_prefix), message.content) == None:
+                    gprefix = prefix(self.bot, message)
+                    if re.match(f'^\\{gprefix}', message.content) == None:
                         cleanMessage = re.sub('<@!?&?\d{17,18}>', '[removed mention]', message.content)
                         logChannel = message.guild.get_channel(msglog)
                         content = discord.Embed(colour = 0x1abc9c)
@@ -502,7 +564,8 @@ class Administration(commands.Cog):
                 msglog = int(document['log_channel'])
                 for message in messages:
                     if not message.author.id == self.bot.user.id and message.author.bot == False:
-                        if re.match('^\{}'.format(self.bot.command_prefix), message.content) == None:
+                        gprefix = prefix(self.bot, message)
+                        if re.match(f'^\\{gprefix}', message.content) == None:
                             cleanMessage = re.sub('<@!?&?\d{17,18}>', '[removed mention]', message.content)
                             logChannel = message.guild.get_channel(msglog)
                             content = discord.Embed(colour = 0x1abc9c)
@@ -536,7 +599,7 @@ class Administration(commands.Cog):
     @commands.command(name = 'exec',
                     description = 'exec',
                     help = 'dev only')
-    @commands.check(is_owner())
+    @is_owner()
     async def cmd_debug(self, ctx, *, data):
         codeblock = "```py\n{}\n```"
         result = None

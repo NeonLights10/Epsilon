@@ -13,6 +13,7 @@ class Help(commands.Cog):
             if not commands:
                 help=discord.Embed(title='Available Commands',color=discord.Color.blue(),description='Run this command again followed by a command or list of commands to receive further help (e.g. `.help cutoff`)')
                 help.set_thumbnail(url=bot_icon_url)
+                help.set_footer(text = 'Fueee~')
                 for x in self.bot.cogs:
                     cog_commands = (self.bot.get_cog(x)).get_commands()
                     if cog_commands and x not in ['Help','Admin']:

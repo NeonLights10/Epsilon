@@ -111,7 +111,7 @@ class Utility(commands.Cog):
             await ctx.send(embed = gen_embed(title = "Input Error", content = "This is not a valid time."))
             return
         if hour > 23 or hour < 0 or minute > 59 or minute < 0:
-            log.warning("UserError: Invalid Time")
+            log.warning("Error: Invalid Time")
             await ctx.send(embed = gen_embed(title = "Input Error", content = "You entered a time that does not exist! Make sure the hour is not negative or greater than 24, and that minutes are within 00-59."))
             return
 
@@ -232,7 +232,7 @@ class Utility(commands.Cog):
         final_time = str(hour) + ":" + str(minute)
 
         embed = gen_embed(title = "tconvert", content = f"Converted time from **{timezone1}** to **{timezone2}** is **{final_time}**")
-        await ctx.send(embed = embed)      
+        await ctx.send(embed = embed)
 
 def setup(bot):
     bot.add_cog(Utility(bot))
