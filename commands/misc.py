@@ -22,18 +22,18 @@ class Miscellaneous(commands.Cog):
                 return False
         return commands.check(predicate)
 
-    async def generate_invite_link(permissions=discord.Permissions(335932630), guild=None):
-        app_info = await bot.application_info()
+    async def generate_invite_link(self, permissions=discord.Permissions(335932630), guild=None):
+        app_info = await self.bot.application_info()
         return discord.utils.oauth_url(app_info.id, permissions=permissions, guild=guild)
 
     @commands.command(name = "stats",
                 description = "Gives statistics about the bot.")
     async def stats(self, ctx):
         content = discord.Embed(colour = 0x1abc9c)
-        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = bot.user.avatar_url)
+        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.avatar_url)
         content.set_footer(text = "Fueee~")
         content.add_field(name = "Author", value = "Neon#5555")
-        content.add_field(name = "BotID", value = bot.user.id)
+        content.add_field(name = "BotID", value = self.bot.user.id)
         content.add_field(name = "Messages", value = f"{message_count} ({(message_count / ((time.time()-uptime) / 60)):.2f}/min)")
         process = psutil.Process(os.getpid())
         mem = process.memory_full_info()
@@ -54,7 +54,7 @@ class Miscellaneous(commands.Cog):
     async def joinserver(self, ctx):
         url = await self.generate_invite_link()
         content = discord.Embed(colour = 0x1abc9c)
-        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = bot.user.avatar_url)
+        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.avatar_url)
         content.set_footer(text = "Fueee~")
         content.add_field(name = "Invite Link:", value = url)
         await ctx.send(embed = content)
