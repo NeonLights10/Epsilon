@@ -15,6 +15,7 @@ from formatting.constants import UNITS
 from formatting.embed import gen_embed
 from __main__ import log, db, prefix_list, prefix
 
+
 class Administration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -355,6 +356,13 @@ class Administration(commands.Cog):
                 UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val'))
                 for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)
             }).total_seconds())
+
+        async def modmail_enabled():
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if document['modmail_channel']:
+                return True
+            else:
+                return False
         
         mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
 
@@ -374,7 +382,12 @@ class Administration(commands.Cog):
 
             if time:
                 seconds = convert_to_seconds(time)
-                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}')
+                m = await modmail_enabled()
+                dm_embed = None
+                if m:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                else:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}')
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
                 await ctx.send(embed = gen_embed(title = 'mute', content = f'{member.mention} has been muted. \nReason: {reason}'))
@@ -382,7 +395,12 @@ class Administration(commands.Cog):
                 await asyncio.sleep(seconds)
                 await member.remove_roles(mutedRole)
             else:
-                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted', content = f'Reason: {reason}')
+                m = await modmail_enabled()
+                dm_embed = None
+                if m:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                else:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}')
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
                 muted = muted + f'{member.mention} '
@@ -399,13 +417,20 @@ class Administration(commands.Cog):
             await member.remove_roles(mutedRole)
             unmuted = unmuted + f'{member.mention} '
 
-        await ctx.send(embed = gen_embed(title = 'kick', content = f'{unmuted}has been unmuted.'))
+        await ctx.send(embed = gen_embed(title = 'unmute', content = f'{unmuted}has been unmuted.'))
 
     @commands.command(name = 'kick',
                     description = 'Kick user(s) from the server.',
                     help = 'Usage\n\n^kick [user mentions/user ids/user name + discriminator (ex: name#0000)] <reason>')
     @commands.check_any(commands.has_guild_permissions(kick_members = True), has_modrole())
     async def cmd_kick(self, ctx, members: commands.Greedy[discord.Member], *, reason: Optional[str]):
+        async def modmail_enabled():
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if document['modmail_channel']:
+                return True
+            else:
+                return False
+
         kicked = ""
         for member in members:
             dm_channel = member.dm_channel
@@ -415,7 +440,12 @@ class Administration(commands.Cog):
             await ctx.guild.kick(member, reason = reason)
             kicked = kicked + f'{member.name}#{member.discriminator} '
 
-            dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been kicked', content = f'Reason: {reason}')
+            m = await modmail_enabled()
+            dm_embed = None
+            if m:
+                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been kicked', content = f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+            else:
+                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been kicked', content = f'Reason: {reason}')
             dm_embed.set_footer(text = time.ctime())
             await dm_channel.send(embed = dm_embed)
 
@@ -426,6 +456,13 @@ class Administration(commands.Cog):
                     help = 'Usage\n\n^ban [user mentions/user id/user name + discriminator (ex: name#0000)] <reason>')
     @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
     async def cmd_ban(self, ctx, users: commands.Greedy[discord.User], *, reason: Optional[str]):
+        async def modmail_enabled():
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if document['modmail_channel']:
+                return True
+            else:
+                return False
+
         banned = ""
         for user in users:
             await ctx.guild.ban(user, reason = reason)
@@ -436,7 +473,12 @@ class Administration(commands.Cog):
                 if member.dm_channel is None:
                     dm_channel = await user.create_dm()
 
-                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been banned', content = f'Reason: {reason}')
+                m = await modmail_enabled()
+                dm_embed = None
+                if m:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been banned', content = f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                else:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been banned', content = f'Reason: {reason}')
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
 
@@ -447,9 +489,21 @@ class Administration(commands.Cog):
                     help = 'Usage\n\n^warn [user mentions/user ids/user name + discriminator (ex: name#0000)] <reason>')
     @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
     async def strike(self, ctx, members: commands.Greedy[discord.Member], message_link: str, *, reason):
-        time = datetime.datetime.utcnow()
+        async def modmail_enabled():
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if document['modmail_channel']:
+                return True
+            else:
+                return False
 
+        time = datetime.datetime.utcnow()
+        if len(members) < 1:
+            log.warning("Missing Required Argument")
+            params = ' '.join([x for x in ctx.command.clean_params])
+            await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
+            return
         if not validators.url(message_link):
+            log.warning('Error: Invalid Input')
             await ctx.send(embed = gen_embed(title = 'Input Error', content = "Invalid URL. Check the formatting (https:// prefix is required)"))
             return
         for member in members:
@@ -467,8 +521,13 @@ class Administration(commands.Cog):
             }
             await db.warns.insert_one(post)
 
-            dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been given a strike', content = f'Reason: {reason}')
-            dm_embed.set_footer(text = time.ctime())
+            m = await modmail_enabled()
+            dm_embed = None
+            if m:
+                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been given a strike', content = f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+            else:
+                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been given a strike', content = f'Reason: {reason}')
+            dm_embed.set_footer(text = ctx.guild.id)
             await dm_channel.send(embed = dm_embed)
 
             embed = gen_embed(name = f'{member.name}#{member.discriminator}', icon_url = member.avatar_url, title='Strike recorded', content = f'{ctx.author.name}#{ctx.author.discriminator} gave a strike to {member.name}#{member.discriminator} | {member.id}')
@@ -525,7 +584,7 @@ class Administration(commands.Cog):
                     description = 'Shuts down the bot. Only owner can use this command.')
     @is_owner()
     async def shutdown(self, ctx):
-        await close()
+        await self.close()
 
     @shutdown.error
     async def shutdown_error(self, ctx, error):

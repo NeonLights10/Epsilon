@@ -145,11 +145,26 @@ async def _check_document(guild, id):
 
 ####################
 
+def gen_embed(name = None, icon_url = None, title = None, content = None):
+    """Provides a basic template for embeds"""
+    e = discord.Embed(colour = 0x1abc9c)
+    if name and icon_url:
+        e.set_author(name = name, icon_url = icon_url)
+    e.set_footer(text = "Fueee~")
+    e.title = title
+    e.description = content
+    return e 
+
 #This is a super jenk way of handling the prefix without using the async db connection but it works
 prefix_list = {}
 
 def prefix(bot, message): 
-    results = prefix_list.get(message.guild.id)
+    results =  None
+    try:
+        results = prefix_list.get(message.guild.id)
+    except:
+        pass
+
     if results:
         prefix = results
     else:
@@ -205,32 +220,70 @@ async def on_message(message):
     global message_count
     message_count += 1
     ctx = await bot.get_context(message)
-    #change this later once we start doing stuff in DMs
+
     if isinstance(ctx.channel, discord.TextChannel):
         document = await db.servers.find_one({"server_id": ctx.guild.id})
-        if document['fun']:
-            post = {'server_id': ctx.guild.id,
-                    'channel_id': ctx.channel.id,
-                    'msg_id': ctx.message.id}
-            await db.msgid.insert_one(post)
 
-    if ctx.author.bot is False:
-        if ctx.prefix:
-            log.info(f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
-        if ctx.message.reference and document['fun']:
-            ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
-            if ref_message.author == bot.user:
+        if ctx.author.bot is False:
+            if ctx.prefix:
+                log.info(f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
+            else:
+                if document['fun']:
+                    post = {'server_id': ctx.guild.id,
+                            'channel_id': ctx.channel.id,
+                            'msg_id': ctx.message.id}
+                    await db.msgid.insert_one(post)
+
+            if ctx.message.reference and document['fun']:
+                ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
+                if ref_message.author == bot.user:
+                    
+                    #modmail logic
+                    if ctx.channel.id == document['modmail_channel']:
+                        if ref_message.embeds[0].title == 'New Modmail':
+                            ref_embed = ref_message.embeds[0].footer
+                            user_id = ref_embed.text
+                            user = await bot.fetch_user(user_id)
+                            if document['modmail_channel']:
+                                embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = "New Modmail", content = message.clean_content)
+                                embed.set_footer(text = f"{ctx.guild.id}")
+                                dm_channel = user.dm_channel
+                                if user.dm_channel is None:
+                                    dm_channel = await user.create_dm()
+                                await dm_channel.send(embed = embed)
+                                await ctx.send(embed = gen_embed(title = 'Modmail sent', content = f'Sent modmail to {user.name}#{user.discriminator}.'))
+                    else:
+                        log.info("Found a reply to me, generating response...")
+                        msg = await get_msgid(ctx.message)
+                        log.info(f"Message retrieved: {msg}\n")
+                        await ctx.message.reply(content = msg)
+
+            elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
                 log.info("Found a mention of myself, generating response...")
                 msg = await get_msgid(ctx.message)
                 log.info(f"Message retrieved: {msg}\n")
                 await ctx.message.reply(content = msg)
-        elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
-            log.info("Found a mention of myself, generating response...")
-            msg = await get_msgid(ctx.message)
-            log.info(f"Message retrieved: {msg}\n")
-            await ctx.message.reply(content = msg)
 
-        await bot.invoke(ctx)
+            await bot.invoke(ctx)
+
+    elif isinstance(ctx.channel, discord.DMChannel):
+        if ctx.author.bot is False:
+            if ctx.message.reference:
+                ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
+                if ref_message.embeds[0].title == 'You have been given a strike' or 'New Modmail':
+                    ref_embed = ref_message.embeds[0].footer
+                    guild_id = ref_embed.text
+                    document = await db.servers.find_one({"server_id": int(guild_id)})
+                    if document['modmail_channel']:
+                        guild = discord.utils.find(lambda g: g.id == int(guild_id), bot.guilds)
+                        embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = "New Modmail", content = f'{message.clean_content}\n\nYou may reply to this modmail using the reply function.')
+                        embed.set_footer(text = f"{ctx.author.id}")
+                        channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], guild.channels)
+                        await channel.send(embed = embed)
+                        await ctx.send(embed = gen_embed(title = 'Modmail sent', content = 'The moderators will review your message and get back to you shortly.'))
+                        return
+
+
 
 @bot.event
 async def on_guild_join(guild):
@@ -264,6 +317,14 @@ async def on_member_join(member):
         await welcome_channel.send(embed = embed)
 
 ###################
+
+def is_owner():
+    async def predicate(ctx):
+        if ctx.message.author.id == 133048058756726784:
+            return True
+        else:
+            return False
+    return commands.check(predicate)
 
 async def generate_invite_link(permissions=discord.Permissions(335932630), guild=None):
     app_info = await bot.application_info()
@@ -333,10 +394,20 @@ async def joinserver(ctx):
     content.add_field(name = "Invite Link:", value = url)
     await ctx.send(embed = content)
 
+@bot.command(name = 'leave',
+            description = 'Makes the bot leave the server and purges all information from database.')
+@is_owner()
+async def leave(ctx):
+    await db.msgid.delete_many({'server_id': ctx.guild.id})
+    await db.warns.delete_many({'server_id': ctx.guild.id})
+    await db.servers.delete_one({'server_id': ctx.guild.id})
+    await ctx.guild.leave()
+
 bot.remove_command('help')
 bot.load_extension("commands.help")
 bot.load_extension("commands.utility")
 bot.load_extension("commands.errorhandler")
 bot.load_extension("commands.administration")
 bot.load_extension("commands.fun")
+bot.load_extension("commands.modmail")
 bot.run(TOKEN)

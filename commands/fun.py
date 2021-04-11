@@ -116,10 +116,10 @@ class Fun(commands.Cog):
                 msg = msg + f'and {members[len(members) - 1].mention} a headpat!'
             else:
                 msg = msg + f' {members[0].mention}!'
-
+        else:
             msg = f'{NAME} gives {ctx.author.mention} a small headpat :heart:'
 
-        content = await self._get_gif("headpat", msg)
+        content = await self._get_gif("pat", msg)
         await ctx.send(embed = content)
 
 def setup(bot):

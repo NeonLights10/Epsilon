@@ -69,8 +69,13 @@ class CommandErrorHandler(commands.Cog):
                     traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
                     await ctx.send(embed = gen_embed(title = 'Disabled Command', content = 'Sorry, this command has been disabled on this server.'))
 
+        elif isinstance(error, discord.HTTPException):
+                    log.error(f"Error: {error.status} | {error.text}")
+                    traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+                    await ctx.send(embed = gen_embed(title = '400 Bad Request', content = f'{error.text}'))
+
         else:
-            print('Ignoring exception in command {}:'.format(ctx.command), file = sys.stderr)
+            log.critical(f'Ignoring exception in command {ctx.command}:')
             traceback.print_exception(type(error), error, error.__traceback__, file = sys.stderr)
 
 def setup(bot):
