@@ -43,6 +43,5 @@ class Modmail(commands.Cog):
                 log.warning("Error: Modmail is Disabled")
                 await ctx.send(embed = gen_embed(title = 'Disabled Command', content = 'Sorry, modmail is disabled.'))
 
-
 def setup(bot):
     bot.add_cog(Modmail(bot))

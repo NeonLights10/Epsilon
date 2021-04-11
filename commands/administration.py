@@ -169,7 +169,7 @@ class Administration(commands.Cog):
                 embed = gen_embed(title = 'welcomeconfig', content = f"Welcome message set for {ctx.guild.name}: {welcome_message}")
                 embed.set_image(url)
                 await ctx.send(embed = embed)
-            else:
+            else: 
                 await ctx.send(embed = gen_embed(title = 'Input Error', content = "Invalid URL. Check the formatting (https:// prefix is required)"))
         else:
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'welcome_message': welcome_message}})
@@ -177,7 +177,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'serverconfig',
                     description = 'Set various server config settings.',
-                    help = 'Available settings - max_strike, fun')
+                    help = 'Usage\n\n\%serverconfig [option] [enable/disable/number]\nAvailable settings - max_strike, fun\n(max_strike) takes number values.')
     @commands.check_any(commands.has_guild_permissions(manage_guild = True), has_modrole())
     async def serverconfig(self, ctx, config_option: str, value: Union[int, str]):
         valid_options = {'max_strike', 'fun'}
@@ -667,34 +667,6 @@ class Administration(commands.Cog):
                         content.description = f"**Before:** {before.clean_content}\n**After:** {after.clean_content}"
                         await logChannel.send(embed = content)
         except: pass
-
-    @commands.command(name = 'exec',
-                    description = 'exec',
-                    help = 'dev only')
-    @is_owner()
-    async def cmd_debug(self, ctx, *, data):
-        codeblock = "```py\n{}\n```"
-        result = None
-
-        if data.startswith('```') and data.endswith('```'):
-            data = '\n'.join(data.rstrip('`\n').split('\n')[1:])
-
-        code = data.strip('` \n')
-
-        scope = globals().copy()
-        scope.update({'self': self})
-
-        try:
-            result = eval(code, scope)
-        except:
-            try:
-                exec(code, scope)
-            except Exception as e:
-                traceback.print_exc(chain=False)
-                await ctx.send("{}: {}".format(type(e).__name__, e))
-
-        if asyncio.iscoroutine(result):
-            result = await result
 
 def setup(bot):
     bot.add_cog(Administration(bot))

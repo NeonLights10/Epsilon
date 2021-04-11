@@ -23,6 +23,7 @@ class Help(commands.Cog):
                                 commands.append(y.name)
                         commands = ('\n'.join(map(str, sorted(commands))))
                         help.add_field(name=x,value=commands,inline=True)
+                help.add_field(name="Music",value="Coming soon...",inline=True)
                 await ctx.send(embed=help)
             else:
                 for command in commands:

@@ -320,18 +320,6 @@ async def on_member_join(member):
 
 ###################
 
-def is_owner():
-    async def predicate(ctx):
-        if ctx.message.author.id == 133048058756726784:
-            return True
-        else:
-            return False
-    return commands.check(predicate)
-
-async def generate_invite_link(permissions=discord.Permissions(335932630), guild=None):
-    app_info = await bot.application_info()
-    return discord.utils.oauth_url(app_info.id, permissions=permissions, guild=guild)
-
 async def get_msgid(message, attempts = 1):
     pipeline = [{'$match': {'$and': [{'server_id': message.guild.id}, {'author_id': {'$not': {'$regex': str(bot.user.id)}}}] }}, {'$sample': {'size': 1}}]
     async for msgid in db.msgid.aggregate(pipeline):
@@ -363,53 +351,12 @@ async def get_msgid(message, attempts = 1):
 
 ####################
 
-@bot.command(name = "stats",
-            description = "Gives statistics about the bot.")
-async def stats(ctx):
-    content = discord.Embed(colour = 0x1abc9c)
-    content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = bot.user.avatar_url)
-    content.set_footer(text = "Fueee~")
-    content.add_field(name = "Author", value = "Neon#5555")
-    content.add_field(name = "BotID", value = bot.user.id)
-    content.add_field(name = "Messages", value = f"{message_count} ({(message_count / ((time.time()-uptime) / 60)):.2f}/min)")
-    process = psutil.Process(os.getpid())
-    mem = process.memory_full_info()
-    mem = mem.uss / 1000000
-    content.add_field(name = "Memory Usage", value = f'{mem:.2f} MB')
-    content.add_field(name = "Servers", value = f"I am running on {str(len(bot.guilds))} servers")
-    ctime = float(time.time()-uptime)
-    day = ctime // (24 * 3600)
-    ctime = ctime % (24 * 3600)
-    hour = ctime // 3600
-    ctime %= 3600
-    minutes = ctime // 60
-    content.add_field(name = "Uptime", value = f"{day:.0f} days\n{hour:.0f} hours\n{minutes:.0f} minutes")
-    await ctx.send(embed = content)
-
-@bot.command(name = 'joinserver',
-            description = 'Creates a link to invite the bot to another server.')
-async def joinserver(ctx):
-    url = await generate_invite_link()
-    content = discord.Embed(colour = 0x1abc9c)
-    content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = bot.user.avatar_url)
-    content.set_footer(text = "Fueee~")
-    content.add_field(name = "Invite Link:", value = url)
-    await ctx.send(embed = content)
-
-@bot.command(name = 'leave',
-            description = 'Makes the bot leave the server and purges all information from database.')
-@is_owner()
-async def leave(ctx):
-    await db.msgid.delete_many({'server_id': ctx.guild.id})
-    await db.warns.delete_many({'server_id': ctx.guild.id})
-    await db.servers.delete_one({'server_id': ctx.guild.id})
-    await ctx.guild.leave()
-
 bot.remove_command('help')
 bot.load_extension("commands.help")
 bot.load_extension("commands.utility")
 bot.load_extension("commands.errorhandler")
-bot.load_extension("commands.administration")
 bot.load_extension("commands.fun")
+bot.load_extension("commands.misc")
+bot.load_extension("commands.administration")
 bot.load_extension("commands.modmail")
 bot.run(TOKEN)
