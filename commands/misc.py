@@ -7,6 +7,9 @@ from discord.ext import commands
 from __main__ import log, db, message_count, uptime
 from formatting.embed import gen_embed
 
+from formatting.constants import VERSION as BOTVERSION
+from formatting.constants import NAME
+
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
