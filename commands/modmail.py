@@ -14,7 +14,7 @@ class Modmail(commands.Cog):
 
     @commands.command(name = 'modmail',
                     description = 'Start a modmail.',
-                    help = 'Usage:\n\n^modmail [recipient_id] [message]\nIf you are sending it to a server, the recipient id will be the server id.\nIf you are a mod sending it to a user, the recipient id will be the user id (will also accept mention and name+discriminator)')
+                    help = 'Usage:\n\n\%modmail [recipient_id] [message]\nIf you are sending it to a server, the recipient id will be the server id.\nIf you are a mod sending it to a user, the recipient id will be the user id (will also accept mention and name+discriminator)')
     async def modmail(self, ctx, recipient_id: Union[discord.Guild, discord.User], *, content: str):
 
         if isinstance(recipient_id, discord.Guild):

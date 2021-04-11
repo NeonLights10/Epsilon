@@ -40,7 +40,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'setprefix',
                     description = 'Sets the command prefix that the bot will use for this server.',
-                    help ='Usage:\n\n^setprefix !')
+                    help ='Usage:\n\n\%setprefix !')
     @commands.check_any(commands.has_guild_permissions(administrator = True), is_owner())
     async def setprefix(self, ctx, prefix: str):
         await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'prefix': prefix}})
@@ -62,7 +62,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'setmodrole', 
                     description = 'Sets the moderator role for this server. Only mods have access to administration commands.',
-                    help = 'Usage:\n\n^setmodrole [role id/role mention]')
+                    help = 'Usage:\n\n\%setmodrole [role id/role mention]')
     @commands.check_any(commands.has_guild_permissions(administrator = True), is_owner())
     async def setmodrole(self, ctx, roleid: discord.Role):
         roleid = roleid or ctx.message.role_reactions[0]
@@ -83,7 +83,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'autorole',
                     description = 'Sets a role to be added whenever a user joins the server.',
-                    help = 'Usage\n\n^autorole [role id/role mention or disable]')
+                    help = 'Usage\n\n\%autorole [role id/role mention or disable]')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def autorole(self, ctx, roleid: Union[discord.Role, str]):
         roleid = roleid or ctx.message.role_reactions[0]
@@ -116,7 +116,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'channelconfig',
                     description = 'Set channel for logs and welcome messages.',
-                    help = 'Usage\n\n^channelconfig [log/welcome/modmail] [channel id/channel mention] OR [disable] to turn off')
+                    help = 'Usage\n\n\%channelconfig [log/welcome/modmail] [channel id/channel mention] OR [disable] to turn off')
     @commands.check_any(commands.has_guild_permissions(manage_guild = True), has_modrole())
     async def channelconfig(self, ctx, channel_option: str, channel_id: Union[discord.TextChannel, str]):
         valid_options = {'log', 'welcome', 'modmail'}
@@ -158,10 +158,10 @@ class Administration(commands.Cog):
                 await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Enabled modmail in channel {channel_id.mention} for {ctx.guild.name}'))
 
     @commands.command(name = 'welcomeconfig',
-                    description = 'Set the welcome message and optional banner. Enclose the message in quotes.',
-                    help = 'Usage\n\n^welcomeconfig "[message]" <url>')
+                    description = 'Set the welcome message and optional banner.',
+                    help = 'Usage\n\n\%welcomeconfig "[message]" <url>')
     @commands.check_any(commands.has_guild_permissions(manage_guild = True), has_modrole())
-    async def welcomeconfig(self, ctx, url: str = None, *, welcome_message):
+    async def welcomeconfig(self, ctx, url: str = None, *, welcome_message: str):
         clean_welcome_message = re.sub('<@!?&?\d{17,18}>', '[removed mention]', welcome_message)
         if url:
             if validators.url(url):
@@ -210,7 +210,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'purgeid',
                     description = 'Deletes a specific message based on message id.',
-                    help = 'Usage\n\n^purgeid <message id>')
+                    help = 'Usage\n\n\%purgeid <message id>')
     @commands.check_any(commands.has_guild_permissions(manage_messages = True), has_modrole())
     async def msgpurgeid(self, ctx, msg_id: int):
         def id_check(m):
@@ -221,7 +221,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'purge',
                     description = 'Deletes the previous # of messages from the channel. Specifying a user will delete the messages for that user. Specifying a time will delete messages from the past x amount of time. You can also reply to a message to delete messages after the one replied to.',
-                    help = 'Usage\n\n^purge <user id/user mention/user name + discriminator (ex: name#0000)> <num> <time/message id>\n(Optionally, you can reply to a message with the command and it will delete ones after that message)')
+                    help = 'Usage\n\n\%purge <user id/user mention/user name + discriminator (ex: name#0000)> <num> <time/message id>\n(Optionally, you can reply to a message with the command and it will delete ones after that message)')
     @commands.check_any(commands.has_guild_permissions(manage_messages = True), has_modrole())
     async def msgpurge(self, ctx, members: commands.Greedy[discord.Member], num: Optional[int], time: Optional[Union[discord.Message, str]]):
         def convert_to_timedelta(s):
@@ -299,7 +299,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'addrole',
                     description = 'Creates a new role. You can also specify members to add to the role when it is created.',
-                    help = 'Usage\n\n^addrole <user mentions/user ids/user name + discriminator (ex: name#0000)> <role name>')
+                    help = 'Usage\n\n\%addrole <user mentions/user ids/user name + discriminator (ex: name#0000)> <role name>')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def addrole(self, ctx, members: commands.Greedy[discord.Member], *, role_name: str):
         role_permissions = ctx.guild.default_role
@@ -317,7 +317,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'removerole',
                     description = 'Deletes a role.',
-                    help = 'Usage\n\n^removerole <role name/role mention>')
+                    help = 'Usage\n\n\%removerole <role name/role mention>')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def removerole(self, ctx, *, role_name: Union[discord.Role, str]):
         role_name = role_name or ctx.message.role_mentions
@@ -326,7 +326,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'adduser',
                     description = 'Adds user(s) to a role.',
-                    help = 'Usage\n\n^adduser [user mentions/user ids/user name + discriminator (ex: name#0000)] [role name/role mention/role id]')
+                    help = 'Usage\n\n\%adduser [user mentions/user ids/user name + discriminator (ex: name#0000)] [role name/role mention/role id]')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def adduser(self, ctx, members: commands.Greedy[discord.Member], *, role: discord.Role):
         added = ''
@@ -337,7 +337,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'removeuser',
                     description = 'Removes user(s) from a role.',
-                    help = 'Usage\n\n^removeuser [user mentions/user ids/user name + discriminator (ex: name#0000)] [role name/role mention/role id]')
+                    help = 'Usage\n\n\%removeuser [user mentions/user ids/user name + discriminator (ex: name#0000)] [role name/role mention/role id]')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def removeuser(self, ctx, members: commands.Greedy[discord.Member], *, role: discord.Role):
         removed = ''
@@ -348,7 +348,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'mute',
                     description = 'Mute user(s) for a certain amount of time.',
-                    help = 'Usage\n\n^mute [user mentions/user ids/user name + discriminator (ex: name#0000)] <time> <reason>')
+                    help = 'Usage\n\n\%mute [user mentions/user ids/user name + discriminator (ex: name#0000)] <time> <reason>')
     @commands.check_any(commands.has_guild_permissions(mute_members = True), has_modrole())
     async def mute(self, ctx, members: commands.Greedy[discord.Member], time: Optional[str] = None, *, reason: Optional[str]):
         def convert_to_seconds(s):
@@ -421,7 +421,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'kick',
                     description = 'Kick user(s) from the server.',
-                    help = 'Usage\n\n^kick [user mentions/user ids/user name + discriminator (ex: name#0000)] <reason>')
+                    help = 'Usage\n\n\%kick [user mentions/user ids/user name + discriminator (ex: name#0000)] <reason>')
     @commands.check_any(commands.has_guild_permissions(kick_members = True), has_modrole())
     async def cmd_kick(self, ctx, members: commands.Greedy[discord.Member], *, reason: Optional[str]):
         async def modmail_enabled():
@@ -453,7 +453,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'ban',
                     description = 'Ban user(s) from the server.',
-                    help = 'Usage\n\n^ban [user mentions/user id/user name + discriminator (ex: name#0000)] <reason>')
+                    help = 'Usage\n\n\%ban [user mentions/user id/user name + discriminator (ex: name#0000)] <reason>')
     @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
     async def cmd_ban(self, ctx, users: commands.Greedy[discord.User], *, reason: Optional[str]):
         async def modmail_enabled():
@@ -486,7 +486,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'strike',
                     description = 'Strike a user. After a certain number of strikes, the user is automatically banned. Default is 3, can be changed using severconfig',
-                    help = 'Usage\n\n^warn [user mentions/user ids/user name + discriminator (ex: name#0000)] <reason>')
+                    help = 'Usage\n\n\%warn [user mentions/user ids/user name + discriminator (ex: name#0000)] <reason>')
     @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
     async def strike(self, ctx, members: commands.Greedy[discord.Member], message_link: str, *, reason):
         async def modmail_enabled():
@@ -544,9 +544,22 @@ class Administration(commands.Cog):
                 max_strike = document['max_strike']
                 await ctx.guild.ban(member, reason = f'You have accumulated {max_strike} strikes and therefore will be banned from the server.')
 
+                dm_channel = member.dm_channel
+                if member.dm_channel is None:
+                    dm_channel = await user.create_dm()
+
+                m = await modmail_enabled()
+                dm_embed = None
+                if m:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been banned', content = f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                else:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been banned', content = f'Reason: {reason}')
+                dm_embed.set_footer(text = time.ctime())
+                await dm_channel.send(embed = dm_embed)
+    
     @commands.command(name = 'lookup',
                     description = 'Lookup strikes for a user. Returns all currently active strikes.',
-                    help = 'Usage\n\n^lookup [user mention/user id]')
+                    help = 'Usage\n\n\%lookup [user mention/user id]')
     @commands.check_any(commands.has_guild_permissions(view_audit_log = True), has_modrole())
     async def lookup(self, ctx, member: discord.Member):
         time = datetime.datetime.utcnow()
@@ -574,7 +587,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'slowmode',
                     description = 'Enables slowmode for the channel you are in. Time is in seconds.',
-                    help = 'Usage\n\n^slowmode [time]')
+                    help = 'Usage\n\n\%slowmode [time]')
     @commands.check_any(commands.has_guild_permissions(manage_channels = True), has_modrole())
     async def slowmode(self, ctx, time : int):
         await ctx.channel.edit(slowmode_delay = 0)

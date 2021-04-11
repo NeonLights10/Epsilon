@@ -25,20 +25,24 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'roll', 
                     description = "Generates a random number from 0-100 unless you specify a max number.",
-                    help = 'Examples:\n\n^roll 20')
+                    help = 'Examples:\n\n\%roll 20')
     async def roll(self, ctx, num: int = 100):
-        answer = random.randint(0, num)
-        embed = gen_embed(
-                    name = f"{ctx.author.name}#{ctx.author.discriminator}", 
-                    icon_url = ctx.author.avatar_url, 
-                    title = "roll",
-                    content = f"{ctx.author.mention} rolled a {str(answer)}"
-                    )
-        await ctx.send(embed = embed)
+        if int < 0:
+            log.warning("Error: Invalid input")
+                await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Please pick a number > 0.'))
+        else:
+            answer = random.randint(0, num)
+            embed = gen_embed(
+                        name = f"{ctx.author.name}#{ctx.author.discriminator}", 
+                        icon_url = ctx.author.avatar_url, 
+                        title = "roll",
+                        content = f"{ctx.author.mention} rolled a {str(answer)}"
+                        )
+            await ctx.send(embed = embed)
 
     @commands.command(name = 'time',
                     description = "Print the current date and time in UTC. If a timezone is specified, the time will be displayed in that timezone.",
-                    help = "Usage:\n\n^time [timezone]")
+                    help = "Usage:\n\n\%time [timezone]")
     async def time(self, ctx, timezone = None):
         """
         Usage:
@@ -99,7 +103,7 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'tconvert',
                     description = "Converts time from one timezone to another. All times in 24 hour time.",
-                    help = "Usage:\n\n {command_prefix}tconvert [time] [timezone_from] [timezone_to]")
+                    help = "Usage:\n\n\%tconvert [time] [timezone_from] [timezone_to]")
     async def tconvert(self, ctx, time_in: str, timezone1: str, timezone2: str):
         #Parse time first
         time_parsed = time_in.split(":")

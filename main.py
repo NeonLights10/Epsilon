@@ -37,7 +37,7 @@ dlog.setLevel(logging.WARNING)
 intents = discord.Intents.default()
 intents.members = True
 
-default_prefix = "^"
+default_prefix = "%"
 databaseName = config_json["database_name"]
 
 ####################
@@ -237,7 +237,6 @@ async def on_message(message):
             if ctx.message.reference and document['fun']:
                 ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
                 if ref_message.author == bot.user:
-                    
                     #modmail logic
                     if ctx.channel.id == document['modmail_channel']:
                         if ref_message.embeds[0].title == 'New Modmail':
@@ -270,7 +269,8 @@ async def on_message(message):
         if ctx.author.bot is False:
             if ctx.message.reference:
                 ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
-                if ref_message.embeds[0].title == 'You have been given a strike' or 'New Modmail':
+                valid_options = {'You have been given a strike', 'New Modmail', 'You have been banned', 'You have been kicked'}
+                if ref_message.embeds[0].title in valid_options or re.match('You have been muted', ref_message.embeds[0].title):
                     ref_embed = ref_message.embeds[0].footer
                     guild_id = ref_embed.text
                     document = await db.servers.find_one({"server_id": int(guild_id)})
@@ -285,9 +285,6 @@ async def on_message(message):
             elif ctx.prefix:
                 if ctx.command.name == 'modmail':
                     await bot.invoke(ctx)
-
-
-
 
 
 @bot.event
