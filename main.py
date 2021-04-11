@@ -282,6 +282,11 @@ async def on_message(message):
                         await channel.send(embed = embed)
                         await ctx.send(embed = gen_embed(title = 'Modmail sent', content = 'The moderators will review your message and get back to you shortly.'))
                         return
+            elif ctx.prefix:
+                if ctx.command.name == 'modmail':
+                    await bot.invoke(ctx)
+
+
 
 
 
