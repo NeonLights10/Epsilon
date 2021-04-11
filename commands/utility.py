@@ -29,7 +29,7 @@ class Utility(commands.Cog):
     async def roll(self, ctx, num: int = 100):
         if int < 0:
             log.warning("Error: Invalid input")
-                await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Please pick a number > 0.'))
+            await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Please pick a number > 0.'))
         else:
             answer = random.randint(0, num)
             embed = gen_embed(
