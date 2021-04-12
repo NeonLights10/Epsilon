@@ -23,7 +23,7 @@ class Miscellaneous(commands.Cog):
                 return False
         return commands.check(predicate)
 
-    async def generate_invite_link(self, permissions=discord.Permissions(335932630), guild=None):
+    async def generate_invite_link(self, permissions=discord.Permissions(340126934), guild=None):
         app_info = await self.bot.application_info()
         return discord.utils.oauth_url(app_info.id, permissions=permissions, guild=guild)
 
