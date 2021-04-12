@@ -349,7 +349,7 @@ class Utility(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.user.id == self.bot.user.id:
+        if payload.user_id == self.bot.user.id:
             return
         channel = self.bot.get_channel(payload.channel_id)
         rmessage = await channel.fetch_message(payload.message_id)
@@ -375,7 +375,7 @@ class Utility(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if payload.user.id == self.bot.user.id:
+        if payload.user_id == self.bot.user.id:
             return
         channel = self.bot.get_channel(payload.channel_id)
         rmessage = await channel.fetch_message(payload.message_id)
