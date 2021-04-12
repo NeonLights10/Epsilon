@@ -11,10 +11,10 @@ Epsilon is a multipurpose discord bot written in Python using the discord.py lib
 Neon#5555 on discord
 
 ## Features
-Server specific modmail
-Reaction based self role assignment
-Strike/ban system with record lookup
-Logging capabilities
-Timezone conversion
-Fun commands
-And more coming soon...
+* Server specific modmail
+* Reaction based self role assignment
+* Strike/ban system with record lookup
+* Logging capabilities
+* Timezone conversion
+* Fun commands
+* And more coming soon...
