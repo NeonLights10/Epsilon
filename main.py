@@ -265,7 +265,6 @@ async def on_message(message):
             
 
     elif isinstance(ctx.channel, discord.DMChannel):
-        document = await db.servers.find_one({"server_id": ctx.guild.id})
         if ctx.author.bot is False:
             if ctx.message.reference:
                 ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
