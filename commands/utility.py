@@ -321,7 +321,7 @@ class Utility(commands.Cog):
                     for role in roles:
                         remoji = roles[role]
                         rolename = ctx.guild.get_role(int(role))
-                        rcontent = rcontent + f'{remoji} {rolename}\n'
+                        rcontent = rcontent + f'{remoji} {rolename.mention}\n'
                     rembed = gen_embed(title = document['category_name'], content = rcontent)
                     await rmessage.edit(embed = rembed)
                     for role in roles:
@@ -341,7 +341,7 @@ class Utility(commands.Cog):
                         for role in roles:
                             emoji = roles[role]
                             rolename = ctx.guild.get_role(int(role))
-                            rcontent = rcontent + f'{emoji} {rolename}\n'
+                            rcontent = rcontent + f'{emoji} {rolename.mention}\n'
                     rembed = gen_embed(title = document['category_name'], content = rcontent)
                     await rmessage.edit(embed = rembed)
                     await rmessage.remove_reaction(remoji, self.bot.user)
