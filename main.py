@@ -222,21 +222,15 @@ async def on_message(message):
     ctx = await bot.get_context(message)
 
     if isinstance(ctx.channel, discord.TextChannel):
-        document = await db.servers.find_one({"server_id": ctx.guild.id})
 
         if ctx.author.bot is False:
             if ctx.prefix:
                 log.info(f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
-            else:
-                if document['fun']:
-                    post = {'server_id': ctx.guild.id,
-                            'channel_id': ctx.channel.id,
-                            'msg_id': ctx.message.id}
-                    await db.msgid.insert_one(post)
-
-            if ctx.message.reference:
+                await bot.invoke(ctx)
+            elif ctx.message.reference:
                 ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
                 if ref_message.author == bot.user:
+                    document = await db.servers.find_one({"server_id": ctx.guild.id})
                     #modmail logic
                     if ctx.channel.id == document['modmail_channel']:
                         if ref_message.embeds[0].title == 'New Modmail':
@@ -256,6 +250,13 @@ async def on_message(message):
                         msg = await get_msgid(ctx.message)
                         log.info(f"Message retrieved: {msg}\n")
                         await ctx.message.reply(content = msg)
+            else:
+                document = await db.servers.find_one({"server_id": ctx.guild.id})
+                if document['fun']:
+                    post = {'server_id': ctx.guild.id,
+                            'channel_id': ctx.channel.id,
+                            'msg_id': ctx.message.id}
+                    await db.msgid.insert_one(post)
 
             elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
                 log.info("Found a mention of myself, generating response...")
@@ -263,9 +264,10 @@ async def on_message(message):
                 log.info(f"Message retrieved: {msg}\n")
                 await ctx.message.reply(content = msg)
 
-            await bot.invoke(ctx)
+            
 
     elif isinstance(ctx.channel, discord.DMChannel):
+        document = await db.servers.find_one({"server_id": ctx.guild.id})
         if ctx.author.bot is False:
             if ctx.message.reference:
                 ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
