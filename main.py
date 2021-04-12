@@ -250,6 +250,11 @@ async def on_message(message):
                         msg = await get_msgid(ctx.message)
                         log.info(f"Message retrieved: {msg}\n")
                         await ctx.message.reply(content = msg)
+            elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
+                log.info("Found a mention of myself, generating response...")
+                msg = await get_msgid(ctx.message)
+                log.info(f"Message retrieved: {msg}\n")
+                await ctx.message.reply(content = msg)
             else:
                 document = await db.servers.find_one({"server_id": ctx.guild.id})
                 if document['fun']:
@@ -257,13 +262,6 @@ async def on_message(message):
                             'channel_id': ctx.channel.id,
                             'msg_id': ctx.message.id}
                     await db.msgid.insert_one(post)
-
-            elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
-                log.info("Found a mention of myself, generating response...")
-                msg = await get_msgid(ctx.message)
-                log.info(f"Message retrieved: {msg}\n")
-                await ctx.message.reply(content = msg)
-
             
 
     elif isinstance(ctx.channel, discord.DMChannel):
