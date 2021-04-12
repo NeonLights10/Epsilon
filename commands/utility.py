@@ -9,7 +9,8 @@ from datetime import timedelta
 from discord.ext import commands
 from formatting.embed import gen_embed
 from formatting.constants import TIMEZONE_DICT
-from __main__ import log
+from typing import Union, Optional
+from __main__ import log, db
 
 def find_key(dic, val):
     try:
@@ -22,6 +23,19 @@ def find_key(dic, val):
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    def to_ord(argument):
+        return ord(argument)
+
+    def has_modrole():
+        async def predicate(ctx):
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if document['modrole']:
+                role = discord.utils.find(lambda r: r.id == document['modrole'], ctx.guild.roles)
+                return role in ctx.author.roles
+            else:
+                return False
+        return commands.check(predicate)
 
     @commands.command(name = 'roll', 
                     description = "Generates a random number from 0-100 unless you specify a max number.",
@@ -237,6 +251,150 @@ class Utility(commands.Cog):
 
         embed = gen_embed(title = "tconvert", content = f"Converted time from **{timezone1}** to **{timezone2}** is **{final_time}**")
         await ctx.send(embed = embed)
+
+    @commands.command(name = 'reactcategory',
+                    description = 'Set up a react based role category in a channel.',
+                    help = 'Usage:\n\n\%reactrole [create/remove] [channel] [name]')
+    @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
+    async def reactcategory(self, ctx, option: str, dchannel: discord.TextChannel, *, value: str):
+        valid_options = {'create', 'remove'}
+        if option not in valid_options:
+            log.warning('Error: Invalid Input')
+            params = ' '.join([x for x in valid_options])
+            await ctx.send(embed = gen_embed(title = 'Input Error', content = f'That is not a valid option for this parameter. Valid options: <{params}>'))
+            return
+        if option == 'create':
+            embed = gen_embed(title = value, content = 'Empty. Add a role!')
+            rmessage = await dchannel.send(embed = embed)
+            post = {'server_id': ctx.guild.id,
+                    'msg_id': rmessage.id,
+                    'channel_id': dchannel.id,
+                    'category_name': value,
+                    'roles': None,
+                    }
+            await db.rolereact.insert_one(post)
+            await ctx.send(embed = gen_embed(title = 'reactcategory', content = f'Created role reaction category {value} in {dchannel.mention}'))
+            return
+        elif option == 'remove':
+            categories = db.rolereact.find({"server_id": ctx.guild.id})
+            rmessage_id = None
+            async for document in categories:
+                if document['category_name'] == value and document['channel_id'] == dchannel.id:
+                    rmessage = await dchannel.fetch_message(document['msg_id'])
+                    if rmessage:
+                        rmessage_id = rmessage.id
+                        await rmessage.delete()
+                    else:
+                        log.warning('Error: Invalid Input')
+                        params = ' '.join([x for x in valid_options])
+                        await ctx.send(embed = gen_embed(title = 'Input Error', content = f"Couldn't find react based role message."))
+                        return
+            deleted = await db.rolereact.delete_one({'msg_id': rmessage_id})
+            if deleted.deleted_count > 0:
+                await ctx.send(embed = gen_embed(title = 'reactcategory', content = f'Deleted role reaction category {value} in {dchannel.mention}'))
+
+    @commands.command(name = 'reactrole',
+                    description = 'Add a role to a react based role category.',
+                    help = 'Usage:\n\n\%reactrole [add/remove/edit] <emoji> [channel] [category]\n(Emoji is not needed when removing a role)')
+    @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
+    async def reactrole(self, ctx, option: str, drole: discord.Role, emoji: Optional[Union[discord.Emoji, to_ord]], dchannel: discord.TextChannel = None, *, value: str = None):
+        valid_options = {'add', 'remove', 'edit'}
+        if option not in valid_options:
+            log.warning('Error: Invalid Input')
+            params = ' '.join([x for x in valid_options])
+            await ctx.send(embed = gen_embed(title = 'Input Error', content = f'That is not a valid option for this parameter. Valid options: <{params}>'))
+            return
+        categories = db.rolereact.find({"server_id": ctx.guild.id})
+        if option == 'add' or option == 'edit':
+            async for document in categories:
+                if document['channel_id'] == dchannel.id and document['category_name'] == value:
+                    roles = document['roles']
+                    if not roles:
+                        roles = {}
+                    if isinstance(emoji, discord.Emoji):
+                        roles[str(drole.id)] = f"<:{emoji.name}:{emoji.id}>"
+                    else:
+                        roles[str(drole.id)] = chr(emoji)
+                    await db.rolereact.update_one({'channel_id': dchannel.id, 'category_name': value}, {"$set": {'roles': roles}})
+                    rmessage = await dchannel.fetch_message(document['msg_id'])
+                    rcontent = ""
+                    for role in roles:
+                        remoji = roles[role]
+                        rolename = ctx.guild.get_role(int(role))
+                        rcontent = rcontent + f'{remoji} {rolename}\n'
+                    rembed = gen_embed(title = document['category_name'], content = rcontent)
+                    await rmessage.edit(embed = rembed)
+                    for role in roles:
+                        await rmessage.add_reaction(roles[role])
+                    await ctx.send(embed = gen_embed(title = 'reactrole', content = f'Added/edited role {drole.name} with emoji {remoji} in {dchannel.mention}'))
+        elif option == 'remove':
+            async for document in categories:
+                if document['channel_id'] == dchannel.id and document['category_name'] == value:
+                    roles = document['roles']
+                    remoji = roles.pop(str(drole.id), None)
+                    await db.rolereact.update_one({'channel_id': dchannel.id, 'category_name': value}, {"$set": {'roles': roles}})
+                    rmessage = await dchannel.fetch_message(document['msg_id'])
+                    rcontent = ""
+                    if len(roles) < 1:
+                            rcontent = 'Empty. Add a role!'
+                    else:
+                        for role in roles:
+                            emoji = roles[role]
+                            rolename = ctx.guild.get_role(int(role))
+                            rcontent = rcontent + f'{emoji} {rolename}\n'
+                    rembed = gen_embed(title = document['category_name'], content = rcontent)
+                    await rmessage.edit(embed = rembed)
+                    await rmessage.remove_reaction(remoji, self.bot.user)
+                    await ctx.send(embed = gen_embed(title = 'reactrole', content = f'Removed role {drole.name} with emoji {remoji} in {dchannel.mention}'))
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        channel = self.bot.get_channel(payload.channel_id)
+        rmessage = await channel.fetch_message(payload.message_id)
+        categories = db.rolereact.find({"server_id": rmessage.guild.id})
+        async for document in categories:
+            if document['msg_id'] == rmessage.id:
+                roles = document['roles']
+                extracted_emoji = None
+                remoji = None
+                for role in roles:
+                    raw_emoji = roles[role]
+                    if re.search('\d{18}', raw_emoji):
+                        extracted_emoji = re.search('\d{18}', raw_emoji).group()
+                        extracted_emoji = discord.utils.get(rmessage.guild.emojis, id = int(extracted_emoji))
+                        remoji = discord.utils.get(rmessage.guild.emojis, id = payload.emoji.id)
+                    if not extracted_emoji:
+                        extracted_emoji = raw_emoji
+                        remoji = payload.emoji.name
+
+                    if extracted_emoji == remoji:
+                        extracted_role = rmessage.guild.get_role(int(role))
+                        await payload.member.add_roles(extracted_role)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload):
+        channel = self.bot.get_channel(payload.channel_id)
+        rmessage = await channel.fetch_message(payload.message_id)
+        categories = db.rolereact.find({"server_id": rmessage.guild.id})
+        async for document in categories:
+            if document['msg_id'] == rmessage.id:
+                roles = document['roles']
+                extracted_emoji = None
+                remoji = None
+                for role in roles:
+                    raw_emoji = roles[role]
+                    if re.search('\d{18}', raw_emoji):
+                        extracted_emoji = re.search('\d{18}', raw_emoji).group()
+                        extracted_emoji = discord.utils.get(rmessage.guild.emojis, id = int(extracted_emoji))
+                        remoji = discord.utils.get(rmessage.guild.emojis, id = payload.emoji.id)
+                    if not extracted_emoji:
+                        extracted_emoji = raw_emoji
+                        remoji = payload.emoji.name
+
+                    if extracted_emoji == remoji:
+                        extracted_role = rmessage.guild.get_role(int(role))
+                        user = rmessage.guild.get_member(payload.user_id)
+                        await user.remove_roles(extracted_role)
 
 def setup(bot):
     bot.add_cog(Utility(bot))
