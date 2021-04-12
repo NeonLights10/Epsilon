@@ -2,6 +2,7 @@ import discord
 import asyncio
 import psutil
 import time
+import os
 
 from discord.ext import commands
 from __main__ import log, db, message_count, uptime
