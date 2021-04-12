@@ -1,5 +1,5 @@
 # Epsilon
-![latest release](https://img.shields.io/badge/latest%20release-0.2.0-brightgreen.svg)
+![latest release](https://img.shields.io/badge/latest%20release-0.4.0-brightgreen.svg)
 
 Epsilon is a multipurpose discord bot written in Python using the discord.py library.
 
@@ -11,4 +11,10 @@ Epsilon is a multipurpose discord bot written in Python using the discord.py lib
 Neon#5555 on discord
 
 ## Features
-Coming soon...
+Server specific modmail
+Reaction based self role assignment
+Strike/ban system with record lookup
+Logging capabilities
+Timezone conversion
+Fun commands
+And more coming soon...
