@@ -486,7 +486,7 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'strike',
                     description = 'Strike a user. After a certain number of strikes, the user is automatically banned. Default is 3, can be changed using severconfig',
-                    help = 'Usage\n\n\%warn [user mentions/user ids/user name + discriminator (ex: name#0000)] <reason>')
+                    help = 'Usage\n\n\%strike [user mentions/user ids/user name + discriminator (ex: name#0000)] [message_link] <reason>')
     @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
     async def strike(self, ctx, members: commands.Greedy[discord.Member], message_link: str, *, reason):
         async def modmail_enabled():
