@@ -85,6 +85,7 @@ class Miscellaneous(commands.Cog):
 
     @commands.command(name = 'reload',
                     description = 'Reload a cog.')
+    @is_owner()
     async def reload(self, ctx, cog_name: str):
         self.bot.unload_extension(cog_name)
         self.bot.load_extension(cog_name)
