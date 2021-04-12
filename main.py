@@ -244,7 +244,7 @@ async def on_message(message):
                             user_id = ref_embed.text
                             user = await bot.fetch_user(user_id)
                             if document['modmail_channel']:
-                                embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = "New Modmail", content = f'{message.clean_conten}\n\nYou may reply to this modmail using the reply function.')
+                                embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = "New Modmail", content = f'{message.clean_content}\n\nYou may reply to this modmail using the reply function.')
                                 embed.set_footer(text = f"{ctx.guild.id}")
                                 dm_channel = user.dm_channel
                                 if user.dm_channel is None:
