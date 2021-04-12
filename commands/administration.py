@@ -152,7 +152,7 @@ class Administration(commands.Cog):
                 await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Enabled logging in channel {channel_id.mention} for {ctx.guild.name}'))
             elif channel_option == "welcome":
                 await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'welcome_channel': channel_id.id}})
-                await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Enabled logging in channel {channel_id.mention} for {ctx.guild.name}'))
+                await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Enabled welcomes in channel {channel_id.mention} for {ctx.guild.name}'))
             elif channel_option == "modmail":
                 await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'modmail_channel': channel_id.id}})
                 await ctx.send(embed = gen_embed(title = 'channelconfig', content = f'Enabled modmail in channel {channel_id.mention} for {ctx.guild.name}'))
