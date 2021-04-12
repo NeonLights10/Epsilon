@@ -41,7 +41,7 @@ class Utility(commands.Cog):
                     description = "Generates a random number from 0-100 unless you specify a max number.",
                     help = 'Examples:\n\n\%roll 20')
     async def roll(self, ctx, num: int = 100):
-        if int < 0:
+        if num < 0:
             log.warning("Error: Invalid input")
             await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Please pick a number > 0.'))
         else:
@@ -349,6 +349,8 @@ class Utility(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        if payload.user.id == self.bot.user.id:
+            return
         channel = self.bot.get_channel(payload.channel_id)
         rmessage = await channel.fetch_message(payload.message_id)
         categories = db.rolereact.find({"server_id": rmessage.guild.id})
@@ -373,6 +375,8 @@ class Utility(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
+        if payload.user.id == self.bot.user.id:
+            return
         channel = self.bot.get_channel(payload.channel_id)
         rmessage = await channel.fetch_message(payload.message_id)
         categories = db.rolereact.find({"server_id": rmessage.guild.id})
