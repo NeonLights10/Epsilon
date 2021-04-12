@@ -234,7 +234,7 @@ async def on_message(message):
                             'msg_id': ctx.message.id}
                     await db.msgid.insert_one(post)
 
-            if ctx.message.reference and document['fun']:
+            if ctx.message.reference:
                 ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
                 if ref_message.author == bot.user:
                     #modmail logic
@@ -244,14 +244,14 @@ async def on_message(message):
                             user_id = ref_embed.text
                             user = await bot.fetch_user(user_id)
                             if document['modmail_channel']:
-                                embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = "New Modmail", content = message.clean_content)
+                                embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = "New Modmail", content = f'{message.clean_conten}\n\nYou may reply to this modmail using the reply function.')
                                 embed.set_footer(text = f"{ctx.guild.id}")
                                 dm_channel = user.dm_channel
                                 if user.dm_channel is None:
                                     dm_channel = await user.create_dm()
                                 await dm_channel.send(embed = embed)
                                 await ctx.send(embed = gen_embed(title = 'Modmail sent', content = f'Sent modmail to {user.name}#{user.discriminator}.'))
-                    else:
+                    elif document['fun']:
                         log.info("Found a reply to me, generating response...")
                         msg = await get_msgid(ctx.message)
                         log.info(f"Message retrieved: {msg}\n")

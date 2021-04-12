@@ -39,7 +39,7 @@ class Help(commands.Cog):
                                 for c in self.bot.get_cog(y.cog_name).get_commands():
                                     if command == c.name or command in c.aliases:
                                         help.add_field(name='Description',value=c.description, inline=False)
-                                        help.add_field(name='Inputs',value=f".{c.name} {c.signature}", inline=False)
+                                        help.add_field(name='Inputs',value=f"{ctx.prefix}{c.name} {c.signature}", inline=False)
                                         if c.help:
                                             help.add_field(name='Examples / Further Help',value=c.help, inline=False)
                                 found = True

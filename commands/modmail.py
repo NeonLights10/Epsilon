@@ -13,7 +13,7 @@ class Modmail(commands.Cog):
         self.bot = bot
 
     @commands.command(name = 'modmail',
-                    description = 'Start a modmail.',
+                    description = 'Start a modmail. A modmail channel must be configured first before using this command.\nUse \%serverconfig modmail [channel]',
                     help = 'Usage:\n\n\%modmail [recipient_id] [message]\nIf you are sending it to a server, the recipient id will be the server id.\nIf you are a mod sending it to a user, the recipient id will be the user id (will also accept mention and name+discriminator)')
     async def modmail(self, ctx, recipient_id: Union[discord.Guild, discord.User], *, content: str):
 
