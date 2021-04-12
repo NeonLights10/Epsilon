@@ -289,6 +289,11 @@ async def on_message(message):
 
 @bot.event
 async def on_guild_join(guild):
+    await _check_document(guild, guild.id)
+    
+    status = discord.Game(f'{default_prefix}help | {len(bot.guilds)} servers')
+    await bot.change_presence(activity = status)
+
     general = find(lambda x: x.name == 'general',  guild.text_channels)
     if general and general.permissions_for(guild.me).send_messages:
         embed = gen_embed(name=f'{guild.name}',
