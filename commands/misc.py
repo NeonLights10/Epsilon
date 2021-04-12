@@ -40,7 +40,7 @@ class Miscellaneous(commands.Cog):
         mem = process.memory_full_info()
         mem = mem.uss / 1000000
         content.add_field(name = "Memory Usage", value = f'{mem:.2f} MB')
-        content.add_field(name = "Servers", value = f"I am running on {str(len(bot.guilds))} servers")
+        content.add_field(name = "Servers", value = f"I am running on {str(len(self.bot.guilds))} servers")
         ctime = float(time.time()-uptime)
         day = ctime // (24 * 3600)
         ctime = ctime % (24 * 3600)
