@@ -398,9 +398,9 @@ class Administration(commands.Cog):
                 m = await modmail_enabled()
                 dm_embed = None
                 if m:
-                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted.', content = f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                 else:
-                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}')
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted.', content = f'Reason: {reason}')
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
                 muted = muted + f'{member.mention} '
