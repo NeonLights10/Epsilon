@@ -13,6 +13,7 @@ from typing import Union, Optional
 from discord.ext import commands
 from formatting.constants import UNITS
 from formatting.embed import gen_embed
+from bson.objectid import ObjectId
 from __main__ import log, db, prefix_list, prefix
 
 
@@ -177,10 +178,10 @@ class Administration(commands.Cog):
 
     @commands.command(name = 'serverconfig',
                     description = 'Set various server config settings.',
-                    help = 'Usage\n\n\%serverconfig [option] [enable/disable/number]\nAvailable settings - max_strike, fun\n(max_strike) takes number values.')
+                    help = 'Usage\n\n\%serverconfig [option] [enable/disable/number]\nAvailable settings - fun')
     @commands.check_any(commands.has_guild_permissions(manage_guild = True), has_modrole())
     async def serverconfig(self, ctx, config_option: str, value: Union[int, str]):
-        valid_options = {'max_strike', 'fun'}
+        valid_options = {'fun'}
         valid_values = {'enable', 'disable'}
         config_option = config_option.lower()
         value = value.lower()
@@ -189,13 +190,6 @@ class Administration(commands.Cog):
             await ctx.send(embed = gen_embed(title = 'Input Error', content = f'That is not a valid option for this parameter. Valid options: <{params}>'))
             return
 
-        if config_option == 'max_strike':
-            if value > 0:
-                await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'max_strike': value}})
-                await ctx.send(embed = gen_embed(title = 'serverconfig', content = f'Changed the max number of strikes to {value}'))
-            else:
-                log.warning("Error: Invalid input")
-                await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Please make sure the number > 0'))
         if config_option == 'fun':
             if value in valid_values:
                 if value == 'enable':
@@ -257,9 +251,9 @@ class Administration(commands.Cog):
                             elif isinstance(time, discord.MessageReference):
                                 after_value = await ctx.channel.fetch_message(time.message_id)
 
-                            await delete_messages(limit = num + 1, check = user_check, after = after_value)
+                            await delete_messages(limit = num, check = user_check, after = after_value)
                         else:
-                            await delete_messages(limit = num + 1, check = user_check)
+                            await delete_messages(limit = num, check = user_check)
                 elif time:
                     after_value = datetime.datetime.utcnow()
                     if isinstance(time, str):
@@ -497,7 +491,7 @@ class Administration(commands.Cog):
         await ctx.send(embed = gen_embed(title = 'ban', content = f'{banned}has been kicked.\nReason: {reason}'))
 
     @commands.command(name = 'strike',
-                    description = 'Strike a user. After a certain number of strikes, the user is automatically banned. Default is 3, can be changed using severconfig',
+                    description = 'Strike a user. After 3 strikes, the user is automatically banned.',
                     help = 'Usage\n\n\%strike [user mentions/user ids/user name + discriminator (ex: name#0000)] [message_link] <reason>')
     @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
     async def strike(self, ctx, members: commands.Greedy[discord.Member], message_link: str, *, reason):
@@ -528,6 +522,7 @@ class Administration(commands.Cog):
                 'server_id': ctx.guild.id,
                 'user_name': f'{member.name}#{member.discriminator}',
                 'user_id': member.id,
+                'moderator': ctx.author.name,
                 'message_link': message_link,
                 'reason': reason
             }
@@ -547,15 +542,11 @@ class Administration(commands.Cog):
             embed.set_footer(text = time.ctime())
             await ctx.send(embed = embed)
 
-            #check for number of strikes
-            expire_date = time + relativedelta(months=-2)
-            query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date}}
-            results = await db.warns.count_documents(query)
-            document = await db.servers.find_one({"server_id": ctx.guild.id})
-            if results >= document['max_strike']:
-                max_strike = document['max_strike']
-                await ctx.guild.ban(member, reason = f'You have accumulated {max_strike} strikes and therefore will be banned from the server.')
+            results = await check_strike(ctx, member)
 
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if len(results) >= document['max_strike']:
+                max_strike = document['max_strike']
                 dm_channel = member.dm_channel
                 if member.dm_channel is None:
                     dm_channel = await user.create_dm()
@@ -568,34 +559,50 @@ class Administration(commands.Cog):
                     dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been banned', content = f'Reason: {reason}')
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
+                await ctx.guild.ban(member, reason = f'You have accumulated {max_strike} strikes and therefore will be banned from the server.')
     
     @commands.command(name = 'lookup',
                     description = 'Lookup strikes for a user. Returns all currently active strikes.',
                     help = 'Usage\n\n\%lookup [user mention/user id]')
     @commands.check_any(commands.has_guild_permissions(view_audit_log = True), has_modrole())
     async def lookup(self, ctx, member: discord.Member):
-        time = datetime.datetime.utcnow()
-
-        expire_date = time + relativedelta(months=-2)
-        query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date}}
-        results = db.warns.find(query).sort('time', pymongo.DESCENDING)
-        num_strikes = await db.warns.count_documents(query)
-        expired_query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$lt': expire_date}}
+        valid_strikes = [] #probably redundant but doing it anyways to prevent anything stupid
+        results = await check_strike(ctx, member, valid_strikes = valid_strikes)
+        num_strikes = len(results)
+        #pull all of the documents now, cross reference with active strikes to determine the expired ones
+        expired_query = {'server_id': ctx.guild.id, 'user_id': member.id}
         expired_results = db.warns.find(expired_query).sort('time', pymongo.DESCENDING)
 
         embed = gen_embed(name = f'{member.name}#{member.discriminator}', icon_url = member.avatar_url, title='Strike Lookup', content= f'Found {num_strikes} active strikes for this user.')
-        async for document in results:
+        for document in results:
+            documentid = document['_id']
             stime = document['time']
             reason = document['reason']
             message_link = document['message_link']
-            embed.add_field(name = f'Strike | {stime.ctime()}', value = f'Reason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
+            moderator = document['moderator']
+            embed.add_field(name = f'Strike | {stime.ctime()}', value = f'UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
         async for document in expired_results:
-            stime = document['time']
-            reason = document['reason']
-            message_link = document['message_link']
-            embed.add_field(name = f'Strike (EXPIRED) | {stime.ctime()}', value = f'Reason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
+            if document not in results:
+                documentid = document['_id']
+                stime = document['time']
+                reason = document['reason']
+                message_link = document['message_link']
+                moderator = document['moderator']
+                embed.add_field(name = f'Strike (EXPIRED) | {stime.ctime()}', value = f'UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
         embed.set_footer(text = f'UID: {member.id}')
         await ctx.send(embed = embed)
+
+    @commands.command(name = 'removestrike',
+                    description = 'Remove a strike from the database.',
+                    help = 'Usage\n\n\%removestrike [strike UID]\n(This is found using \%lookup)')
+    async def removestrike(self, ctx, strikeid: str):
+        deleted = await db.warns.delete_one({"_id": ObjectId(strikeid)})
+        if deleted.deleted_count == 1:
+            embed = gen_embed(title='Strike Deleted', content= f'Strike {strikeid} was deleted.')
+            await ctx.send(embed = embed)
+        elif deleted.deleted_count == 0:
+            log.warning(f'Error while deleting strike')
+            await ctx.send(embed = gen_embed(title = 'Error', content = "Was unable to delete strike. Check your UID. If correct, something may be wrong with the database or the strike does not exist."))
 
     @commands.command(name = 'slowmode',
                     description = 'Enables slowmode for the channel you are in. Time is in seconds.',
@@ -679,6 +686,40 @@ class Administration(commands.Cog):
                         content.description = f"**Before:** {before.clean_content}\n**After:** {after.clean_content}"
                         await logChannel.send(embed = content)
         except: pass
+
+#this method will spit out the list of valid strikes. we can cross reference the entire list of strikes to determine which ones are expired on the lookup command. 
+#we can also check the length of the list when giving out strikes to determine if an automatic ban is required.
+async def check_strike(ctx, member, time = datetime.datetime.utcnow() + relativedelta(minutes=1), valid_strikes = []):
+    expire_date = time + relativedelta(months=-2)
+    query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
+    results = await db.warns.count_documents(query)
+    if results > 0: #this means we have an active strike. let's check the next strike to see if it's within 2 months of this strike.
+        results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1) #this will return the latest strike
+        document = await results.to_list(length = None)
+        document = document.pop()
+        valid_strikes.append(document)
+        if len(valid_strikes) >= 3:
+            #ban time boom boom. stop searching and step out
+            return valid_strikes
+        newtime = document['time']
+        return await check_strike(ctx, member, time = newtime, valid_strikes = valid_strikes) #let's check again for a second strike, which when found, will check for the final strike. 
+    elif len(valid_strikes) == 0:
+        log.info('no valid strikes in past 2 months')
+        #we didn't find a strike in the past 2 months, but an old strike might still be decaying. let's check the past 4 months.
+        expire_date = time + relativedelta(months=-4)
+        query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
+        results = await db.warns.count_documents(query)
+        if results > 0: #we found a strike! let's check to see if there's another strike within 2 months.
+            results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1) #this will return the latest strike
+            sdocument = await results.to_list(length = None)
+            sdocument = sdocument.pop()
+            expire_date = time + relativedelta(months=-2)
+            sresults = await db.warns.count_documents(query)
+            if sresults > 0: #we found a second strike. that means this strike is expired, but the first strike is active.
+                valid_strikes.append(sdocument)
+        return valid_strikes
+    else: #this means we didn't get a hit, so let's step out
+        return valid_strikes
 
 def setup(bot):
     bot.add_cog(Administration(bot))

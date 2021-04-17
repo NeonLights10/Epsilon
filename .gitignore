@@ -2,3 +2,4 @@ config.json
 *.pyc
 *.log
 *.log.last
+working.py
