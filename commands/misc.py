@@ -3,6 +3,8 @@ import asyncio
 import psutil
 import time
 import os
+import csv
+import dateutil.parser
 
 from discord.ext import commands
 from __main__ import log, db, message_count, uptime
@@ -118,6 +120,30 @@ class Miscellaneous(commands.Cog):
 
         if asyncio.iscoroutine(result):
             result = await result
+
+    @commands.command(name = 'updatedb',
+                    description = 'dev only')
+    @is_owner()
+    async def updatedb(self, ctx):
+        with open("commands/db/warn_db.csv", encoding="utf8") as csv_file:
+            csv_reader = csv.DictReader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                if line_count == 0:
+                    log.info(f'Column names are {", ".join(row)}')
+                    line_count += 1
+                post = {
+                    'time': dateutil.parser.parse(row['time']),
+                    'server_id': ctx.guild.id,
+                    'user_name': row['user_name'],
+                    'user_id': int(row['user_id']),
+                    'moderator': row['moderator'],
+                    'message_link': row['message_link'],
+                    'reason': row['reason']
+                }
+                await db.warns.insert_one(post)
+                line_count += 1
+            print(f'Processed {line_count} lines.')
 
 def setup(bot):
     bot.add_cog(Miscellaneous(bot))

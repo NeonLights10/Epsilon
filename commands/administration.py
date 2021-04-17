@@ -580,7 +580,7 @@ class Administration(commands.Cog):
             reason = document['reason']
             message_link = document['message_link']
             moderator = document['moderator']
-            embed.add_field(name = f'Strike | {stime.ctime()}', value = f'UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
+            embed.add_field(name = f'Strike | {stime.ctime()}', value = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
         async for document in expired_results:
             if document not in results:
                 documentid = document['_id']
@@ -588,7 +588,7 @@ class Administration(commands.Cog):
                 reason = document['reason']
                 message_link = document['message_link']
                 moderator = document['moderator']
-                embed.add_field(name = f'Strike (EXPIRED) | {stime.ctime()}', value = f'UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
+                embed.add_field(name = f'Strike (EXPIRED) | {stime.ctime()}', value = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})', inline = False)
         embed.set_footer(text = f'UID: {member.id}')
         await ctx.send(embed = embed)
 
