@@ -568,7 +568,7 @@ class Administration(commands.Cog):
     @commands.check_any(commands.has_guild_permissions(view_audit_log = True), has_modrole())
     async def lookup(self, ctx, member: discord.Member):
         valid_strikes = [] #probably redundant but doing it anyways to prevent anything stupid
-        results = await check_strike(ctx, member, time = datetime.datetime.utcnow() + relativedelta(minutes=2) valid_strikes = valid_strikes)
+        results = await check_strike(ctx, member, time = datetime.datetime.utcnow() + relativedelta(minutes=2), valid_strikes = valid_strikes)
         num_strikes = len(results)
         #pull all of the documents now, cross reference with active strikes to determine the expired ones
         expired_query = {'server_id': ctx.guild.id, 'user_id': member.id}
