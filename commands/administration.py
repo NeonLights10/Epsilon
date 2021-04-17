@@ -503,6 +503,7 @@ class Administration(commands.Cog):
                 return False
 
         time = datetime.datetime.utcnow()
+        searchtime = time + relativedelta(seconds=1)
         if len(members) < 1:
             log.warning("Missing Required Argument")
             params = ' '.join([x for x in ctx.command.clean_params])
@@ -542,7 +543,7 @@ class Administration(commands.Cog):
             embed.set_footer(text = time.ctime())
             await ctx.send(embed = embed)
 
-            results = await check_strike(ctx, member)
+            results = await check_strike(ctx, member, time = searchtime)
 
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if len(results) >= document['max_strike']:
@@ -567,7 +568,7 @@ class Administration(commands.Cog):
     @commands.check_any(commands.has_guild_permissions(view_audit_log = True), has_modrole())
     async def lookup(self, ctx, member: discord.Member):
         valid_strikes = [] #probably redundant but doing it anyways to prevent anything stupid
-        results = await check_strike(ctx, member, valid_strikes = valid_strikes)
+        results = await check_strike(ctx, member, time = datetime.datetime.utcnow() + relativedelta(minutes=2) valid_strikes = valid_strikes)
         num_strikes = len(results)
         #pull all of the documents now, cross reference with active strikes to determine the expired ones
         expired_query = {'server_id': ctx.guild.id, 'user_id': member.id}
@@ -689,7 +690,8 @@ class Administration(commands.Cog):
 
 #this method will spit out the list of valid strikes. we can cross reference the entire list of strikes to determine which ones are expired on the lookup command. 
 #we can also check the length of the list when giving out strikes to determine if an automatic ban is required.
-async def check_strike(ctx, member, time = datetime.datetime.utcnow() + relativedelta(minutes=1), valid_strikes = []):
+async def check_strike(ctx, member, time = datetime.datetime.utcnow(), valid_strikes = []):
+    log.info(time)
     expire_date = time + relativedelta(months=-2)
     query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
     results = await db.warns.count_documents(query)

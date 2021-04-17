@@ -134,7 +134,7 @@ class Miscellaneous(commands.Cog):
                     line_count += 1
                 post = {
                     'time': dateutil.parser.parse(row['time']),
-                    'server_id': ctx.guild.id,
+                    'server_id': 432379300684103699, #ctx.guild.id,
                     'user_name': row['user_name'],
                     'user_id': int(row['user_id']),
                     'moderator': row['moderator'],
