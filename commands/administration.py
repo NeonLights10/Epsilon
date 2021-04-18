@@ -566,7 +566,7 @@ class Administration(commands.Cog):
                     description = 'Lookup strikes for a user. Returns all currently active strikes.',
                     help = 'Usage\n\n\%lookup [user mention/user id]')
     @commands.check_any(commands.has_guild_permissions(view_audit_log = True), has_modrole())
-    async def lookup(self, ctx, member: discord.Member):
+    async def lookup(self, ctx, member: discord.User):
         valid_strikes = [] #probably redundant but doing it anyways to prevent anything stupid
         results = await check_strike(ctx, member, time = datetime.datetime.utcnow() + relativedelta(minutes=2), valid_strikes = valid_strikes)
         num_strikes = len(results)
