@@ -329,19 +329,24 @@ async def on_member_join(member):
 
 ###################
 
+# This recursive function checks the database for a message ID for the bot to fetch a message and respond with when mentioned or replied to.
 async def get_msgid(message, attempts = 1):
+    # Construct the aggregation pipeline, match for the current server id and exclude bot messages if they somehow snuck past the initial regex.
     pipeline = [{'$match': {'$and': [{'server_id': message.guild.id}, {'author_id': {'$not': {'$regex': str(bot.user.id)}}}] }}, {'$sample': {'size': 1}}]
     async for msgid in db.msgid.aggregate(pipeline):
+            # This is jenky and I believe can be fixed to use ctx instead, but it searches each channel until it finds the channel the message was sent in.
+            # This lets us fetch the message.
             for channel in message.guild.channels:
                 if channel.id == msgid['channel_id']:
                     try:
                         msg = await channel.fetch_message(msgid['msg_id'])
-                        #log.info(msg.content)
+                        # Now let's double check that we aren't mentioning ourself or another bot, and that the messages has no embeds or attachments.
                         if (re.match('^%|^\^|^\$|^!|^\.|@', msg.content) == None) and (re.match(f'<@!?{bot.user.id}>', msg.content) == None) and (len(msg.embeds) == 0) and (msg.author.bot == False):
                             log.info("Attempts taken:{}".format(attempts))
                             log.info("Message ID:{}".format(msg.id))
                             return msg.clean_content
                         else:
+                            # If we fail, remove that message ID from the DB so we never call it again.
                             attempts += 1
                             mid = msgid['msg_id']
                             await db.msgid.delete_one({"msg_id": mid})
@@ -352,6 +357,7 @@ async def get_msgid(message, attempts = 1):
                         raise discord.exceptions.CommandError("I don't have permissions to read message history.")
 
                     except discord.NotFound:
+                        # This happens sometimes due to deleted message or other weird shenanigans, so do the same as above.
                         attempts += 1
                         mid = msgid['msg_id']
                         await db.msgid.delete_one({"msg_id": mid})

@@ -688,39 +688,66 @@ class Administration(commands.Cog):
                         await logChannel.send(embed = content)
         except: pass
 
-#this method will spit out the list of valid strikes. we can cross reference the entire list of strikes to determine which ones are expired on the lookup command. 
-#we can also check the length of the list when giving out strikes to determine if an automatic ban is required.
+# This method will spit out the list of valid strikes. we can cross reference the entire list of strikes to determine which ones are expired on the lookup command. 
+# We can also check the length of the list when giving out strikes to determine if an automatic ban is required.
+# Currently, there are 5 scenarios:
+#   1. No strikes active (none in past 2 months OR one in past 4 months but none in the 2 months immediately prior to that strike)
+#   2. One strike active (past 2 months)
+#   3. One strike active due to the presence of two strikes within two months (First strike expired, second is still active)
+#   4. Two strikes active (past 2 months)
+#   5. Three strikes active (proceed to ban the user)
 async def check_strike(ctx, member, time = datetime.datetime.utcnow(), valid_strikes = []):
-    log.info(time)
+    log.info(time) #this is here for debugging race condition atm
+
+    # Create the search query
     expire_date = time + relativedelta(months=-2)
     query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
     results = await db.warns.count_documents(query)
-    if results > 0: #this means we have an active strike. let's check the next strike to see if it's within 2 months of this strike.
-        results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1) #this will return the latest strike
+
+    if results > 0: 
+        # This case means we have an active strike. let's check the next strike to see if it's within 2 months of this strike.
+        # This sorts our query by date and will return the latest strike
+        results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1) 
         document = await results.to_list(length = None)
         document = document.pop()
         valid_strikes.append(document)
+        
         if len(valid_strikes) >= 3:
-            #ban time boom boom. stop searching and step out
+            # Ban time boom boom. stop searching and step out
+            log.info('max_strike exceeded, proceed to ban')
             return valid_strikes
+
+        # Else it's time to step in and start the recursion to check the next two months again.
+        # If the second strike is found, we will step in one final time to check for the third and final strike. 
         newtime = document['time']
-        return await check_strike(ctx, member, time = newtime, valid_strikes = valid_strikes) #let's check again for a second strike, which when found, will check for the final strike. 
+        return await check_strike(ctx, member, time = newtime, valid_strikes = valid_strikes) 
+
+    # If we didn't find any strikes in the past 2 months, we still need to check for the third case.
+    # A recent strike might still be decaying due to the reset decay timer so let's check the past 4 months.
     elif len(valid_strikes) == 0:
         log.info('no valid strikes in past 2 months')
-        #we didn't find a strike in the past 2 months, but an old strike might still be decaying. let's check the past 4 months.
+        # Create new search query
         expire_date = time + relativedelta(months=-4)
         query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
         results = await db.warns.count_documents(query)
-        if results > 0: #we found a strike! let's check to see if there's another strike within 2 months.
-            results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1) #this will return the latest strike
+
+        if results > 0:
+            # We found a strike! let's check to see if there's another strike within 2 months of this one.
+            results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1)
             sdocument = await results.to_list(length = None)
             sdocument = sdocument.pop()
             expire_date = time + relativedelta(months=-2)
             sresults = await db.warns.count_documents(query)
-            if sresults > 0: #we found a second strike. that means this strike is expired, but the first strike is active.
+
+            if sresults > 0: 
+                # We found a second strike. That means this second strike is expired, but the first strike is active.
+                # Remember, the first strike in this case is the most recent, while second is older. It's flipped from terminology.
                 valid_strikes.append(sdocument)
         return valid_strikes
-    else: #this means we didn't get a hit, so let's step out
+
+    else: 
+        #This means we didn't get a hit, so let's step out and spit out an empty list.
+        log.info('all strike cases false')
         return valid_strikes
 
 def setup(bot):
