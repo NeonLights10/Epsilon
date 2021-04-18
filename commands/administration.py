@@ -746,7 +746,7 @@ async def check_strike(ctx, member, time = datetime.datetime.utcnow(), valid_str
         return valid_strikes
 
     else: 
-        #This means we didn't get a hit, so let's step out and spit out an empty list.
+        #This means we didn't get a hit, so let's step out and spit out our list.
         log.info('all strike cases false')
         return valid_strikes
 

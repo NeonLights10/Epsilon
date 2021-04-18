@@ -49,7 +49,7 @@ def _setup_logging():
     shandler.setFormatter(colorlog.LevelFormatter(
         fmt = {
             'DEBUG': '{log_color}[{levelname}:{module}] {message}',
-            'INFO': '{log_color}{message}',
+            'INFO': '{log_color}{asctime} | {message}',
             'WARNING': '{log_color}{levelname}: {message}',
             'ERROR': '{log_color}[{levelname}:{module}] {message}',
             'CRITICAL': '{log_color}[{levelname}:{module}] {message}',
@@ -72,7 +72,7 @@ def _setup_logging():
             'VOICEDEBUG': 'purple',
     },
         style = '{',
-        datefmt = ''
+        datefmt = '%Y-%m-%d %H:%M:%S'
     ))
     log.addHandler(shandler)
     dlog.addHandler(shandler)
