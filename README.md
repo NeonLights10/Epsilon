@@ -20,7 +20,3 @@ Neon#5555 on discord
 * Timezone conversion
 * Fun commands
 * And more coming soon...
-
-### Notice
-This bot makes use of the experimental [discord-ext-menus](https://github.com/Rapptz/discord-ext-menus) project.
-To install this, you must run this command: `python -m pip install -U git+https://github.com/Rapptz/discord-ext-menus` as it is not on PyPI yet.
