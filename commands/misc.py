@@ -7,7 +7,8 @@ import csv
 import dateutil.parser
 
 from discord.ext import commands
-from __main__ import log, db, message_count, uptime
+from __main__ import log, db, uptime
+import main
 from formatting.embed import gen_embed
 
 from formatting.constants import VERSION as BOTVERSION
@@ -32,13 +33,12 @@ class Miscellaneous(commands.Cog):
     @commands.command(name = "stats",
                 description = "Gives statistics about the bot.")
     async def stats(self, ctx):
-        global message_count
         content = discord.Embed(colour = 0x1abc9c)
         content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.avatar_url)
         content.set_footer(text = "Fueee~")
         content.add_field(name = "Author", value = "Neon#5555")
         content.add_field(name = "BotID", value = self.bot.user.id)
-        content.add_field(name = "Messages", value = f"{message_count} ({(message_count / ((time.time()-uptime) / 60)):.2f}/min)")
+        content.add_field(name = "Messages", value = f"{main.message_count} ({(main.message_count / ((time.time()-uptime) / 60)):.2f}/min)")
         process = psutil.Process(os.getpid())
         mem = process.memory_full_info()
         mem = mem.uss / 1000000

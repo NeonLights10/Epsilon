@@ -290,11 +290,10 @@ class Administration(commands.Cog):
             elif isinstance(time, discord.MessageReference):
                         after_value = await ctx.channel.fetch_message(time.message_id)
 
-            await delete_messages(after = after_value)
+            await delete_messages(before = ctx.message, after = after_value)
             return
         else:
             log.warning("Missing Required Argument")
-            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             params = ' '.join([x for x in ctx.command.clean_params])
             sent = await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
             await ctx.message.delete()
@@ -436,7 +435,11 @@ class Administration(commands.Cog):
                 return True
             else:
                 return False
-
+        if not members:
+            log.warning("Missing Required Argument")
+            params = ' '.join([x for x in ctx.command.clean_params])
+            sent = await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
+            return
         kicked = ""
         for member in members:
             dm_channel = member.dm_channel
@@ -468,7 +471,11 @@ class Administration(commands.Cog):
                 return True
             else:
                 return False
-
+        if not users:
+            log.warning("Missing Required Argument")
+            params = ' '.join([x for x in ctx.command.clean_params])
+            sent = await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
+            return
         banned = ""
         for user in users:
             if ctx.guild.get_member(user.id):
@@ -625,7 +632,6 @@ class Administration(commands.Cog):
     async def shutdown_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure):
             log.warning("Error: Permission Error")
-            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             await ctx.send(embed = gen_embed(title = 'Permission Error', content = "Sorry, you don't have access to this command."))
 
     @commands.Cog.listener()
