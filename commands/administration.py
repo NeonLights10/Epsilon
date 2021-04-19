@@ -543,7 +543,9 @@ class Administration(commands.Cog):
             embed.set_footer(text = time.ctime())
             await ctx.send(embed = embed)
 
-            results = await check_strike(ctx, member, time = searchtime)
+            valid_strikes = [] #probably redundant but doing it anyways to prevent anything stupid
+            results = await check_strike(ctx, member, time = searchtime, valid_strikes = valid_strikes)
+            log.info(results)
 
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if len(results) >= document['max_strike']:
@@ -707,6 +709,7 @@ async def check_strike(ctx, member, time = datetime.datetime.utcnow(), valid_str
     if results > 0: 
         # This case means we have an active strike. let's check the next strike to see if it's within 2 months of this strike.
         # This sorts our query by date and will return the latest strike
+        log.info('found strike, beginning search process')
         results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1) 
         document = await results.to_list(length = None)
         document = document.pop()

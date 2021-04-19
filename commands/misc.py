@@ -32,6 +32,7 @@ class Miscellaneous(commands.Cog):
     @commands.command(name = "stats",
                 description = "Gives statistics about the bot.")
     async def stats(self, ctx):
+        global message_count
         content = discord.Embed(colour = 0x1abc9c)
         content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.avatar_url)
         content.set_footer(text = "Fueee~")
