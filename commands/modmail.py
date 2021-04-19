@@ -32,7 +32,7 @@ class Modmail(commands.Cog):
         elif isinstance(recipient_id, discord.User):
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if document['modmail_channel']:
-                embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = 'New Modmail', content = f'{content}\n\nYou may reply to this modmail using the reply function.')
+                embed = gen_embed(name = f'{ctx.guild.name}', icon_url = ctx.guild.icon_url, title = 'New Modmail', content = f'{content}\n\nYou may reply to this modmail using the reply function.')
                 embed.set_footer(text = f'{ctx.guild.id}')
                 dm_channel = recipient_id.dm_channel
                 if recipient_id.dm_channel is None:
