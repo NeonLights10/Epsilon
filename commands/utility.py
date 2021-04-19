@@ -23,9 +23,9 @@ def find_key(dic, val):
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
+        
     def to_ord(argument):
-        return ord(argument)
+        return ord(str(argument))
 
     def has_modrole():
         async def predicate(ctx):
