@@ -479,8 +479,8 @@ class Administration(commands.Cog):
         banned = ""
         for user in users:
             if ctx.guild.get_member(user.id):
-                dm_channel = member.dm_channel
-                if member.dm_channel is None:
+                dm_channel = user.dm_channel
+                if user.dm_channel is None:
                     dm_channel = await user.create_dm()
 
                 m = await modmail_enabled()
