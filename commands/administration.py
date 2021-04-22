@@ -455,7 +455,7 @@ class Administration(commands.Cog):
             dm_embed.set_footer(text = time.ctime())
             await dm_channel.send(embed = dm_embed)
 
-            await ctx.guild.kick(member, reason = reason)
+            await ctx.guild.kick(member, reason = reason[:511])
             kicked = kicked + f'{member.name}#{member.discriminator} '
 
         await ctx.send(embed = gen_embed(title = 'kick', content = f'{kicked}has been kicked.\nReason: {reason}'))
@@ -492,7 +492,7 @@ class Administration(commands.Cog):
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
 
-            await ctx.guild.ban(user, reason = reason)
+            await ctx.guild.ban(user, reason = reason[:511])
             banned = banned + f'{user.name}#{user.discriminator} '
 
         await ctx.send(embed = gen_embed(title = 'ban', content = f'{banned}has been kicked.\nReason: {reason}'))
