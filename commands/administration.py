@@ -539,9 +539,9 @@ class Administration(commands.Cog):
             m = await modmail_enabled()
             dm_embed = None
             if m:
-                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been given a strike', content = f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been given a strike', content = f'Reason: {reason}\nMessage Link: {message_link}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
             else:
-                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been given a strike', content = f'Reason: {reason}')
+                dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been given a strike', content = f'Reason: {reason}\nMessage Link: {message_link}')
             dm_embed.set_footer(text = ctx.guild.id)
             await dm_channel.send(embed = dm_embed)
 
