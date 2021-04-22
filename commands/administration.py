@@ -493,7 +493,7 @@ class Administration(commands.Cog):
                 await dm_channel.send(embed = dm_embed)
 
             await ctx.guild.ban(user, reason = reason)
-            banned = banned + f'{member.name}#{member.discriminator} '
+            banned = banned + f'{user.name}#{user.discriminator} '
 
         await ctx.send(embed = gen_embed(title = 'ban', content = f'{banned}has been kicked.\nReason: {reason}'))
 
