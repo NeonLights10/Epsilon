@@ -146,5 +146,33 @@ class Miscellaneous(commands.Cog):
                 line_count += 1
             print(f'Processed {line_count} lines.')
 
+    @commands.command(name = 'objgraph',
+                    description = 'dev only')
+    @is_owner()
+    async def objgraph(self, ctx, func='most_common_types()'):
+        import objgraph
+
+        if func == 'growth':
+            f = StringIO()
+            objgraph.show_growth(limit=10, file=f)
+            f.seek(0)
+            data = f.read()
+            f.close()
+
+        elif func == 'leaks':
+            f = StringIO()
+            objgraph.show_most_common_types(objects=objgraph.get_leaking_objects(), file=f)
+            f.seek(0)
+            data = f.read()
+            f.close()
+
+        elif func == 'leakstats':
+            data = objgraph.typestats(objects=objgraph.get_leaking_objects())
+
+        else:
+            data = eval('objgraph.' + func)
+
+        await ctx.send(f'```python\n{data}\n```')
+
 def setup(bot):
     bot.add_cog(Miscellaneous(bot))
