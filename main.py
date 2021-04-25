@@ -251,6 +251,7 @@ async def on_message(message):
                         log.info(f"Message retrieved: {msg}\n")
                         await ctx.message.reply(content = msg)
                 elif document['fun']:
+                    ref_message = None
                     post = {'server_id': ctx.guild.id,
                             'channel_id': ctx.channel.id,
                             'msg_id': ctx.message.id}
