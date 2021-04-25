@@ -6,6 +6,7 @@ import os
 import csv
 import dateutil.parser
 
+from io import StringIO
 from discord.ext import commands
 from __main__ import log, db, uptime
 import main
