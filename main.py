@@ -261,6 +261,7 @@ async def on_message(message):
                 msg = await get_msgid(ctx.message)
                 log.info(f"Message retrieved: {msg}\n")
                 await ctx.message.reply(content = msg)
+                msg = None
             else:
                 document = await db.servers.find_one({"server_id": ctx.guild.id})
                 if document['fun']:

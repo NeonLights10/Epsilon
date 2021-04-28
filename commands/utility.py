@@ -4,6 +4,7 @@ import datetime
 import random
 import time
 import re
+import emoji as zemoji
 
 from datetime import timedelta
 from discord.ext import commands
@@ -24,8 +25,8 @@ class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def to_ord(argument):
-        return ord(argument)
+    def convert_emoji(argument):
+        return zemoji.demojize(argument)
 
     def has_modrole():
         async def predicate(ctx):
@@ -297,7 +298,7 @@ class Utility(commands.Cog):
                     description = 'Add a role to a react based role category.',
                     help = 'Usage:\n\n\%reactrole [add/remove/edit] <emoji> [channel] [category]\n(Emoji is not needed when removing a role)')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
-    async def reactrole(self, ctx, option: str, drole: discord.Role, emoji: Optional[Union[discord.Emoji, to_ord]], dchannel: discord.TextChannel = None, *, value: str = None):
+    async def reactrole(self, ctx, option: str, drole: discord.Role, emoji: Optional[Union[discord.Emoji, convert_emoji]], dchannel: discord.TextChannel = None, *, value: str = None):
         valid_options = {'add', 'remove', 'edit'}
         if option not in valid_options:
             log.warning('Error: Invalid Input')
@@ -314,8 +315,19 @@ class Utility(commands.Cog):
                     if isinstance(emoji, discord.Emoji):
                         roles[str(drole.id)] = f"<:{emoji.name}:{emoji.id}>"
                     else:
-                        roles[str(drole.id)] = chr(emoji)
+                        #the only reason I can't just accept the raw emoji is because of the order of parameters and also because i don't want to accept whole strings
+                        emoji = zemoji.emojize(emoji)
+                        emojilist = zemoji.emoji_lis(emoji)
+                        if len(emojilist) > 0:
+                            emoji = emojilist[0]['emoji']
+                            roles[str(drole.id)] = emoji
+                        else:
+                            log.warning('Error: Invalid Input')
+                            await ctx.send(embed = gen_embed(title = 'Input Error', content = f'Could not recognize emoji or no emoji was given.'))
+                            return
                     await db.rolereact.update_one({'channel_id': dchannel.id, 'category_name': value}, {"$set": {'roles': roles}})
+                    roles = await db.rolereact.find_one({'channel_id': dchannel.id, 'category_name': value})
+                    roles = roles['roles']
                     rmessage = await dchannel.fetch_message(document['msg_id'])
                     rcontent = ""
                     for role in roles:
@@ -326,7 +338,7 @@ class Utility(commands.Cog):
                     await rmessage.edit(embed = rembed)
                     for role in roles:
                         await rmessage.add_reaction(roles[role])
-                    await ctx.send(embed = gen_embed(title = 'reactrole', content = f'Added/edited role {drole.name} with emoji {remoji} in {dchannel.mention}'))
+                    await ctx.send(embed = gen_embed(title = 'reactrole', content = f'Added/edited role {drole.name} with emoji {emoji} in {dchannel.mention}'))
         elif option == 'remove':
             async for document in categories:
                 if document['channel_id'] == dchannel.id and document['category_name'] == value:

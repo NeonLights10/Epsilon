@@ -7,3 +7,4 @@ psutil
 validators
 dnspython
 python-dateutil
+emoji

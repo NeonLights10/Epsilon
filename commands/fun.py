@@ -115,7 +115,7 @@ class Fun(commands.Cog):
                         msg = msg + f' {members[i].mention},'
                 msg = msg + f'and {members[len(members) - 1].mention} a headpat!'
             else:
-                msg = msg + f' {members[0].mention}!'
+                msg = msg + f' {members[0].mention} a headpat!'
         else:
             msg = f'{NAME} gives {ctx.author.mention} a small headpat :heart:'
 

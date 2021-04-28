@@ -514,11 +514,11 @@ class Administration(commands.Cog):
         if len(members) < 1:
             log.warning("Missing Required Argument")
             params = ' '.join([x for x in ctx.command.clean_params])
-            await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
+            await ctx.send(embed = gen_embed(title = "Invalid or missing member(s) to strike", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
             return
         if not validators.url(message_link):
             log.warning('Error: Invalid Input')
-            await ctx.send(embed = gen_embed(title = 'Input Error', content = "Invalid URL. Check the formatting (https:// prefix is required)"))
+            await ctx.send(embed = gen_embed(title = 'Input Error', content = "Invalid or missing message link. Check the formatting (https:// prefix is required)"))
             return
         for member in members:
             dm_channel = member.dm_channel
