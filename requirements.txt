@@ -8,3 +8,4 @@ validators
 dnspython
 python-dateutil
 emoji
+objgraph
