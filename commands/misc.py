@@ -128,10 +128,14 @@ class Miscellaneous(commands.Cog):
     @is_owner()
     async def announce(self, ctx, *, message: str):
         for guild in self.bot.guilds:
-            if guild.public_updates_channel:
-                await guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
-            elif guild.system_channel:
-                await guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
+            try:
+                if guild.public_updates_channel:
+                    await guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
+                elif guild.system_channel:
+                    await guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
+            except discord.Forbidden:
+                #ignore any failures due to permissions
+                pass
 
     @commands.command(name = 'updatedb',
                     description = 'dev only')
