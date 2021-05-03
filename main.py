@@ -258,7 +258,10 @@ async def on_message(message):
                     await db.msgid.insert_one(post)
             elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
                 log.info("Found a mention of myself, generating response...")
-                msg = await get_msgid(ctx.message)
+                if re.search('hou', ctx.message.clean_content):
+                    msg = 'hou is god'
+                else:
+                    msg = await get_msgid(ctx.message)
                 log.info(f"Message retrieved: {msg}\n")
                 await ctx.message.reply(content = msg)
                 msg = None

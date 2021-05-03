@@ -123,6 +123,16 @@ class Miscellaneous(commands.Cog):
         if asyncio.iscoroutine(result):
             result = await result
 
+    @commands.command(name = 'announce',
+                    description = 'dev only, creates an announcement to send to all servers')
+    @is_owner()
+    async def announce(self, ctx, *, message: str):
+        for guild in self.bot.guilds:
+            if guild.public_updates_channel:
+                guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
+            elif guild.system_channel:
+                guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
+
     @commands.command(name = 'updatedb',
                     description = 'dev only')
     @is_owner()
