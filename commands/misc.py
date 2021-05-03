@@ -129,9 +129,9 @@ class Miscellaneous(commands.Cog):
     async def announce(self, ctx, *, message: str):
         for guild in self.bot.guilds:
             if guild.public_updates_channel:
-                guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
+                await guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
             elif guild.system_channel:
-                guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
+                await guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
 
     @commands.command(name = 'updatedb',
                     description = 'dev only')
