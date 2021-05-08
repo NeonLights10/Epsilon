@@ -55,6 +55,23 @@ class Utility(commands.Cog):
                         )
             await ctx.send(embed = embed)
 
+    @commands.command(name = 'froll',
+                    description = "Generates a forced roll - the number specified will be the number rolled.",
+                    help = 'Usage:\n\n\%froll <channel> <number>')
+    async def froll(self, ctx, channel = discord.TextChannel, num: int = 100):
+        if num < 0:
+            log.warning("Error: Invalid input")
+            await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Please pick a number > 0.'))
+        else:
+            answer = num
+            embed = gen_embed(
+                        name = f"{ctx.author.name}#{ctx.author.discriminator}", 
+                        icon_url = ctx.author.avatar_url, 
+                        title = "roll",
+                        content = f"{ctx.author.mention} rolled a {str(answer)}"
+                        )
+            await channel.send(embed = embed)
+
     @commands.command(name = 'time',
                     description = "Print the current date and time in UTC. If a timezone is specified, the time will be displayed in that timezone.",
                     help = "Usage:\n\n\%time [timezone]")

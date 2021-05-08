@@ -133,6 +133,7 @@ class Miscellaneous(commands.Cog):
                     await guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
                 elif guild.system_channel:
                     await guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'{message}'))
+                #let's utilize our other stored channels as well in case we don't have permission
             except discord.Forbidden:
                 #ignore any failures due to permissions
                 pass
