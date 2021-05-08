@@ -58,7 +58,7 @@ class Utility(commands.Cog):
     @commands.command(name = 'froll',
                     description = "Generates a forced roll - the number specified will be the number rolled.",
                     help = 'Usage:\n\n\%froll <channel> <number>')
-    async def froll(self, ctx, channel = discord.TextChannel, num: int = 100):
+    async def froll(self, ctx, channel: discord.TextChannel, num: int = 100):
         if num < 0:
             log.warning("Error: Invalid input")
             await ctx.send(embed = gen_embed(title = 'Input Error', content = 'That is not a valid option for this parameter. Please pick a number > 0.'))
