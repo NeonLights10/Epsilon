@@ -9,7 +9,7 @@ import pymongo
 
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
-from typing import Union, Optional
+from typing import Union, Optional, Literal
 from discord.ext import commands
 from formatting.constants import UNITS
 from formatting.embed import gen_embed
@@ -219,7 +219,7 @@ class Administration(commands.Cog):
     @commands.check_any(commands.has_guild_permissions(manage_messages = True), has_modrole())
     async def msgpurge(self, ctx, members: commands.Greedy[discord.Member], num: Optional[int], time: Optional[Union[discord.Message, str]]):
         def convert_to_timedelta(s):
-                    return timedelta(**{UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val')) for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)})
+            return timedelta(**{UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val')) for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)})
 
         async def delete_messages(limit = None, check = None, before = None, after = None):
             deleted = await ctx.channel.purge(limit = limit, check = check, before = before, after = after)
@@ -501,7 +501,13 @@ class Administration(commands.Cog):
                     description = 'Strike a user. After 3 strikes, the user is automatically banned.',
                     help = 'Usage\n\n\%strike [user mentions/user ids/user name + discriminator (ex: name#0000)] [message_link] <reason>\nExample: \%strike Example#0000 https://example.com This is your first strike. Reason is blah blah.')
     @commands.check_any(commands.has_guild_permissions(ban_members = True), has_modrole())
-    async def strike(self, ctx, members: commands.Greedy[discord.Member], message_link: str, *, reason):
+    async def strike(self, ctx, severity: Literal['1', '2', '3'], members: commands.Greedy[discord.Member], message_link: str, *, reason):
+        def convert_to_seconds(s):
+            return int(timedelta(**{
+                UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val'))
+                for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)
+            }).total_seconds())
+
         async def modmail_enabled():
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if document['modmail_channel']:
@@ -520,6 +526,7 @@ class Administration(commands.Cog):
             log.warning('Error: Invalid Input')
             await ctx.send(embed = gen_embed(title = 'Input Error', content = "Invalid or missing message link. Check the formatting (https:// prefix is required)"))
             return
+
         for member in members:
             dm_channel = member.dm_channel
             if member.dm_channel is None:
@@ -534,7 +541,23 @@ class Administration(commands.Cog):
                 'message_link': message_link,
                 'reason': reason
             }
-            await db.warns.insert_one(post)
+            if severity is '1':
+                await db.warns.insert_one(post)
+            elif severity is '2':
+                await db.warns.insert_one(post)
+                await db.warns.insert_one(post)
+            elif severity is '3':
+                await db.warns.insert_one(post)
+                await db.warns.insert_one(post)
+                await db.warns.insert_one(post)
+
+            if severity is '2':
+                def check(m):
+                    return m.user == ctx.author
+
+                msg = await self.bot.wait_for('message', check=check)
+                if re.match(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I):
+                    
 
             m = await modmail_enabled()
             dm_embed = None
@@ -544,6 +567,9 @@ class Administration(commands.Cog):
                 dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title='You have been given a strike', content = f'Reason: {reason}\nMessage Link: {message_link}')
             dm_embed.set_footer(text = ctx.guild.id)
             await dm_channel.send(embed = dm_embed)
+
+            if severity is '2':
+
 
             embed = gen_embed(name = f'{member.name}#{member.discriminator}', icon_url = member.avatar_url, title='Strike recorded', content = f'{ctx.author.name}#{ctx.author.discriminator} gave a strike to {member.name}#{member.discriminator} | {member.id}')
             embed.add_field(name = 'Reason', value = f'{reason}\n\n[Go to message/evidence]({message_link})')

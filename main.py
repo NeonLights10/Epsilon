@@ -222,7 +222,6 @@ async def on_message(message):
     ctx = await bot.get_context(message)
 
     if isinstance(ctx.channel, discord.TextChannel):
-
         if ctx.author.bot is False:
             if ctx.prefix:
                 log.info(f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
@@ -244,6 +243,14 @@ async def on_message(message):
                                 if user.dm_channel is None:
                                     dm_channel = await user.create_dm()
                                 await dm_channel.send(embed = embed)
+                                if len(ctx.message.attachments) > 0:
+                                    attachnum = 1
+                                    for attachment in ctx.message.attachments:
+                                        embed = gen_embed(name = f'{ctx.guild.name}', icon_url = ctx.guild.icon_url, title = 'Attachment', content = f'Attachment {attachnum}:')
+                                        embed.set_image(attachment.url)
+                                        embed.set_footer(text = f'{ctx.guild.id}')
+                                        await dm_channel.send(embed = embed)
+                                        attachnum += 1
                                 await ctx.send(embed = gen_embed(title = 'Modmail sent', content = f'Sent modmail to {user.name}#{user.discriminator}.'))
                     elif document['fun']:
                         log.info("Found a reply to me, generating response...")
@@ -289,6 +296,14 @@ async def on_message(message):
                         embed.set_footer(text = f"{ctx.author.id}")
                         channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], guild.channels)
                         await channel.send(embed = embed)
+                        if len(ctx.message.attachments) > 0:
+                            attachnum = 1
+                            for attachment in ctx.message.attachments:
+                                embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = 'Attachment', content = f'Attachment {attachnum}:')
+                                embed.set_image(attachment.url)
+                                embed.set_footer(text = f'{ctx.author.id}')
+                                await channel.send(embed = embed)
+                                attachnum += 1
                         await ctx.send(embed = gen_embed(title = 'Modmail sent', content = 'The moderators will review your message and get back to you shortly.'))
                         return
             elif ctx.prefix:

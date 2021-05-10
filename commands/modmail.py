@@ -16,7 +16,23 @@ class Modmail(commands.Cog):
                     description = 'Start a modmail. A modmail channel must be configured first before using this command.\nUse \%serverconfig modmail [channel]',
                     help = 'Usage:\n\n\%modmail [recipient_id] [message]\nIf you are sending it to a server, the recipient id will be the server id.\nIf you are a mod sending it to a user, the recipient id will be the user id (will also accept mention and name+discriminator)')
     async def modmail(self, ctx, recipient_id: Union[discord.Guild, discord.User], *, content: str):
+        if isinstance(ctx.channel, discord.TextChannel):
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            role = None
+            if document['modrole']:
+                role = discord.utils.find(lambda r: r.id == document['modrole'], ctx.guild.roles)
+            permissions = ctx.channel.permissions_for(ctx.author)
+            if role is not None:
+                if permissions.manage_messages is False:
+                    log.warning("Permission Error")
+                    await ctx.send(embed = gen_embed(title= 'Error', content = 'Sorry, modmail does not work in regular text channels! Please use this command in a DM with me.'))
+                    return
+            elif role not in ctx.author.roles:
+                log.warning("Permission Error")
+                    await ctx.send(embed = gen_embed(title= 'Error', content = 'Sorry, modmail does not work in regular text channels! Please use this command in a DM with me.'))
+                    return
 
+            log.warning("Error: modmail attempted to")
         if isinstance(recipient_id, discord.Guild):
             document = await db.servers.find_one({"server_id": recipient_id.id})
             if document['modmail_channel']:
@@ -24,6 +40,14 @@ class Modmail(commands.Cog):
                 embed.set_footer(text = f'{ctx.author.id}')
                 channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], recipient_id.channels)
                 await channel.send(embed = embed)
+                if len(ctx.message.attachments) > 0:
+                    attachnum = 1
+                    for attachment in ctx.message.attachments:
+                        embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = 'Attachment', content = f'Attachment {attachnum}:')
+                        embed.set_image(attachment.url)
+                        embed.set_footer(text = f'{ctx.author.id}')
+                        await channel.send(embed = embed)
+                        attachnum += 1
                 await ctx.send(embed = gen_embed(title = 'Modmail sent', content = 'The moderators will review your message and get back to you shortly.'))
             else:
                 log.warning("Error: Modmail is Disabled")
@@ -38,6 +62,14 @@ class Modmail(commands.Cog):
                 if recipient_id.dm_channel is None:
                     dm_channel = await recipient_id.create_dm()
                 await dm_channel.send(embed = embed)
+                if len(ctx.message.attachments) > 0:
+                    attachnum = 1
+                    for attachment in ctx.message.attachments:
+                        embed = gen_embed(name = f'{ctx.guild.name}', icon_url = ctx.guild.icon_url, title = 'Attachment', content = f'Attachment {attachnum}:')
+                        embed.set_image(attachment.url)
+                        embed.set_footer(text = f'{ctx.guild.id}')
+                        await channel.send(embed = embed)
+                        attachnum += 1
                 await ctx.send(embed = gen_embed(title = 'Modmail sent', content = f'Sent modmail to {recipient_id.name}#{recipient_id.discriminator}.'))
             else:
                 log.warning("Error: Modmail is Disabled")
