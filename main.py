@@ -228,6 +228,7 @@ async def on_ready():
         log.info(f" - {ser}")    
     print(flush = True)
 
+#TODO - refactor and move modmail logic and fun logic out to separate helper methods
 @bot.event
 async def on_message(message):
     global message_count
@@ -344,7 +345,7 @@ async def on_member_join(member):
     log.info(f"A new member joined in {member.guild.name}")
     document = await db.servers.find_one({"server_id": member.guild.id})
     if document['autorole']:
-        role = discord.utils.find(lambda r: r.name == str(document['autorole']), member.guild.roles)
+        role = discord.utils.find(lambda r: r.id == int(document['autorole']), member.guild.roles)
         if role:
             await member.add_roles(role)
             log.info("Auto-assigned role to new member in {}".format(member.guild.name))
