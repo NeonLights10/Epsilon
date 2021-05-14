@@ -125,6 +125,9 @@ async def _initialize_document(guild, id):
             'modrole': None,
             'autorole': None,
             'log_channel': None,
+            'log_joinleaves': False,
+            'log_kbm': False,
+            'log_strikes': False,
             'welcome_channel': None,
             'welcome_message': f"Welcome to the {guild.name}!",
             'welcome_banner': None,
@@ -142,6 +145,16 @@ async def _check_document(guild, id):
     if await db.servers.find_one({"server_id": id}) == None:
         log.info("Did not find one, creating document...")
         await _initialize_document(guild, id)
+    else:
+        #Update this list as new fields are inserted
+        db.servers.update(
+            {"server_id": id},
+            [{ '$set': {
+                "log_joinleaves": { '$cond': [{ '$not': ["$log_joinleaves"] }, False, "$log_joinleaves" ]},
+                "log_kbm": { '$cond': [{ '$not': ["$log_kbm"] }, False, "$log_kbm" ]},
+                "log_strikes": { '$cond': [{ '$not': ["$log_strikes"] }, False, "$log_strikes" ]}
+            }}]
+        )
 
 ####################
 
@@ -346,6 +359,7 @@ async def on_member_join(member):
         if document['welcome_banner']:
             embed.set_image(document['welcome_banner'])
         await welcome_channel.send(embed = embed)
+    if document[]
 
 ###################
 
