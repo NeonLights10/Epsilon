@@ -148,7 +148,7 @@ async def _check_document(guild, id):
         await _initialize_document(guild, id)
     else:
         #Update this list as new fields are inserted
-        db.servers.update(
+        await db.servers.update(
             {"server_id": id},
             [{ '$set': {
                 "log_joinleaves": { '$cond': [{ '$not': ["$log_joinleaves"] }, False, "$log_joinleaves" ]},
