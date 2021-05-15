@@ -260,7 +260,7 @@ async def on_message(message):
                                 if len(ctx.message.attachments) > 0:
                                     attachnum = 1
                                     for attachment in ctx.message.attachments:
-                                        embed = gen_embed(name = f'{ctx.guild.name}', icon_url = ctx.guild.icon_url, title = 'Attachment', content = f'Attachment {attachnum}:')
+                                        embed = gen_embed(name = f'{ctx.guild.name}', icon_url = ctx.guild.icon_url, title = 'Attachment', content = f'Attachment #{attachnum}:')
                                         embed.set_image(attachment.url)
                                         embed.set_footer(text = f'{ctx.guild.id}')
                                         await dm_channel.send(embed = embed)
@@ -313,7 +313,7 @@ async def on_message(message):
                         if len(ctx.message.attachments) > 0:
                             attachnum = 1
                             for attachment in ctx.message.attachments:
-                                embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = 'Attachment', content = f'Attachment {attachnum}:')
+                                embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = 'Attachment', content = f'Attachment #{attachnum}:')
                                 embed.set_image(attachment.url)
                                 embed.set_footer(text = f'{ctx.author.id}')
                                 await channel.send(embed = embed)
@@ -353,14 +353,34 @@ async def on_member_join(member):
             log.error("Auto-assign role does not exist!")
     if document['welcome_message'] and document['welcome_channel']:
         welcome_channel = find(lambda c: c.id == int(document['welcome_channel'], member.guild.text_channels))
-        embed = gen_embed(name=f"{member.name}#{member.discriminator}",
-                        icon_url= member.avatar_url, 
-                        title=f"Welcome to {member.guild.name}", 
-                        content=document['welcome_message'])
+        embed = gen_embed(name = f"{member.name}#{member.discriminator}",
+                        icon_url = member.avatar_url, 
+                        title = f"Welcome to {member.guild.name}", 
+                        content = document['welcome_message'])
         if document['welcome_banner']:
             embed.set_image(document['welcome_banner'])
         await welcome_channel.send(embed = embed)
-    if document[]
+    if document['log_joinleaves'] and document['log_channel']:
+        embed = gen_embed(name = f"{member.name}#{member.discriminator}",
+                        icon_url = member.avatar_url,
+                        title = "Member joined",
+                        content = f"Member #{member.guild.member_count}")
+        msglog = int(document['log_channel'])
+        logChannel = member.guild.get_channel(msglog)
+        await logChannel.send(embed = embed)
+
+@bot.event
+async def on_member_remove(member):
+    if document['log_joinleaves'] and document['log_channel']:
+        jointime = member.joined_at
+        nowtime = datetime.datetime.utcnow()
+        embed = gen_embed(name = f"{member.name}#{member.discriminator}",
+                        icon_url = member.avatar_url,
+                        title = "Member left",
+                        content = f"Joined {member.joined_at} ({nowtime - jointime} ago)"
+        msglog = int(document['log_channel'])
+        logChannel = member.guild.get_channel(msglog)
+        await logChannel.send(embed = embed)
 
 ###################
 

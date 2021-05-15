@@ -43,7 +43,7 @@ class Modmail(commands.Cog):
                 if len(ctx.message.attachments) > 0:
                     attachnum = 1
                     for attachment in ctx.message.attachments:
-                        embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = 'Attachment', content = f'Attachment {attachnum}:')
+                        embed = gen_embed(name = f'{ctx.author.name}#{ctx.author.discriminator}', icon_url = ctx.author.avatar_url, title = 'Attachment', content = f'Attachment #{attachnum}:')
                         embed.set_image(attachment.url)
                         embed.set_footer(text = f'{ctx.author.id}')
                         await channel.send(embed = embed)
@@ -65,7 +65,7 @@ class Modmail(commands.Cog):
                 if len(ctx.message.attachments) > 0:
                     attachnum = 1
                     for attachment in ctx.message.attachments:
-                        embed = gen_embed(name = f'{ctx.guild.name}', icon_url = ctx.guild.icon_url, title = 'Attachment', content = f'Attachment {attachnum}:')
+                        embed = gen_embed(name = f'{ctx.guild.name}', icon_url = ctx.guild.icon_url, title = 'Attachment', content = f'Attachment #{attachnum}:')
                         embed.set_image(attachment.url)
                         embed.set_footer(text = f'{ctx.guild.id}')
                         await channel.send(embed = embed)

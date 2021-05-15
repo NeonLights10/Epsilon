@@ -392,7 +392,13 @@ class Administration(commands.Cog):
                     dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Reason: {reason}')
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
-                await ctx.send(embed = gen_embed(title = 'mute', content = f'{member.mention} has been muted. \nReason: {reason}'))
+                embed = gen_embed(title = 'mute', content = f'{member.mention} has been muted. \nReason: {reason}')
+                await ctx.send(embed = embed)
+                document = await db.servers.find_one({"server_id": ctx.guild.id})
+                if document['log_channel'] and document['log_kbm']:
+                    msglog = int(document['log_channel'])
+                    logChannel = member.guild.get_channel(msglog)
+                    await logChannel.send(embed = embed)
 
                 await asyncio.sleep(seconds)
                 await member.remove_roles(mutedRole)
@@ -435,6 +441,7 @@ class Administration(commands.Cog):
                 return True
             else:
                 return False
+
         if not members:
             log.warning("Missing Required Argument")
             params = ' '.join([x for x in ctx.command.clean_params])
@@ -458,7 +465,13 @@ class Administration(commands.Cog):
             await ctx.guild.kick(member, reason = reason[:511])
             kicked = kicked + f'{member.name}#{member.discriminator} '
 
-        await ctx.send(embed = gen_embed(title = 'kick', content = f'{kicked}has been kicked.\nReason: {reason}'))
+        embed = gen_embed(title = 'kick', content = f'{kicked}has been kicked.\nReason: {reason}')
+        await ctx.send(embed = embed)
+        document = await db.servers.find_one({"server_id": ctx.guild.id})
+        if document['log_channel'] and document['log_kbm']:
+            msglog = int(document['log_channel'])
+            logChannel = member.guild.get_channel(msglog)
+            await logChannel.send(embed = embed)
 
     @commands.command(name = 'ban',
                     description = 'Ban user(s) from the server.',
@@ -471,6 +484,7 @@ class Administration(commands.Cog):
                 return True
             else:
                 return False
+
         if not users:
             log.warning("Missing Required Argument")
             params = ' '.join([x for x in ctx.command.clean_params])
@@ -495,7 +509,13 @@ class Administration(commands.Cog):
             await ctx.guild.ban(user, reason = reason[:511])
             banned = banned + f'{user.name}#{user.discriminator} '
 
-        await ctx.send(embed = gen_embed(title = 'ban', content = f'{banned}has been kicked.\nReason: {reason}'))
+        embed = gen_embed(title = 'ban', content = f'{banned}has been kicked.\nReason: {reason}')
+        await ctx.send(embed = embed)
+        document = await db.servers.find_one({"server_id": ctx.guild.id})
+        if document['log_channel'] and document['log_kbm']:
+            msglog = int(document['log_channel'])
+            logChannel = member.guild.get_channel(msglog)
+            await logChannel.send(embed = embed)
 
     @commands.command(name = 'strike',
                     description = 'Strike a user. After 3 strikes, the user is automatically banned.',
@@ -515,6 +535,23 @@ class Administration(commands.Cog):
             else:
                 return False
 
+        async def mutetime():
+            def check(m):
+                    return m.user == ctx.author
+
+            attempts = 1
+            await ctx.send(embed = gen_embed(title = 'Mute Duration', content = 'How long do you want to mute the user? Accepted format: ##[smhdw] (these correspond to seconds, minutes, hours, days, weeks)\n Example: 3d 6h -> 3 days, 6 hours'))
+            msg = await self.bot.wait_for('message', check=check)
+            if re.match(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I):
+                return msg
+            elif attempts > 3:
+                #exit out so we don't crash in a recursive loop due to user incompetency
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed = gen_embed(title = 'Mute Duration', content = "Sorry, I didn't catch that or it was an invalid format."))
+                attempts += 1
+                return await mutetime()
+
         time = datetime.datetime.utcnow()
         searchtime = time + relativedelta(seconds=1)
         if len(members) < 1:
@@ -526,6 +563,17 @@ class Administration(commands.Cog):
             log.warning('Error: Invalid Input')
             await ctx.send(embed = gen_embed(title = 'Input Error', content = "Invalid or missing message link. Check the formatting (https:// prefix is required)"))
             return
+
+        if severity is '2':
+            msg = await mutetime()
+            mutetime = convert_to_seconds(msg)
+            mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
+
+            if not mutedRole:
+                mutedRole = await ctx.guild.create_role(name="Muted")
+
+                for channel in ctx.guild.channels:
+                    await channel.set_permissions(mutedRole, speak=False, send_messages=False)
 
         for member in members:
             dm_channel = member.dm_channel
@@ -550,15 +598,7 @@ class Administration(commands.Cog):
                 await db.warns.insert_one(post)
                 await db.warns.insert_one(post)
                 await db.warns.insert_one(post)
-
-            if severity is '2':
-                def check(m):
-                    return m.user == ctx.author
-
-                msg = await self.bot.wait_for('message', check=check)
-                if re.match(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I):
                     
-
             m = await modmail_enabled()
             dm_embed = None
             if m:
@@ -568,19 +608,30 @@ class Administration(commands.Cog):
             dm_embed.set_footer(text = ctx.guild.id)
             await dm_channel.send(embed = dm_embed)
 
-            if severity is '2':
-
+            if len(ctx.message.attachments) > 0:
+                attachnum = 1
+                for attachment in ctx.message.attachments:
+                    embed = gen_embed(name = f'{ctx.guild.name}', icon_url = ctx.guild.icon_url, title = 'Attachment', content = f'Attachment #{attachnum}:')
+                    embed.set_image(attachment.url)
+                    embed.set_footer(text = f'{ctx.guild.id}')
+                    await channel.send(embed = embed)
+                    attachnum += 1
 
             embed = gen_embed(name = f'{member.name}#{member.discriminator}', icon_url = member.avatar_url, title='Strike recorded', content = f'{ctx.author.name}#{ctx.author.discriminator} gave a strike to {member.name}#{member.discriminator} | {member.id}')
             embed.add_field(name = 'Reason', value = f'{reason}\n\n[Go to message/evidence]({message_link})')
             embed.set_footer(text = time.ctime())
             await ctx.send(embed = embed)
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if document['log_channel'] and document['log_strikes']:
+                msglog = int(document['log_channel'])
+                logChannel = member.guild.get_channel(msglog)
+                await logChannel.send(embed = embed)
 
             valid_strikes = [] #probably redundant but doing it anyways to prevent anything stupid
             results = await check_strike(ctx, member, time = searchtime, valid_strikes = valid_strikes)
             log.info(results)
 
-            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            #ban check should always come before mute
             if len(results) >= document['max_strike']:
                 max_strike = document['max_strike']
                 dm_channel = member.dm_channel
@@ -596,7 +647,30 @@ class Administration(commands.Cog):
                 dm_embed.set_footer(text = time.ctime())
                 await dm_channel.send(embed = dm_embed)
                 await ctx.guild.ban(member, reason = f'You have accumulated {max_strike} strikes and therefore will be banned from the server.')
-    
+                if document['log_channel'] and document['log_kbm']:
+                    msglog = int(document['log_channel'])
+                    logChannel = member.guild.get_channel(msglog)
+                    await logChannel.send()#do custom
+
+            if severity is '2':
+                await member.add_roles(mutedRole)
+
+                if m:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Strike 2 - automatic mute\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                else:
+                    dm_embed = gen_embed(name = ctx.guild.name, icon_url = ctx.guild.icon_url, title=f'You have been muted for {seconds} seconds', content = f'Strike 2 - automatic mute')
+                dm_embed.set_footer(text = time.ctime())
+                await dm_channel.send(embed = dm_embed)
+                await ctx.send(embed = gen_embed(title = 'mute', content = f'{member.mention} has been muted.'))
+                if document['log_channel'] and document['log_kbm']:
+                    msglog = int(document['log_channel'])
+                    logChannel = member.guild.get_channel(msglog)
+                    await logChannel.send()#do custom
+
+                await asyncio.sleep(seconds)
+                await member.remove_roles(mutedRole)
+                return
+
     @commands.command(name = 'lookup',
                     description = 'Lookup strikes for a user. Returns all currently active strikes.',
                     help = 'Usage\n\n\%lookup [user mention/user id]')
