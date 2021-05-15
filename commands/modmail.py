@@ -29,8 +29,8 @@ class Modmail(commands.Cog):
                     return
             elif role not in ctx.author.roles:
                 log.warning("Permission Error")
-                    await ctx.send(embed = gen_embed(title= 'Error', content = 'Sorry, modmail does not work in regular text channels! Please use this command in a DM with me.'))
-                    return
+                await ctx.send(embed = gen_embed(title= 'Error', content = 'Sorry, modmail does not work in regular text channels! Please use this command in a DM with me.'))
+                return
 
             log.warning("Error: modmail attempted to")
         if isinstance(recipient_id, discord.Guild):

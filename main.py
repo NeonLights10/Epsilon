@@ -13,6 +13,7 @@ import time
 import discord
 import colorlog
 import motor.motor_asyncio
+import datetime
 
 from discord.ext import commands
 from discord.utils import find, get
@@ -81,7 +82,7 @@ _setup_logging()
 
 log.info(f"Set logging level to {config_json['log_level']}")
 
-if config_json["debug_mode"] == True:
+if config_json["debug_mode"]:
     debuglog = logging.getLogger('discord')
     debuglog.setLevel(logging.DEBUG)
     dhandler = logging.FileHandler(filename = 'logs/discord.log', encoding = 'utf-8', mode = 'w')
@@ -371,13 +372,14 @@ async def on_member_join(member):
 
 @bot.event
 async def on_member_remove(member):
+    document = await db.servers.find_one({"server_id": member.guild.id})
     if document['log_joinleaves'] and document['log_channel']:
         jointime = member.joined_at
         nowtime = datetime.datetime.utcnow()
         embed = gen_embed(name = f"{member.name}#{member.discriminator}",
                         icon_url = member.avatar_url,
                         title = "Member left",
-                        content = f"Joined {member.joined_at} ({nowtime - jointime} ago)"
+                        content = f"Joined {member.joined_at} ({nowtime - jointime} ago)")
         msglog = int(document['log_channel'])
         logChannel = member.guild.get_channel(msglog)
         await logChannel.send(embed = embed)
