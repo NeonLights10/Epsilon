@@ -29,7 +29,7 @@ with open("config.json") as file:
     DBPASSWORD = config_json['db_password']
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 dlog = logging.getLogger('discord')
 dlog.setLevel(logging.WARNING)
