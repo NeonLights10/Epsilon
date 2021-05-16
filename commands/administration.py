@@ -617,7 +617,7 @@ class Administration(commands.Cog):
             await ctx.guild.ban(user, reason=reason[:511])
             banned = banned + f'{user.name}#{user.discriminator} '
 
-        embed = gen_embed(title='ban', content=f'{banned}has been kicked.\nReason: {reason}')
+        embed = gen_embed(title='ban', content=f'{banned}has been banned.\nReason: {reason}')
         await ctx.send(embed=embed)
         document = await db.servers.find_one({"server_id": ctx.guild.id})
         if document['log_channel'] and document['log_kbm']:
@@ -801,8 +801,11 @@ class Administration(commands.Cog):
                                     reason=f'You have accumulated {max_strike} strikes and therefore will be banned from the server.')
                 if document['log_channel'] and document['log_kbm']:
                     msglog = int(document['log_channel'])
-                    logChannel = member.guild.get_channel(msglog)
-                    await logChannel.send()  # do custom
+                    logChannel = ctx.guild.get_channel(msglog)
+                    embed = gen_embed(title='ban',
+                                      content=f'{member.name} (ID: {member.id} has been banned.\nReason: Accumulated maximum # of strikes')
+                    await logChannel.send(embed=embed)
+                return #if this happens we should zip out
 
             if severity == '2':
                 await member.add_roles(mutedRole)
@@ -820,9 +823,10 @@ class Administration(commands.Cog):
                 await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
                 if document['log_channel'] and document['log_kbm']:
                     msglog = int(document['log_channel'])
-                    logChannel = member.guild.get_channel(msglog)
-                    await logChannel.send()  # do custom
-
+                    logChannel = ctx.guild.get_channel(msglog)
+                    embed = gen_embed(title='ban',
+                                      content=f'{member.name} (ID: {member.id} has been muted for {mutetime} seconds.\nReason: Strike severity 2')
+                    await logChannel.send(embed=embed)  # do custom
                 await asyncio.sleep(mutetime)
                 await member.remove_roles(mutedRole)
                 return
