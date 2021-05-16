@@ -212,7 +212,7 @@ class Administration(commands.Cog):
 
     @commands.command(name='serverconfig',
                       description='Set various server config settings.',
-                      help='Usage\n\n%serverconfig [option] [enable/disable/number]\nAvailable settings - fun')
+                      help='Usage\n\n%serverconfig [option] [enable/disable/number]\nAvailable settings - fun, log_joinleave, log_kbm, log_strikes')
     @commands.check_any(commands.has_guild_permissions(manage_guild=True), has_modrole())
     async def serverconfig(self, ctx, config_option: str, value: Union[int, str]):
         valid_options = {'fun', 'log_joinleave', 'log_kbm', 'log_strikes'}
