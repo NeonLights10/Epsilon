@@ -257,7 +257,8 @@ async def on_message(message):
                 if ref_message.author == bot.user:
                     # modmail logic
                     if ctx.channel.id == document['modmail_channel']:
-                        if ref_message.embeds[0].title == 'New Modmail':
+                        valid_options = {'New Modmail', 'Attachment'}
+                        if ref_message.embeds[0].title in valid_options:
                             ref_embed = ref_message.embeds[0].footer
                             user_id = ref_embed.text
                             user = await bot.fetch_user(user_id)
@@ -313,7 +314,7 @@ async def on_message(message):
             if ctx.message.reference:
                 ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
                 valid_options = {'You have been given a strike', 'New Modmail', 'You have been banned',
-                                 'You have been kicked'}
+                                 'You have been kicked', 'Attachment'}
                 if ref_message.embeds[0].title in valid_options or re.match('You have been muted',
                                                                             ref_message.embeds[0].title):
                     ref_embed = ref_message.embeds[0].footer
