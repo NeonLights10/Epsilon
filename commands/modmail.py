@@ -68,7 +68,7 @@ class Modmail(commands.Cog):
                         embed = gen_embed(name = f'{ctx.guild.name}', icon_url = ctx.guild.icon_url, title = 'Attachment', content = f'Attachment #{attachnum}:')
                         embed.set_image(attachment.url)
                         embed.set_footer(text = f'{ctx.guild.id}')
-                        await channel.send(embed = embed)
+                        await dm_channel.send(embed = embed)
                         attachnum += 1
                 await ctx.send(embed = gen_embed(title = 'Modmail sent', content = f'Sent modmail to {recipient_id.name}#{recipient_id.discriminator}.'))
             else:
