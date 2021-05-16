@@ -790,10 +790,11 @@ class Administration(commands.Cog):
                 if m:
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
                                          content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                    dm_embed.set_footer(text=ctx.guild.id)
                 else:
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
                                          content=f'Reason: {reason}')
-                dm_embed.set_footer(text=time.ctime())
+                    dm_embed.set_footer(text=time.ctime())
                 await dm_channel.send(embed=dm_embed)
                 await ctx.guild.ban(member,
                                     reason=f'You have accumulated {max_strike} strikes and therefore will be banned from the server.')
