@@ -36,7 +36,7 @@ class Fun(commands.Cog):
 
     @commands.command(name = 'hug',
                     description = f'Hug someone! If no one is specified, {NAME} will hug you <3',
-                    help = 'Usage\n\n\%poke [user mentions/user ids/user name + discriminator (ex: name#0000)')
+                    help = 'Usage\n\n%poke [user mentions/user ids/user name + discriminator (ex: name#0000)')
     @fun_enabled()
     async def hug(self, ctx, members: commands.Greedy[discord.Member]):
         if members:
@@ -58,7 +58,7 @@ class Fun(commands.Cog):
 
     @commands.command(name = 'cuddle',
                     description = f'Cuddle someone! If no one is specified, {NAME} will cuddle you <3',
-                    help = 'Usage\n\n\%poke [user mentions/user ids/user name + discriminator (ex: name#0000)')
+                    help = 'Usage\n\n%poke [user mentions/user ids/user name + discriminator (ex: name#0000)')
     @fun_enabled()
     async def cuddle(self, ctx, members: commands.Greedy[discord.Member]):
         if members:
@@ -80,7 +80,7 @@ class Fun(commands.Cog):
 
     @commands.command(name = 'poke',
                     description = f'Poke someone! If no one is specified, {NAME} will poke you :P',
-                    help = 'Usage\n\n\%poke [user mentions/user ids/user name + discriminator (ex: name#0000)')
+                    help = 'Usage\n\n%poke [user mentions/user ids/user name + discriminator (ex: name#0000)')
     @fun_enabled()
     async def poke(self, ctx, members: commands.Greedy[discord.Member]):
         if members:
@@ -102,7 +102,7 @@ class Fun(commands.Cog):
 
     @commands.command(name = 'headpat',
                     description = f'Headpat someone! If no one is specified, {NAME} will give you a headpat <3',
-                    help = 'Usage\n\n\%headpat [user mentions/user ids/user name + discriminator (ex: name#0000)')
+                    help = 'Usage\n\n%headpat [user mentions/user ids/user name + discriminator (ex: name#0000)')
     @fun_enabled()
     async def headpat(self, ctx, members: commands.Greedy[discord.Member]):
         if members:

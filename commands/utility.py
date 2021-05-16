@@ -40,7 +40,7 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'roll', 
                     description = "Generates a random number from 0-100 unless you specify a max number.",
-                    help = 'Examples:\n\n\%roll 20')
+                    help = 'Examples:\n\n%roll 20')
     async def roll(self, ctx, num: int = 100):
         if num < 0:
             log.warning("Error: Invalid input")
@@ -57,7 +57,7 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'froll',
                     description = "Generates a forced roll - the number specified will be the number rolled.",
-                    help = 'Usage:\n\n\%froll <channel> <number>')
+                    help = 'Usage:\n\n%froll <channel> <number>')
     async def froll(self, ctx, channel: discord.TextChannel, num: int = 100):
         if num < 0:
             log.warning("Error: Invalid input")
@@ -74,7 +74,7 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'time',
                     description = "Print the current date and time in UTC. If a timezone is specified, the time will be displayed in that timezone.",
-                    help = "Usage:\n\n\%time [timezone]")
+                    help = "Usage:\n\n%time [timezone]")
     async def time(self, ctx, timezone = None):
         """
         Usage:
@@ -135,7 +135,7 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'tconvert',
                     description = "Converts time from one timezone to another. All times in 24 hour time.",
-                    help = "Usage:\n\n\%tconvert [time] [timezone_from] [timezone_to]")
+                    help = "Usage:\n\n%tconvert [time] [timezone_from] [timezone_to]")
     async def tconvert(self, ctx, time_in: str, timezone1: str, timezone2: str):
         #Parse time first
         time_parsed = time_in.split(":")
@@ -272,7 +272,7 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'reactcategory',
                     description = 'Set up a react based role category in a channel.',
-                    help = 'Usage:\n\n\%reactrole [create/remove] [channel] [name]')
+                    help = 'Usage:\n\n%reactrole [create/remove] [channel] [name]')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def reactcategory(self, ctx, option: str, dchannel: discord.TextChannel, *, value: str):
         valid_options = {'create', 'remove'}
@@ -313,7 +313,7 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'reactrole',
                     description = 'Add a role to a react based role category.',
-                    help = 'Usage:\n\n\%reactrole [add/remove/edit] <emoji> [channel] [category]\n(Emoji is not needed when removing a role)')
+                    help = 'Usage:\n\n%reactrole [add/remove/edit] <emoji> [channel] [category]\n(Emoji is not needed when removing a role)')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def reactrole(self, ctx, option: str, drole: discord.Role, emoji: Optional[Union[discord.Emoji, convert_emoji]], dchannel: discord.TextChannel = None, *, value: str = None):
         valid_options = {'add', 'remove', 'edit'}

@@ -4,3 +4,5 @@ config.json
 *.log.last
 working.py
 warn_db.csv
+venv
+.idea
