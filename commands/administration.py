@@ -705,6 +705,7 @@ class Administration(commands.Cog):
                 await db.warns.insert_one(post)
             elif severity == '2':
                 await db.warns.insert_one(post)
+                #this is stupid and i hate it but it is what it is
                 npost = {
                     'time': time + relativedelta(seconds=1),
                     'server_id': ctx.guild.id,
@@ -764,8 +765,8 @@ class Administration(commands.Cog):
             embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.avatar_url,
                               title='Strike recorded',
                               content=f'{ctx.author.name}#{ctx.author.discriminator} gave a strike to {member.name}#{member.discriminator} | {member.id}')
-            embed.add_field(name='Severity', value=f'{severity}')
-            embed.add_field(name='Reason', value=f'{reason}\n\n[Go to message/evidence]({message_link})')
+            embed.add_field(name='Severity', value=f'{severity} strike(s)', inline=False)
+            embed.add_field(name='Reason', value=f'{reason}\n\n[Go to message/evidence]({message_link})', inline=False)
             embed.set_footer(text=time.ctime())
             await ctx.send(embed=embed)
             document = await db.servers.find_one({"server_id": ctx.guild.id})
