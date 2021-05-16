@@ -756,7 +756,7 @@ class Administration(commands.Cog):
                 for attachment in ctx.message.attachments:
                     embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url, title='Attachment',
                                       content=f'Attachment #{attachnum}:')
-                    embed.set_image(attachment.url)
+                    embed.set_image(url = attachment.url)
                     embed.set_footer(text=f'{ctx.guild.id}')
                     await dm_channel.send(embed=embed)
                     attachnum += 1
