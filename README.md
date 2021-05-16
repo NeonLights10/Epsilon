@@ -1,5 +1,5 @@
 # Epsilon
-![latest release](https://img.shields.io/badge/latest%20release-0.5.2-brightgreen.svg)
+![latest release](https://img.shields.io/badge/latest%20release-0.6.0-brightgreen.svg)
 
 Add me: https://discord.com/oauth2/authorize?client_id=322761091270705162&scope=bot&permissions=340126934
 
