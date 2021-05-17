@@ -814,11 +814,12 @@ class Administration(commands.Cog):
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
                                          title=f'You have been muted for {mutetime} seconds',
                                          content=f'Strike 2 - automatic mute\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                    dm_embed.set_footer(text=ctx.guild.id)
                 else:
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
                                          title=f'You have been muted for {mutetime} seconds',
                                          content=f'Strike 2 - automatic mute')
-                dm_embed.set_footer(text=time.ctime())
+                    dm_embed.set_footer(text=time.ctime())
                 await dm_channel.send(embed=dm_embed)
                 await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
                 if document['log_channel'] and document['log_kbm']:
@@ -1018,10 +1019,11 @@ async def check_strike(ctx, member, time=datetime.datetime.utcnow(), valid_strik
 
         if results > 0:
             # We found a strike! let's check to see if there's another strike within 2 months of this one.
+            expire_date = time + relativedelta(months=-2)
+            query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
             results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1)
             sdocument = await results.to_list(length=None)
             sdocument = sdocument.pop()
-            expire_date = time + relativedelta(months=-2)
             sresults = await db.warns.count_documents(query)
 
             if sresults > 0:

@@ -238,7 +238,6 @@ async def on_ready():
         log.info(f" - {ser}")
     print(flush=True)
 
-
 # TODO - refactor and move modmail logic and fun logic out to separate helper methods
 @bot.event
 async def on_message(message):
