@@ -114,7 +114,8 @@ log.addHandler(fhandler)
 ####################
 
 # db init and first time setup
-log.info(f'\nEstablishing connection to MongoDB database {databaseName}')
+log.info('\n')
+log.info(f'Establishing connection to MongoDB database {databaseName}')
 
 mclient = motor.motor_asyncio.AsyncIOMotorClient(
     f"mongodb+srv://admin:{DBPASSWORD}@delphinium.jnxfw.mongodb.net/{databaseName}?retryWrites=true&w=majority")
