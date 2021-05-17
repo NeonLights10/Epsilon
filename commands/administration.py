@@ -692,6 +692,7 @@ class Administration(commands.Cog):
             if member.dm_channel is None:
                 dm_channel = await member.create_dm()
 
+            # move this out to a separate method
             post = {
                 'time': time,
                 'server_id': ctx.guild.id,
@@ -807,7 +808,20 @@ class Administration(commands.Cog):
                     await logChannel.send(embed=embed)
                 return #if this happens we should zip out
 
-            if severity == '2':
+            elif len(results) == 2:
+                # we need to do this now since severity was not 2
+                # yes it's kinda redundant to do it here but this reduces calls to the DB
+                msg = await mutetime()
+                mutetime = convert_to_seconds(msg)
+                mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
+
+                if not mutedRole:
+                    mutedRole = await ctx.guild.create_role(name="Muted")
+
+                    for channel in ctx.guild.channels:
+                        await channel.set_permissions(mutedRole, speak=False, send_messages=False)
+
+            if severity == '2' or len(results) == 2:
                 await member.add_roles(mutedRole)
 
                 if m:

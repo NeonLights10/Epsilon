@@ -219,7 +219,7 @@ class Utility(commands.Cog):
                 elif timezone2_hour > 0:
                     timezone2_combined = timezone2_hour * 60 + timezone2_minute
                 elif timezone2_hour == 0:
-                    timezone2_combined = 0;
+                    timezone2_combined = 0
             except ValueError:
                 log.warning("ValueError: Timezone Dictionary Error")
                 await ctx.send(embed = gen_embed(title = "Timezone Dictionary Error", content = "There is an error with the timezone dictionary."))
