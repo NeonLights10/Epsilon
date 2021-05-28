@@ -613,8 +613,10 @@ class Administration(commands.Cog):
                                          content=f'Reason: {reason}')
                 dm_embed.set_footer(text=time.ctime())
                 await dm_channel.send(embed=dm_embed)
-
-            await ctx.guild.ban(user, reason=reason[:511])
+            if reason:
+                await ctx.guild.ban(user, reason=reason[:511])
+            else:
+                await ctx.guild.ban(user)
             banned = banned + f'{user.name}#{user.discriminator} '
 
         embed = gen_embed(title='ban', content=f'{banned}has been banned.\nReason: {reason}')
@@ -678,7 +680,7 @@ class Administration(commands.Cog):
 
         if severity == '2':
             msg = await mutetime()
-            mutetime = convert_to_seconds(msg)
+            mtime = convert_to_seconds(msg)
             mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
 
             if not mutedRole:
@@ -812,7 +814,7 @@ class Administration(commands.Cog):
                 # we need to do this now since severity was not 2
                 # yes it's kinda redundant to do it here but this reduces calls to the DB
                 msg = await mutetime()
-                mutetime = convert_to_seconds(msg)
+                mtime = convert_to_seconds(msg)
                 mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
 
                 if not mutedRole:
@@ -826,12 +828,12 @@ class Administration(commands.Cog):
 
                 if m:
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                         title=f'You have been muted for {mutetime} seconds',
+                                         title=f'You have been muted for {mtime} seconds',
                                          content=f'Strike 2 - automatic mute\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                     dm_embed.set_footer(text=ctx.guild.id)
                 else:
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                         title=f'You have been muted for {mutetime} seconds',
+                                         title=f'You have been muted for {mtime} seconds',
                                          content=f'Strike 2 - automatic mute')
                     dm_embed.set_footer(text=time.ctime())
                 await dm_channel.send(embed=dm_embed)
@@ -840,9 +842,9 @@ class Administration(commands.Cog):
                     msglog = int(document['log_channel'])
                     logChannel = ctx.guild.get_channel(msglog)
                     embed = gen_embed(title='ban',
-                                      content=f'{member.name} (ID: {member.id} has been muted for {mutetime} seconds.\nReason: Strike severity 2')
+                                      content=f'{member.name} (ID: {member.id} has been muted for {mtime} seconds.\nReason: Strike severity 2')
                     await logChannel.send(embed=embed)  # do custom
-                await asyncio.sleep(mutetime)
+                await asyncio.sleep(mtime)
                 await member.remove_roles(mutedRole)
                 return
 
