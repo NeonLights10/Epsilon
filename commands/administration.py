@@ -1038,14 +1038,15 @@ async def check_strike(ctx, member, time=datetime.datetime.utcnow(), valid_strik
             expire_date = time + relativedelta(months=-2)
             query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
             results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1)
-            sdocument = await results.to_list(length=None)
-            sdocument = sdocument.pop()
-            sresults = await db.warns.count_documents(query)
+            if results > 0:
+                sdocument = await results.to_list(length=None)
+                sdocument = sdocument.pop()
+                sresults = await db.warns.count_documents(query)
 
-            if sresults > 0:
-                # We found a second strike. That means this second strike is expired, but the first strike is active.
-                # Remember, the first strike in this case is the most recent, while second is older. It's flipped from terminology.
-                valid_strikes.append(sdocument)
+                if sresults > 0:
+                    # We found a second strike. That means this second strike is expired, but the first strike is active.
+                    # Remember, the first strike in this case is the most recent, while second is older. It's flipped from terminology.
+                    valid_strikes.append(sdocument)
         return valid_strikes
 
     else:
