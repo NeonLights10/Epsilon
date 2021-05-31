@@ -1038,7 +1038,8 @@ async def check_strike(ctx, member, time=datetime.datetime.utcnow(), valid_strik
             expire_date = time + relativedelta(months=-2)
             query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
             results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1)
-            if results > 0:
+            resultsnum = await db.warns.count_documents(query)
+            if resultsnum > 0:
                 sdocument = await results.to_list(length=None)
                 sdocument = sdocument.pop()
                 sresults = await db.warns.count_documents(query)
