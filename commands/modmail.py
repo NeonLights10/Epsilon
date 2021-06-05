@@ -24,12 +24,13 @@ class Modmail(commands.Cog):
                 role = discord.utils.find(lambda r: r.id == document['modrole'], ctx.guild.roles)
             permissions = ctx.channel.permissions_for(ctx.author)
             if role:
-                if permissions.manage_messages is False:
-                    log.warning("Permission Error")
-                    await ctx.send(embed=gen_embed(title='Error',
-                                                   content='Sorry, modmail does not work in regular text channels! Please use this command in a DM with me.'))
-                    return
-            elif role not in ctx.author.roles:
+                if role not in ctx.author.roles:
+                    if permissions.manage_messages is False:
+                        log.warning("Permission Error")
+                        await ctx.send(embed=gen_embed(title='Error',
+                                                       content='Sorry, modmail does not work in regular text channels! Please use this command in a DM with me.'))
+                        return
+            elif permissions.manage_messages is False:
                 log.warning("Permission Error")
                 await ctx.send(embed=gen_embed(title='Error',
                                                content='Sorry, modmail does not work in regular text channels! Please use this command in a DM with me.'))

@@ -77,6 +77,7 @@ class CommandErrorHandler(commands.Cog):
         else:
             log.critical(f'Ignoring exception in command {ctx.command}:')
             traceback.print_exception(type(error), error, error.__traceback__, file = sys.stderr)
+            await ctx.send(embed=gen_embed(title='Error', content=f'{traceback.format_exc(error)}'))
 
 def setup(bot):
     bot.add_cog(CommandErrorHandler(bot))
