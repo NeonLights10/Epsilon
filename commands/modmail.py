@@ -29,14 +29,14 @@ class Modmail(commands.Cog):
                         log.warning("Permission Error")
                         await ctx.send(embed=gen_embed(title='Error',
                                                        content='Sorry, modmail does not work in regular text channels! Please use this command in a DM with me.'))
+                        log.warning("Error: modmail attempted to be sent from text channel")
                         return
             elif permissions.manage_messages is False:
                 log.warning("Permission Error")
                 await ctx.send(embed=gen_embed(title='Error',
                                                content='Sorry, modmail does not work in regular text channels! Please use this command in a DM with me.'))
+                log.warning("Error: modmail attempted to be sent from text channel")
                 return
-
-            log.warning("Error: modmail attempted to be sent from text channel")
 
         if isinstance(recipient_id, discord.Guild):
             document = await db.servers.find_one({"server_id": recipient_id.id})
