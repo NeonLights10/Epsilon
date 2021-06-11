@@ -175,7 +175,7 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
     return e
 
 async def _emoji_log(message):
-    custom_emojis_raw = re.findall(r'<:\w*:\d*>', message.content)
+    custom_emojis_raw = re.findall(r'<a?:\w*:\d*>', message.content)
     custom_emojis_formatted = [int(e.split(':')[2].replace('>', '')) for e in custom_emojis_raw]
     custom_emojis = []
     for e in custom_emojis_formatted:
