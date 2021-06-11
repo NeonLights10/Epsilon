@@ -487,7 +487,11 @@ class Administration(commands.Cog):
                                          title=f'You have been muted for {seconds} seconds',
                                          content=f'Reason: {reason}')
                 dm_embed.set_footer(text=time.ctime())
-                await dm_channel.send(embed=dm_embed)
+                try:
+                    await dm_channel.send(embed=dm_embed)
+                except discord.errors.Forbidden:
+                    await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with muting the user.'))
+
                 embed = gen_embed(title='mute', content=f'{member.mention} has been muted. \nReason: {reason}')
                 await ctx.send(embed=embed)
                 document = await db.servers.find_one({"server_id": ctx.guild.id})
@@ -511,7 +515,10 @@ class Administration(commands.Cog):
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
                                          title=f'You have been muted.', content=f'Reason: {reason}')
                     dm_embed.set_footer(text=time.ctime())
-                await dm_channel.send(embed=dm_embed)
+                try:
+                    await dm_channel.send(embed=dm_embed)
+                except discord.errors.Forbidden:
+                    await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with muting the user.'))
                 muted = muted + f'{member.mention} '
 
             await ctx.send(embed=gen_embed(title='mute', content=f'{muted} has been muted. \nReason: {reason}'))
@@ -564,7 +571,11 @@ class Administration(commands.Cog):
                 dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been kicked',
                                      content=f'Reason: {reason}')
                 dm_embed.set_footer(text=time.ctime())
-            await dm_channel.send(embed=dm_embed)
+            try:
+                await dm_channel.send(embed=dm_embed)
+            except discord.errors.Forbidden:
+                await ctx.send(embed=gen_embed(title='Warning',
+                                               content='This user does not accept DMs. I could not send them the message, but I will proceed with kicking the user.'))
 
             await ctx.guild.kick(member, reason=reason[:511])
             kicked = kicked + f'{member.name}#{member.discriminator} '
@@ -612,7 +623,10 @@ class Administration(commands.Cog):
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
                                          content=f'Reason: {reason}')
                 dm_embed.set_footer(text=time.ctime())
-                await dm_channel.send(embed=dm_embed)
+                try:
+                    await dm_channel.send(embed=dm_embed)
+                except discord.errors.Forbidden:
+                    await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with banning the user.'))
             if reason:
                 await ctx.guild.ban(user, reason=reason[:511])
             else:
@@ -753,7 +767,11 @@ class Administration(commands.Cog):
                                      title='You have been given a strike',
                                      content=f'Reason: {reason}\nMessage Link: {message_link}')
             dm_embed.set_footer(text=ctx.guild.id)
-            await dm_channel.send(embed=dm_embed)
+            try:
+                await dm_channel.send(embed=dm_embed)
+            except discord.errors.Forbidden:
+                await ctx.send(embed=gen_embed(title='Warning',
+                                               content='This user does not accept DMs. I could not send them the message, but I will proceed with striking the user.'))
 
             if len(ctx.message.attachments) > 0:
                 attachnum = 1
@@ -799,7 +817,11 @@ class Administration(commands.Cog):
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
                                          content=f'Reason: {reason}')
                     dm_embed.set_footer(text=time.ctime())
-                await dm_channel.send(embed=dm_embed)
+                try:
+                    await dm_channel.send(embed=dm_embed)
+                except discord.errors.Forbidden:
+                    await ctx.send(embed=gen_embed(title='Warning',
+                                                   content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and banning the user.'))
                 await ctx.guild.ban(member,
                                     reason=f'You have accumulated {max_strike} strikes and therefore will be banned from the server.')
                 if document['log_channel'] and document['log_kbm']:
@@ -836,7 +858,11 @@ class Administration(commands.Cog):
                                          title=f'You have been muted for {mtime} seconds',
                                          content=f'Strike 2 - automatic mute')
                     dm_embed.set_footer(text=time.ctime())
-                await dm_channel.send(embed=dm_embed)
+                try:
+                    await dm_channel.send(embed=dm_embed)
+                except discord.errors.Forbidden:
+                    await ctx.send(embed=gen_embed(title='Warning',
+                                                   content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
                 await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
                 if document['log_channel'] and document['log_kbm']:
                     msglog = int(document['log_channel'])
