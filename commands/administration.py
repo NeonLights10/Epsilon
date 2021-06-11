@@ -400,7 +400,7 @@ class Administration(commands.Cog):
                                            reason=f"Created by {ctx.author.name}#{ctx.author.discriminator}")
         await ctx.send(embed=gen_embed(title='addrole', content=f'Created role {role.name}.'))
 
-        await role.edit(position=0)
+        await role.edit(position=1)
 
         if members:
             for member in members:
