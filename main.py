@@ -174,6 +174,26 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
     e.description = content
     return e
 
+async def _emoji_log(message):
+    custom_emojis_raw = re.findall(r'<:\w*:\d*>', message.content)
+    custom_emojis_formatted = [int(e.split(':')[2].replace('>', '')) for e in custom_emojis_raw]
+    custom_emojis = []
+    for e in custom_emojis_formatted:
+        entry = discord.utils.get(message.guild.emojis, id=e)
+        if entry is not None:
+            custom_emojis.append(entry)
+    if len(custom_emojis) > 0:
+        for emoji in custom_emojis:
+            if await db.emoji.find_one({"id": emoji.id}) is None:
+                post = {'id': emoji.id,
+                        'name': emoji.name,
+                        'guild': emoji.guild_id,
+                        'count': 0
+                }
+                await db.emoji.insert_one(post)
+            document = await db.emoji.find_one({"id": emoji.id})
+            count = document['count'] + 1
+            await db.emoji.update_one({"id": emoji.id}, {"$set": {'count': count}})
 
 # This is a super jenk way of handling the prefix without using the async db connection but it works
 prefix_list = {}
@@ -244,6 +264,9 @@ async def on_message(message):
     global message_count
     message_count += 1
     ctx = await bot.get_context(message)
+
+    if ctx.guild.id == 432379300684103699:
+        await _emoji_log(message)
 
     if isinstance(ctx.channel, discord.TextChannel):
         if ctx.author.bot is False:
