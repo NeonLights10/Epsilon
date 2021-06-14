@@ -265,10 +265,9 @@ async def on_message(message):
     message_count += 1
     ctx = await bot.get_context(message)
 
-    if ctx.guild.id == 432379300684103699:
-        await _emoji_log(message)
-
     if isinstance(ctx.channel, discord.TextChannel):
+        if ctx.guild.id == 432379300684103699:
+            await _emoji_log(message)
         if ctx.author.bot is False:
             if ctx.prefix:
                 log.info(

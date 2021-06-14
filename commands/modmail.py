@@ -85,7 +85,11 @@ class Modmail(commands.Cog):
                                           content=f'Attachment #{attachnum}:')
                         embed.set_image(url=attachment.url)
                         embed.set_footer(text=f'{ctx.guild.id}')
-                        await dm_channel.send(embed=embed)
+                        try:
+                            await dm_channel.send(embed=embed)
+                        except discord.errors.Forbidden:
+                            await ctx.send(embed=gen_embed(title='Warning',
+                                                           content='This user does not accept DMs. I could not send them the message.'))
                         attachnum += 1
                 await ctx.send(embed=gen_embed(title='Modmail sent',
                                                content=f'Sent modmail to {recipient_id.name}#{recipient_id.discriminator}.'))
