@@ -38,6 +38,57 @@ class Utility(commands.Cog):
                 return False
         return commands.check(predicate)
 
+    @commands.command(name = 'efficiencyguide',
+                      description = 'Generates an efficiency guide for tiering in the channel you specify.',
+                      help = 'Example:\n\n%efficiencyguide #tiering-etiquette')
+    @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole())
+    async def efficiencyguide(self, ctx, channel: discord.TextChannel):
+        embed = gen_embed(
+                    name = f"{ctx.guild.name}",
+                    icon_url = ctx.guild.icon_url,
+                    title = 'Tiering Etiqeutte and Efficiency',
+                    content = 'Efficiency guidelines taken from LH 2.0, originally made by Binh and edited by doom_chicken.'
+                    )
+        embed.set_image(url = 'https://files.s-neon.xyz/share/bandori-efficiency.png')
+        await channel.send(embed=embed)
+        embed = gen_embed(
+                    title = 'Menuing',
+                    content = 'Spam the bottom right of your screen in between songs. See video for an example:'
+                    )
+        embed.set_footer(text=discord.Embed.Empty)
+        await channel.send(embed=embed)
+        await channel.send(content='https://twitter.com/Binh_gbp/status/1106789316607410176')
+        embed = gen_embed(
+                    title='Swaps',
+                    content="Try to have someone ready to swap with you by the time you're done. Ping the appropriate roles (usually standby, or t100 or even t1000) and when you're planning to stop.  Say \"scores\" in your room's chat channel when you finish the song and \"open\" when you're out of the room.  Ideally whoever is swapping in should be spamming the room code to join as soon as they see \"scores.\" If possible, being in VC with the tierers can greatly smooth out this process."
+                    )
+        embed.set_footer(text=discord.Embed.Empty)
+        await channel.send(embed=embed)
+        embed = gen_embed(
+                    title='Pins/Frames/Titles',
+                    content='Pins/Frames/Titles - Please remove any and all existing pins as well as setting the default frame; these will slow down the room greatly with additional loading times. I would also prefer if you went down to one title before you join any rooms, but no need to leave if forgotten.'
+                )
+        embed.set_footer(text=discord.Embed.Empty)
+        await channel.send(embed=embed)
+        embed = gen_embed(
+                    title='Flame Sync',
+                    content='Flame syncing will now operate with the remake of the room every set of 90 🔥. If multiple sets are being done, a room maker should be designated. The flame check setting should now be turned OFF from now on.'
+                )
+        embed.set_footer(text=discord.Embed.Empty)
+        await channel.send(embed=embed)
+        embed = gen_embed(
+                    title='Skip Full Combo',
+                    content="Break combo somewhere in the song, it'll skip the FC animation and save a few seconds."
+                )
+        embed.set_footer(text=discord.Embed.Empty)
+        await channel.send(embed=embed)
+        embed = gen_embed(
+                    title='Rooming Guidelines',
+                    content="**Starting with 3-4 people** can potentially be better than dealing with the chance of bad pubs depending on the event.\n\nFor extremely competitive events, iOS and high end Android devices are given priority."
+                )
+        embed.set_footer(text=discord.Embed.Empty)
+        await channel.send(embed=embed)
+
     @commands.command(name = 'roll', 
                     description = "Generates a random number from 0-100 unless you specify a max number.",
                     help = 'Examples:\n\n%roll 20')
