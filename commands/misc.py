@@ -140,10 +140,6 @@ class Miscellaneous(commands.Cog):
                     general = discord.utils.find(lambda x: x.name == 'general', guild.text_channels)
                     if general and general.permissions_for(guild.me).send_messages:
                         await general.send(embed=gen_embed(title='Global Announcement', content=f'{message}'))
-                    else:
-                        channel = guild.text_channels[0]
-                        if channel.permissions_for(guild.me).send_messages:
-                            await channel.send(embed=gen_embed(title='Global Announcement', content=f'{message}'))
                 #let's utilize our other stored channels as well in case we don't have permission
             except discord.Forbidden:
                 #ignore any failures due to permissions

@@ -20,6 +20,18 @@ class Tiering(commands.Cog):
         else:
             return None
 
+    def convert_spot(argument):
+        if re.search('^\d{5}$', argument):
+            log.warning('Bad Argument - Room Code')
+            raise discord.ext.commands.BadArgument()
+        elif re.search('^\d{1}$', argument):
+            return argument
+        elif re.search('^f$', argument):
+            return "0"
+        else:
+            log.warning('Bad Argument - Room Code')
+            raise discord.ext.commands.BadArgument(message="This is not a valid option. Open spots must be a single digit number.")
+
     def has_modrole():
         async def predicate(ctx):
             document = await db.servers.find_one({"server_id": ctx.guild.id})
@@ -135,7 +147,7 @@ class Tiering(commands.Cog):
                       description='Changes the room name without having to go through the menu. If no arguments are provided, the room will be changed to a dead room. Rooms must start with the standard tiering prefix "g#-".\nBoth parameters are optional.',
                       help='Usage:\n\n%room <open spots> <room number>\n\nExample:\n\n%room 1 12345\nFor just changing room number - %room 12345\nFor just changing open spots - %room 3')
     @commands.cooldown(rate=2,per=600.00,type=commands.BucketType.channel)
-    async def room(self, ctx, open_spots: Optional[int], room_num: Union[convert_room, None]):
+    async def room(self, ctx, open_spots: Optional[convert_spot], room_num: Union[convert_room, None]):
         currentname = ctx.channel.name
         namesuffix = ""
         if re.search('^g\d-', currentname):
@@ -145,15 +157,16 @@ class Tiering(commands.Cog):
             await ctx.send(embed=gen_embed(title='Invalid Channel',
                                            content=f'This is not a valid tiering channel. Please match the format g#-xxxxx to use this command.'))
             return
-        if re.search('-\d$', currentname):
-            namesuffix=re.search("-\d$", currentname).group(0)
+        if re.search('-[\df]$', currentname):
+            namesuffix=re.search("-[\df]$", currentname).group(0)
 
         if room_num:
             if open_spots:
-                if 0 < open_spots < 4:
+                open_spots = int(open_spots)
+                if 0 < open_spots <= 4:
                     namesuffix=f'-{open_spots}'
                 elif open_spots == 0:
-                    namesuffix=''
+                    namesuffix='-f'
                 else:
                     log.warning('Error: Invalid Input')
                     await ctx.send(embed=gen_embed(title='Input Error',
@@ -165,11 +178,13 @@ class Tiering(commands.Cog):
                                            content=f'Changed room code to {room_num}'))
         else:
             if open_spots:
-                if 0 < open_spots < 4:
+                open_spots = int(open_spots)
+                if 0 < open_spots <= 4:
                     namesuffix=f'-{open_spots}'
-                    nameprefix=re.search("(^g\d-.+)(?![^-])(?<!-\d$)",currentname).group(0)
+                    nameprefix=re.search("(^g\d-.+)(?![^-])(?<!-[\df]$)",currentname).group(0)
                 elif open_spots == 0:
-                    namesuffix=''
+                    namesuffix='-f'
+                    nameprefix = re.search("(^g\d-.+)(?![^-])(?<!-[\df]$)", currentname).group(0)
                 else:
                     log.warning('Error: Invalid Input')
                     await ctx.send(embed=gen_embed(title='Input Error',
