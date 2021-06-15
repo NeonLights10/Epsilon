@@ -397,6 +397,8 @@ class Utility(commands.Cog):
                     if not extracted_emoji:
                         extracted_emoji = raw_emoji
                         remoji = payload.emoji.name
+                        log.info(extracted_emoji)
+                        log.info(remoji)
 
                     if extracted_emoji == remoji:
                         extracted_role = rmessage.guild.get_role(int(role))
