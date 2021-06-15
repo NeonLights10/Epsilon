@@ -77,23 +77,26 @@ class Miscellaneous(commands.Cog):
                     description = 'Unload a cog.')
     @is_owner()
     async def unload(self, ctx, cog_name: str):
-        self.bot.unload_extension(cog_name)
-        await ctx.send(embed = gen_embed(title = 'Unload Cog', content = f'{cog_name} unloaded.'))
+        cog = f"commands.{cog_name.lower()}"
+        self.bot.unload_extension(cog)
+        await ctx.send(embed = gen_embed(title = 'Unload Cog', content = f'{cog_name.capitalize()} unloaded.'))
 
     @commands.command(name = 'load',
                     description = 'Load a cog.')
     @is_owner()
     async def load(self, ctx, cog_name: str):
-        self.bot.load_extension(cog_name)
-        await ctx.send(embed = gen_embed(title = 'Load Cog', content = f'{cog_name} loaded.'))
+        cog = f"commands.{cog_name.lower()}"
+        self.bot.load_extension(cog)
+        await ctx.send(embed = gen_embed(title = 'Load Cog', content = f'{cog_name.capitalize()} loaded.'))
 
     @commands.command(name = 'reload',
                     description = 'Reload a cog.')
     @is_owner()
     async def reload(self, ctx, cog_name: str):
-        self.bot.unload_extension(cog_name)
-        self.bot.load_extension(cog_name)
-        await ctx.send(embed = gen_embed(title = 'Reload Cog', content = f'{cog_name} reloaded.'))
+        cog = f"commands.{cog_name.lower()}"
+        self.bot.unload_extension(cog)
+        self.bot.load_extension(cog)
+        await ctx.send(f"Successfully reloaded the {cog} cog")
 
     @commands.command(name = 'exec',
                     description = 'exec',

@@ -525,7 +525,7 @@ class Administration(commands.Cog):
 
     @commands.command(name='unmute',
                       description='Unmute a user',
-                      help='Usage\n\n ^unmute [user mentions/user ids/user name + discriminator (ex: name#0000)]')
+                      help='Usage\n\n %unmute [user mentions/user ids/user name + discriminator (ex: name#0000)]')
     @commands.check_any(commands.has_guild_permissions(mute_members=True), has_modrole())
     async def unmute(self, ctx, members: commands.Greedy[discord.Member]):
         mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
