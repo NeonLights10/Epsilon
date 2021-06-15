@@ -138,7 +138,7 @@ async def _initialize_document(guild, id):
             'welcome_banner': None,
             'max_strike': 3,
             'modmail_channel': None,
-            'fun': False,
+            'fun': True,
             'prefix': None,
             }
     log.info(f"Creating document for {guild.name}...")
