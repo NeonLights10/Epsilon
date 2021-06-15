@@ -389,6 +389,7 @@ class Utility(commands.Cog):
                 extracted_emoji = None
                 remoji = None
                 for role in roles:
+                    extracted_emoji = None
                     raw_emoji = roles[role]
                     if re.search('\d{18}', raw_emoji):
                         extracted_emoji = re.search('\d{18}', raw_emoji).group()
@@ -397,8 +398,6 @@ class Utility(commands.Cog):
                     if not extracted_emoji:
                         extracted_emoji = raw_emoji
                         remoji = payload.emoji.name
-                        log.info(extracted_emoji)
-                        log.info(remoji)
 
                     if extracted_emoji == remoji:
                         extracted_role = rmessage.guild.get_role(int(role))
