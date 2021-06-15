@@ -467,6 +467,7 @@ class Utility(commands.Cog):
                 extracted_emoji = None
                 remoji = None
                 for role in roles:
+                    extracted_emoji = None
                     raw_emoji = roles[role]
                     if re.search('\d{18}', raw_emoji):
                         extracted_emoji = re.search('\d{18}', raw_emoji).group()
