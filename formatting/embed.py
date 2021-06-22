@@ -2,6 +2,7 @@ import discord
 
 from formatting.constants import VERSION as BOTVERSION
 from formatting.constants import NAME
+from typing import List
 from __main__ import bot, log
 
 def gen_embed(name = None, icon_url = None, title = None, content = None):
