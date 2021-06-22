@@ -2,12 +2,134 @@ import asyncio
 import discord
 import time
 import re
+import datetime
+import pymongo
 from datetime import timedelta
 
 from discord.ext import commands, tasks
-from formatting.embed import gen_embed
-from typing import Union, Optional
+from formatting.embed import gen_embed, embed_splitter
+from typing import Union, Optional, List, SupportsInt
 from __main__ import log, db
+
+TIME_RE_STRING = r"\s?".join(
+    [
+        r"((?P<weeks>\d+?)\s?(weeks?|w))?",
+        r"((?P<days>\d+?)\s?(days?|d))?",
+        r"((?P<hours>\d+?)\s?(hours?|hrs|hr?))?",
+        r"((?P<minutes>\d+?)\s?(minutes?|mins?|m(?!o)))?",  # prevent matching "months"
+        r"((?P<seconds>\d+?)\s?(seconds?|secs?|s))?",
+    ]
+)
+
+TIME_RE = re.compile(TIME_RE_STRING, re.I)
+
+def parse_timedelta(argument: str, *, maximum: Optional[timedelta] = None, minimum: Optional[timedelta] = None,
+                    allowed_units: Optional[List[str]] = None) -> Optional[timedelta]:
+    """
+    This converts a user provided string into a timedelta
+    The units should be in order from largest to smallest.
+    This works with or without whitespace.
+    Parameters
+    ----------
+    argument : str
+        The user provided input
+    maximum : Optional[timedelta]
+        If provided, any parsed value higher than this will raise an exception
+    minimum : Optional[timedelta]
+        If provided, any parsed value lower than this will raise an exception
+    allowed_units : Optional[List[str]]
+        If provided, you can constrain a user to expressing the amount of time
+        in specific units. The units you can chose to provide are the same as the
+        parser understands. (``weeks``, ``days``, ``hours``, ``minutes``, ``seconds``)
+    Returns
+    -------
+    Optional[timedelta]
+        If matched, the timedelta which was parsed. This can return `None`
+    Raises
+    ------
+    BadArgument
+        If the argument passed uses a unit not allowed, but understood
+        or if the value is out of bounds.
+    """
+    matches = TIME_RE.match(argument)
+    allowed_units = allowed_units or ["weeks", "days", "hours", "minutes", "seconds"]
+    if matches:
+        params = {k: int(v) for k, v in matches.groupdict().items() if v is not None}
+        for k in params.keys():
+            if k not in allowed_units:
+                raise discord.errors.BadArgument(
+                    _("`{unit}` is not a valid unit of time for this command").format(unit=k)
+                )
+        if params:
+            try:
+                delta = timedelta(**params)
+            except OverflowError:
+                raise discord.errors.BadArgument(
+                    _("The time set is way too high, consider setting something reasonable.")
+                )
+            if maximum and maximum < delta:
+                raise discord.errors.BadArgument(
+                    _(
+                        "This amount of time is too large for this command. (Maximum: {maximum})"
+                    ).format(maximum=humanize_timedelta(timedelta=maximum))
+                )
+            if minimum and delta < minimum:
+                raise discord.errors.BadArgument(
+                    _(
+                        "This amount of time is too small for this command. (Minimum: {minimum})"
+                    ).format(minimum=humanize_timedelta(timedelta=minimum))
+                )
+            return delta
+    return None
+
+
+def humanize_timedelta(*, timedelta: Optional[datetime.timedelta] = None, seconds: Optional[SupportsInt] = None) -> str:
+    """
+    Get a locale aware human timedelta representation.
+    This works with either a timedelta object or a number of seconds.
+    Fractional values will be omitted, and values less than 1 second
+    an empty string.
+    Parameters
+    ----------
+    timedelta: Optional[datetime.timedelta]
+        A timedelta object
+    seconds: Optional[SupportsInt]
+        A number of seconds
+    Returns
+    -------
+    str
+        A locale aware representation of the timedelta or seconds.
+    Raises
+    ------
+    ValueError
+        The function was called with neither a number of seconds nor a timedelta object
+    """
+
+    try:
+        obj = seconds if seconds is not None else timedelta.total_seconds()
+    except AttributeError:
+        raise ValueError("You must provide either a timedelta or a number of seconds")
+
+    seconds = int(obj)
+    periods = [
+        ("year", "years", 60 * 60 * 24 * 365),
+        ("month", "months", 60 * 60 * 24 * 30),
+        ("day", "days", 60 * 60 * 24),
+        ("hour", "hours", 60 * 60),
+        ("minute", "minutes", 60),
+        ("second", "seconds", 1),
+    ]
+
+    strings = []
+    for period_name, plural_period_name, period_seconds in periods:
+        if seconds >= period_seconds:
+            period_value, seconds = divmod(seconds, period_seconds)
+            if period_value == 0:
+                continue
+            unit = plural_period_name if period_value > 1 else period_name
+            strings.append(f"{period_value} {unit}")
+
+    return ", ".join(strings)
 
 class Reminder(commands.Cog):
     SEND_DELAY_SECONDS = 30
@@ -51,53 +173,62 @@ class Reminder(commands.Cog):
     async def check_reminders(self):
         stime = int(time.time())
         to_remove = []
-        query={'future_time': {'$lt': stime}}
-        reminders=db.reminders.find(query)
-        async for reminder in reminders:
-            user=self.bot.get_user(reminder['user_id'])
-            if user is None:
-                reminder_id = reminder['_id']
-                to_remove.append(reminder)
-            delay=time - reminder['future_time']
-            embed=discord.Embed(
-                    title=f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
-                    colour = 0x1abc9c
-            )
-            if delay > self.SEND_DELAY_SECONDS:
-                embed.set_footer(
-                    text=f"""This was supposed to send {humanize_timedelta(seconds=delay)} ago.\n
-                        I might be having network or server issues, or perhaps I just started up.\n
-                        Sorry about that!"""
+        count = await db.reminders.estimated_document_count()
+        if count > 0:
+            query = {'future_time': {'$lt': stime}}
+            reminders = db.reminders.find(query)
+            async for reminder in reminders:
+                user = self.bot.get_user(reminder['user_id'])
+                if user is None:
+                    to_remove.append(reminder)
+
+                delay = int(stime) - int(reminder['future_time'])
+                embed=discord.Embed(
+                        title = f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
+                        colour = 0x1abc9c
                 )
-            embed_name = f"From {reminder['future_timestamp']} ago:"
-            if reminder['repeat']:
-                embed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(reminder['repeat'], 86400))}:"
-            reminder_text = reminder['reminder']
-            if len(reminder_text) > 900:
-                reminder_text = reminder_text[:897] + "..."
-            if reminder['jump_link']:
-                reminder_text += f"\n\n[original message]({reminder['jump_link']})"
-            embed.add_field(
-                name=embed_name,
-                value=reminder_text,
-            )
-            try:
-                await user.send(embed=embed)
-            except (discord.errors.Forbidden, discord.errors.Forbidden):
-                #Can't send DMs to user, delete it
-                log.error('Could not send reminder dm to user, deleting reminder')
+                if delay > self.SEND_DELAY_SECONDS:
+                    embed.set_footer(
+                        text=f"""This was supposed to send {humanize_timedelta(seconds=delay)} ago.
+                            I might be having network or server issues, or perhaps I just started up.
+                            Sorry about that!"""
+                    )
+                embed_name = f"From {reminder['future_timestamp']} ago:"
+                if reminder['repeat']:
+                    embed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(reminder['repeat'], 86400))}:"
+                reminder_text = reminder['reminder']
+                if len(reminder_text) > 900:
+                    reminder_text = reminder_text[:897] + "..."
+                if reminder['jump_link']:
+                    reminder_text += f"\n\n[original message]({reminder['jump_link']})"
+                embed.add_field(
+                    name = embed_name,
+                    value = reminder_text,
+                )
+
+                try:
+                    await user.send(embed=embed)
+                except (discord.errors.Forbidden, discord.errors.Forbidden):
+                    #Can't send DMs to user, delete it
+                    log.error('Could not send reminder dm to user, deleting reminder')
+                    to_remove.append(reminder)
+                except discord.HTTPException:
+                    # Something weird happened: retry next time
+                    pass
                 to_remove.append(reminder)
         if to_remove:
             for reminder in to_remove:
-                new_reminder_id = reminder['_id']
                 if reminder['repeat']:
                     if reminder['repeat'] < 86400:
                         reminder['repeat'] = 86400
                     while reminder['future_time'] <= int(time.time()):
                         reminder['future_time'] += reminder['repeat']
                     reminder['future_timestamp'] = humanize_timedelta(seconds=reminder['repeat'])
-                    await db.reminders.replace_one({'_id': new_reminder_id}, reminder)
+                    await db.reminders.replace_one({'user_id': reminder['user_id'], 'nid': reminder['nid']}, reminder)
                 else:
+                    query = {'user_id': ctx.author.id}
+                    nid = await db.warns.count_documents(query)
+                    new_reminder_id = nid
                     await db.reminders.delete_one({'_id': new_reminder_id})
 
     @check_reminders.before_loop
@@ -141,9 +272,9 @@ class Reminder(commands.Cog):
     async def list(self, ctx, sort: str = 'time'):
         reminders = None
         if sort == 'time':
-            reminders = db.reminders.find({'user_id': author.id}).sort('future_time', pymongo.DESCENDING)
+            reminders = db.reminders.find({'user_id': ctx.author.id}).sort('future_time', pymongo.DESCENDING)
         elif sort =='added':
-            reminders = db.reminders.find({'user_id': author.id}).sort('creation_time', pymongo.ASCENDING)
+            reminders = db.reminders.find({'user_id': ctx.author.id}).sort('creation_time', pymongo.ASCENDING)
         else:
             log.warning('Invalid option')
             await ctx.reply(embed=gen_embed(title="Invalid sort option entered",
@@ -156,15 +287,15 @@ class Reminder(commands.Cog):
             return
 
         embed = discord.Embed(
-            title=f"Reminders for {author.display_name}",
+            title=f"Reminders for {ctx.author.display_name}",
             color= 0x1abc9c,
         )
-        embed.set_thumbnail(url=author.avatar_url)
+        embed.set_thumbnail(url=ctx.author.avatar_url)
         current_time = int(time.time())
         async for reminder in reminders:
-            delta = reminder["future_time"] - current_time
+            delta = reminder['future_time'] - current_time
             reminder_title = "ID# {} — {}".format(
-                reminder["USER_REMINDER_ID"],
+                reminder['nid'],
                 "In {}".format(humanize_timedelta(seconds=delta))
                 if delta > 0
                 else "Now!",
@@ -172,9 +303,9 @@ class Reminder(commands.Cog):
             if reminder['repeat']:
                 reminder_title = (
                     f"{reminder_title.rstrip('!')}, "
-                    f"repeating every {humanize_timedelta(seconds=reminder['REPEAT'])}"
+                    f"repeating every {humanize_timedelta(seconds=reminder['repeat'])}"
                 )
-            reminder_text = reminder["REMINDER"]
+            reminder_text = reminder['reminder']
             if reminder['jump_link']:
                 reminder_text += f"\n([original message]({reminder['jump_link']}))"
             reminder_text = reminder_text or "(no reminder text or jump link)"
@@ -205,15 +336,15 @@ class Reminder(commands.Cog):
                                     \n- the unique id for the reminder to delete
                                     \n- `last` to delete the most recently created reminder
                                     \n- `all` to delete all reminders (same as %forgetme)""",
-                      help='Usage:\n\n%delete [index]')
+                      help='\nUsage:\n\n%reminder delete [index]')
     async def remove(self, ctx, index: str):
         await self._delete_reminder(ctx, index)
 
     @modify.command(name='text',
                       description="Change/modify the text of an existing reminder.\n\n <reminder_id> is the unique id of the reminder to change.",
-                      help='Usage:\n\n%text [reminder_id] [new text]')
-    async def text(self, ctx, reminder_id: str, *, text: str):
-        reminder = await db.reminders.find_one({'_id': reminder_id})
+                      help='\nUsage:\n\n%modify text [reminder_id] [new text]')
+    async def text(self, ctx, reminder_id: int, *, text: str):
+        reminder = await db.reminders.find_one({'user_id': ctx.author.id, 'nid': reminder_id})
         if not reminder:
             log.warning('No reminder found')
             await ctx.reply(embed=gen_embed(title="Could not find reminder",
@@ -224,22 +355,22 @@ class Reminder(commands.Cog):
             log.warning('Exceeded length limit')
             await ctx.reply(embed=gen_embed(title="Exceeded length limit",
                                             content='Your reminder text is too long (must be <900 characters)'))
-        await db.reminders.update_one({"_id": reminder_id}, {"$set": {'reminder': text}})
+        await db.reminders.update_one({'user_id': ctx.author.id, 'nid': reminder_id}, {"$set": {'reminder': text}})
         await ctx.reply(embed=gen_embed(title="Reminder edited successfuly",
                                         content=f'Your reminder text for reminder {reminder_id} has been changed successfuly.'))
 
     @modify.command(name='repeat',
                       description="Change/modify the repeating time of an existing reminder.\n\n <reminder_id> is the unique id of the reminder to change.\nSet time to 0/stop/none/false/no/cancel/n to disable repeating.",
-                      help='Usage:\n\n%text [reminder_id] [new time]')
-    async def repeat(self, ctx, reminder_id: str, *, time: str):
-        reminder = await db.reminders.find_one({'_id': reminder_id})
+                      help='\nUsage:\n\n%modify repeat [reminder_id] [new time]')
+    async def repeat(self, ctx, reminder_id: int, *, time: str):
+        reminder = await db.reminders.find_one({'user_id': ctx.author.id, 'nid': reminder_id})
         if not reminder:
             log.warning('No reminder found')
             await ctx.reply(embed=gen_embed(title="Could not find reminder",
                                             content=f"I couldn't find any reminder with id {reminder_id}. Check the id again to ensure it is correct."))
             return
         if time.lower() in ["0", "stop", "none", "false", "no", "cancel", "n"]:
-            await db.reminders.update_one({"_id": reminder_id}, {"$set": {'repeat': None}})
+            await db.reminders.update_one({'user_id': ctx.author.id, 'nid': reminder_id}, {"$set": {'repeat': None}})
             await ctx.reply(embed=gen_embed(title="Repeating reminder disabled",
                                             content=f"Reminder {reminder_id} will no longer repeat. The final reminder will be sent in {humanize_timedelta(seconds=int(reminder['future_time'] - time.time()))}."))
         else:
@@ -248,22 +379,22 @@ class Reminder(commands.Cog):
             except commands.BadArgument as ba:
                 await ctx.reply(embed = gen_embed(title='remindme', content=str(ba)))
                 return
-            await db.reminders.update_one({"_id": reminder_id}, {"$set": {'repeat': int(time_delta.total_seconds())}})
+            await db.reminders.update_one({'user_id': ctx.author.id, 'nid': reminder_id}, {"$set": {'repeat': int(time_delta.total_seconds())}})
             await ctx.reply(embed=gen_embed(title="Reminder edited successfuly",
                                             content=f"Reminder {reminder_id} will now remind you every {humanize_timedelta(timedelta=time_delta)}, with the first reminder being sent in {humanize_timedelta(seconds=int(reminder['future_time'] - time.time()))}."))
 
     @modify.command(name='time',
                     description="Change/modify the time of an existing reminder.\n\n <reminder_id> is the unique id of the reminder to change.",
-                    help='Usage:\n\n%text [reminder_id] [new time]')
-    async def repeat(self, ctx, reminder_id: str, *, time: str):
-        reminder = await db.reminders.find_one({'_id': reminder_id})
+                    help='\nUsage:\n\n%modify time [reminder_id] [new time]')
+    async def mtime(self, ctx, reminder_id: int, *, ntime: str):
+        reminder = await db.reminders.find_one({'user_id': ctx.author.id, 'nid': reminder_id})
         if not reminder:
             log.warning('No reminder found')
             await ctx.reply(embed=gen_embed(title="Could not find reminder",
                                             content=f"I couldn't find any reminder with id {reminder_id}. Check the id again to ensure it is correct."))
             return
         try:
-            time_delta = parse_timedelta(time, minimum=timedelta(minutes=1))
+            time_delta = parse_timedelta(ntime, minimum=timedelta(minutes=1))
         except commands.BadArgument as ba:
             await ctx.reply(embed=gen_embed(title='remindme', content=str(ba)))
             return
@@ -289,14 +420,19 @@ class Reminder(commands.Cog):
             params = ' '.join([x for x in ctx.command.clean_params])
             await ctx.reply(embed=gen_embed(title="Invalid parameter(s) entered",
                                            content=f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
+            return
         if len(reminder_text) > 900:
             log.warning('Exceeded length limit')
             await ctx.reply(embed=gen_embed(title="Exceeded length limit",
                                             content='Your reminder text is too long (must be <900 characters)'))
+            return
         repeat = (int(reminder_time_repeat.total_seconds()) if reminder_time_repeat else None)
         future_timeunix = int(time.time() + reminder_time.total_seconds())
         future_timestamp = humanize_timedelta(timedelta=reminder_time)
+        query = {'user_id': ctx.author.id}
+        nid = await db.warns.count_documents(query) + 1
         post = {
+            'nid': nid,
             'user_id': ctx.author.id,
             'creation_date': time.time(),
             'reminder': reminder_text,
@@ -312,9 +448,9 @@ class Reminder(commands.Cog):
         if repeat:
             message += f"every {humanize_timedelta(timedelta=reminder_time_repeat)}"
         else:
-            message += f"in {future_text}"
+            message += f"in {future_timestamp}"
         if repeat and reminder_time_repeat != reminder_time:
-            message += f", with the first reminder in {future_text}."
+            message += f", with the first reminder in {future_timestamp}."
         else:
             message += "."
         await ctx.reply(embed=gen_embed(title='Reminder set!',
@@ -323,7 +459,7 @@ class Reminder(commands.Cog):
         query: discord.Message = await ctx.send(embed=gen_embed(title='Want to be reminded too?',
                                                                 content=f"If anyone else would like {'these reminders' if repeat else 'to be reminded'} as well, click the bell below!"))
         db.reminders.update_one({"_id": reminder.inserted_id}, {"$set": {'query_id': query.id}})
-        await query.add_reaction('\u1f514')
+        await query.add_reaction('\N{BELL}')
         await query.delete(delay=30.0)
 
     #############################
@@ -412,7 +548,7 @@ class Reminder(commands.Cog):
         def check(m):
             return m.author == ctx.author
 
-        query = {'user_id': author.id}
+        query = {'user_id': ctx.author.id}
         num_reminders = await db.reminders.count_documents(query)
         if num_reminders <= 0:
             await ctx.reply(embed=gen_embed(title='No Reminders Found',
@@ -436,16 +572,16 @@ class Reminder(commands.Cog):
             return
         if index == 'last':
             reminder_to_delete = db.reminders.find_one(query, {'sort': {'$natural': -1}})
-            rid = reminder_to_delete['_id']
+            rid = reminder_to_delete['nid']
             await db.reminders.delete_one(query, {'sort': { '$natural' :-1 }})
             await ctx.reply(embed=gen_embed(title='Latest reminder deleted',
                                             content=f"Your most recently created reminder (ID: {rid}) has been deleted."))
             return
         else:
-            uquery = {'_id': index}
+            uquery = {'user_id': ctx.author.id, 'nid': index}
             reminder_to_delete = db.reminders.find_one(uquery)
             if reminder_to_delete:
-                rid = reminder_to_delete['_id']
+                rid = reminder_to_delete['nid']
                 await db.reminders.delete_one(query)
                 await ctx.reply(embed=gen_embed(title='Reminder deleted',
                                                 content=f"Reminder (ID: {rid}) has been deleted."))
@@ -456,6 +592,17 @@ class Reminder(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        async def reminder_exists(new_reminder):
+            async for document in db.reminders.find():
+                if (
+                        document['user_id'] == new_reminder['user_id']
+                        and document['reminder'] == new_reminder['reminder']
+                        and document['future_time'] == new_reminder['future_time']
+                        and document['future_timestamp'] == new_reminder['future_timestamp']
+                ):
+                    return True
+            return False
+
         if not payload.guild_id:
             return
         if str(payload.emoji) != "\N{BELL}":
@@ -463,55 +610,51 @@ class Reminder(commands.Cog):
         guild = self.bot.get_guild(payload.guild_id)
         if not guild:
             return
-        member = get.get_member(payload.user_id)
+        member = guild.get_member(payload.user_id)
         if member.bot:
             return
 
-        found_reminder = db.reminders.find_one({'query_id': payload.message_id})
+        found_reminder = await db.reminders.find_one({'query_id': payload.message_id})
         if found_reminder:
+            reminder_text = found_reminder['reminder']
+            repeat = found_reminder['repeat']
+            future_time = found_reminder['future_time']
+            future_timestamp = found_reminder['future_timestamp']
+            jump_link = found_reminder['jump_link']
+            query = {'user_id': ctx.author.id}
+            nid = await db.warns.count_documents(query) + 1
             post = {
+                'nid': nid,
                 'user_id': member.id,
                 'creation_date': time.time(),
-                'reminder': found_reminder['reminder_text'],
-                'repeat': found_reminder['repeat'],
-                'future_time': found_reminder['future_timeunix'],
-                'future_timestamp': found_reminder['future_timestamp'],
-                'jump_link': found_reminder['jump_link'],
+                'reminder': reminder_text, #WHY????
+                'repeat': repeat,
+                'future_time': future_time,
+                'future_timestamp': future_timestamp,
+                'jump_link': jump_link,
                 'query_id': None
             }
-            if _reminder_exists(post):
+            if await reminder_exists(post):
                 return
-            new_reminder = await db.reminders.insert_one(post)
+            await db.reminders.insert_one(post)
             message = 'Hello! I will also send you'
-            if new_reminder["REPEAT"]:
-                human_repeat = humanize_timedelta(seconds=new_reminder["repeat"])
+            if post['repeat']:
+                human_repeat = humanize_timedelta(seconds=post["repeat"])
                 message += f"those reminders every {human_repeat}"
-                if human_repeat != new_reminder["future_timestamp"]:
+                if human_repeat != post["future_timestamp"]:
                     message += (
-                        f", with the first reminder in {new_reminder['future_timestamp']}."
+                        f", with the first reminder in {post['future_timestamp']}."
                     )
                 else:
                     message += "."
             else:
-                message += f"that reminder in {new_reminder['FUTURE_TEXT']}."
+                message += f"that reminder in {post['future_timestamp']}."
 
             try:
                 await member.send(embed=gen_embed(title='Reminder added!', content=message))
             except (discord.Forbidden, discord.NotFound):
                 log.warning('Could not send reminder DM to user')
                 pass
-
-    @staticmethod
-    async def _reminder_exists(new_reminder):
-        async for document in db.reminders.find():
-            if (
-                document['user_id'] == new_reminder['user_id']
-                and document['reminder'] == new_reminder['reminder']
-                and document['future_time'] == new_reminder['future_time']
-                and document['future_timestamp'] == new_reminder['future_timestamp']
-            ):
-                return True
-        return False
 
 def setup(bot):
     bot.add_cog(Reminder(bot))

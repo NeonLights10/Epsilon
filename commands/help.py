@@ -28,6 +28,7 @@ class Help(commands.Cog):
             else:
                 for command in commands:
                     found = False
+                    shelp = None
                     for x in self.bot.cogs:
                         cog_commands = (self.bot.get_cog(x)).get_commands()
                         for y in cog_commands:
@@ -42,19 +43,19 @@ class Help(commands.Cog):
                                         help.add_field(name='Inputs',value=f"{ctx.prefix}{c.name} {c.signature}", inline=False)
                                         if c.help:
                                             help.add_field(name='Examples / Further Help',value=c.help, inline=False)
-                                    if isinstance(c, discord.ext.commands.Group):
-                                        shelp=discord.Embed(title="Subcommands",color=discord.Color.blue())
-                                        for sc in c.walk_commands():
-                                            if sc.parents[0] == c:
-                                                value = f'{sc.description}\nInputs: {ctx.prefix}{sc.name} {sc.signature}'
-                                                if sc.help:
-                                                    value = value + f'\nExamples / Further Help: {sc.help}'
-                                                if sc.aliases:
-                                                    shelp.add_field(name=f"{sc.name.capitalize()} ({(', '.join(map(str, sorted(sc.aliases))))})",
-                                                                    value=value, inline=False)
-                                                else:
-                                                    shelp.add_field(name=f"{sc.name.capitalize()}",
-                                                                    value=value, inline=False)
+                                if isinstance(y, discord.ext.commands.Group):
+                                    shelp=discord.Embed(title="Subcommands",color=discord.Color.blue())
+                                    for sc in y.walk_commands():
+                                        if sc.parents[0] == y:
+                                            value = f'{sc.description}\nInputs: {ctx.prefix}{sc.name} {sc.signature}'
+                                            if sc.help:
+                                                value = value + f'\nExamples / Further Help: {sc.help}'
+                                            if sc.aliases:
+                                                shelp.add_field(name=f"{sc.name.capitalize()} ({(', '.join(map(str, sorted(sc.aliases))))})",
+                                                                value=value, inline=False)
+                                            else:
+                                                shelp.add_field(name=f"{sc.name.capitalize()}",
+                                                                value=value, inline=False)
                                 found = True
                     if not found:
                         """Reminds you if that cog doesn't exist."""
