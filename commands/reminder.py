@@ -1,6 +1,7 @@
 import asyncio
 import discord
 import time
+import re
 from datetime import timedelta
 
 from discord.ext import commands, tasks
@@ -8,7 +9,7 @@ from formatting.embed import gen_embed
 from typing import Union, Optional
 from __main__ import log, db
 
-class Tiering(commands.Cog):
+class Reminder(commands.Cog):
     SEND_DELAY_SECONDS = 30
 
     def __init__(self, bot):
@@ -41,7 +42,7 @@ class Tiering(commands.Cog):
             + r")"
             + r"$"
         )
-        self.check_reminder.start()
+        self.check_reminders.start()
 
     def cog_unload(self):
         self.printer.cancel()
@@ -511,3 +512,6 @@ class Tiering(commands.Cog):
             ):
                 return True
         return False
+
+def setup(bot):
+    bot.add_cog(Reminder(bot))
