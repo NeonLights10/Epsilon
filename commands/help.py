@@ -53,7 +53,7 @@ class Help(commands.Cog):
                                                     shelp.add_field(name=f"{sc.name.capitalize()} ({(', '.join(map(str, sorted(sc.aliases))))})",
                                                                     value=value, inline=False)
                                                 else:
-                                                    shelp.add_field(name=f"{subcommand.name.capitalize()}",
+                                                    shelp.add_field(name=f"{sc.name.capitalize()}",
                                                                     value=value, inline=False)
                                 found = True
                     if not found:
