@@ -42,6 +42,19 @@ class Help(commands.Cog):
                                         help.add_field(name='Inputs',value=f"{ctx.prefix}{c.name} {c.signature}", inline=False)
                                         if c.help:
                                             help.add_field(name='Examples / Further Help',value=c.help, inline=False)
+                                if isinstance(command, Group):
+                                    shelp=discord.Embed(title="Subcommands",color=discord.Color.blue())
+                                    for sc in command.walk_commands():
+                                        if sc.parents[0] == command:
+                                            value = f'{sc.description}\nInputs: {ctx.prefix}{sc.name} {sc.signature}'
+                                            if sc.help:
+                                                value = value + f'\nExamples / Further Help: {sc.help}'
+                                            if sc.aliases:
+                                                shelp.add_field(name=f"{sc.name.capitalize()} ({(', '.join(map(str, sorted(sc.aliases))))})",
+                                                                value=value, inline=False)
+                                            else:
+                                                shelp.add_field(name=f"{subcommand.name.capitalize()}",
+                                                                value=value, inline=False)
                                 found = True
                     if not found:
                         """Reminds you if that cog doesn't exist."""
@@ -49,7 +62,10 @@ class Help(commands.Cog):
                         help.set_thumbnail(url=bot_icon_url)
                     else:
                         help.set_thumbnail(url=bot_icon_url)
-                        await ctx.send(embed=help)                     
+                        await ctx.send(embed=help)
+                        if shelp:
+                            shelp.set_thumbnail(url=bot_icon_url)
+                            await ctx.send(embed=shelp)
         except Exception as e:
             await ctx.send(str(e))
             

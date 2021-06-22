@@ -53,7 +53,7 @@ class Utility(commands.Cog):
                         title = "roll",
                         content = f"{ctx.author.mention} rolled a {str(answer)}"
                         )
-            await ctx.send(embed = embed)
+            await ctx.reply(embed = embed)
 
     @commands.command(name = 'froll',
                     description = "Generates a forced roll - the number specified will be the number rolled.",
@@ -131,7 +131,7 @@ class Utility(commands.Cog):
         current_time = current_time.strftime('%Y-%m-%d | %H:%M ' + timezone)
         msg = f"The current time is: {current_time}"
         embed = gen_embed(title = "time", content = f"{msg}")
-        await ctx.send(embed = embed)
+        await ctx.reply(embed = embed)
 
     @commands.command(name = 'tconvert',
                     description = "Converts time from one timezone to another. All times in 24 hour time.",
@@ -268,7 +268,7 @@ class Utility(commands.Cog):
         final_time = str(hour) + ":" + str(minute)
 
         embed = gen_embed(title = "tconvert", content = f"Converted time from **{timezone1}** to **{timezone2}** is **{final_time}**")
-        await ctx.send(embed = embed)
+        await ctx.reply(embed = embed)
 
     @commands.command(name = 'reactcategory',
                     description = 'Set up a react based role category in a channel.',

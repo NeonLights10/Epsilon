@@ -70,6 +70,7 @@ class Miscellaneous(commands.Cog):
     async def leave(self, ctx):
         await db.msgid.delete_many({'server_id': ctx.guild.id})
         await db.warns.delete_many({'server_id': ctx.guild.id})
+        await db.rolereact.delete_many({'server_id': ctx.guild.id})
         await db.servers.delete_one({'server_id': ctx.guild.id})
         await ctx.guild.leave()
 

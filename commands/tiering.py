@@ -198,5 +198,8 @@ class Tiering(commands.Cog):
                 await ctx.send(embed=gen_embed(title='room',
                                                content=f'Closed room'))
 
+    #async def connect(self, ctx, label, dest_server):
+
+
 def setup(bot):
     bot.add_cog(Tiering(bot))
