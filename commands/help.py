@@ -45,7 +45,7 @@ class Help(commands.Cog):
                                     if isinstance(c, discord.ext.commands.Group):
                                         shelp=discord.Embed(title="Subcommands",color=discord.Color.blue())
                                         for sc in c.walk_commands():
-                                            if sc.parents[0] == command:
+                                            if sc.parents[0] == c:
                                                 value = f'{sc.description}\nInputs: {ctx.prefix}{sc.name} {sc.signature}'
                                                 if sc.help:
                                                     value = value + f'\nExamples / Further Help: {sc.help}'
