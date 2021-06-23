@@ -588,7 +588,7 @@ class Reminder(commands.Cog):
             reminder_to_delete = await db.reminders.find_one(uquery)
             if reminder_to_delete:
                 rid = reminder_to_delete['nid']
-                await db.reminders.delete_one(query)
+                await db.reminders.delete_one(uquery)
                 await ctx.reply(embed=gen_embed(title='Reminder deleted',
                                                 content=f"Reminder (ID: {rid}) has been deleted."))
             else:
