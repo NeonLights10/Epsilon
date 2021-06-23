@@ -60,24 +60,24 @@ def parse_timedelta(argument: str, *, maximum: Optional[timedelta] = None, minim
         params = {k: int(v) for k, v in matches.groupdict().items() if v is not None}
         for k in params.keys():
             if k not in allowed_units:
-                raise discord.errors.BadArgument(
+                raise discord.ext.commands.BadArgument(
                     _("`{unit}` is not a valid unit of time for this command").format(unit=k)
                 )
         if params:
             try:
                 delta = timedelta(**params)
             except OverflowError:
-                raise discord.errors.BadArgument(
+                raise discord.ext.commands.BadArgument(
                     _("The time set is way too high, consider setting something reasonable.")
                 )
             if maximum and maximum < delta:
-                raise discord.errors.BadArgument(
+                raise discord.ext.commands.BadArgument(
                     _(
                         "This amount of time is too large for this command. (Maximum: {maximum})"
                     ).format(maximum=humanize_timedelta(timedelta=maximum))
                 )
             if minimum and delta < minimum:
-                raise discord.errors.BadArgument(
+                raise discord.ext.commands.BadArgument(
                     _(
                         "This amount of time is too small for this command. (Minimum: {minimum})"
                     ).format(minimum=humanize_timedelta(timedelta=minimum))
