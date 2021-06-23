@@ -229,10 +229,7 @@ class Reminder(commands.Cog):
                     reminder['future_timestamp'] = humanize_timedelta(seconds=reminder['repeat'])
                     await db.reminders.replace_one({'user_id': reminder['user_id'], 'nid': reminder['nid']}, reminder)
                 else:
-                    query = {'user_id': ctx.author.id}
-                    nid = await db.warns.count_documents(query)
-                    new_reminder_id = nid
-                    await db.reminders.delete_one({'_id': new_reminder_id})
+                    await db.reminders.delete_one({'user_id': reminder['user_id'], 'nid': reminder['nid']})
 
     @check_reminders.before_loop
     async def wait_ready(self):
