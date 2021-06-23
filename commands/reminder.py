@@ -400,7 +400,7 @@ class Reminder(commands.Cog):
             return
         future = int(time.time() + time_delta.total_seconds())
         future_timestamp = humanize_timedelta(timedelta=time_delta)
-        await db.reminders.update_one({"_id": reminder_id}, {"$set": {'future_time': future, 'future_timestamp': future_timestamp}})
+        await db.reminders.update_one({'user_id': ctx.author.id, "nid": reminder_id}, {"$set": {'future_time': future, 'future_timestamp': future_timestamp}})
         message = f"Reminder {reminder_id} will now remind you in {future_timestamp}"
         if reminder['repeat']:
             message += f", repeating every {humanize_timedelta(seconds=reminder['repeat'])} thereafter."
