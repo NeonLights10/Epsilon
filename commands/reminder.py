@@ -578,6 +578,12 @@ class Reminder(commands.Cog):
                                             content=f"Your most recently created reminder (ID: {rid}) has been deleted."))
             return
         else:
+            try:
+                index = int(index)
+            except ValueError:
+                raise discord.ext.commands.BadArgument(
+                    ("`{unit}` is not a valid ID for this command").format(unit=k)
+                )
             uquery = {'user_id': ctx.author.id, 'nid': index}
             reminder_to_delete = await db.reminders.find_one(uquery)
             if reminder_to_delete:
