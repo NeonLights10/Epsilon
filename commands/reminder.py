@@ -579,7 +579,7 @@ class Reminder(commands.Cog):
             return
         else:
             uquery = {'user_id': ctx.author.id, 'nid': index}
-            reminder_to_delete = db.reminders.find_one(uquery)
+            reminder_to_delete = await db.reminders.find_one(uquery)
             if reminder_to_delete:
                 rid = reminder_to_delete['nid']
                 await db.reminders.delete_one(query)
