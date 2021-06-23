@@ -11,6 +11,9 @@ from formatting.embed import gen_embed, embed_splitter
 from typing import Union, Optional, List, SupportsInt
 from __main__ import log, db
 
+#Reminder system ported over for discord.py base and modified from PhasecoreX's Cogs for Red-DiscordBot
+#https://github.com/PhasecoreX/PCXCogs
+
 TIME_RE_STRING = r"\s?".join(
     [
         r"((?P<weeks>\d+?)\s?(weeks?|w))?",
@@ -627,7 +630,7 @@ class Reminder(commands.Cog):
                 'nid': nid,
                 'user_id': member.id,
                 'creation_date': time.time(),
-                'reminder': reminder_text, #WHY????
+                'reminder': reminder_text,
                 'repeat': repeat,
                 'future_time': future_time,
                 'future_timestamp': future_timestamp,
