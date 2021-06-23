@@ -624,7 +624,7 @@ class Reminder(commands.Cog):
             future_time = found_reminder['future_time']
             future_timestamp = found_reminder['future_timestamp']
             jump_link = found_reminder['jump_link']
-            query = {'user_id': ctx.author.id}
+            query = {'user_id': payload.author.id}
             nid = await db.warns.count_documents(query) + 1
             post = {
                 'nid': nid,
