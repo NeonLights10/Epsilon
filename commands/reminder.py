@@ -430,7 +430,7 @@ class Reminder(commands.Cog):
         future_timeunix = int(time.time() + reminder_time.total_seconds())
         future_timestamp = humanize_timedelta(timedelta=reminder_time)
         query = {'user_id': ctx.author.id}
-        nid = await db.warns.count_documents(query) + 1
+        nid = await db.reminders.count_documents(query) + 1
         post = {
             'nid': nid,
             'user_id': ctx.author.id,
