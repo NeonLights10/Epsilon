@@ -691,6 +691,10 @@ class Administration(commands.Cog):
             await ctx.send(embed=gen_embed(title='Input Error',
                                            content="Invalid or missing message link. Check the formatting (https:// prefix is required)"))
             return
+        if len(reason) >= 1024:
+            log.warning('Error: Reason too long')
+            await ctx.send(embed=gen_embed(title='Max character limit reached',
+                                           content='Your reason message is too long (> 1024 characters). Please shorten the message to fit it in the embed.'))
 
         if severity == '2':
             msg = await mutetime()
