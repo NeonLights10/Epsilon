@@ -561,7 +561,7 @@ class Reminder(commands.Cog):
                 resp = await self.bot.wait_for('message', check=check, timeout=30)
             except asyncio.TimeoutError:
                 pass
-            if resp == 'yes':
+            if resp.content == 'yes':
                 pass
             else:
                 await ctx.reply(embed=gen_embed(title='Deletion cancelled',
