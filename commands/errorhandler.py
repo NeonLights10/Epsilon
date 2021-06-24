@@ -52,7 +52,7 @@ class CommandErrorHandler(commands.Cog):
         elif isinstance(error, commands.BadArgument):
             log.warning("Bad Argument - Traceback below:")
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-            await ctx.send(embed = gen_embed(title = "Invalid parameter entered", content = "Are you sure you entered the right parameter?"))
+            await ctx.send(embed = gen_embed(title = "Invalid parameter entered", content = f"Error: {error.message} \nAre you sure you entered the right parameter?"))
 
         elif isinstance(error, commands.CommandOnCooldown):
             log.warning("Command on Cooldown - Traceback below:")

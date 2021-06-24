@@ -61,26 +61,22 @@ def parse_timedelta(argument: str, *, maximum: Optional[timedelta] = None, minim
         for k in params.keys():
             if k not in allowed_units:
                 raise discord.ext.commands.BadArgument(
-                    ("`{unit}` is not a valid unit of time for this command").format(unit=k)
+                    "`{unit}` is not a valid unit of time for this command".format(unit=k)
                 )
         if params:
             try:
                 delta = timedelta(**params)
             except OverflowError:
                 raise discord.ext.commands.BadArgument(
-                    ("The time set is way too high, consider setting something reasonable.")
+                    "The time set is way too high, consider setting something reasonable."
                 )
             if maximum and maximum < delta:
                 raise discord.ext.commands.BadArgument(
-                    (
-                        "This amount of time is too large for this command. (Maximum: {maximum})"
-                    ).format(maximum=humanize_timedelta(timedelta=maximum))
+                    "This amount of time is too large for this command. (Maximum: {maximum})".format(maximum=humanize_timedelta(timedelta=maximum))
                 )
             if minimum and delta < minimum:
                 raise discord.ext.commands.BadArgument(
-                    (
-                        "This amount of time is too small for this command. (Minimum: {minimum})"
-                    ).format(minimum=humanize_timedelta(timedelta=minimum))
+                    "This amount of time is too small for this command. (Minimum: {minimum})".format(minimum=humanize_timedelta(timedelta=minimum))
                 )
             return delta
     return None
@@ -249,20 +245,20 @@ class Reminder(commands.Cog):
     @commands.command(name='remindme',
                       description="""Create a reminder with optional reminder text.
                                 \nEither of the following formats are allowed:
-                                \n`[p]remindme [in] <time> [to] [reminder_text]`
-                                \n`[p]remindme [to] [reminder_text] [in] <time>`
+                                \n`%remindme [in] <time> [to] [reminder_text]`
+                                \n`%remindme [to] [reminder_text] [in] <time>`
                                 \n\n`<time>` supports commas, spaces, and "and":
                                 \n`12h30m`, `6 hours 15 minutes`, `2 weeks, 4 days, and 10 seconds`
                                 \nAccepts seconds, minutes, hours, days, and weeks.
                                 \n\nYou can also add `every <repeat_time>` to the command for repeating reminders.
                                 \n`<repeat_time>` accepts days and weeks only, but otherwise is the same as `<time>`.""",
                       help="""Examples:
-                                \n`[p]remindme in 8min45sec to do that thing`
-                                \n`[p]remindme to water my plants in 2 hours`
-                                \n`[p]remindme in 3 days`
-                                \n`[p]remindme 8h`
-                                \n`[p]remindme every 1 week to take out the trash`
-                                \n`[p]remindme in 1 hour to drink some water every 1 day`""")
+                                \n`%remindme in 8min45sec to do that thing`
+                                \n`%remindme to water my plants in 2 hours`
+                                \n`%remindme in 3 days`
+                                \n`%remindme 8h`
+                                \n`%remindme every 1 week to take out the trash`
+                                \n`%remindme in 1 hour to drink some water every 1 day`""")
     async def remindme(self, ctx, *, time_and_optional_text: str = ''):
         await self._create_reminder(ctx, time_and_optional_text)
 
@@ -336,13 +332,13 @@ class Reminder(commands.Cog):
                                     \n- the unique id for the reminder to delete
                                     \n- `last` to delete the most recently created reminder
                                     \n- `all` to delete all reminders (same as %forgetme)""",
-                      help='\nUsage:\n\n%reminder delete [index]')
+                      help='\n\nUsage:\n\n%reminder delete [index]')
     async def remove(self, ctx, index: str):
         await self._delete_reminder(ctx, index)
 
     @modify.command(name='text',
                       description="Change/modify the text of an existing reminder.\n\n <reminder_id> is the unique id of the reminder to change.",
-                      help='\nUsage:\n\n%modify text [reminder_id] [new text]')
+                      help='\n\nUsage:\n\n%modify text [reminder_id] [new text]')
     async def text(self, ctx, reminder_id: int, *, text: str):
         reminder = await db.reminders.find_one({'user_id': ctx.author.id, 'nid': reminder_id})
         if not reminder:
@@ -361,7 +357,7 @@ class Reminder(commands.Cog):
 
     @modify.command(name='repeat',
                       description="Change/modify the repeating time of an existing reminder.\n\n <reminder_id> is the unique id of the reminder to change.\nSet time to 0/stop/none/false/no/cancel/n to disable repeating.",
-                      help='\nUsage:\n\n%modify repeat [reminder_id] [new time]')
+                      help='\n\nUsage:\n\n%modify repeat [reminder_id] [new time]')
     async def repeat(self, ctx, reminder_id: int, *, time: str):
         reminder = await db.reminders.find_one({'user_id': ctx.author.id, 'nid': reminder_id})
         if not reminder:
@@ -385,7 +381,7 @@ class Reminder(commands.Cog):
 
     @modify.command(name='time',
                     description="Change/modify the time of an existing reminder.\n\n <reminder_id> is the unique id of the reminder to change.",
-                    help='\nUsage:\n\n%modify time [reminder_id] [new time]')
+                    help='\n\nUsage:\n\n%modify time [reminder_id] [new time]')
     async def mtime(self, ctx, reminder_id: int, *, ntime: str):
         reminder = await db.reminders.find_one({'user_id': ctx.author.id, 'nid': reminder_id})
         if not reminder:

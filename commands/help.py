@@ -47,9 +47,9 @@ class Help(commands.Cog):
                                     shelp=discord.Embed(title="Subcommands",color=discord.Color.blue())
                                     for sc in y.walk_commands():
                                         if sc.parents[0] == y:
-                                            value = f'{sc.description}\nInputs: {ctx.prefix}{sc.name} {sc.signature}'
+                                            value = f'{sc.description}\nInputs: {ctx.prefix}{y.name} {sc.name} {sc.signature}'
                                             if sc.help:
-                                                value = value + f'\nExamples / Further Help: {sc.help}'
+                                                value = value + f'\nExamples / Further Help: ' + sc.help
                                             if sc.aliases:
                                                 shelp.add_field(name=f"{sc.name.capitalize()} ({(', '.join(map(str, sorted(sc.aliases))))})",
                                                                 value=value, inline=False)
