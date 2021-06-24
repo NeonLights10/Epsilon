@@ -695,6 +695,7 @@ class Administration(commands.Cog):
             log.warning('Error: Reason too long')
             await ctx.send(embed=gen_embed(title='Max character limit reached',
                                            content='Your reason message is too long (> 1024 characters). Please shorten the message to fit it in the embed.'))
+            return
 
         if severity == '2':
             msg = await mutetime()
