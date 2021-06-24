@@ -55,11 +55,11 @@ def parse_timedelta(argument: str, *, maximum: Optional[timedelta] = None, minim
         or if the value is out of bounds.
     """
     matches = TIME_RE.match(argument)
-    allowed_units = allowed_units or ["weeks", "days", "hours", "minutes", "seconds"]
+    allowed_unit_list = allowed_units or ["weeks", "days", "hours", "minutes", "seconds"]
     if matches:
         params = {k: int(v) for k, v in matches.groupdict().items() if v is not None}
         for k in params.keys():
-            if k not in allowed_units:
+            if k not in allowed_unit_list:
                 raise discord.ext.commands.BadArgument(
                     "`{unit}` is not a valid unit of time for this command".format(unit=k)
                 )
