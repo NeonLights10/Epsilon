@@ -569,7 +569,7 @@ class Reminder(commands.Cog):
                 return
             await db.reminders.delete_many(query)
             await ctx.reply(embed=gen_embed(title='Reminders deleted',
-                                            content='All of yoru reminders have been deleted.'))
+                                            content='All of your reminders have been deleted.'))
             return
         if index == 'last':
             reminder_to_delete = db.reminders.find_one(query, {'sort': {'$natural': -1}})
