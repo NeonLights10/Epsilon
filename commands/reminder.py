@@ -172,7 +172,7 @@ class Reminder(commands.Cog):
     def cog_unload(self):
         self.printer.cancel()
 
-    @tasks.loop(seconds=5)
+    @tasks.loop(seconds=10)
     async def check_reminders(self):
         stime = int(time.time())
         to_remove = []
@@ -556,8 +556,9 @@ class Reminder(commands.Cog):
             return
         if index == 'all':
             await ctx.reply('Are you **sure** you want to remove all your reminders? (yes/no)')
+            resp = None
             try:
-                resp = await ctx.bot.wait_for('message', check=check, timeout=30)
+                resp = await self.bot.wait_for('message', check=check, timeout=30)
             except asyncio.TimeoutError:
                 pass
             if resp == 'yes':
@@ -582,7 +583,7 @@ class Reminder(commands.Cog):
                 index = int(index)
             except ValueError:
                 raise discord.ext.commands.BadArgument(
-                    ("`{unit}` is not a valid ID for this command").format(unit=k)
+                    "`{unit}` is not a valid ID for this command".format(unit=k)
                 )
             uquery = {'user_id': ctx.author.id, 'nid': index}
             reminder_to_delete = await db.reminders.find_one(uquery)
