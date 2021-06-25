@@ -110,11 +110,10 @@ class Tiering(commands.Cog):
         embed = gen_embed(
             title="Marina's Gift Box Can Efficiency",
             content="""This chart helps you get the most boost cans as efficiently as possible.
-            It lets you know whether you should keep opening gifts from a box or move on to the next box 
-            (if possible) based on the probability of pulling a boost can.
-            \nTo use this chart, make sure turn on the settings called "Exchange All" & "Stop on Special Prize".
-            \nOnce you have collected the special prize, you can look at this chart to determine if you should keep
-            pulling or move to the next box."""
+            It lets you know whether you should keep opening gifts from a box or move on to the next box (if possible) based on the probability of pulling a boost can.
+            \nTo use this chart, make sure turn on the settings called
+            \n"Exchange All" & "Stop on Special Prize".
+            \nOnce you have collected the special prize, you can look at this chart to determine if you should keep pulling or move to the next box."""
         )
         embed.set_image(url='https://files.s-neon.xyz/share/marina_box.png')
         embed.add_field(
