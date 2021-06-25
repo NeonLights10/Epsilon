@@ -103,13 +103,18 @@ class Tiering(commands.Cog):
             name=f"{ctx.guild.name}",
             icon_url=ctx.guild.icon_url,
             title='Versus Live Tiering Info',
-            content='Graciously stolen from **Zia** & **Blur** and the **Play Act! Challenge*Audition** server'
+            content='Graciously stolen from **Zia** & **Blur** and the **Play Act! Challenge*Audition** server, edited by **Neon**'
         )
         embed.set_footer(text=discord.Embed.Empty)
         await channel.send(embed=embed)
         embed = gen_embed(
             title="Marina's Gift Box Can Efficiency",
-            content='Follow the chart below to obtain the best efficiency.'
+            content="""This chart helps you get the most boost cans as efficiently as possible.
+            It lets you know whether you should keep opening gifts from a box or move on to the next box 
+            (if possible) based on the probability of pulling a boost can.
+            \nTo use this chart, make sure turn on the settings called "Exchange All" & "Stop on Special Prize".
+            \nOnce you have collected the special prize, you can look at this chart to determine if you should keep
+            pulling or move to the next box."""
         )
         embed.set_image(url='https://files.s-neon.xyz/share/marina_box.png')
         embed.add_field(
