@@ -408,7 +408,7 @@ class Reminder(commands.Cog):
     async def _create_reminder(self, ctx, time_and_optional_text: str):
         try:
             (reminder_time, reminder_time_repeat, reminder_text) = self._process_reminder_text(time_and_optional_text.strip())
-        except commands.BadArgument as ba:
+        except discord.ext.commands.BadArgument as ba:
             await ctx.reply(embed = gen_embed(title='remindme', content=str(ba)))
             return
         if not reminder_time:

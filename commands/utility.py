@@ -272,7 +272,7 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'reactcategory',
                     description = 'Set up a react based role category in a channel.',
-                    help = 'Usage:\n\n%reactrole [create/remove] [channel] [name]')
+                    help = 'Usage:\n\n%reactcategory [create/remove] [channel] [name]\n`%reactcategory create #roles Fun Roles`')
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def reactcategory(self, ctx, option: str, dchannel: discord.TextChannel, *, value: str):
         valid_options = {'create', 'remove'}
@@ -313,7 +313,9 @@ class Utility(commands.Cog):
 
     @commands.command(name = 'reactrole',
                     description = 'Add a role to a react based role category.',
-                    help = 'Usage:\n\n%reactrole [add/remove/edit] <emoji> [channel] [category]\n(Emoji is not needed when removing a role)')
+                    help = """Usage:\n\n%reactrole [add/remove/edit] [role] <emoji> [channel] [category]\n(Emoji is not needed when removing a role)
+                           \n`%reactrole add t100 🔔 #roles Tiering Roles`
+                           \n`%reactrole remove t100 #roles Tiering Roles`""")
     @commands.check_any(commands.has_guild_permissions(manage_roles = True), has_modrole())
     async def reactrole(self, ctx, option: str, drole: discord.Role, emoji: Optional[Union[discord.Emoji, convert_emoji]], dchannel: discord.TextChannel = None, *, value: str = None):
         valid_options = {'add', 'remove', 'edit'}
