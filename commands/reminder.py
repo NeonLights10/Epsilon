@@ -170,6 +170,18 @@ class Reminder(commands.Cog):
 
     @tasks.loop(seconds=10)
     async def check_reminders(self):
+        async def remove(to_remove):
+            for reminder in to_remove:
+                if reminder['repeat']:
+                    if reminder['repeat'] < 86400:
+                        reminder['repeat'] = 86400
+                    while reminder['future_time'] <= int(time.time()):
+                        reminder['future_time'] += reminder['repeat']
+                    reminder['future_timestamp'] = humanize_timedelta(seconds=reminder['repeat'])
+                    await db.reminders.replace_one({'user_id': reminder['user_id'], 'nid': reminder['nid']}, reminder)
+                else:
+                    await db.reminders.delete_one({'user_id': reminder['user_id'], 'nid': reminder['nid']})
+
         stime = int(time.time())
         to_remove = []
         count = await db.reminders.estimated_document_count()
@@ -216,16 +228,10 @@ class Reminder(commands.Cog):
                     pass
                 to_remove.append(reminder)
         if to_remove:
-            for reminder in to_remove:
-                if reminder['repeat']:
-                    if reminder['repeat'] < 86400:
-                        reminder['repeat'] = 86400
-                    while reminder['future_time'] <= int(time.time()):
-                        reminder['future_time'] += reminder['repeat']
-                    reminder['future_timestamp'] = humanize_timedelta(seconds=reminder['repeat'])
-                    await db.reminders.replace_one({'user_id': reminder['user_id'], 'nid': reminder['nid']}, reminder)
-                else:
-                    await db.reminders.delete_one({'user_id': reminder['user_id'], 'nid': reminder['nid']})
+            try:
+                asyncio.wait_for(remove(to_remove), timeout=19.0)
+            except asyncio.TimeoutError:
+                log.critical('Deleting reminders timed out. Something went very wrong.')
 
     @check_reminders.before_loop
     async def wait_ready(self):
