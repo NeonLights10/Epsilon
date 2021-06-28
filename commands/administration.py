@@ -200,7 +200,7 @@ class Administration(commands.Cog):
                                             {"$set": {'welcome_message': welcome_message, 'welcome_banner': url}})
                 embed = gen_embed(title='welcomeconfig',
                                   content=f"Welcome message set for {ctx.guild.name}: {welcome_message}")
-                embed.set_image(url)
+                embed.set_image(url=url)
                 await ctx.send(embed=embed)
             else:
                 await ctx.send(embed=gen_embed(title='Input Error',
