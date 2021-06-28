@@ -229,7 +229,7 @@ class Reminder(commands.Cog):
                 to_remove.append(reminder)
         if to_remove:
             try:
-                asyncio.wait_for(remove(to_remove), timeout=19.0)
+                await asyncio.wait_for(remove(to_remove), timeout=19.0)
             except asyncio.TimeoutError:
                 log.critical('Deleting reminders timed out. Something went very wrong.')
 
