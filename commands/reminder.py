@@ -136,6 +136,7 @@ class Reminder(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.lock = asyncio.Lock()
+        self.to_remove = []
         optional_in_every = r"(in\s+|every\s+)?"
         amount_and_time = r"\d+\s*(weeks?|w|days?|d|hours?|hrs|hr?|minutes?|mins?|m(?!o)|seconds?|secs?|s)"
         optional_comma_space_and = r"[\s,]*(and)?\s*"
@@ -170,20 +171,9 @@ class Reminder(commands.Cog):
         self.printer.cancel()
 
     async def do_check_reminders(self):
-        async def remove(to_remove):
-            for reminder in to_remove:
-                if reminder['repeat']:
-                    if reminder['repeat'] < 86400:
-                        reminder['repeat'] = 86400
-                    while reminder['future_time'] <= int(time.time()):
-                        reminder['future_time'] += reminder['repeat']
-                    reminder['future_timestamp'] = humanize_timedelta(seconds=reminder['repeat'])
-                    await db.reminders.replace_one({'user_id': reminder['user_id'], 'nid': reminder['nid']}, reminder)
-                else:
-                    await db.reminders.delete_one({'user_id': reminder['user_id'], 'nid': reminder['nid']})
-
+        log.info('starting check for reminders')
         stime = int(time.time())
-        to_remove = []
+        self.to_remove = []
         count = await db.reminders.estimated_document_count()
         if count > 0:
             query = {'future_time': {'$lt': stime}}
@@ -191,7 +181,7 @@ class Reminder(commands.Cog):
             async for reminder in reminders:
                 user = self.bot.get_user(reminder['user_id'])
                 if user is None:
-                    to_remove.append(reminder)
+                    self.to_remove.append(reminder)
 
                 delay = int(stime) - int(reminder['future_time'])
                 embed = discord.Embed(
@@ -222,16 +212,11 @@ class Reminder(commands.Cog):
                 except (discord.errors.Forbidden, discord.errors.Forbidden):
                     # Can't send DMs to user, delete it
                     log.error('Could not send reminder dm to user, deleting reminder')
-                    to_remove.append(reminder)
+                    self.to_remove.append(reminder)
                 except discord.HTTPException:
                     # Something weird happened: retry next time
                     pass
-                to_remove.append(reminder)
-        if to_remove:
-            try:
-                await asyncio.wait_for(remove(to_remove), timeout=19.0)
-            except asyncio.TimeoutError:
-                log.critical('Deleting reminders timed out. Something went very wrong.')
+                self.to_remove.append(reminder)
 
     @tasks.loop(seconds=10)
     async def check_reminders(self):
@@ -245,7 +230,22 @@ class Reminder(commands.Cog):
 
     @check_reminders.before_loop
     async def wait_ready(self):
+        log.info('wait till ready')
         await self.bot.wait_until_ready()
+
+    @check_reminders.after_loop
+    async def delete_expired_reminders(self):
+        log.info('deleting them reminders')
+        for reminder in self.to_remove:
+            if reminder['repeat']:
+                if reminder['repeat'] < 86400:
+                    reminder['repeat'] = 86400
+                while reminder['future_time'] <= int(time.time()):
+                    reminder['future_time'] += reminder['repeat']
+                reminder['future_timestamp'] = humanize_timedelta(seconds=reminder['repeat'])
+                await db.reminders.replace_one({'user_id': reminder['user_id'], 'nid': reminder['nid']}, reminder)
+            else:
+                await db.reminders.delete_one({'user_id': reminder['user_id'], 'nid': reminder['nid']})
 
     @commands.group(name='reminder',
                     description='Manage your reminders.')
