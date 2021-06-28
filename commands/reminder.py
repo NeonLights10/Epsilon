@@ -235,8 +235,13 @@ class Reminder(commands.Cog):
 
     @tasks.loop(seconds=10)
     async def check_reminders(self):
-        async with self.lock:
-            await self.do_check_reminders()
+        if self.check_reminders.is_running():
+            log.info('running, cancel')
+            return
+        else:
+            log.info('no running, go')
+            async with self.lock:
+                await self.do_check_reminders()
 
     @check_reminders.before_loop
     async def wait_ready(self):
