@@ -171,7 +171,6 @@ class Reminder(commands.Cog):
         self.printer.cancel()
 
     async def do_check_reminders(self):
-        start = timer()
         log.info('starting check for reminders')
         stime = int(time.time())
         to_remove = []
@@ -231,15 +230,18 @@ class Reminder(commands.Cog):
                                                    reminder)
                 else:
                     await db.reminders.delete_one({'user_id': reminder['user_id'], 'nid': reminder['nid']})
-        end = timer()
+
         log.info('completed task')
-        log.info(f'{end - start}')
+
 
     @tasks.loop(seconds=10)
     async def check_reminders(self):
+        start = timer()
         async with self.lock:
             await self.do_check_reminders()
-
+        end = timer()
+        log.info(f'{end - start}')
+        
     @check_reminders.before_loop
     async def wait_ready(self):
         log.info('wait till ready')
