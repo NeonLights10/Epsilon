@@ -135,6 +135,7 @@ class Reminder(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.lock = asyncio.Lock()
         optional_in_every = r"(in\s+|every\s+)?"
         amount_and_time = r"\d+\s*(weeks?|w|days?|d|hours?|hrs|hr?|minutes?|mins?|m(?!o)|seconds?|secs?|s)"
         optional_comma_space_and = r"[\s,]*(and)?\s*"
@@ -168,8 +169,7 @@ class Reminder(commands.Cog):
     def cog_unload(self):
         self.printer.cancel()
 
-    @tasks.loop(seconds=10)
-    async def check_reminders(self):
+    async def do_check_reminders(self):
         async def remove(to_remove):
             for reminder in to_remove:
                 if reminder['repeat']:
@@ -194,15 +194,15 @@ class Reminder(commands.Cog):
                     to_remove.append(reminder)
 
                 delay = int(stime) - int(reminder['future_time'])
-                embed=discord.Embed(
-                        title = f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
-                        colour = 0x1abc9c
+                embed = discord.Embed(
+                    title=f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
+                    colour=0x1abc9c
                 )
                 if delay > self.SEND_DELAY_SECONDS:
                     embed.set_footer(
                         text=f"""This was supposed to send {humanize_timedelta(seconds=delay)} ago.
-                            I might be having network or server issues, or perhaps I just started up.
-                            Sorry about that!"""
+                                    I might be having network or server issues, or perhaps I just started up.
+                                    Sorry about that!"""
                     )
                 embed_name = f"From {reminder['future_timestamp']} ago:"
                 if reminder['repeat']:
@@ -213,14 +213,14 @@ class Reminder(commands.Cog):
                 if reminder['jump_link']:
                     reminder_text += f"\n\n[original message]({reminder['jump_link']})"
                 embed.add_field(
-                    name = embed_name,
-                    value = reminder_text,
+                    name=embed_name,
+                    value=reminder_text,
                 )
 
                 try:
                     await user.send(embed=embed)
                 except (discord.errors.Forbidden, discord.errors.Forbidden):
-                    #Can't send DMs to user, delete it
+                    # Can't send DMs to user, delete it
                     log.error('Could not send reminder dm to user, deleting reminder')
                     to_remove.append(reminder)
                 except discord.HTTPException:
@@ -232,6 +232,11 @@ class Reminder(commands.Cog):
                 asyncio.wait_for(remove(to_remove), timeout=19.0)
             except asyncio.TimeoutError:
                 log.critical('Deleting reminders timed out. Something went very wrong.')
+
+    @tasks.loop(seconds=10)
+    async def check_reminders(self):
+        async with self.lock:
+            await self.do_check_reminders()
 
     @check_reminders.before_loop
     async def wait_ready(self):
