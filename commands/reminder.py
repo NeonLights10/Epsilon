@@ -646,7 +646,7 @@ class Reminder(commands.Cog):
             if await reminder_exists(post):
                 return
             await db.reminders.insert_one(post)
-            message = 'Hello! I will also send you'
+            message = 'Hello! I will also send you '
             if post['repeat']:
                 human_repeat = humanize_timedelta(seconds=post["repeat"])
                 message += f"those reminders every {human_repeat}"
