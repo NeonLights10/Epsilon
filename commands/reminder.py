@@ -243,7 +243,7 @@ class Reminder(commands.Cog):
 
     @check_reminders.before_loop
     async def wait_ready(self):
-        log.info('wait till ready')
+        #log.info('wait till ready')
         await self.bot.wait_until_ready()
 
     @commands.group(name='reminder',
