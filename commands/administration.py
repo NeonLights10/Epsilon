@@ -837,7 +837,7 @@ class Administration(commands.Cog):
                     await logChannel.send(embed=embed)
                 return #if this happens we should zip out
 
-            elif len(results) == 2:
+            elif len(results) == 2 and severity != 2:
                 # we need to do this now since severity was not 2
                 # yes it's kinda redundant to do it here but this reduces calls to the DB
                 msg = await mutetime()
