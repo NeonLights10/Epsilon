@@ -140,6 +140,7 @@ async def _initialize_document(guild, id):
             'modmail_channel': None,
             'fun': True,
             'prefix': None,
+            'blacklist': []
             }
     log.info(f"Creating document for {guild.name}...")
     await db.servers.insert_one(post)
@@ -156,6 +157,7 @@ async def _check_document(guild, id):
             {"server_id": id},
             [{'$set': {
                 "log_joinleaves": {'$cond': [{'$not': ["$log_joinleaves"]}, False, "$log_joinleaves"]},
+                "blacklist": {'$cond': [{'$not': ["$blacklist"]}, [], "$blacklist"]},
                 "log_kbm": {'$cond': [{'$not': ["$log_kbm"]}, False, "$log_kbm"]},
                 "log_strikes": {'$cond': [{'$not': ["$log_strikes"]}, False, "$log_strikes"]}
             }}]
@@ -447,12 +449,13 @@ async def get_msgid(message, attempts=1):
                 try:
                     msg = await channel.fetch_message(msgid['msg_id'])
                     # Now let's double check that we aren't mentioning ourself or another bot, and that the messages has no embeds or attachments.
+                    document = await db.servers.find_one({"server_id": message.guild.id})
                     if (re.match('^%|^\^|^\$|^!|^\.|@', msg.content) is None) and (
                             re.match(f'<@!?{bot.user.id}>', msg.content) is None) and (len(msg.embeds) == 0) and (
-                            msg.author.bot is False):
-                        log.info("Attempts taken:{}".format(attempts))
-                        log.info("Message ID:{}".format(msg.id))
-                        return msg.clean_content
+                            msg.author.bot is False) and (msg.channel.id not in document['blacklist']):
+                                log.info("Attempts taken:{}".format(attempts))
+                                log.info("Message ID:{}".format(msg.id))
+                                return msg.clean_content
                     else:
                         # If we fail, remove that message ID from the DB so we never call it again.
                         attempts += 1
