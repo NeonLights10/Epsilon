@@ -139,7 +139,7 @@ async def _initialize_document(guild, id):
             'max_strike': 3,
             'modmail_channel': None,
             'fun': True,
-            'chat:' False,
+            'chat': False,
             'prefix': None,
             'blacklist': [],
             'whitelist': []
