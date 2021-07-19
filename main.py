@@ -316,12 +316,12 @@ async def on_message(message):
                                             attachnum += 1
                                     await ctx.send(embed=gen_embed(title='Modmail sent',
                                                                    content=f'Sent modmail to {user.name}#{user.discriminator}.'))
-                        else:
+                        elif document['chat']:
                             log.info("Found a reply to me, generating response...")
                             msg = await get_msgid(ctx.message)
                             log.info(f"Message retrieved: {msg}\n")
                             await ctx.message.reply(content=msg)
-                    elif document['chat']:
+                    else:
                         post = {'server_id': ctx.guild.id,
                                 'channel_id': ctx.channel.id,
                                 'msg_id': ctx.message.id}
