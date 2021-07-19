@@ -161,6 +161,31 @@ class Administration(commands.Cog):
             await ctx.send(embed=gen_embed(title='blacklist',
                                            content=f'Unblacklisted channel {channel_id.mention} for {ctx.guild.name}'))
 
+    @commands.command(name='whitelist',
+                      description='Add a channel to the whitelist (Kanon will only listen to messages/commands in these channels.)',
+                      help='Usage\n\n%whitelist [add/remove] [channel id/channel mention]')
+    async def blacklist(self, ctx, channel_option: str, channel_id: discord.TextChannel):
+        valid_options = {'add', 'remove', 'delete'}
+        channel_option = channel_option.lower()
+        if channel_option not in valid_options:
+            params = ' '.join([x for x in valid_options])
+            await ctx.send(embed=gen_embed(title='Input Error',
+                                           content=f'That is not a valid option for this parameter. Valid options: <{params}>'))
+            return
+
+        document = await db.servers.find_one({"server_id": ctx.guild.id})
+        whitelist = document['whitelist']
+        if channel_option == 'add':
+            whitelist.append(channel_id.id)
+            await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
+            await ctx.send(embed=gen_embed(title='whitelist',
+                                           content=f'Whitelisted channel {channel_id.mention} for {ctx.guild.name}'))
+        elif channel_option == 'remove' or 'delete':
+            whitelist.remove(channel_id.id)
+            await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
+            await ctx.send(embed=gen_embed(title='whitelist',
+                                           content=f'Unwhitelisted channel {channel_id.mention} for {ctx.guild.name}'))
+
     @commands.command(name='channelconfig',
                       description='Set channel for logs and welcome messages.',
                       help='Usage\n\n%channelconfig [log/welcome/modmail] [channel id/channel mention] OR [disable] to turn off')
@@ -237,10 +262,10 @@ class Administration(commands.Cog):
 
     @commands.command(name='serverconfig',
                       description='Set various server config settings.',
-                      help='Usage\n\n%serverconfig [option] [enable/disable]\nAvailable settings - fun, log_joinleave, log_kbm, log_strikes')
+                      help='Usage\n\n%serverconfig [option] [enable/disable]\nAvailable settings - fun (commands from fun cog), log_joinleave (log joins and leaves), log_kbm (log kicks, bans, and mutes), log_strikes (log strikes), chat (enables/disables chat function')
     @commands.check_any(commands.has_guild_permissions(manage_guild=True), has_modrole())
     async def serverconfig(self, ctx, config_option: str, value: str):
-        valid_options = {'fun', 'log_joinleave', 'log_kbm', 'log_strikes'}
+        valid_options = {'fun', 'log_joinleave', 'log_kbm', 'log_strikes', 'chat'}
         valid_values = {'enable', 'disable'}
         config_option = config_option.lower()
         value = value.lower()
@@ -260,6 +285,20 @@ class Administration(commands.Cog):
                     await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'fun': False}})
                     await ctx.send(embed=gen_embed(title='serverconfig',
                                                    content=f'Fun commands have been disabled for {ctx.guild.name}'))
+            else:
+                log.warning("Error: Invalid input")
+                await ctx.send(embed=gen_embed(title='Input Error',
+                                               content='That is not a valid option for this parameter. Valid values: "enable" "disable"'))
+        elif config_option == 'chat':
+            if value in valid_values:
+                if value == 'enable':
+                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'chat': True}})
+                    await ctx.send(embed=gen_embed(title='serverconfig',
+                                                   content=f'Chat function has been enabled for {ctx.guild.name}. Remember to blacklist channels you do not want Kanon to listen to.'))
+                if value == 'disable':
+                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'chat': False}})
+                    await ctx.send(embed=gen_embed(title='serverconfig',
+                                                   content=f'Chat function has been disabled for {ctx.guild.name}'))
             else:
                 log.warning("Error: Invalid input")
                 await ctx.send(embed=gen_embed(title='Input Error',

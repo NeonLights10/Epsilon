@@ -139,8 +139,10 @@ async def _initialize_document(guild, id):
             'max_strike': 3,
             'modmail_channel': None,
             'fun': True,
+            'chat:' False,
             'prefix': None,
-            'blacklist': []
+            'blacklist': [],
+            'whitelist': []
             }
     log.info(f"Creating document for {guild.name}...")
     await db.servers.insert_one(post)
@@ -158,8 +160,10 @@ async def _check_document(guild, id):
             [{'$set': {
                 "log_joinleaves": {'$cond': [{'$not': ["$log_joinleaves"]}, False, "$log_joinleaves"]},
                 "blacklist": {'$cond': [{'$not': ["$blacklist"]}, [], "$blacklist"]},
+                "whitelist": {'$cond': [{'$not': ["$whitelist"]}, [], "$whitelist"]},
                 "log_kbm": {'$cond': [{'$not': ["$log_kbm"]}, False, "$log_kbm"]},
-                "log_strikes": {'$cond': [{'$not': ["$log_strikes"]}, False, "$log_strikes"]}
+                "log_strikes": {'$cond': [{'$not': ["$log_strikes"]}, False, "$log_strikes"]},
+                "chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]}
             }}]
         )
 
@@ -268,67 +272,70 @@ async def on_message(message):
     ctx = await bot.get_context(message)
 
     if isinstance(ctx.channel, discord.TextChannel):
+        document = await db.servers.find_one({"server_id": ctx.guild.id})
+
         if ctx.guild.id == 432379300684103699:
             await _emoji_log(message)
-        if ctx.author.bot is False:
-            if ctx.prefix:
-                log.info(
-                    f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
-                await bot.invoke(ctx)
-            elif ctx.message.reference:
-                ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
-                document = await db.servers.find_one({"server_id": ctx.guild.id})
-                if ref_message.author == bot.user:
-                    # modmail logic
-                    if ctx.channel.id == document['modmail_channel']:
-                        valid_options = {'New Modmail', 'Attachment'}
-                        if ref_message.embeds[0].title in valid_options:
-                            ref_embed = ref_message.embeds[0].footer
-                            user_id = ref_embed.text
-                            user = await bot.fetch_user(user_id)
-                            if document['modmail_channel']:
-                                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
-                                                  title="New Modmail",
-                                                  content=f'{message.clean_content}\n\nYou may reply to this modmail using the reply function.')
-                                embed.set_footer(text=f"{ctx.guild.id}")
-                                dm_channel = user.dm_channel
-                                if user.dm_channel is None:
-                                    dm_channel = await user.create_dm()
-                                await dm_channel.send(embed=embed)
-                                if len(ctx.message.attachments) > 0:
-                                    attachnum = 1
-                                    for attachment in ctx.message.attachments:
-                                        embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
-                                                          title='Attachment', content=f'Attachment #{attachnum}:')
-                                        embed.set_image(url=attachment.url)
-                                        embed.set_footer(text=f'{ctx.guild.id}')
-                                        await dm_channel.send(embed=embed)
-                                        attachnum += 1
-                                await ctx.send(embed=gen_embed(title='Modmail sent',
-                                                               content=f'Sent modmail to {user.name}#{user.discriminator}.'))
-                    elif document['fun']:
-                        log.info("Found a reply to me, generating response...")
-                        msg = await get_msgid(ctx.message)
+
+        whitelist = document['whitelist']
+        if whitelist and ctx.channel not in whitelist:
+            return
+        else:
+            if ctx.author.bot is False:
+                if ctx.prefix:
+                    log.info(
+                        f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
+                    await bot.invoke(ctx)
+                elif ctx.message.reference:
+                    ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
+                    if ref_message.author == bot.user:
+                        # modmail logic
+                        if ctx.channel.id == document['modmail_channel']:
+                            valid_options = {'New Modmail', 'Attachment'}
+                            if ref_message.embeds[0].title in valid_options:
+                                ref_embed = ref_message.embeds[0].footer
+                                user_id = ref_embed.text
+                                user = await bot.fetch_user(user_id)
+                                if document['modmail_channel']:
+                                    embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
+                                                      title="New Modmail",
+                                                      content=f'{message.clean_content}\n\nYou may reply to this modmail using the reply function.')
+                                    embed.set_footer(text=f"{ctx.guild.id}")
+                                    dm_channel = user.dm_channel
+                                    if user.dm_channel is None:
+                                        dm_channel = await user.create_dm()
+                                    await dm_channel.send(embed=embed)
+                                    if len(ctx.message.attachments) > 0:
+                                        attachnum = 1
+                                        for attachment in ctx.message.attachments:
+                                            embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
+                                                              title='Attachment', content=f'Attachment #{attachnum}:')
+                                            embed.set_image(url=attachment.url)
+                                            embed.set_footer(text=f'{ctx.guild.id}')
+                                            await dm_channel.send(embed=embed)
+                                            attachnum += 1
+                                    await ctx.send(embed=gen_embed(title='Modmail sent',
+                                                                   content=f'Sent modmail to {user.name}#{user.discriminator}.'))
+                        else:
+                            log.info("Found a reply to me, generating response...")
+                            msg = await get_msgid(ctx.message)
+                            log.info(f"Message retrieved: {msg}\n")
+                            await ctx.message.reply(content=msg)
+                    elif document['chat']:
+                        post = {'server_id': ctx.guild.id,
+                                'channel_id': ctx.channel.id,
+                                'msg_id': ctx.message.id}
+                        await db.msgid.insert_one(post)
+                elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
+                    if document['chat']:
+                        log.info("Found a mention of myself, generating response...")
+                        if re.search('hou', ctx.message.clean_content):
+                            msg = 'hou is god'
+                        else:
+                            msg = await get_msgid(ctx.message)
                         log.info(f"Message retrieved: {msg}\n")
                         await ctx.message.reply(content=msg)
-                elif document['fun']:
-                    post = {'server_id': ctx.guild.id,
-                            'channel_id': ctx.channel.id,
-                            'msg_id': ctx.message.id}
-                    await db.msgid.insert_one(post)
-            elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
-                document = await db.servers.find_one({"server_id": ctx.guild.id})
-                if document['fun']:
-                    log.info("Found a mention of myself, generating response...")
-                    if re.search('hou', ctx.message.clean_content):
-                        msg = 'hou is god'
-                    else:
-                        msg = await get_msgid(ctx.message)
-                    log.info(f"Message retrieved: {msg}\n")
-                    await ctx.message.reply(content=msg)
-            else:
-                document = await db.servers.find_one({"server_id": ctx.guild.id})
-                if document['fun']:
+                else:
                     post = {'server_id': ctx.guild.id,
                             'channel_id': ctx.channel.id,
                             'msg_id': ctx.message.id}
