@@ -625,14 +625,14 @@ class Reminder(commands.Cog):
                 try:
                     parsed = parse_timedelta(
                         testing_text,
-                        minimum=timedelta(days=1),
-                        allowed_units=["weeks", "days"],
+                        minimum=timedelta(hours=1),
+                        allowed_units=["weeks", "days", "hours"],
                     )
                 except commands.BadArgument as ba:
                     orig_message = str(ba)[0].lower() + str(ba)[1:]
                     raise BadArgument(
                         f"For the repeating portion of this reminder, {orig_message}. "
-                        "You must only use `days` or `weeks` when dealing with repeating reminders."
+                        "You must only use `days`, `weeks`, or `hours` when dealing with repeating reminders."
                     )
             else:
                 parsed = parse_timedelta(testing_text, minimum=timedelta(minutes=1))
