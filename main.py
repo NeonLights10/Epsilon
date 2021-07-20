@@ -21,6 +21,7 @@ from pymongo import MongoClient
 
 from formatting.constants import VERSION as BOTVERSION
 from formatting.constants import NAME
+from formatting.constants import FILTER
 
 # read config information
 with open("config.json") as file:
@@ -465,9 +466,10 @@ async def get_msgid(message, attempts=1):
                     msg = await channel.fetch_message(msgid['msg_id'])
                     # Now let's double check that we aren't mentioning ourself or another bot, and that the messages has no embeds or attachments.
 
-                    if (re.match('^%|^\^|^\$|^!|^\.|@', msg.content) is None) and (
+                    filter = f"(?:{'|'.join(test_list)})"
+                    if (re.match('^%|^\^|^\$|^!|^\.|@|k!', msg.content) is None) and (
                             re.match(f'<@!?{bot.user.id}>', msg.content) is None) and (len(msg.embeds) == 0) and (
-                            msg.author.bot is False):
+                            msg.author.bot is False) and (re.match(filter, msg.content is None)):
                                 log.info("Attempts taken:{}".format(attempts))
                                 log.info("Message ID:{}".format(msg.id))
                                 return msg.clean_content
