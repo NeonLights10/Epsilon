@@ -197,7 +197,7 @@ class Reminder(commands.Cog):
                     )
                 embed_name = f"From {reminder['future_timestamp']} ago:"
                 if reminder['repeat']:
-                    embed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(reminder['repeat'], 86400))}:"
+                    embed_name = f"Repeating reminder every {humanize_timedelta(seconds=reminder['repeat'])}:"
                 reminder_text = reminder['reminder']
                 if len(reminder_text) > 900:
                     reminder_text = reminder_text[:897] + "..."
