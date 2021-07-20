@@ -731,6 +731,7 @@ class Reminder(commands.Cog):
             post = {
                 'nid': nid,
                 'user_id': member.id,
+                'channel_id': ctx.channel.id,
                 'creation_date': time.time(),
                 'reminder': reminder_text,
                 'repeat': repeat,
