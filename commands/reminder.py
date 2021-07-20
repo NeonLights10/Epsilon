@@ -174,6 +174,7 @@ class Reminder(commands.Cog):
         #log.info('starting check for reminders')
         stime = int(time.time())
         to_remove = []
+        group_send = []
         count = await db.reminders.estimated_document_count()
         if count > 0:
             query = {'future_time': {'$lt': stime}}
@@ -206,17 +207,76 @@ class Reminder(commands.Cog):
                     name=embed_name,
                     value=reminder_text,
                 )
-
-                try:
-                    await user.send(embed=embed)
-                except (discord.errors.Forbidden, discord.errors.Forbidden):
-                    # Can't send DMs to user, delete it
-                    log.error('Could not send reminder dm to user, deleting reminder')
-                    to_remove.append(reminder)
-                except discord.HTTPException:
-                    # Something weird happened: retry next time
-                    pass
+                if reminder['location'] == 'channel':
+                    group_send.append(reminder)
+                elif reminder['location'] == 'dm':
+                    try:
+                        await user.send(embed=embed)
+                    except (discord.errors.Forbidden, discord.errors.Forbidden):
+                        # Can't send DMs to user, delete it
+                        log.error('Could not send reminder dm to user, deleting reminder')
+                        to_remove.append(reminder)
+                    except discord.HTTPException:
+                        # Something weird happened: retry next time
+                        pass
                 to_remove.append(reminder)
+        if group_send:
+            #take first reminder in list - check every other. if match, pop and save user id
+            #send message with mentions first - then send embed
+            #repeat until list is empty
+            def group_reminder_exists(reminder, new_reminder):
+                if (
+                        reminder['reminder'] == new_reminder['reminder']
+                        and reminder['future_time'] == new_reminder['future_time']
+                        and reminder['future_timestamp'] == new_reminder['future_timestamp']
+                ):
+                    return True
+                return False
+
+            async def send_group_reminders(group_send):
+                if len(group_send) == 0:
+                    return
+
+                base_reminder = group_send.pop(0)
+                user_mentions = []
+                for reminder in group_send[:]:
+                    if group_reminder_exists(base_reminder, reminder):
+                        user = self.bot.get_user(reminder['user_id'])
+                        if user is None:
+                            pass
+                        user_mentions.append(user.mention)
+                        group_send.remove(reminder)
+
+                delay = int(stime) - int(reminder['future_time'])
+                embed = discord.Embed(
+                    title=f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
+                    colour=0x1abc9c
+                )
+                if delay > self.SEND_DELAY_SECONDS:
+                    embed.set_footer(
+                        text=f"""This was supposed to send {humanize_timedelta(seconds=delay)} ago.
+                                                    I might be having network or server issues, or perhaps I just started up.
+                                                    Sorry about that!"""
+                    )
+                embed_name = f"From {reminder['future_timestamp']} ago:"
+                if reminder['repeat']:
+                    embed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(reminder['repeat'], 86400))}:"
+                reminder_text = reminder['reminder']
+                if len(reminder_text) > 900:
+                    reminder_text = reminder_text[:897] + "..."
+                if reminder['jump_link']:
+                    reminder_text += f"\n\n[original message]({reminder['jump_link']})"
+                embed.add_field(
+                    name=embed_name,
+                    value=reminder_text,
+                )
+                channel = self.bot.get_channel(reminder['channel_id'])
+                await channel.send(f"{''.join(user_mentions)}")
+                await channel.send(embed=embed)
+                send_group_reminders(group_send)
+
+            send_group_reminders(group_send)
+
         if to_remove:
             #log.info('deleting them reminders')
             for reminder in to_remove:
@@ -421,6 +481,24 @@ class Reminder(commands.Cog):
                                         content=message))
 
     async def _create_reminder(self, ctx, time_and_optional_text: str):
+        async def get_location(attempts = 1):
+            def check(m):
+                return m.author == ctx.author
+
+            await ctx.send(embed=gen_embed(title='Reminder location',
+                                           content='Where would you like to be reminded? Available options are [channel] to be reminded here, or [dm] to be reminded in dms.'))
+            msg = await self.bot.wait_for('message', check=check)
+            if re.match('(^channel$)|(^dm$)', msg.clean_content, flags=re.I):
+                return msg.clean_content
+            elif attempts > 3:
+                # exit out so we don't crash in a recursive loop due to user incompetency
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed=gen_embed(title='Reminder Duration',
+                                               content="Sorry, I didn't catch that or it was an invalid format."))
+                attempts += 1
+                return await get_location(attempts)
+
         try:
             (reminder_time, reminder_time_repeat, reminder_text) = self._process_reminder_text(time_and_optional_text.strip())
         except discord.ext.commands.BadArgument as ba:
@@ -437,6 +515,13 @@ class Reminder(commands.Cog):
             await ctx.reply(embed=gen_embed(title="Exceeded length limit",
                                             content='Your reminder text is too long (must be <900 characters)'))
             return
+
+        msg = await get_location()
+        location = None
+        if msg == 'channel':
+            location = 'channel'
+        elif msg == 'dm':
+            location = 'dm'
         repeat = (int(reminder_time_repeat.total_seconds()) if reminder_time_repeat else None)
         future_timeunix = int(time.time() + reminder_time.total_seconds())
         future_timestamp = humanize_timedelta(timedelta=reminder_time)
@@ -445,13 +530,15 @@ class Reminder(commands.Cog):
         post = {
             'nid': nid,
             'user_id': ctx.author.id,
+            'channel_id': ctx.channel.id,
             'creation_date': time.time(),
             'reminder': reminder_text,
             'repeat': repeat,
             'future_time': future_timeunix,
             'future_timestamp': future_timestamp,
             'jump_link': ctx.message.jump_url,
-            'query_id': None
+            'query_id': None,
+            'location': location
         }
         reminder = await db.reminders.insert_one(post)
 
