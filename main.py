@@ -469,7 +469,7 @@ async def get_msgid(message, attempts=1):
                     filter = f"(?:{'|'.join(FILTER)})"
                     if (re.match('^%|^\^|^\$|^!|^\.|@|k!', msg.content) is None) and (
                             re.match(f'<@!?{bot.user.id}>', msg.content) is None) and (len(msg.embeds) == 0) and (
-                            msg.author.bot is False) and (re.match(filter, msg.content is None)):
+                            msg.author.bot is False) and (re.match(filter, msg.content) is None):
                                 log.info("Attempts taken:{}".format(attempts))
                                 log.info("Message ID:{}".format(msg.id))
                                 return msg.clean_content
