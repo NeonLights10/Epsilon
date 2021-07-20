@@ -154,6 +154,10 @@ async def _check_document(guild, id):
         log.info("Did not find one, creating document...")
         await _initialize_document(guild, id)
     else:
+        document = await db.servers.find_one({"server_id": id})
+        blacklist = document['blacklist']
+        for channel_id in blacklist:
+            await db.msgid.delete_many({"channel_id": channel_id})
         # Update this list as new fields are inserted
         await db.servers.update_many(
             {"server_id": id},
@@ -459,11 +463,9 @@ async def get_msgid(message, attempts=1):
                     msg = await channel.fetch_message(msgid['msg_id'])
                     # Now let's double check that we aren't mentioning ourself or another bot, and that the messages has no embeds or attachments.
 
-                    #DEPRECATED - USED FOR SERVERS THAT EXISTED BEFORE BLACKLIST ONLY - remove this document check after a few months
-                    document = await db.servers.find_one({"server_id": message.guild.id})
                     if (re.match('^%|^\^|^\$|^!|^\.|@', msg.content) is None) and (
                             re.match(f'<@!?{bot.user.id}>', msg.content) is None) and (len(msg.embeds) == 0) and (
-                            msg.author.bot is False) and (msg.channel.id not in document['blacklist']):
+                            msg.author.bot is False):
                                 log.info("Attempts taken:{}".format(attempts))
                                 log.info("Message ID:{}".format(msg.id))
                                 return msg.clean_content

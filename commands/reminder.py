@@ -234,48 +234,45 @@ class Reminder(commands.Cog):
                 return False
 
             async def send_group_reminders(group_send):
-                if len(group_send) == 0:
-                    return
+                while len(group_send) != 0:
+                    base_reminder = group_send.pop(0)
+                    user_mentions = []
+                    for reminder in group_send[:]:
+                        if group_reminder_exists(base_reminder, reminder):
+                            user = self.bot.get_user(reminder['user_id'])
+                            if user is None:
+                                pass
+                            user_mentions.append(user.mention)
+                            group_send.remove(reminder)
 
-                base_reminder = group_send.pop(0)
-                user_mentions = []
-                for reminder in group_send[:]:
-                    if group_reminder_exists(base_reminder, reminder):
-                        user = self.bot.get_user(reminder['user_id'])
-                        if user is None:
-                            pass
-                        user_mentions.append(user.mention)
-                        group_send.remove(reminder)
-
-                delay = int(stime) - int(reminder['future_time'])
-                embed = discord.Embed(
-                    title=f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
-                    colour=0x1abc9c
-                )
-                if delay > self.SEND_DELAY_SECONDS:
-                    embed.set_footer(
-                        text=f"""This was supposed to send {humanize_timedelta(seconds=delay)} ago.
-                                                    I might be having network or server issues, or perhaps I just started up.
-                                                    Sorry about that!"""
+                    delay = int(stime) - int(reminder['future_time'])
+                    embed = discord.Embed(
+                        title=f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
+                        colour=0x1abc9c
                     )
-                embed_name = f"From {reminder['future_timestamp']} ago:"
-                if reminder['repeat']:
-                    embed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(reminder['repeat'], 86400))}:"
-                reminder_text = reminder['reminder']
-                if len(reminder_text) > 900:
-                    reminder_text = reminder_text[:897] + "..."
-                if reminder['jump_link']:
-                    reminder_text += f"\n\n[original message]({reminder['jump_link']})"
-                embed.add_field(
-                    name=embed_name,
-                    value=reminder_text,
-                )
-                channel = self.bot.get_channel(reminder['channel_id'])
-                await channel.send(f"{''.join(user_mentions)}")
-                await channel.send(embed=embed)
-                send_group_reminders(group_send)
+                    if delay > self.SEND_DELAY_SECONDS:
+                        embed.set_footer(
+                            text=f"""This was supposed to send {humanize_timedelta(seconds=delay)} ago.
+                                                        I might be having network or server issues, or perhaps I just started up.
+                                                        Sorry about that!"""
+                        )
+                    embed_name = f"From {reminder['future_timestamp']} ago:"
+                    if reminder['repeat']:
+                        embed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(reminder['repeat'], 86400))}:"
+                    reminder_text = reminder['reminder']
+                    if len(reminder_text) > 900:
+                        reminder_text = reminder_text[:897] + "..."
+                    if reminder['jump_link']:
+                        reminder_text += f"\n\n[original message]({reminder['jump_link']})"
+                    embed.add_field(
+                        name=embed_name,
+                        value=reminder_text,
+                    )
+                    channel = self.bot.get_channel(reminder['channel_id'])
+                    await channel.send(f"{''.join(user_mentions)}")
+                    await channel.send(embed=embed)
 
-            send_group_reminders(group_send)
+            await send_group_reminders(group_send)
 
         if to_remove:
             #log.info('deleting them reminders')

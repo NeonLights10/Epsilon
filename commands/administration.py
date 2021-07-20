@@ -153,6 +153,7 @@ class Administration(commands.Cog):
         if channel_option == 'add':
             for channel in channel_id:
                 blacklist.append(channel.id)
+                await db.msgid.delete_many({"channel_id": channel.id})
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
                                            content=f'Blacklisted channel {channel_id.mention} for {ctx.guild.name}'))
