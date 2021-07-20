@@ -458,6 +458,8 @@ async def get_msgid(message, attempts=1):
                 try:
                     msg = await channel.fetch_message(msgid['msg_id'])
                     # Now let's double check that we aren't mentioning ourself or another bot, and that the messages has no embeds or attachments.
+
+                    #DEPRECATED - USED FOR SERVERS THAT EXISTED BEFORE BLACKLIST ONLY - remove this document check after a few months
                     document = await db.servers.find_one({"server_id": message.guild.id})
                     if (re.match('^%|^\^|^\$|^!|^\.|@', msg.content) is None) and (
                             re.match(f'<@!?{bot.user.id}>', msg.content) is None) and (len(msg.embeds) == 0) and (
