@@ -153,8 +153,13 @@ class Administration(commands.Cog):
         if channel_option == 'add':
             channels_added = ""
             for channel in channel_id:
-                blacklist.append(channel.id)
-                channels_added += f"{channel.mention} "
+                if channel.id not in blacklist:
+                    blacklist.append(channel.id)
+                    channels_added += f"{channel.mention} "
+                else:
+                    await ctx.send(embed=gen_embed(title='Input Error',
+                                                   content=f'This channel is already blacklisted!'))
+                    return
                 await db.msgid.delete_many({"channel_id": channel.id})
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
@@ -162,8 +167,13 @@ class Administration(commands.Cog):
         elif channel_option == 'remove' or 'delete':
             channels_removed = ""
             for channel in channel_id:
-                blacklist.remove(channel.id)
-                channels_removed += f"{channel.mention} "
+                if channel.id in blacklist:
+                    blacklist.remove(channel.id)
+                    channels_removed += f"{channel.mention} "
+                else:
+                    await ctx.send(embed=gen_embed(title='Input Error',
+                                                   content=f'This channel is not blacklisted!'))
+                    return
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
                                            content=f'Unblacklisted channel {channels_removed} for {ctx.guild.name}'))
@@ -185,16 +195,26 @@ class Administration(commands.Cog):
         if channel_option == 'add':
             channels_added = ""
             for channel in channel_id:
-                whitelist.append(channel.id)
-                channels_added += f"{channel.mention} "
+                if channel.id not in whitelist:
+                    whitelist.append(channel.id)
+                    channels_added += f"{channel.mention} "
+                else:
+                    await ctx.send(embed=gen_embed(title='Input Error',
+                                                   content=f'This channel is already whitelisted!'))
+                    return
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
                                            content=f'Whitelisted channel {channels_added} for {ctx.guild.name}'))
         elif channel_option == 'remove' or 'delete':
             channels_removed = ""
             for channel in channel_id:
-                whitelist.remove(channel.id)
-                channels_removed += f"{channel.mention} "
+                if channel.id in whitelist:
+                    whitelist.remove(channel.id)
+                    channels_removed += f"{channel.mention} "
+                else:
+                    await ctx.send(embed=gen_embed(title='Input Error',
+                                                   content=f'This channel is not whitelisted!'))
+                    return
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
                                            content=f'Unwhitelisted channel {channels_removed} for {ctx.guild.name}'))
