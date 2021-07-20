@@ -630,7 +630,7 @@ class Reminder(commands.Cog):
                     )
                 except commands.BadArgument as ba:
                     orig_message = str(ba)[0].lower() + str(ba)[1:]
-                    raise BadArgument(
+                    raise discord.ext.commands.BadArgument(
                         f"For the repeating portion of this reminder, {orig_message}. "
                         "You must only use `days`, `weeks`, or `hours` when dealing with repeating reminders."
                     )
