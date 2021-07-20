@@ -284,7 +284,7 @@ class Reminder(commands.Cog):
                     while reminder['future_time'] <= int(time.time()):
                         reminder['future_time'] += reminder['repeat']
                     reminder['future_timestamp'] = humanize_timedelta(seconds=reminder['repeat'])
-                    await db.reminders.replace_one({'user_id': reminder['user_id'], 'nid': reminder['nid']},
+                    await db.reminders.replace_one({'user_id': reminder['user_id'], 'nid': reminder['nid'], 'creation_date': time.time()},
                                                    reminder)
                 else:
                     await db.reminders.delete_one({'user_id': reminder['user_id'], 'nid': reminder['nid']})
