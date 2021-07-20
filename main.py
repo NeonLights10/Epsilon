@@ -466,7 +466,7 @@ async def get_msgid(message, attempts=1):
                     msg = await channel.fetch_message(msgid['msg_id'])
                     # Now let's double check that we aren't mentioning ourself or another bot, and that the messages has no embeds or attachments.
 
-                    filter = f"(?:{'|'.join(test_list)})"
+                    filter = f"(?:{'|'.join(FILTER)})"
                     if (re.match('^%|^\^|^\$|^!|^\.|@|k!', msg.content) is None) and (
                             re.match(f'<@!?{bot.user.id}>', msg.content) is None) and (len(msg.embeds) == 0) and (
                             msg.author.bot is False) and (re.match(filter, msg.content is None)):
