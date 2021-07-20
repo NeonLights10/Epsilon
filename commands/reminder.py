@@ -238,6 +238,8 @@ class Reminder(commands.Cog):
                 while len(group_send) != 0:
                     base_reminder = group_send.pop(0)
                     user_mentions = []
+                    buser = self.bot.get_user(base_reminder['user_id'])
+                    user_mentions.append(buser.mention)
                     for greminder in group_send[:]:
                         if group_reminder_exists(base_reminder, greminder):
                             guser = self.bot.get_user(greminder['user_id'])
