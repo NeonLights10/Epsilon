@@ -164,7 +164,7 @@ class Administration(commands.Cog):
     @commands.command(name='whitelist',
                       description='Add a channel to the whitelist (Kanon will only listen to messages/commands in these channels.)',
                       help='Usage\n\n%whitelist [add/remove] [channel id/channel mention]')
-    async def blacklist(self, ctx, channel_option: str, channel_id: discord.TextChannel):
+    async def whitelist(self, ctx, channel_option: str, channel_id: discord.TextChannel):
         valid_options = {'add', 'remove', 'delete'}
         channel_option = channel_option.lower()
         if channel_option not in valid_options:
