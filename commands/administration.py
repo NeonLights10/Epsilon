@@ -151,18 +151,22 @@ class Administration(commands.Cog):
         document = await db.servers.find_one({"server_id": ctx.guild.id})
         blacklist = document['blacklist']
         if channel_option == 'add':
+            channels_added = ""
             for channel in channel_id:
                 blacklist.append(channel.id)
+                channels_added += f"{channel.mention} "
                 await db.msgid.delete_many({"channel_id": channel.id})
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
-                                           content=f'Blacklisted channel {channel_id.mention} for {ctx.guild.name}'))
+                                           content=f'Blacklisted channel {channels_added} for {ctx.guild.name}'))
         elif channel_option == 'remove' or 'delete':
+            channels_removed = ""
             for channel in channel_id:
                 blacklist.remove(channel.id)
+                channels_removed += f"{channel.mention} "
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
-                                           content=f'Unblacklisted channel {channel_id.mention} for {ctx.guild.name}'))
+                                           content=f'Unblacklisted channel {channels_removed} for {ctx.guild.name}'))
 
     @commands.command(name='whitelist',
                       description='Add a channel to the whitelist (Kanon will only listen to messages/commands in these channels.)',
@@ -179,17 +183,21 @@ class Administration(commands.Cog):
         document = await db.servers.find_one({"server_id": ctx.guild.id})
         whitelist = document['whitelist']
         if channel_option == 'add':
+            channels_added = ""
             for channel in channel_id:
                 whitelist.append(channel.id)
+                channels_added += f"{channel.mention} "
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
-                                           content=f'Whitelisted channel {channel_id.mention} for {ctx.guild.name}'))
+                                           content=f'Whitelisted channel {channels_added} for {ctx.guild.name}'))
         elif channel_option == 'remove' or 'delete':
+            channels_removed = ""
             for channel in channel_id:
                 whitelist.remove(channel.id)
+                channels_removed += f"{channel.mention} "
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
-                                           content=f'Unwhitelisted channel {channel_id.mention} for {ctx.guild.name}'))
+                                           content=f'Unwhitelisted channel {channels_removed} for {ctx.guild.name}'))
 
     @commands.command(name='channelconfig',
                       description='Set channel for logs and welcome messages.',
