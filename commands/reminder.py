@@ -234,6 +234,7 @@ class Reminder(commands.Cog):
                 return False
 
             async def send_group_reminders(group_send):
+                log.info('sending group reminders (aka channel)')
                 while len(group_send) != 0:
                     base_reminder = group_send.pop(0)
                     user_mentions = []
@@ -257,7 +258,7 @@ class Reminder(commands.Cog):
                                                         Sorry about that!"""
                         )
                     gembed_name = f"From {base_reminder['future_timestamp']} ago:"
-                    if greminder['repeat']:
+                    if base_reminder['repeat']:
                         gembed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(base_reminder['repeat'], 86400))}:"
                     greminder_text = base_reminder['reminder']
                     if len(greminder_text) > 900:
@@ -275,7 +276,7 @@ class Reminder(commands.Cog):
             await send_group_reminders(group_send)
 
         if to_remove:
-            #log.info('deleting them reminders')
+            log.info('deleting them reminders')
             for reminder in to_remove:
                 if reminder['repeat']:
                     if reminder['repeat'] < 86400:
