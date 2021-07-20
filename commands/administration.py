@@ -139,7 +139,7 @@ class Administration(commands.Cog):
     @commands.command(name='blacklist',
                       description='Add a channel to the blacklist (Kanon will not save message IDs from these channels for fun commands. That means she cannot accidently leak any messages from these channels.)',
                       help='Usage\n\n%blacklist [add/remove] [channel id/channel mention]')
-    async def blacklist(self, ctx, channel_option: str, channel_id: discord.TextChannel):
+    async def blacklist(self, ctx, channel_option: str, channel_id: commands.Greedy[discord.TextChannel]):
         valid_options = {'add', 'remove', 'delete'}
         channel_option = channel_option.lower()
         if channel_option not in valid_options:
@@ -151,12 +151,14 @@ class Administration(commands.Cog):
         document = await db.servers.find_one({"server_id": ctx.guild.id})
         blacklist = document['blacklist']
         if channel_option == 'add':
-            blacklist.append(channel_id.id)
+            for channel in channel_id:
+                blacklist.append(channel.id)
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
                                            content=f'Blacklisted channel {channel_id.mention} for {ctx.guild.name}'))
         elif channel_option == 'remove' or 'delete':
-            blacklist.remove(channel_id.id)
+            for channel in channel_id:
+                blacklist.remove(channel.id)
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
                                            content=f'Unblacklisted channel {channel_id.mention} for {ctx.guild.name}'))
@@ -164,7 +166,7 @@ class Administration(commands.Cog):
     @commands.command(name='whitelist',
                       description='Add a channel to the whitelist (Kanon will only listen to messages/commands in these channels.)',
                       help='Usage\n\n%whitelist [add/remove] [channel id/channel mention]')
-    async def whitelist(self, ctx, channel_option: str, channel_id: discord.TextChannel):
+    async def whitelist(self, ctx, channel_option: str, channel_id: commands.Greedy[discord.TextChannel]):
         valid_options = {'add', 'remove', 'delete'}
         channel_option = channel_option.lower()
         if channel_option not in valid_options:
@@ -176,12 +178,14 @@ class Administration(commands.Cog):
         document = await db.servers.find_one({"server_id": ctx.guild.id})
         whitelist = document['whitelist']
         if channel_option == 'add':
-            whitelist.append(channel_id.id)
+            for channel in channel_id:
+                whitelist.append(channel.id)
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
                                            content=f'Whitelisted channel {channel_id.mention} for {ctx.guild.name}'))
         elif channel_option == 'remove' or 'delete':
-            whitelist.remove(channel_id.id)
+            for channel in channel_id:
+                whitelist.remove(channel.id)
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
                                            content=f'Unwhitelisted channel {channel_id.mention} for {ctx.guild.name}'))

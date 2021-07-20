@@ -322,10 +322,11 @@ async def on_message(message):
                             log.info(f"Message retrieved: {msg}\n")
                             await ctx.message.reply(content=msg)
                     else:
-                        post = {'server_id': ctx.guild.id,
-                                'channel_id': ctx.channel.id,
-                                'msg_id': ctx.message.id}
-                        await db.msgid.insert_one(post)
+                        if ctx.channel.id not in document['blacklist']:
+                            post = {'server_id': ctx.guild.id,
+                                    'channel_id': ctx.channel.id,
+                                    'msg_id': ctx.message.id}
+                            await db.msgid.insert_one(post)
                 elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
                     if document['chat']:
                         log.info("Found a mention of myself, generating response...")
@@ -336,10 +337,11 @@ async def on_message(message):
                         log.info(f"Message retrieved: {msg}\n")
                         await ctx.message.reply(content=msg)
                 else:
-                    post = {'server_id': ctx.guild.id,
-                            'channel_id': ctx.channel.id,
-                            'msg_id': ctx.message.id}
-                    await db.msgid.insert_one(post)
+                    if ctx.channel.id not in document['blacklist']:
+                        post = {'server_id': ctx.guild.id,
+                                'channel_id': ctx.channel.id,
+                                'msg_id': ctx.message.id}
+                        await db.msgid.insert_one(post)
 
 
     elif isinstance(ctx.channel, discord.DMChannel):
