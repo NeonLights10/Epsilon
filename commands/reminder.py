@@ -234,7 +234,7 @@ class Reminder(commands.Cog):
                 return False
 
             async def send_group_reminders(group_send):
-                log.info('sending group reminders (aka channel)')
+                #log.info('sending group reminders (aka channel)')
                 while len(group_send) != 0:
                     base_reminder = group_send.pop(0)
                     user_mentions = []
@@ -278,7 +278,7 @@ class Reminder(commands.Cog):
             await send_group_reminders(group_send)
 
         if to_remove:
-            log.info('deleting them reminders')
+            #log.info('deleting them reminders')
             for reminder in to_remove:
                 if reminder['repeat']:
                     if reminder['repeat'] < 86400:
