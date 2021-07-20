@@ -726,6 +726,7 @@ class Reminder(commands.Cog):
             future_time = found_reminder['future_time']
             future_timestamp = found_reminder['future_timestamp']
             jump_link = found_reminder['jump_link']
+            location = found_reminder['location']
             query = {'user_id': member.id}
             nid = await db.reminders.count_documents(query) + 1
             post = {
@@ -737,7 +738,8 @@ class Reminder(commands.Cog):
                 'future_time': future_time,
                 'future_timestamp': future_timestamp,
                 'jump_link': jump_link,
-                'query_id': None
+                'query_id': None,
+                'location': location
             }
             if await reminder_exists(post):
                 return
