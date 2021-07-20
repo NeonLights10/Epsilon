@@ -245,32 +245,32 @@ class Reminder(commands.Cog):
                             user_mentions.append(guser.mention)
                             group_send.remove(greminder)
 
-                        gdelay = int(stime) - int(greminder['future_time'])
-                        gembed = discord.Embed(
-                            title=f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
-                            colour=0x1abc9c
+                    gdelay = int(stime) - int(base_reminder['future_time'])
+                    gembed = discord.Embed(
+                        title=f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
+                        colour=0x1abc9c
+                    )
+                    if gdelay > self.SEND_DELAY_SECONDS:
+                        gembed.set_footer(
+                            text=f"""This was supposed to send {humanize_timedelta(seconds=delay)} ago.
+                                                        I might be having network or server issues, or perhaps I just started up.
+                                                        Sorry about that!"""
                         )
-                        if gdelay > self.SEND_DELAY_SECONDS:
-                            gembed.set_footer(
-                                text=f"""This was supposed to send {humanize_timedelta(seconds=delay)} ago.
-                                                            I might be having network or server issues, or perhaps I just started up.
-                                                            Sorry about that!"""
-                            )
-                        gembed_name = f"From {greminder['future_timestamp']} ago:"
-                        if greminder['repeat']:
-                            gembed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(greminder['repeat'], 86400))}:"
-                        greminder_text = reminder['reminder']
-                        if len(greminder_text) > 900:
-                            greminder_text = greminder_text[:897] + "..."
-                        if greminder['jump_link']:
-                            greminder_text += f"\n\n[original message]({greminder['jump_link']})"
-                        gembed.add_field(
-                            name=gembed_name,
-                            value=greminder_text,
-                        )
-                        channel = self.bot.get_channel(greminder['channel_id'])
-                        await channel.send(f"{''.join(user_mentions)}")
-                        await channel.send(embed=embed)
+                    gembed_name = f"From {base_reminder['future_timestamp']} ago:"
+                    if greminder['repeat']:
+                        gembed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(base_reminder['repeat'], 86400))}:"
+                    greminder_text = base_reminder['reminder']
+                    if len(greminder_text) > 900:
+                        greminder_text = greminder_text[:897] + "..."
+                    if base_reminder['jump_link']:
+                        greminder_text += f"\n\n[original message]({base_reminder['jump_link']})"
+                    gembed.add_field(
+                        name=gembed_name,
+                        value=greminder_text,
+                    )
+                    channel = self.bot.get_channel(base_reminder['channel_id'])
+                    await channel.send(f"{''.join(user_mentions)}")
+                    await channel.send(embed=embed)
 
             await send_group_reminders(group_send)
 
