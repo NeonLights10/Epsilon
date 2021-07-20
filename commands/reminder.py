@@ -261,7 +261,7 @@ class Reminder(commands.Cog):
                         )
                     gembed_name = f"From {base_reminder['future_timestamp']} ago:"
                     if base_reminder['repeat']:
-                        gembed_name = f"Repeating reminder every {humanize_timedelta(seconds=max(base_reminder['repeat'], 86400))}:"
+                        gembed_name = f"Repeating reminder every {humanize_timedelta(seconds=base_reminder['repeat'])}:"
                     greminder_text = base_reminder['reminder']
                     if len(greminder_text) > 900:
                         greminder_text = greminder_text[:897] + "..."
@@ -281,8 +281,6 @@ class Reminder(commands.Cog):
             #log.info('deleting them reminders')
             for reminder in to_remove:
                 if reminder['repeat']:
-                    if reminder['repeat'] < 86400:
-                        reminder['repeat'] = 86400
                     while reminder['future_time'] <= int(time.time()):
                         reminder['future_time'] += reminder['repeat']
                     reminder['future_timestamp'] = humanize_timedelta(seconds=reminder['repeat'])

@@ -138,6 +138,7 @@ async def _initialize_document(guild, id):
             'welcome_banner': None,
             'max_strike': 3,
             'modmail_channel': None,
+            'announcement_channel': None,
             'fun': True,
             'chat': False,
             'prefix': None,
@@ -167,7 +168,8 @@ async def _check_document(guild, id):
                 "whitelist": {'$cond': [{'$not': ["$whitelist"]}, [], "$whitelist"]},
                 "log_kbm": {'$cond': [{'$not': ["$log_kbm"]}, False, "$log_kbm"]},
                 "log_strikes": {'$cond': [{'$not': ["$log_strikes"]}, False, "$log_strikes"]},
-                "chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]}
+                "chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]},
+                "announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]}
             }}]
         )
 

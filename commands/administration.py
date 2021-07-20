@@ -224,7 +224,7 @@ class Administration(commands.Cog):
                       help='Usage\n\n%channelconfig [log/welcome/modmail] [channel id/channel mention] OR [disable] to turn off')
     @commands.check_any(commands.has_guild_permissions(manage_guild=True), has_modrole())
     async def channelconfig(self, ctx, channel_option: str, channel_id: Union[discord.TextChannel, str]):
-        valid_options = {'log', 'welcome', 'modmail'}
+        valid_options = {'log', 'welcome', 'modmail', 'announcements'}
         channel_option = channel_option.lower()
         if channel_option not in valid_options:
             params = ' '.join([x for x in valid_options])
@@ -248,6 +248,9 @@ class Administration(commands.Cog):
                     await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'modmail_channel': None}})
                     await ctx.send(
                         embed=gen_embed(title='channelconfig', content=f'Disabled modmail for {ctx.guild.name}'))
+                elif channel_option == "announcements":
+                    await ctx.send(embed=gen_embed(title='channelconfig',
+                                                   content=f'Cannot disable announcements.'))
 
             elif not discord.utils.find(lambda c: c.id == channel_id, ctx.guild.text_channels):
                 log.warning("Error: Channel Not Found")
@@ -270,6 +273,10 @@ class Administration(commands.Cog):
                 await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'modmail_channel': channel_id.id}})
                 await ctx.send(embed=gen_embed(title='channelconfig',
                                                content=f'Enabled modmail in channel {channel_id.mention} for {ctx.guild.name}'))
+            elif channel_option == "announcements":
+                await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'announcement_channel': channel_id.id}})
+                await ctx.send(embed=gen_embed(title='channelconfig',
+                                               content=f'Enabled announcements in channel {channel_id.mention} for {ctx.guild.name}'))
 
     @commands.command(name='welcomeconfig',
                       description='Set the welcome message and optional banner.',
