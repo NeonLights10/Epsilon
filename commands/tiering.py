@@ -26,7 +26,7 @@ class Tiering(commands.Cog):
             raise discord.ext.commands.BadArgument()
         elif re.search('^\d{1}$', argument):
             return argument
-        elif re.search('^f$', argument):
+        elif re.search('^[Ff]$', argument):
             return "0"
         else:
             log.warning('Bad Argument - Room Code')
