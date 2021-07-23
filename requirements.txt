@@ -9,3 +9,4 @@ dnspython
 python-dateutil
 emoji
 objgraph
+humanfriendly

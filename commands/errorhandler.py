@@ -2,6 +2,7 @@ import discord
 import traceback
 import sys
 
+from humanfriendly import format_timespan
 from discord.ext import commands
 from formatting.embed import gen_embed
 from __main__ import log
@@ -61,7 +62,7 @@ class CommandErrorHandler(commands.Cog):
         elif isinstance(error, commands.CommandOnCooldown):
             log.warning("Command on Cooldown - Traceback below:")
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-            await ctx.send(embed = gen_embed(title = "Command on Cooldown", content = "You are trying to change the name too many times. The global rate limit is twice per 10 minutes."))
+            await ctx.send(embed = gen_embed(title = "Command on Cooldown", content = f"You are trying to change the name too many times. Discord's global rate limit per channel is twice per 10 minutes.\nPlease try again in {format_timespan(ctx.command.get_cooldown_retry_after(ctx))}."))
 
         elif isinstance(error, discord.errors.Forbidden):
             log.error("Permission Error: Bot does not have sufficient permissions. - Traceback below:")
