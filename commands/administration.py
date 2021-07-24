@@ -1020,10 +1020,15 @@ class Administration(commands.Cog):
             moderator = document['moderator']
             embed_message = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})'
             log.info(embed_message)
+            log.info(f'original message length is {len(embed_message)}')
             if len(embed_message) > 1024:
                 truncate = 1024 - (len(embed_message) - 1024) - 4
+                log.info(f'truncate # is {truncate}')
                 reason = reason[0:truncate] + "..."
                 log.info(reason)
+                newstring = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})'
+                log.info(newstring)
+                log.info(f'new message length is {len(embed_message)}')
             embed.add_field(name=f'Strike | {stime.ctime()}',
                             value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
                             inline=False)
