@@ -1022,15 +1022,15 @@ class Administration(commands.Cog):
             log.info(embed_message)
             log.info(f'original message length is {len(embed_message)}')
             if len(embed_message) > 1024:
-                truncate = 1024 - (len(embed_message) - 1024) - 4
+                truncate = len(reason) - (len(embed_message) - 1024) - 4
                 log.info(f'truncate # is {truncate}')
-                reason = reason[0:truncate] + "..."
-                log.info(reason)
-                newstring = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})'
+                truncatedreason = reason[0:truncate] + "..."
+                log.info(truncatedreason)
+                newstring = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {truncatedreason}\n[Go to message/evidence]({message_link})'
                 log.info(newstring)
                 log.info(f'new message length is {len(embed_message)}')
             embed.add_field(name=f'Strike | {stime.ctime()}',
-                            value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
+                            value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {truncatedreason}\n[Go to message/evidence]({message_link})',
                             inline=False)
         async for document in expired_results:
             if document not in results:
