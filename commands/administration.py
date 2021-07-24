@@ -1019,19 +1019,16 @@ class Administration(commands.Cog):
             message_link = document['message_link']
             moderator = document['moderator']
             embed_message = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})'
-            log.info(embed_message)
-            log.info(f'original message length is {len(embed_message)}')
             if len(embed_message) > 1024:
                 truncate = len(reason) - (len(embed_message) - 1024) - 4
-                log.info(f'truncate # is {truncate}')
                 truncatedreason = reason[0:truncate] + "..."
-                log.info(truncatedreason)
-                newstring = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {truncatedreason}\n[Go to message/evidence]({message_link})'
-                log.info(newstring)
-                log.info(f'new message length is {len(embed_message)}')
-            embed.add_field(name=f'Strike | {stime.ctime()}',
-                            value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {truncatedreason}\n[Go to message/evidence]({message_link})',
-                            inline=False)
+                embed.add_field(name=f'Strike | {stime.ctime()}',
+                                value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {truncatedreason}\n[Go to message/evidence]({message_link})',
+                                inline=False)
+            else:
+                embed.add_field(name=f'Strike | {stime.ctime()}',
+                                value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
+                                inline=False)
         async for document in expired_results:
             if document not in results:
                 documentid = document['_id']
@@ -1041,11 +1038,15 @@ class Administration(commands.Cog):
                 moderator = document['moderator']
                 embed_message = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})'
                 if len(embed_message) > 1024:
-                    truncate = 1024 - (len(embed_message) - 1024) - 4
-                    reason = reason[0:truncate] + "..."
-                embed.add_field(name=f'Strike (EXPIRED) | {stime.ctime()}',
-                                value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
-                                inline=False)
+                    truncate = len(reason) - (len(embed_message) - 1024) - 4
+                    truncatedreason = reason[0:truncate] + "..."
+                    embed.add_field(name=f'Strike | {stime.ctime()}',
+                                    value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {truncatedreason}\n[Go to message/evidence]({message_link})',
+                                    inline=False)
+                else:
+                    embed.add_field(name=f'Strike (EXPIRED) | {stime.ctime()}',
+                                    value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
+                                    inline=False)
         embed.set_footer(text=f'UID: {member.id}')
         await ctx.send(embed=embed)
 
