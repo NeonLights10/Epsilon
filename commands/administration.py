@@ -798,7 +798,7 @@ class Administration(commands.Cog):
         if len(reason) >= 1024:
             log.warning('Error: Reason too long')
             await ctx.send(embed=gen_embed(title='Max character limit reached',
-                                           content='Your reason message is too long (> 1024 characters). Please shorten the message to fit it in the embed.'))
+                                           content=f'Your reason message is too long ({len(reason) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
             return
 
         m = await modmail_enabled()
@@ -807,13 +807,13 @@ class Administration(commands.Cog):
             if len(embed_message) > 1024:
                 log.warning('Error: Reason too long')
                 await ctx.send(embed=gen_embed(title='Max character limit reached',
-                                               content='Your reason message is too long (> 1024 characters). Please shorten the message to fit it in the embed.'))
+                                               content=f'Your reason message is too long ({len(embed_message) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
         else:
             embed_message = f'Reason: {reason}\nMessage Link: {message_link}'
             if len(embed_message) > 1024:
                 log.warning('Error: Reason too long')
                 await ctx.send(embed=gen_embed(title='Max character limit reached',
-                                               content='Your reason message is too long (> 1024 characters). Please shorten the message to fit it in the embed.'))
+                                               content=f'Your reason message is too long ({len(embed_message) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
 
 
         if severity == '2':
