@@ -801,6 +801,21 @@ class Administration(commands.Cog):
                                            content='Your reason message is too long (> 1024 characters). Please shorten the message to fit it in the embed.'))
             return
 
+        m = await modmail_enabled()
+        if m:
+            embed_message = f'Reason: {reason}\nMessage Link: {message_link}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.'
+            if len(embed_message) > 1024:
+                log.warning('Error: Reason too long')
+                await ctx.send(embed=gen_embed(title='Max character limit reached',
+                                               content='Your reason message is too long (> 1024 characters). Please shorten the message to fit it in the embed.'))
+        else:
+            embed_message = f'Reason: {reason}\nMessage Link: {message_link}'
+            if len(embed_message) > 1024:
+                log.warning('Error: Reason too long')
+                await ctx.send(embed=gen_embed(title='Max character limit reached',
+                                               content='Your reason message is too long (> 1024 characters). Please shorten the message to fit it in the embed.'))
+
+
         if severity == '2':
             msg = await mutetime()
             mtime = convert_to_seconds(msg)
@@ -865,16 +880,15 @@ class Administration(commands.Cog):
                 }
                 await db.warns.insert_one(nnpost)
 
-            m = await modmail_enabled()
             dm_embed = None
             if m:
                 dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
                                      title='You have been given a strike',
-                                     content=f'Reason: {reason}\nMessage Link: {message_link}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                                     content=embed_message)
             else:
                 dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
                                      title='You have been given a strike',
-                                     content=f'Reason: {reason}\nMessage Link: {message_link}')
+                                     content=embed_message)
             dm_embed.set_footer(text=ctx.guild.id)
             try:
                 await dm_channel.send(embed=dm_embed)
@@ -1004,6 +1018,10 @@ class Administration(commands.Cog):
             reason = document['reason']
             message_link = document['message_link']
             moderator = document['moderator']
+            embed_message = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})'
+            if len(embed_message) > 1024:
+                truncate = 1024 - (len(embed_message) - 1024) - 3
+                reason = reason[0:truncate] + "..."
             embed.add_field(name=f'Strike | {stime.ctime()}',
                             value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
                             inline=False)
@@ -1014,6 +1032,10 @@ class Administration(commands.Cog):
                 reason = document['reason']
                 message_link = document['message_link']
                 moderator = document['moderator']
+                embed_message = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})'
+                if len(embed_message) > 1024:
+                    truncate = 1024 - (len(embed_message) - 1024) - 3
+                    reason = reason[0:truncate] + "..."
                 embed.add_field(name=f'Strike (EXPIRED) | {stime.ctime()}',
                                 value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
                                 inline=False)
