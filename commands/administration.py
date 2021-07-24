@@ -1020,7 +1020,7 @@ class Administration(commands.Cog):
             moderator = document['moderator']
             embed_message = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})'
             if len(embed_message) > 1024:
-                truncate = 1024 - (len(embed_message) - 1024) - 3
+                truncate = 1024 - (len(embed_message) - 1024) - 4
                 reason = reason[0:truncate] + "..."
             embed.add_field(name=f'Strike | {stime.ctime()}',
                             value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
@@ -1034,7 +1034,7 @@ class Administration(commands.Cog):
                 moderator = document['moderator']
                 embed_message = f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})'
                 if len(embed_message) > 1024:
-                    truncate = 1024 - (len(embed_message) - 1024) - 3
+                    truncate = 1024 - (len(embed_message) - 1024) - 4
                     reason = reason[0:truncate] + "..."
                 embed.add_field(name=f'Strike (EXPIRED) | {stime.ctime()}',
                                 value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
