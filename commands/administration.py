@@ -815,7 +815,6 @@ class Administration(commands.Cog):
                 await ctx.send(embed=gen_embed(title='Max character limit reached',
                                                content=f'Your reason message is too long ({len(embed_message) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
 
-
         if severity == '2':
             msg = await mutetime()
             mtime = convert_to_seconds(msg)
