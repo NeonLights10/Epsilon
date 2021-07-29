@@ -677,9 +677,9 @@ class Administration(commands.Cog):
                 dm_embed.set_footer(text=time.ctime())
             try:
                 await dm_channel.send(embed=dm_embed)
-            except discord.errors.Forbidden:
+            except:
                 await ctx.send(embed=gen_embed(title='Warning',
-                                               content='This user does not accept DMs. I could not send them the message, but I will proceed with kicking the user.'))
+                                               content='This user does not accept DMs or there was an issue with sending DMs. I could not send them the message, but I will proceed with kicking the user.'))
 
             await ctx.guild.kick(member, reason=reason[:511])
             kicked = kicked + f'{member.name}#{member.discriminator} '
@@ -729,8 +729,8 @@ class Administration(commands.Cog):
                 dm_embed.set_footer(text=time.ctime())
                 try:
                     await dm_channel.send(embed=dm_embed)
-                except discord.errors.Forbidden:
-                    await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with banning the user.'))
+                except:
+                    await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs or there was an issue sending DM. I will proceed with banning the user.'))
             if reason:
                 await ctx.guild.ban(user, reason=reason[:511])
             else:
