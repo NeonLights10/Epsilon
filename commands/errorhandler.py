@@ -83,6 +83,8 @@ class CommandErrorHandler(commands.Cog):
                     log.error(f"Error: {error.status} | {error.text}")
                     traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
                     await ctx.send(embed = gen_embed(title = f'{error.status}', content = f'{error.text}'))
+                    if error.status == 400:
+                        return
 
         else:
             log.critical(f'Ignoring exception in command {ctx.command}:')
