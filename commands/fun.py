@@ -12,12 +12,9 @@ class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def fun_enabled():
-        async def predicate(ctx):
-            document = await db.servers.find_one({"server_id": ctx.guild.id})
-            is_fun = document['fun']
-            return is_fun
-        return commands.check(predicate)
+    async def cog_check(self, ctx):
+        document = await db.servers.find_one({"server_id": ctx.guild.id})
+        return document['fun']
 
     async def _get_gif(self, type, msg):
         async with aiohttp.ClientSession() as session:
@@ -37,7 +34,6 @@ class Fun(commands.Cog):
     @commands.command(name = 'hug',
                     description = f'Hug someone! If no one is specified, {NAME} will hug you <3',
                     help = 'Usage\n\n%poke [user mentions/user ids/user name + discriminator (ex: name#0000)')
-    @fun_enabled()
     async def hug(self, ctx, members: commands.Greedy[discord.Member]):
         if members:
             msg = f'{ctx.author.mention} hugged'
@@ -59,7 +55,6 @@ class Fun(commands.Cog):
     @commands.command(name = 'cuddle',
                     description = f'Cuddle someone! If no one is specified, {NAME} will cuddle you <3',
                     help = 'Usage\n\n%poke [user mentions/user ids/user name + discriminator (ex: name#0000)')
-    @fun_enabled()
     async def cuddle(self, ctx, members: commands.Greedy[discord.Member]):
         if members:
             msg = f'{ctx.author.mention} cuddles'
@@ -81,7 +76,6 @@ class Fun(commands.Cog):
     @commands.command(name = 'poke',
                     description = f'Poke someone! If no one is specified, {NAME} will poke you :P',
                     help = 'Usage\n\n%poke [user mentions/user ids/user name + discriminator (ex: name#0000)')
-    @fun_enabled()
     async def poke(self, ctx, members: commands.Greedy[discord.Member]):
         if members:
             msg = f'{ctx.author.mention} poked'
@@ -103,7 +97,6 @@ class Fun(commands.Cog):
     @commands.command(name = 'headpat',
                     description = f'Headpat someone! If no one is specified, {NAME} will give you a headpat <3',
                     help = 'Usage\n\n%headpat [user mentions/user ids/user name + discriminator (ex: name#0000)')
-    @fun_enabled()
     async def headpat(self, ctx, members: commands.Greedy[discord.Member]):
         if members:
             msg = f'{ctx.author.mention} gave'
