@@ -559,7 +559,7 @@ class Administration(commands.Cog):
             if value == 'disable':
                 document = await db.servers.find_one({"server_id": ctx.guild.id})
                 await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'verify': []}})
-                if verify:
+                if document[verify]:
                     rchannel = self.bot.get_channel(document['verify'][0])
                     rmessage = await rchannel.fetch_message(document['verify'][2])
                     await rmessage.delete()
