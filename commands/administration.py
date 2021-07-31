@@ -597,7 +597,7 @@ class Administration(commands.Cog):
                             embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
                                                  title=f'Verification',
                                                  content=embed_message)
-                            rmessage = await channel.send(embed)
+                            rmessage = await channel.send(embed=embed)
                             post.append(rmessage.id)
                             await rmessage.add_reaction(emoji)
                         else:
@@ -609,7 +609,7 @@ class Administration(commands.Cog):
                         embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
                                           title=f'Verification',
                                           content='In order to access this server, you must react to this message. By reacting to this message, you are agreeing to the rules of this server and Discord TOS.')
-                        rmessage = await channel.send(embed)
+                        rmessage = await channel.send(embed=embed)
                         post.append(rmessage.id)
                         await rmessage.add_reaction(emoji)
                     await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'verify': post}})
