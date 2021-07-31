@@ -590,7 +590,12 @@ class Administration(commands.Cog):
                     newpermissions.update(read_messages = False, send_messages = False)
                     await ctx.guild.roles[0].edit(reason='Enabling verification', permissions=newpermissions)
                     await channel.set_permissions(ctx.guild.roles[0], overwrite=discord.PermissionOverwrite(read_messages = True, add_reactions = True))
-                    await ctx.guild.create_role(name='Verified', permissions=discord.Permissions(read_messages = True, send_messages = True))
+                    role = discord.utils.find(lambda r: r.name == 'Verified', ctx.guild.roles)
+                    if role:
+                        await role.edit(reason='Enabling verification with existing role', permissions=discord.Permissions(read_messages = True, send_messages = True))
+                    else:
+                        await ctx.guild.create_role(name='Verified', permissions=discord.Permissions(read_messages = True, send_messages = True))
+
 
                     if embed_message:
                         if len(embed_message) < 1024:
