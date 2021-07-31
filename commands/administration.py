@@ -551,57 +551,11 @@ class Administration(commands.Cog):
                       description='Sets up verification role for the server.',
                       help='Usage\n\n%setupverify [channel mention/channel id] [emoji] <message>\n\n If no message is specified, a default message will be used.')
     @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
-    async def setupverify(self, ctx, value: str, channel: discord.TextChannel, emoji: Union[discord.Emoji, convert_emoji], *, embed_message: Optional[str]):
+    async def setupverify(self, ctx, value: str, channel: Optional[discord.TextChannel], emoji: Optional[Union[discord.Emoji, convert_emoji]], *, embed_message: Optional[str]):
         valid_values = {'enable', 'disable'}
         post = []
         value = value.lower()
         if value in valid_values:
-            if value == 'enable':
-                post.append(channel.id)
-                if isinstance(emoji, discord.Emoji):
-                    post.append(f"<:{emoji.name}:{emoji.id}>")
-                else:
-                    # the only reason I can't just accept the raw emoji is because of the order of parameters and also because i don't want to accept whole strings
-                    emoji = zemoji.emojize(emoji)
-                    emojilist = zemoji.emoji_lis(emoji)
-                    if len(emojilist) > 0:
-                        emoji = emojilist[0]['emoji']
-                        post.append(emoji)
-                    else:
-                        log.warning('Error: Invalid Input')
-                        await ctx.send(embed=gen_embed(title='Input Error',
-                                                       content=f'Could not recognize emoji or no emoji was given.'))
-                        return
-
-                newpermissions = ctx.guild.roles[0].permissions
-                newpermissions.update(read_messages = False, send_messages = False)
-                await ctx.guild.roles[0].edit(reason='Enabling verification', permissions=newpermissions)
-                await channel.set_permissions(ctx.guild.roles[0], overwrite=discord.PermissionOverwrite(read_messages = True, add_reactions = True))
-                await ctx.guild.create_role(name='Verified', permissions=discord.Permissions(read_messages = True, send_messages = True))
-
-                if embed_message:
-                    if len(embed_message) < 1024:
-                        embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                             title=f'Verification',
-                                             content=embed_message)
-                        rmessage = await channel.send(embed)
-                        post.append(rmessage.id)
-                        await rmessage.add_reaction(emoji)
-                    else:
-                        log.warning('Error: Reason too long')
-                        await ctx.send(embed=gen_embed(title='Max character limit reached',
-                                                       content=f'Your reason message is too long ({len(reason) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
-                        return
-                else:
-                    embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                      title=f'Verification',
-                                      content='In order to access this server, you must react to this message. By reacting to this message, you are agreeing to the rules of this server and Discord TOS.')
-                    rmessage = await channel.send(embed)
-                    post.append(rmessage.id)
-                    await rmessage.add_reaction(emoji)
-                await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'verify': post}})
-                await ctx.send(embed=gen_embed(title='setupverify',
-                                               content=f'Verification has been set up in {ctx.guild.name}.'))
             if value == 'disable':
                 document = await db.servers.find_one({"server_id": ctx.guild.id})
                 await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'verify': []}})
@@ -614,6 +568,59 @@ class Administration(commands.Cog):
                 else:
                     await ctx.send(embed=gen_embed(title='setupverify',
                                                    content=f'Verification is not enabled!'))
+            if value == 'enable':
+                if emoji and channel:
+                    post.append(channel.id)
+                    if isinstance(emoji, discord.Emoji):
+                        post.append(f"<:{emoji.name}:{emoji.id}>")
+                    else:
+                        # the only reason I can't just accept the raw emoji is because of the order of parameters and also because i don't want to accept whole strings
+                        emoji = zemoji.emojize(emoji)
+                        emojilist = zemoji.emoji_lis(emoji)
+                        if len(emojilist) > 0:
+                            emoji = emojilist[0]['emoji']
+                            post.append(emoji)
+                        else:
+                            log.warning('Error: Invalid Input')
+                            await ctx.send(embed=gen_embed(title='Input Error',
+                                                           content=f'Could not recognize emoji or no emoji was given.'))
+                            return
+
+                    newpermissions = ctx.guild.roles[0].permissions
+                    newpermissions.update(read_messages = False, send_messages = False)
+                    await ctx.guild.roles[0].edit(reason='Enabling verification', permissions=newpermissions)
+                    await channel.set_permissions(ctx.guild.roles[0], overwrite=discord.PermissionOverwrite(read_messages = True, add_reactions = True))
+                    await ctx.guild.create_role(name='Verified', permissions=discord.Permissions(read_messages = True, send_messages = True))
+
+                    if embed_message:
+                        if len(embed_message) < 1024:
+                            embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                                                 title=f'Verification',
+                                                 content=embed_message)
+                            rmessage = await channel.send(embed)
+                            post.append(rmessage.id)
+                            await rmessage.add_reaction(emoji)
+                        else:
+                            log.warning('Error: Reason too long')
+                            await ctx.send(embed=gen_embed(title='Max character limit reached',
+                                                           content=f'Your reason message is too long ({len(reason) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
+                            return
+                    else:
+                        embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                                          title=f'Verification',
+                                          content='In order to access this server, you must react to this message. By reacting to this message, you are agreeing to the rules of this server and Discord TOS.')
+                        rmessage = await channel.send(embed)
+                        post.append(rmessage.id)
+                        await rmessage.add_reaction(emoji)
+                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'verify': post}})
+                    await ctx.send(embed=gen_embed(title='setupverify',
+                                                   content=f'Verification has been set up in {ctx.guild.name}.'))
+                else:
+                    log.warning("Missing Required Argument")
+                    params = ' '.join([x for x in ctx.command.clean_params])
+                    sent = await ctx.send(embed=gen_embed(title="Invalid parameter(s) entered",
+                                                          content=f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
+                    return
         else:
             log.warning("Error: Invalid input")
             await ctx.send(embed=gen_embed(title='Input Error',
