@@ -593,7 +593,7 @@ class Administration(commands.Cog):
                     newpermissions.update(read_messages = False, send_messages = False)
                     await ctx.guild.roles[0].edit(reason='Enabling verification', permissions=newpermissions)
                     for achannel in ctx.guild.text_channels:
-                        achannel.set_permissions(ctx.guild.roles[0], overwrite=None)
+                        await achannel.set_permissions(ctx.guild.roles[0], overwrite=None)
                     await channel.set_permissions(ctx.guild.roles[0], overwrite=discord.PermissionOverwrite(read_messages = True, add_reactions = True))
                     role = discord.utils.find(lambda r: r.name == 'Verified', ctx.guild.roles)
                     if role:
