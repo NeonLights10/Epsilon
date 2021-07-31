@@ -601,10 +601,11 @@ class Administration(commands.Cog):
                         verified = await ctx.guild.create_role(name='Verified', permissions=discord.Permissions(read_messages=True, send_messages=True))
                     for achannel in ctx.guild.text_channels:
                         channelpermissions = achannel.overwrites_for(ctx.guild.roles[0])
-                        if channelpermissions.read_messages:
-                            await achannel.set_permissions(ctx.guild.roles[0], overwrite=None)
-                        elif not channelpermissions.read_messages:
-                            await achannel.set_permissions(verified, overwrite=discord.PermissionOverwrite(read_messages = False, add_reactions = False))
+                        if channelpermissions:
+                            if channelpermissions.read_messages:
+                                await achannel.set_permissions(ctx.guild.roles[0], overwrite=None)
+                            elif not channelpermissions.read_messages:
+                                await achannel.set_permissions(verified, overwrite=discord.PermissionOverwrite(read_messages = False, add_reactions = False))
                     await channel.set_permissions(ctx.guild.roles[0], overwrite=discord.PermissionOverwrite(read_messages = True, add_reactions = True))
 
 
