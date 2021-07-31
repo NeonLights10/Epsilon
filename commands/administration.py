@@ -604,8 +604,8 @@ class Administration(commands.Cog):
                         if channelpermissions:
                             if channelpermissions.read_messages:
                                 await achannel.set_permissions(ctx.guild.roles[0], overwrite=None)
-                            elif not channelpermissions.read_messages:
-                                await achannel.set_permissions(verified, overwrite=discord.PermissionOverwrite(read_messages = False, add_reactions = False))
+                            #elif not channelpermissions.read_messages:
+                            #    await achannel.set_permissions(verified, overwrite=discord.PermissionOverwrite(read_messages = False, add_reactions = False))
                     await channel.set_permissions(ctx.guild.roles[0], overwrite=discord.PermissionOverwrite(read_messages = True, add_reactions = True))
 
 
