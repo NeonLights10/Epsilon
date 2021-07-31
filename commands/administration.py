@@ -579,11 +579,11 @@ class Administration(commands.Cog):
                 await channel.set_permissions(ctx.guild.roles[0], overwrite=discord.PermissionOverwrite(read_messages = True, add_reactions = True))
                 await ctx.guild.create_role(name='Verified', permissions=discord.Permissions(read_messages = True, send_messages = True))
 
-                if message:
-                    if len(message) < 1024:
+                if embed_message:
+                    if len(embed_message) < 1024:
                         embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
                                              title=f'Verification',
-                                             content=message)
+                                             content=embed_message)
                         rmessage = await channel.send(embed)
                         post.append(rmessage.id)
                         await rmessage.add_reaction(emoji)
