@@ -565,7 +565,7 @@ class Administration(commands.Cog):
                     await rmessage.delete()
                     newpermissions = ctx.guild.roles[0].permissions
                     newpermissions.update(read_messages=True, send_messages=True)
-                    await ctx.guild.roles[0].edit(reason='Enabling verification', permissions=newpermissions)
+                    await ctx.guild.roles[0].edit(reason='Disabling verification', permissions=newpermissions)
                     await ctx.send(embed=gen_embed(title='setupverify',
                                                    content=f'Verification has been disabled for {ctx.guild.name}'))
                 else:
@@ -592,14 +592,21 @@ class Administration(commands.Cog):
                     newpermissions = ctx.guild.roles[0].permissions
                     newpermissions.update(read_messages = False, send_messages = False)
                     await ctx.guild.roles[0].edit(reason='Enabling verification', permissions=newpermissions)
-                    for achannel in ctx.guild.text_channels:
-                        await achannel.set_permissions(ctx.guild.roles[0], overwrite=None)
-                    await channel.set_permissions(ctx.guild.roles[0], overwrite=discord.PermissionOverwrite(read_messages = True, add_reactions = True))
                     role = discord.utils.find(lambda r: r.name == 'Verified', ctx.guild.roles)
                     if role:
-                        await role.edit(reason='Enabling verification with existing role', permissions=discord.Permissions(read_messages = True, send_messages = True))
+                        verified = role
+                        await role.edit(reason='Enabling verification with existing role',
+                                        permissions=discord.Permissions(read_messages=True, send_messages=True))
                     else:
-                        await ctx.guild.create_role(name='Verified', permissions=discord.Permissions(read_messages = True, send_messages = True))
+                        verified = await ctx.guild.create_role(name='Verified', permissions=discord.Permissions(read_messages=True, send_messages=True))
+                    for achannel in ctx.guild.text_channels:
+                        channelpermissions = achannel.overwrites_for(ctx.guild.roles[0])
+                        if channelpermissions.read_messages:
+                            await achannel.set_permissions(ctx.guild.roles[0], overwrite=None)
+                        elif not channelpermissions.read_messages:
+                            await achannel.set_permissions(verified, overwrite=discord.PermissionOverwrite(read_messages = False, add_reactions = False))
+                    await channel.set_permissions(ctx.guild.roles[0], overwrite=discord.PermissionOverwrite(read_messages = True, add_reactions = True))
+
 
 
                     if embed_message:
