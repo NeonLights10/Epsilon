@@ -6,6 +6,7 @@ import validators
 import datetime
 import asyncio
 import pymongo
+import emoji as zemoji
 
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
@@ -20,6 +21,9 @@ from __main__ import log, db, prefix_list, prefix
 class Administration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    def convert_emoji(argument):
+        return zemoji.demojize(argument)
 
     def has_modrole():
         async def predicate(ctx):
@@ -542,6 +546,102 @@ class Administration(commands.Cog):
             removed = removed + f'{member.mention} '
         await ctx.send(
             embed=gen_embed(title='removeuser', content=f'{removed} has been removed from role {role.name}.'))
+
+    @commands.command(name='setupverify',
+                      description='Sets up verification role for the server.',
+                      help='Usage\n\n%setupverify [channel mention/channel id] [emoji] <message>\n\n If no message is specified, a default message will be used.')
+    @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
+    async def setupverify(self, ctx, value: str, channel: discord.TextChannel, emoji: Union[discord.Emoji, convert_emoji], *, embed_message: Optional[str]):
+        valid_values = {'enable', 'disable'}
+        post = []
+        value = value.lower()
+        if value in valid_values:
+            if value == 'enable':
+                post.append(channel.id)
+                if isinstance(emoji, discord.Emoji):
+                    post.append(f"<:{emoji.name}:{emoji.id}>")
+                else:
+                    # the only reason I can't just accept the raw emoji is because of the order of parameters and also because i don't want to accept whole strings
+                    emoji = zemoji.emojize(emoji)
+                    emojilist = zemoji.emoji_lis(emoji)
+                    if len(emojilist) > 0:
+                        emoji = emojilist[0]['emoji']
+                        post.append(emoji)
+                    else:
+                        log.warning('Error: Invalid Input')
+                        await ctx.send(embed=gen_embed(title='Input Error',
+                                                       content=f'Could not recognize emoji or no emoji was given.'))
+                        return
+
+                newpermissions = guild.roles[-1].permissions
+                newpermissions.update(read_messages = False, send_messages = False)
+                await guild.roles[-1].edit(reason='Enabling verification', permissions=newpermissions)
+                await channel.set_permissions(guild.roles[-1], overwrite=discord.PermissionsOverWrite(read_messages = True, add_reactions = True))
+                await guild.create_role(name='Verified', permissions=discord.Permissions(read_messages = True, send_messages = True))
+
+                if message:
+                    if len(message) < 1024:
+                        embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                                             title=f'Verification',
+                                             content=message)
+                        rmessage = await channel.send(embed)
+                        post.append(rmessage.id)
+                        await rmessage.add_reaction(emoji)
+                    else:
+                        log.warning('Error: Reason too long')
+                        await ctx.send(embed=gen_embed(title='Max character limit reached',
+                                                       content=f'Your reason message is too long ({len(reason) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
+                        return
+                else:
+                    embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                                      title=f'Verification',
+                                      content='In order to access this server, you must react to this message. By reacting to this message, you are agreeing to the rules of this server and Discord TOS.')
+                    rmessage = await channel.send(embed)
+                    post.append(rmessage.id)
+                    await rmessage.add_reaction(emoji)
+                await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'verify': post}})
+                await ctx.send(embed=gen_embed(title='setupverify',
+                                               content=f'Verification has been set up in {ctx.guild.name}.'))
+            if value == 'disable':
+                document = await db.servers.find_one({"server_id": ctx.guild.id})
+                await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'verify': []}})
+                if verify:
+                    rchannel = self.bot.get_channel(document['verify'][0])
+                    rmessage = await rchannel.fetch_message(document['verify'][2])
+                    await rmessage.delete()
+                    await ctx.send(embed=gen_embed(title='setupverify',
+                                                   content=f'Verification has been disabled for {ctx.guild.name}'))
+                else:
+                    await ctx.send(embed=gen_embed(title='setupverify',
+                                                   content=f'Verification is not enabled!'))
+        else:
+            log.warning("Error: Invalid input")
+            await ctx.send(embed=gen_embed(title='Input Error',
+                                           content='That is not a valid option for this parameter. Valid values: "enable" "disable"'))
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        if payload.user_id == self.bot.user.id:
+            return
+        channel = self.bot.get_channel(payload.channel_id)
+        rmessage = await channel.fetch_message(payload.message_id)
+        document = await db.servers.find_one({"server_id": rmessage.guild.id})
+        if document['verify']:
+            if document['verify'][2] == rmessage.id:
+                extracted_emoji = None
+                remoji = None
+                raw_emoji = document['verify'][1]
+                if re.search('\d{18}', raw_emoji):
+                    extracted_emoji = re.search('\d{18}', raw_emoji).group()
+                    extracted_emoji = discord.utils.get(rmessage.guild.emojis, id=int(extracted_emoji))
+                    remoji = discord.utils.get(rmessage.guild.emojis, id=payload.emoji.id)
+                if not extracted_emoji:
+                    extracted_emoji = raw_emoji
+                    remoji = payload.emoji.name
+
+                if extracted_emoji == remoji:
+                    role = discord.utils.find(lambda r: r.name == 'Verified', rmessage.guild.roles)
+                    await payload.member.add_roles(role)
 
     @commands.command(name='mute',
                       description='Mute user(s) for a certain amount of time.',

@@ -144,7 +144,8 @@ async def _initialize_document(guild, id):
             'chat': False,
             'prefix': None,
             'blacklist': [],
-            'whitelist': []
+            'whitelist': [],
+            'verify': []
             }
     log.info(f"Creating document for {guild.name}...")
     await db.servers.insert_one(post)
@@ -170,7 +171,8 @@ async def _check_document(guild, id):
                 "log_kbm": {'$cond': [{'$not': ["$log_kbm"]}, False, "$log_kbm"]},
                 "log_strikes": {'$cond': [{'$not': ["$log_strikes"]}, False, "$log_strikes"]},
                 "chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]},
-                "announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]}
+                "announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]},
+                "verify": {'$cond': [{'$not': ["$verify"]}, [], "$verify"]}
             }}]
         )
 
@@ -400,7 +402,7 @@ async def on_guild_join(guild):
         embed = gen_embed(name=f'{guild.name}',
                           icon_url=guild.icon_url,
                           title='Thanks for inviting me!',
-                          content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with serverconfig and channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555.')
+                          content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555.')
         await general.send(embed=embed)
 
 
