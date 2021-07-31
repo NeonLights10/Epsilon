@@ -573,11 +573,11 @@ class Administration(commands.Cog):
                                                        content=f'Could not recognize emoji or no emoji was given.'))
                         return
 
-                newpermissions = guild.roles[-1].permissions
+                newpermissions = ctx.guild.roles[-1].permissions
                 newpermissions.update(read_messages = False, send_messages = False)
-                await guild.roles[-1].edit(reason='Enabling verification', permissions=newpermissions)
+                await ctx.guild.roles[-1].edit(reason='Enabling verification', permissions=newpermissions)
                 await channel.set_permissions(guild.roles[-1], overwrite=discord.PermissionsOverWrite(read_messages = True, add_reactions = True))
-                await guild.create_role(name='Verified', permissions=discord.Permissions(read_messages = True, send_messages = True))
+                await ctx.guild.create_role(name='Verified', permissions=discord.Permissions(read_messages = True, send_messages = True))
 
                 if message:
                     if len(message) < 1024:
