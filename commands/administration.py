@@ -563,6 +563,9 @@ class Administration(commands.Cog):
                     rchannel = self.bot.get_channel(document['verify'][0])
                     rmessage = await rchannel.fetch_message(document['verify'][2])
                     await rmessage.delete()
+                    newpermissions = ctx.guild.roles[0].permissions
+                    newpermissions.update(read_messages=True, send_messages=True)
+                    await ctx.guild.roles[0].edit(reason='Enabling verification', permissions=newpermissions)
                     await ctx.send(embed=gen_embed(title='setupverify',
                                                    content=f'Verification has been disabled for {ctx.guild.name}'))
                 else:
