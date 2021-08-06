@@ -465,9 +465,10 @@ async def get_msgid(message, attempts=1):
         for channel in message.guild.channels:
             if channel.id == msgid['channel_id']:
                 try:
+                    #We fetch the message, as we do not store any message contents for user privacy. If the message is deleted, we can't access it.
                     msg = await channel.fetch_message(msgid['msg_id'])
-                    # Now let's double check that we aren't mentioning ourself or another bot, and that the messages has no embeds or attachments.
 
+                    # Now let's double check that we aren't mentioning ourself or another bot, and that the messages has no embeds or attachments.
                     filter = f"(?:{'|'.join(FILTER)})"
                     if (re.match('^%|^\^|^\$|^!|^\.|@|k!', msg.content) is None) and (
                             re.match(f'<@!?{bot.user.id}>', msg.content) is None) and (len(msg.embeds) == 0) and (

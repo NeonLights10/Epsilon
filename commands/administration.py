@@ -909,7 +909,7 @@ class Administration(commands.Cog):
                 return await mutetime(attempts)
 
         time = datetime.datetime.utcnow()
-        searchtime = time + relativedelta(seconds=3)
+        searchtime = time + relativedelta(seconds=10)
         if len(members) < 1:
             log.warning("Missing Required Argument")
             params = ' '.join([x for x in ctx.command.clean_params])
@@ -934,12 +934,14 @@ class Administration(commands.Cog):
                 log.warning('Error: Reason too long')
                 await ctx.send(embed=gen_embed(title='Max character limit reached',
                                                content=f'Your reason message is too long ({len(embed_message) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
+                return
         else:
             embed_message = f'Reason: {reason}\nMessage Link: {message_link}'
             if len(embed_message) > 1024:
                 log.warning('Error: Reason too long')
                 await ctx.send(embed=gen_embed(title='Max character limit reached',
                                                content=f'Your reason message is too long ({len(embed_message) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
+                return
 
         if severity == '2':
             msg = await mutetime()
