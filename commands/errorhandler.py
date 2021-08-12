@@ -53,7 +53,7 @@ class CommandErrorHandler(commands.Cog):
         elif isinstance(error, commands.BadArgument):
             log.warning("Bad Argument - Traceback below:")
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-            if hasattr(error, message):
+            if hasattr(error, 'message'):
                 await ctx.send(embed = gen_embed(title = "Invalid parameter entered", content = f"Error: {error.message} \nAre you sure you entered the right parameter?"))
             else:
                 await ctx.send(embed=gen_embed(title="Invalid parameter entered",
