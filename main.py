@@ -321,8 +321,10 @@ async def on_message(message):
         if ctx.guild.id == 432379300684103699:
             await _emoji_log(message)
 
+        #todo: revamp whitelist/blacklist
         whitelist = document['whitelist']
         if whitelist and ctx.channel not in whitelist:
+            await twtfix(message)
             return
         else:
             if ctx.author.bot is False:
