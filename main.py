@@ -7,6 +7,8 @@ import logging
 import re
 import random
 
+import twitter
+
 import psutil
 import time
 
@@ -28,6 +30,10 @@ with open("config.json") as file:
     config_json = json.load(file)
     TOKEN = config_json["token"]
     DBPASSWORD = config_json['db_password']
+    TWTTOKEN = config_json['twitter_token']
+    TWTSECRET = config_json['twitter_secret']
+    CONSUMER_KEY = config_json['consumer_key']
+    CONSUMER_SECRET = config_json['consumer_secret']
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -124,6 +130,12 @@ db = mclient[databaseName]
 
 log.info(f'Database loaded.\n')
 
+t = Twitter(
+    auth=OAuth(TWTTOKEN, TWTSECRET, CONSUMER_KEY, CONSUMER_SECRET)
+)
+
+log.info('Twitter API Initialized.\n')
+
 
 async def _initialize_document(guild, id):
     post = {'server_id': id,
@@ -209,6 +221,24 @@ async def _emoji_log(message):
             document = await db.emoji.find_one({"id": emoji.id})
             count = document['count'] + 1
             await db.emoji.update_one({"id": emoji.id}, {"$set": {'count': count}})
+
+async def twtfix(message):
+    message_link = message.clean_content
+    channel = message.channel
+
+    log.info("Attempting to download tweet info from Twitter API")
+    twid = int(re.sub(r'\?.*$', '', message_link.rsplit("/", 1)[-1]))  # gets the tweet ID as a int from the passed url
+    tweet = t.statuses.show(_id=twid, tweet_mode="extended")
+
+    # Check to see if tweet has a video, if not, make the url passed to the VNF the first t.co link in the tweet
+    if 'extended_entities' in tweet:
+        if 'video_info' in tweet['extended_entities']['media'][0]:
+            new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', message_link)
+            try:
+                await message.delete()
+                await channel.send(content = new_message_content)
+            except:
+                pass
 
 # This is a super jenk way of handling the prefix without using the async db connection but it works
 prefix_list = {}
@@ -330,12 +360,14 @@ async def on_message(message):
                             msg = await get_msgid(ctx.message)
                             log.info(f"Message retrieved: {msg}\n")
                             await ctx.message.reply(content=msg)
+                            await twtfix(message)
                     else:
                         if ctx.channel.id not in document['blacklist']:
                             post = {'server_id': ctx.guild.id,
                                     'channel_id': ctx.channel.id,
                                     'msg_id': ctx.message.id}
                             await db.msgid.insert_one(post)
+                            await twtfix(message)
                 elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
                     if document['chat']:
                         log.info("Found a mention of myself, generating response...")
@@ -345,12 +377,14 @@ async def on_message(message):
                             msg = await get_msgid(ctx.message)
                         log.info(f"Message retrieved: {msg}\n")
                         await ctx.message.reply(content=msg)
+                        await twtfix(message)
                 else:
                     if ctx.channel.id not in document['blacklist']:
                         post = {'server_id': ctx.guild.id,
                                 'channel_id': ctx.channel.id,
                                 'msg_id': ctx.message.id}
                         await db.msgid.insert_one(post)
+                        await twtfix(message)
 
 
     elif isinstance(ctx.channel, discord.DMChannel):
