@@ -226,9 +226,10 @@ async def twtfix(message):
     message_link = message.clean_content
     channel = message.channel
 
-    log.info("Attempting to download tweet info from Twitter API")
-    twid = int(re.sub(r'\?.*$', '', message_link.rsplit("/", 1)[-1]))  # gets the tweet ID as a int from the passed url
-    tweet = t.statuses.show(_id=twid, tweet_mode="extended")
+    if re.match('https://twitter.com', message_link):
+        log.info("Attempting to download tweet info from Twitter API")
+        twid = int(re.sub(r'\?.*$', '', message_link.rsplit("/", 1)[-1]))  # gets the tweet ID as a int from the passed url
+        tweet = t.statuses.show(_id=twid, tweet_mode="extended")
 
     # Check to see if tweet has a video, if not, make the url passed to the VNF the first t.co link in the tweet
     if 'extended_entities' in tweet:
