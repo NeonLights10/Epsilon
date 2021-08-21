@@ -40,6 +40,7 @@ class Miscellaneous(commands.Cog):
         content.add_field(name = "Author", value = "Neon#5555")
         content.add_field(name = "BotID", value = self.bot.user.id)
         content.add_field(name = "Messages", value = f"{main.message_count} ({(main.message_count / ((time.time()-uptime) / 60)):.2f}/min)")
+        content.add_field(name="Commands Processed", value=f"{main.command_count}")
         process = psutil.Process(os.getpid())
         mem = process.memory_full_info()
         mem = mem.uss / 1000000

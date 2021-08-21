@@ -271,6 +271,7 @@ except:
 
 uptime = time.time()
 message_count = 0
+command_count = 0
 
 
 ####################
@@ -307,6 +308,7 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     global message_count
+    global command_count
     message_count += 1
     ctx = await bot.get_context(message)
 
@@ -325,6 +327,7 @@ async def on_message(message):
                     log.info(
                         f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
                     await bot.invoke(ctx)
+                    command_count += 1
                 elif ctx.message.reference:
                     ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
                     if ref_message.author == bot.user:
