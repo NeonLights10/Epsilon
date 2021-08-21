@@ -131,7 +131,7 @@ db = mclient[databaseName]
 log.info(f'Database loaded.\n')
 
 t = twitter.Twitter(
-    auth=OAuth(TWTTOKEN, TWTSECRET, CONSUMER_KEY, CONSUMER_SECRET)
+    auth=twitter.OAuth(TWTTOKEN, TWTSECRET, CONSUMER_KEY, CONSUMER_SECRET)
 )
 
 log.info('Twitter API Initialized.\n')
