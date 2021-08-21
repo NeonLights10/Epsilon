@@ -130,7 +130,7 @@ db = mclient[databaseName]
 
 log.info(f'Database loaded.\n')
 
-t = Twitter(
+t = twitter.Twitter(
     auth=OAuth(TWTTOKEN, TWTSECRET, CONSUMER_KEY, CONSUMER_SECRET)
 )
 
