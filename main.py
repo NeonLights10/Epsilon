@@ -244,9 +244,8 @@ async def twtfix(message):
                         message_link = re.sub(fr'https://twitter\.com/{twid}(\?.*$)', f'https://fxtwitter.com/{twid}/\1', message_link)
                     else:
                         new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', twt_link)
-                        final_message_content = re.search(r'https://fxtwitter\.com\S+', new_message_content)
                         try:
-                            await channel.send(content=final_message_content)
+                            await channel.send(content=new_message_content)
                             return None
                         except:
                             return None
