@@ -186,7 +186,7 @@ async def _check_document(guild, id):
                 "chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]},
                 "announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]},
                 "verify": {'$cond': [{'$not': ["$verify"]}, [], "$verify"]},
-                "delete_twitterfix": {'$cond': [{'$not': ["$log_joinleaves"]}, False, "$log_joinleaves"]}
+                "delete_twitterfix": {'$cond': [{'$not': ["$delete_twitterfix"]}, False, "$delete_twitterfix"]}
             }}]
         )
 
@@ -242,7 +242,7 @@ async def twtfix(message):
             if 'extended_entities' in tweet:
                 if 'video_info' in tweet['extended_entities']['media'][0]:
                     if document['delete_twitterfix']:
-                        log.info(re.search(fr'https://twitter\.com/{twid}(\?.*$)'))
+                        log.info(re.search(fr'https://twitter\.com/{twid}(\?.*$)', message_link))
                         message_link = re.sub(fr'https://twitter\.com/{twid}(\?.*$)', f'https://fxtwitter.com/{twid}/\1', message_link)
                         log.info(message_link)
                         modified = True
