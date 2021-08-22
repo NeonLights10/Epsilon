@@ -226,7 +226,7 @@ async def twtfix(message):
     message_link = message.clean_content
     channel = message.channel
 
-    if re.match('https://twitter.com', message_link):
+    if re.search(r'https://twitter\.com', message_link):
         log.info("Attempting to download tweet info from Twitter API")
         twid = int(re.sub(r'\?.*$', '', message_link.rsplit("/", 1)[-1]))  # gets the tweet ID as a int from the passed url
         tweet = t.statuses.show(_id=twid, tweet_mode="extended")
