@@ -231,7 +231,7 @@ async def twtfix(message):
         twid = int(re.sub(r'\?.*$', '', message_link.rsplit("/", 1)[-1]))  # gets the tweet ID as a int from the passed url
         tweet = t.statuses.show(_id=twid, tweet_mode="extended")
     else:
-        return
+        return None
 
     # Check to see if tweet has a video, if not, make the url passed to the VNF the first t.co link in the tweet
     if 'extended_entities' in tweet:
@@ -239,9 +239,13 @@ async def twtfix(message):
             new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', message_link)
             try:
                 await message.delete()
-                await channel.send(content = new_message_content)
+                return await channel.send(content = new_message_content)
             except:
-                pass
+                return None
+        else:
+            return None
+    else:
+        return None
 
 # This is a super jenk way of handling the prefix without using the async db connection but it works
 prefix_list = {}
@@ -321,71 +325,59 @@ async def on_message(message):
         if ctx.guild.id == 432379300684103699:
             await _emoji_log(message)
 
-        #todo: revamp whitelist/blacklist
         whitelist = document['whitelist']
-        if whitelist and ctx.channel not in whitelist:
-            await twtfix(message)
-            return
-        else:
-            if ctx.author.bot is False:
-                if ctx.prefix:
-                    log.info(
-                        f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
-                    await bot.invoke(ctx)
-                    command_count += 1
-                elif ctx.message.reference:
-                    ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
-                    if ref_message.author == bot.user:
-                        # modmail logic
-                        if ctx.channel.id == document['modmail_channel']:
-                            valid_options = {'New Modmail', 'Attachment'}
-                            if ref_message.embeds[0].title in valid_options:
-                                ref_embed = ref_message.embeds[0].footer
-                                user_id = ref_embed.text
-                                user = await bot.fetch_user(user_id)
-                                if document['modmail_channel']:
-                                    embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
-                                                      title="New Modmail",
-                                                      content=f'{message.clean_content}\n\nYou may reply to this modmail using the reply function.')
-                                    embed.set_footer(text=f"{ctx.guild.id}")
-                                    dm_channel = user.dm_channel
-                                    if user.dm_channel is None:
-                                        dm_channel = await user.create_dm()
-                                    await dm_channel.send(embed=embed)
-                                    if len(ctx.message.attachments) > 0:
-                                        attachnum = 1
-                                        for attachment in ctx.message.attachments:
-                                            embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
-                                                              title='Attachment', content=f'Attachment #{attachnum}:')
-                                            embed.set_image(url=attachment.url)
-                                            embed.set_footer(text=f'{ctx.guild.id}')
-                                            await dm_channel.send(embed=embed)
-                                            attachnum += 1
-                                    await ctx.send(embed=gen_embed(title='Modmail sent',
-                                                                   content=f'Sent modmail to {user.name}#{user.discriminator}.'))
-                        elif document['chat']:
-                            log.info("Found a reply to me, generating response...")
+        if ctx.author.bot is False:
+            if ctx.prefix:
+                if whitelist and ctx.channel not in whitelist:
+                    return
+                log.info(
+                    f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
+                await bot.invoke(ctx)
+                command_count += 1
+            elif ctx.message.reference:
+                ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
+                if ref_message.author == bot.user:
+                    # modmail logic
+                    if ctx.channel.id == document['modmail_channel']:
+                        valid_options = {'New Modmail', 'Attachment'}
+                        if ref_message.embeds[0].title in valid_options:
+                            ref_embed = ref_message.embeds[0].footer
+                            user_id = ref_embed.text
+                            user = await bot.fetch_user(user_id)
+                            if document['modmail_channel']:
+                                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
+                                                  title="New Modmail",
+                                                  content=f'{message.clean_content}\n\nYou may reply to this modmail using the reply function.')
+                                embed.set_footer(text=f"{ctx.guild.id}")
+                                dm_channel = user.dm_channel
+                                if user.dm_channel is None:
+                                    dm_channel = await user.create_dm()
+                                await dm_channel.send(embed=embed)
+                                if len(ctx.message.attachments) > 0:
+                                    attachnum = 1
+                                    for attachment in ctx.message.attachments:
+                                        embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
+                                                          title='Attachment', content=f'Attachment #{attachnum}:')
+                                        embed.set_image(url=attachment.url)
+                                        embed.set_footer(text=f'{ctx.guild.id}')
+                                        await dm_channel.send(embed=embed)
+                                        attachnum += 1
+                                await ctx.send(embed=gen_embed(title='Modmail sent',
+                                                               content=f'Sent modmail to {user.name}#{user.discriminator}.'))
+                    elif document['chat']:
+                        new_message = await twtfix(message)
+                        if whitelist and ctx.channel not in whitelist:
+                            return
+                        log.info("Found a reply to me, generating response...")
+                        if new_message:
+                            msg = await get_msgid(new_message)
+                            log.info(f"Message retrieved: {msg}\n")
+                            await new_message.reply(content=msg)
+                        else:
                             msg = await get_msgid(ctx.message)
                             log.info(f"Message retrieved: {msg}\n")
                             await ctx.message.reply(content=msg)
-                            await twtfix(message)
-                    else:
-                        if ctx.channel.id not in document['blacklist']:
-                            post = {'server_id': ctx.guild.id,
-                                    'channel_id': ctx.channel.id,
-                                    'msg_id': ctx.message.id}
-                            await db.msgid.insert_one(post)
-                            await twtfix(message)
-                elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
-                    if document['chat']:
-                        log.info("Found a mention of myself, generating response...")
-                        if re.search('hou', ctx.message.clean_content):
-                            msg = 'hou is god'
-                        else:
-                            msg = await get_msgid(ctx.message)
-                        log.info(f"Message retrieved: {msg}\n")
-                        await ctx.message.reply(content=msg)
-                        await twtfix(message)
+
                 else:
                     if ctx.channel.id not in document['blacklist']:
                         post = {'server_id': ctx.guild.id,
@@ -393,6 +385,27 @@ async def on_message(message):
                                 'msg_id': ctx.message.id}
                         await db.msgid.insert_one(post)
                         await twtfix(message)
+            elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
+                if document['chat']:
+                    new_message = await twtfix(message)
+                    if whitelist and ctx.channel not in whitelist:
+                        return
+                    log.info("Found a reply to me, generating response...")
+                    if new_message:
+                        msg = await get_msgid(new_message)
+                        log.info(f"Message retrieved: {msg}\n")
+                        await new_message.reply(content=msg)
+                    else:
+                        msg = await get_msgid(ctx.message)
+                        log.info(f"Message retrieved: {msg}\n")
+                        await ctx.message.reply(content=msg)
+            else:
+                if ctx.channel.id not in document['blacklist']:
+                    post = {'server_id': ctx.guild.id,
+                            'channel_id': ctx.channel.id,
+                            'msg_id': ctx.message.id}
+                    await db.msgid.insert_one(post)
+                    await twtfix(message)
 
 
     elif isinstance(ctx.channel, discord.DMChannel):
