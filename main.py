@@ -231,7 +231,7 @@ async def twtfix(message):
 
     twitter_links = re.findall(r'https://twitter\.com\S+', message_link)
     if twitter_links:
-        document = await db.servers.find_one({"server_id": ctx.guild.id})
+        document = await db.servers.find_one({"server_id": message.guild.id})
         for twt_link in twitter_links:
             log.info("Attempting to download tweet info from Twitter API")
             twid = int(re.sub(r'\?.*$', '', twt_link.rsplit("/", 1)[-1]))  # gets the tweet ID as a int from the passed url
