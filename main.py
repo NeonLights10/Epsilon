@@ -228,6 +228,7 @@ async def twtfix(message):
     message_link = message.clean_content
     author = message.author
     channel = message.channel
+    modified = False
 
     twitter_links = re.findall(r'https://twitter\.com\S+', message_link)
     if twitter_links:
@@ -242,26 +243,21 @@ async def twtfix(message):
                 if 'video_info' in tweet['extended_entities']['media'][0]:
                     if document['delete_twitterfix']:
                         message_link = re.sub(fr'https://twitter\.com/{twid}(\?.*$)', f'https://fxtwitter.com/{twid}/\1', message_link)
+                        modified = True
                     else:
                         new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', twt_link)
                         try:
                             await channel.send(content=new_message_content)
-                            return None
                         except:
                             return None
-                else:
-                    return None
-            else:
-                return None
-        if document['delete_twitterfix']:
+        if document['delete_twitterfix'] and modified:
             try:
                 await message.delete()
                 return await channel.send(
                     content=f"**{author.display_name}** ({author.name}#{author.discriminator}) sent:\n{message_link}")
             except:
                 return None
-    else:
-        return None
+    return None
 
 
 
