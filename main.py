@@ -242,8 +242,7 @@ async def twtfix(message):
             if 'extended_entities' in tweet:
                 if 'video_info' in tweet['extended_entities']['media'][0]:
                     if document['delete_twitterfix']:
-                        log.info(re.search(fr'https://twitter\.com/{twid}(\?.*$)', message_link))
-                        message_link = re.sub(fr'https://twitter\.com/{twid}(\?.*$)', f'https://fxtwitter.com/{twid}/\1', message_link)
+                        message_link = re.sub(fr'https://twitter\.com/{twid}(\?.*$)', f'https://fxtwitter.com/\1{twid}\2', message_link)
                         log.info(message_link)
                         modified = True
                     else:
