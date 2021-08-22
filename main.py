@@ -154,6 +154,7 @@ async def _initialize_document(guild, id):
             'announcement_channel': None,
             'fun': True,
             'chat': False,
+            'delete_twitterfix': False,
             'prefix': None,
             'blacklist': [],
             'whitelist': [],
@@ -184,7 +185,8 @@ async def _check_document(guild, id):
                 "log_strikes": {'$cond': [{'$not': ["$log_strikes"]}, False, "$log_strikes"]},
                 "chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]},
                 "announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]},
-                "verify": {'$cond': [{'$not': ["$verify"]}, [], "$verify"]}
+                "verify": {'$cond': [{'$not': ["$verify"]}, [], "$verify"]},
+                "delete_twitterfix": {'$cond': [{'$not': ["$log_joinleaves"]}, False, "$log_joinleaves"]}
             }}]
         )
 
@@ -227,26 +229,42 @@ async def twtfix(message):
     author = message.author
     channel = message.channel
 
-    if re.search(r'https://twitter\.com', message_link):
-        log.info("Attempting to download tweet info from Twitter API")
-        twid = int(re.sub(r'\?.*$', '', message_link.rsplit("/", 1)[-1]))  # gets the tweet ID as a int from the passed url
-        tweet = t.statuses.show(_id=twid, tweet_mode="extended")
+    twitter_links = re.findall(r'https://twitter\.com\S+', message_link)
+    if twitter_links:
+        document = await db.servers.find_one({"server_id": ctx.guild.id})
+        for twt_link in twitter_links:
+            log.info("Attempting to download tweet info from Twitter API")
+            twid = int(re.sub(r'\?.*$', '', twt_link.rsplit("/", 1)[-1]))  # gets the tweet ID as a int from the passed url
+            tweet = t.statuses.show(_id=twid, tweet_mode="extended")
+
+            # Check to see if tweet has a video, if not, make the url passed to the VNF the first t.co link in the tweet
+            if 'extended_entities' in tweet:
+                if 'video_info' in tweet['extended_entities']['media'][0]:
+                    if document['delete_twitterfix']:
+                        message_link = re.sub(fr'https://twitter\.com/({twid}\?.*$)', fr'https://fxtwitter.com/\1', message_link)
+                    else:
+                        new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', twt_link)
+                        final_message_content = re.search(r'https://fxtwitter\.com\S+', new_message_content)
+                        try:
+                            await channel.send(content=final_message_content)
+                            return None
+                        except:
+                            return None
+                else:
+                    return None
+            else:
+                return None
+        if document['delete_twitterfix']:
+            try:
+                await message.delete()
+                return await channel.send(
+                    content=f"**{author.display_name}** ({author.name}#{author.discriminator}) sent:\n{message_link}")
+            except:
+                return None
     else:
         return None
 
-    # Check to see if tweet has a video, if not, make the url passed to the VNF the first t.co link in the tweet
-    if 'extended_entities' in tweet:
-        if 'video_info' in tweet['extended_entities']['media'][0]:
-            new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', message_link)
-            try:
-                await message.delete()
-                return await channel.send(content =f"**{author.display_name}** ({author.name}#{author.discriminator}) sent:\n{new_message_content}")
-            except:
-                return None
-        else:
-            return None
-    else:
-        return None
+
 
 # This is a super jenk way of handling the prefix without using the async db connection but it works
 prefix_list = {}
