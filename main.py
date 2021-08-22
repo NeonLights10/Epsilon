@@ -240,7 +240,7 @@ async def twtfix(message):
             new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', message_link)
             try:
                 await message.delete()
-                return await channel.send(content =f"{author.display_name} ({author.name}#{author.discriminator}) sent:\n{new_message_content}")
+                return await channel.send(content =f"**{author.display_name}** ({author.name}#{author.discriminator}) sent:\n{new_message_content}")
             except:
                 return None
         else:
