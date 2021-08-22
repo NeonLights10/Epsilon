@@ -224,6 +224,7 @@ async def _emoji_log(message):
 
 async def twtfix(message):
     message_link = message.clean_content
+    author = message.author
     channel = message.channel
 
     if re.search(r'https://twitter\.com', message_link):
@@ -239,7 +240,7 @@ async def twtfix(message):
             new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', message_link)
             try:
                 await message.delete()
-                return await channel.send(content = new_message_content)
+                return await channel.send(content =f"{author.display_name} ({author.name}#{author.discriminator}) sent:\n{new_message_content})
             except:
                 return None
         else:
