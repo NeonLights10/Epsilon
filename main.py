@@ -241,9 +241,9 @@ async def twtfix(message):
             # Check to see if tweet has a video, if not, make the url passed to the VNF the first t.co link in the tweet
             if 'extended_entities' in tweet:
                 if 'video_info' in tweet['extended_entities']['media'][0]:
+                    log.info("Modifying twitter link to fxtwitter")
                     if document['delete_twitterfix']:
                         message_link = re.sub(fr'https://twitter\.com/([^/]+/status/{str(twid)}\?\S*)', fr'https://fxtwitter.com/\1', message_link)
-                        log.info(message_link)
                         modified = True
                     else:
                         new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', twt_link)
