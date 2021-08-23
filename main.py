@@ -387,7 +387,7 @@ async def on_message(message):
                         if new_message:
                             return
                         else:
-                            if re.search(r'https://fxtwitter', message.clean_content):
+                            if re.search(r'https://fxtwitter', ref_message.clean_content):
                                 return
                             msg = await get_msgid(ctx.message)
                             log.info(f"Message retrieved: {msg}\n")
