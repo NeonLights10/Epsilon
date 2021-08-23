@@ -234,7 +234,7 @@ async def twtfix(message):
     if twitter_links:
         document = await db.servers.find_one({"server_id": message.guild.id})
         for twt_link in twitter_links:
-            log.info("Attempting to download tweet info from Twitter API")
+            log.info(f"[{message.guild.id}] Attempting to download tweet info from Twitter API")
             twid = int(re.sub(r'\?.*$', '', twt_link.rsplit("/", 1)[-1]))  # gets the tweet ID as a int from the passed url
             tweet = t.statuses.show(_id=twid, tweet_mode="extended")
 
@@ -249,11 +249,13 @@ async def twtfix(message):
                         new_message_content = re.sub(r'https://twitter', 'https://fxtwitter', twt_link)
                         try:
                             await channel.send(content=new_message_content)
+                            log.info("Sent fxtwitter link")
                         except:
                             return None
         if document['delete_twitterfix'] and modified:
             try:
                 await message.delete()
+                log.info("Deleted message, sending fxtwitter link")
                 return await channel.send(
                     content=f"**{author.display_name}** ({author.name}#{author.discriminator}) sent:\n{message_link}")
             except:
