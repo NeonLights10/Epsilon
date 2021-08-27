@@ -382,7 +382,7 @@ async def on_message(message):
                                 await ctx.send(embed=gen_embed(title='Modmail sent',
                                                                content=f'Sent modmail to {user.name}#{user.discriminator}.'))
                     elif document['chat']:
-                        new_message = await twtfix(message)
+                        '''new_message = await twtfix(message)
                         if whitelist and ctx.channel not in whitelist:
                             return
                         log.info("Found a reply to me, generating response...")
@@ -393,7 +393,14 @@ async def on_message(message):
                                 return
                             msg = await get_msgid(ctx.message)
                             log.info(f"Message retrieved: {msg}\n")
-                            await ctx.message.reply(content=msg)
+                            await ctx.message.reply(content=msg)'''
+
+                        if whitelist and ctx.channel not in whitelist:
+                            return
+                        log.info("Found a reply to me, generating response...")
+                        msg = await get_msgid(ctx.message)
+                        log.info(f"Message retrieved: {msg}\n")
+                        await ctx.message.reply(content=msg)
 
                 else:
                     if ctx.channel.id not in document['blacklist']:
@@ -401,28 +408,28 @@ async def on_message(message):
                                 'channel_id': ctx.channel.id,
                                 'msg_id': ctx.message.id}
                         await db.msgid.insert_one(post)
-                        await twtfix(message)
+                        #await twtfix(message)
             elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
                 if document['chat']:
-                    new_message = await twtfix(message)
+                    #new_message = await twtfix(message)
                     if whitelist and ctx.channel not in whitelist:
                         return
                     log.info("Found a reply to me, generating response...")
-                    if new_message:
+                    '''if new_message:
                         msg = await get_msgid(new_message)
                         log.info(f"Message retrieved: {msg}\n")
                         await new_message.reply(content=msg)
-                    else:
-                        msg = await get_msgid(ctx.message)
-                        log.info(f"Message retrieved: {msg}\n")
-                        await ctx.message.reply(content=msg)
+                    else:'''
+                    msg = await get_msgid(ctx.message)
+                    log.info(f"Message retrieved: {msg}\n")
+                    await ctx.message.reply(content=msg)
             else:
                 if ctx.channel.id not in document['blacklist']:
                     post = {'server_id': ctx.guild.id,
                             'channel_id': ctx.channel.id,
                             'msg_id': ctx.message.id}
                     await db.msgid.insert_one(post)
-                    await twtfix(message)
+                    #await twtfix(message)
 
 
     elif isinstance(ctx.channel, discord.DMChannel):
