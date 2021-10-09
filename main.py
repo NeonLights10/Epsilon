@@ -345,7 +345,7 @@ async def on_message(message):
         whitelist = document['whitelist']
         if ctx.author.bot is False:
             if ctx.prefix:
-                if whitelist and ctx.channel not in whitelist:
+                if whitelist and ctx.channel.id not in whitelist:
                     return
                 log.info(
                     f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
