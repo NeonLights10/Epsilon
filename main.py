@@ -452,7 +452,7 @@ async def on_message(message):
                         document = await db.servers.find_one({"server_id": int(guild_id)})
                     except ValueError:
                         embed = gen_embed(title='Error',
-                                          content=f'Cannot find a valid server ID in the footer. Are you sure you replied to the right message?'))
+                                          content=f'Cannot find a valid server ID in the footer. Are you sure you replied to the right message?')
                         await ctx.channel.send(embed)
                         return
                     if document['modmail_channel']:
