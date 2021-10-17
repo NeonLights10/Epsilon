@@ -360,7 +360,13 @@ async def on_message(message):
                         if ref_message.embeds[0].title in valid_options:
                             ref_embed = ref_message.embeds[0].footer
                             user_id = ref_embed.text
-                            user = await bot.fetch_user(user_id)
+                            try:
+                                user = await bot.fetch_user(user_id)
+                            except:
+                                embed = gen_embed(title='Error',
+                                                  content=f'Error finding user. This could be a server-side error, or you replied to the wrong message.'))
+                                await ctx.channel.send(embed)
+                                return
                             if document['modmail_channel']:
                                 embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
                                                   title="New Modmail",
@@ -442,7 +448,13 @@ async def on_message(message):
                                                                             ref_message.embeds[0].title):
                     ref_embed = ref_message.embeds[0].footer
                     guild_id = ref_embed.text
-                    document = await db.servers.find_one({"server_id": int(guild_id)})
+                    try:
+                        document = await db.servers.find_one({"server_id": int(guild_id)})
+                    except ValueError:
+                        embed = gen_embed(title='Error',
+                                          content=f'Cannot find a valid server ID in the footer. Are you sure you replied to the right message?'))
+                        await ctx.channel.send(embed)
+                        return
                     if document['modmail_channel']:
                         guild = discord.utils.find(lambda g: g.id == int(guild_id), bot.guilds)
                         embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
@@ -526,8 +538,8 @@ async def on_member_remove(member):
                           title="Member left",
                           content=f"Joined {member.joined_at} ({nowtime - jointime} ago)")
         msglog = int(document['log_channel'])
-        logChannel = member.guild.get_channel(msglog)
-        await logChannel.send(embed=embed)
+        logchannel = member.guild.get_channel(msglog)
+        await logchannel.send(embed=embed)
 
 
 ###################

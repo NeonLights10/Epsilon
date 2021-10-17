@@ -910,9 +910,9 @@ class Administration(commands.Cog):
 
             await ctx.send(embed=gen_embed(title='Mute Duration',
                                            content='How long do you want to mute the user? Accepted format: ##[smhdw] (these correspond to seconds, minutes, hours, days, weeks)\n Example: 3d 6h -> 3 days, 6 hours'))
-            msg = await self.bot.wait_for('message', check=check)
-            if re.match(r'(\d+)([smhdw]?)', msg.clean_content, flags=re.I):
-                return msg.clean_content
+            mmsg = await self.bot.wait_for('message', check=check)
+            if re.match(r'(\d+)([smhdw]?)', mmsg.clean_content, flags=re.I):
+                return mmsg.clean_content
             elif attempts > 3:
                 # exit out so we don't crash in a recursive loop due to user incompetency
                 raise discord.ext.commands.BadArgument()
@@ -921,6 +921,24 @@ class Administration(commands.Cog):
                                                content="Sorry, I didn't catch that or it was an invalid format."))
                 attempts += 1
                 return await mutetime(attempts)
+
+        async def imagemute(attempts = 1):
+            def check(m):
+                return m.author == ctx.author
+
+            await ctx.send(embed=gen_embed(title='Image Mute',
+                                               content='Do you want to revoke image/external emote privileges? Accepted answers: yes/no y/n'))
+            imsg = await self.bot.wait_for('message', check=check)
+            if re.match('^Yes|No|y|n', imsg.clean_content):
+                return await mutetime()
+            elif attempts > 3:
+                # exit out so we don't crash in a recursive loop due to user incompetency
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed=gen_embed(title='Image Mute',
+                                               content="Sorry, I didn't catch that or it was an invalid format."))
+                attempts += 1
+                return await imagemute(attempts)
 
         time = datetime.datetime.utcnow()
         searchtime = time + relativedelta(seconds=10)
@@ -1109,6 +1127,39 @@ class Administration(commands.Cog):
                     for channel in ctx.guild.channels:
                         await channel.set_permissions(mutedRole, speak=False, send_messages=False)
 
+            elif severity != 2 and ctx.guild.id == 432379300684103699:
+                msg = await imagemute()
+                mtime = convert_to_seconds(msg)
+                mutedRole = discord.utils.get(ctx.guild.roles, name="Image Mute")
+
+                await member.add_roles(mutedRole)
+
+                if m:
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                                         title=f'You have had your image/external emote privileges revoked for for {mtime} seconds',
+                                         content=f'If you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                    dm_embed.set_footer(text=ctx.guild.id)
+                else:
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                                         title=f'You have been image/external emote privileges revoked for for {mtime} seconds',
+                                         content=f'This is a result of your strike.')
+                    dm_embed.set_footer(text=time.ctime())
+                try:
+                    await dm_channel.send(embed=dm_embed)
+                except discord.errors.Forbidden:
+                    await ctx.send(embed=gen_embed(title='Warning',
+                                                   content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
+                await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
+                if document['log_channel'] and document['log_kbm']:
+                    msglog = int(document['log_channel'])
+                    logChannel = ctx.guild.get_channel(msglog)
+                    embed = gen_embed(title='mute',
+                                      content=f'{member.name} (ID: {member.id} has had their image/external emote privileges revoked for {mtime} seconds.\nReason: Moderator specified')
+                    await logChannel.send(embed=embed)  # do custom
+                await asyncio.sleep(mtime)
+                await member.remove_roles(mutedRole)
+                return
+
             if severity == '2' or len(results) == 2:
                 await member.add_roles(mutedRole)
 
@@ -1131,7 +1182,7 @@ class Administration(commands.Cog):
                 if document['log_channel'] and document['log_kbm']:
                     msglog = int(document['log_channel'])
                     logChannel = ctx.guild.get_channel(msglog)
-                    embed = gen_embed(title='ban',
+                    embed = gen_embed(title='mute',
                                       content=f'{member.name} (ID: {member.id} has been muted for {mtime} seconds.\nReason: Strike severity 2')
                     await logChannel.send(embed=embed)  # do custom
                 await asyncio.sleep(mtime)
