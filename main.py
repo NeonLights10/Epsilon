@@ -364,7 +364,7 @@ async def on_message(message):
                                 user = await bot.fetch_user(user_id)
                             except:
                                 embed = gen_embed(title='Error',
-                                                  content=f'Error finding user. This could be a server-side error, or you replied to the wrong message.'))
+                                                  content=f'Error finding user. This could be a server-side error, or you replied to the wrong message.')
                                 await ctx.channel.send(embed)
                                 return
                             if document['modmail_channel']:
