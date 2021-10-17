@@ -365,7 +365,7 @@ async def on_message(message):
                             except:
                                 embed = gen_embed(title='Error',
                                                   content=f'Error finding user. This could be a server-side error, or you replied to the wrong message.')
-                                await ctx.channel.send(embed)
+                                await ctx.channel.send(embed=embed)
                                 return
                             if document['modmail_channel']:
                                 embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
@@ -453,7 +453,7 @@ async def on_message(message):
                     except ValueError:
                         embed = gen_embed(title='Error',
                                           content=f'Cannot find a valid server ID in the footer. Are you sure you replied to the right message?')
-                        await ctx.channel.send(embed)
+                        await ctx.channel.send(embed=embed)
                         return
                     if document['modmail_channel']:
                         guild = discord.utils.find(lambda g: g.id == int(guild_id), bot.guilds)
