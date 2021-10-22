@@ -1127,7 +1127,7 @@ class Administration(commands.Cog):
                     await logChannel.send(embed=embed)
                 return #if this happens we should zip out
 
-            elif len(results) == 2 and severity != 2:
+            elif len(results) == 2 and severity != '2':
                 # we need to do this now since severity was not 2
                 # yes it's kinda redundant to do it here but this reduces calls to the DB
                 msg = await mutetime()
@@ -1143,7 +1143,7 @@ class Administration(commands.Cog):
                         for channel in ctx.guild.channels:
                             await channel.set_permissions(mutedRole, speak=False, send_messages=False)
 
-            elif severity != 2 and ctx.guild.id == 432379300684103699:
+            elif severity != '2' and ctx.guild.id == 432379300684103699:
                 msg = await imagemute()
                 if msg is None:
                     return
