@@ -1145,10 +1145,12 @@ class Administration(commands.Cog):
 
             elif severity != '2' and ctx.guild.id == 432379300684103699:
                 msg = await imagemute()
+                log.info(msg)
                 if msg is None:
                     return
                 else:
                     mtime = convert_to_seconds(msg)
+                    log.info('fetching image mute role and adding')
                     mutedRole = discord.utils.get(ctx.guild.roles, name="Image Mute")
 
                     await member.add_roles(mutedRole)
@@ -1168,6 +1170,7 @@ class Administration(commands.Cog):
                     except discord.errors.Forbidden:
                         await ctx.send(embed=gen_embed(title='Warning',
                                                        content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
+                    log.info('image mute success')
                     await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
                     if document['log_channel'] and document['log_kbm']:
                         msglog = int(document['log_channel'])
