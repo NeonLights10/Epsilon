@@ -708,7 +708,7 @@ class Administration(commands.Cog):
             mutedRole = await ctx.guild.create_role(name="Muted")
 
             for channel in ctx.guild.channels:
-                await channel.set_permissions(mutedRole, speak=False, send_messages=False)
+                await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
 
         muted = ""
         for member in members:
@@ -997,7 +997,7 @@ class Administration(commands.Cog):
                     mutedRole = await ctx.guild.create_role(name="Muted")
 
                     for channel in ctx.guild.channels:
-                        await channel.set_permissions(mutedRole, speak=False, send_messages=False)
+                        await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
 
         for member in members:
             dm_channel = member.dm_channel
@@ -1141,7 +1141,7 @@ class Administration(commands.Cog):
                         mutedRole = await ctx.guild.create_role(name="Muted")
 
                         for channel in ctx.guild.channels:
-                            await channel.set_permissions(mutedRole, speak=False, send_messages=False)
+                            await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
 
             elif severity != '2' and ctx.guild.id == 432379300684103699:
                 msg = await imagemute()
