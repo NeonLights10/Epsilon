@@ -65,15 +65,31 @@ class Miscellaneous(commands.Cog):
         content.add_field(name = "Invite Link:", value = url)
         await ctx.send(embed = content)
 
-    @commands.command(name = 'leave',
-                description = 'Makes the bot leave the server and purges all information from database.')
+    @commands.command(name = 'deleteguild',
+                description = 'Makes the bot leave the server specified and purges all information from database.')
     @is_owner()
-    async def leave(self, ctx):
-        await db.msgid.delete_many({'server_id': ctx.guild.id})
-        await db.warns.delete_many({'server_id': ctx.guild.id})
-        await db.rolereact.delete_many({'server_id': ctx.guild.id})
-        await db.servers.delete_one({'server_id': ctx.guild.id})
-        await ctx.guild.leave()
+    async def deleteguild(self, ctx, server_id: int):
+        guild = self.bot.get_guild(server_id)
+        if guild:
+            await db.msgid.delete_many({'server_id': guild.id})
+            await db.warns.delete_many({'server_id': guild.id})
+            await db.rolereact.delete_many({'server_id': guild.id})
+            await db.servers.delete_one({'server_id': guild.id})
+            await db.emoji.delete_many({'server_id': guild.id})
+            await db.reminders.delete_many({'server_id': guild.id})
+            await guild.leave()
+        await ctx.send(embed = gen_embed(title = 'deleteguild', content = f'Guild {guild.name} ({server_id}) information deleted, left server.'))
+
+    @commands.command(name='deleteuser',
+                      description='Makes the bot delete all data tied to a user id from database.')
+    @is_owner()
+    async def deleteuser(self, ctx, user_id: int):
+        user = await self.bot.fetch_user(user_id)
+        if user:
+            await db.msgid.delete_many({'author_id': guild.id})
+            await db.warns.delete_many({'user_id': guild.id})
+            await db.reminders.delete_many({'user_id': guild.id})
+        await ctx.send(embed = gen_embed(title = 'deleteuser', content = f'User {user.name}#{user.discriminator} ({user_id}) information deleted.'))
 
     @commands.command(name = 'unload',
                     description = 'Unload a cog.')

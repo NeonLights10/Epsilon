@@ -11,7 +11,7 @@ class Help(commands.Cog):
         #try:
             bot_icon_url = f"{self.bot.user.avatar_url.BASE}{self.bot.user.avatar_url._url}"
             if not commands:
-                help=discord.Embed(title='Available Commands',color=discord.Color.blue(),description='Run this command again followed by a command or list of commands to receive further help (e.g. `%help cutoff`)\n\nNeed help with anything? Feel free to shoot me a DM (Neon#5555 or @neon10lights on twitter).')
+                help=discord.Embed(title='Available Commands',color=discord.Color.blue(),description='Run this command again followed by a command or list of commands to receive further help (e.g. `%help cutoff`)\n\nNeed help with anything? Feel free to shoot me a DM (Neon#5555 or @neon10lights on twitter).\nTo request data deletion, please fill out the this form: https://forms.gle/4LYZvADpoe12R6BZ8')
                 help.set_thumbnail(url=bot_icon_url)
                 help.set_footer(text = 'Fueee~')
                 for x in self.bot.cogs:
