@@ -2,7 +2,6 @@ config.json
 *.pyc
 *.log
 *.log.last
-working.py
 warn_db.csv
 venv
 .idea
