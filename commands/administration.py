@@ -906,7 +906,7 @@ class Administration(commands.Cog):
 
         async def mutetime(attempts = 1):
             def check(m):
-                return m.author == ctx.author
+                return m.author == ctx.author and m.channel == ctx.channel
 
             await ctx.send(embed=gen_embed(title='Mute Duration',
                                            content='How long do you want to mute the user? Accepted format: ##[smhdw] (these correspond to seconds, minutes, hours, days, weeks)\n Example: 3d 6h -> 3 days, 6 hours'))
@@ -929,7 +929,7 @@ class Administration(commands.Cog):
 
         async def imagemute(attempts = 1):
             def check(m):
-                return m.author == ctx.author
+                return m.author == ctx.author and m.channel == ctx.channel
 
             await ctx.send(embed=gen_embed(title='Image Mute',
                                                content='Do you want to revoke image/external emote privileges? Accepted answers: yes/no y/n'))
