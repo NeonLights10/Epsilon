@@ -57,7 +57,7 @@ class Modmail(commands.Cog):
                         embed.set_footer(text=f'{ctx.author.id}')
                         await channel.send(embed=embed)
                         attachnum += 1
-                    await channel.send(content=f"{ctx.author.mention}")
+                await channel.send(content=f"{ctx.author.mention}")
                 await ctx.send(embed=gen_embed(title='Modmail sent',
                                                content='The moderators will review your message and get back to you shortly.'))
             else:
