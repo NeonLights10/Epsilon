@@ -306,10 +306,10 @@ class Administration(commands.Cog):
 
     @commands.command(name='serverconfig',
                       description='Set various server config settings.',
-                      help='Usage\n\n%serverconfig [option] [enable/disable]\nAvailable settings - fun (commands from fun cog), log_joinleave (log joins and leaves), log_kbm (log kicks, bans, and mutes), log_strikes (log strikes), chat (enables/disables chat function), delete_twitterfix (enables/disables deletion of original message when fixing a video twitter link)')
+                      help='Usage\n\n%serverconfig [option] [enable/disable]\nAvailable settings - fun (commands from fun cog), log_joinleave (log joins and leaves), log_kbm (log kicks, bans, and mutes), log_strikes (log strikes), chat (enables/disables chat function), announcements (enables/disables bot update announcements)')
     @commands.check_any(commands.has_guild_permissions(manage_guild=True), has_modrole())
     async def serverconfig(self, ctx, config_option: str, value: str):
-        valid_options = {'fun', 'log_joinleave', 'log_kbm', 'log_strikes', 'chat', 'delete_twitterfix'}
+        valid_options = {'fun', 'log_joinleave', 'log_kbm', 'log_strikes', 'chat', 'announcements'}
         valid_values = {'enable', 'disable'}
         config_option = config_option.lower()
         value = value.lower()
@@ -389,16 +389,16 @@ class Administration(commands.Cog):
                 log.warning("Error: Invalid input")
                 await ctx.send(embed=gen_embed(title='Input Error',
                                                content='That is not a valid option for this parameter. Valid values: "enable" "disable"'))
-        elif config_option == 'delete_twitterfix':
+        elif config_option == 'announcements':
             if value in valid_values:
                 if value == 'enable':
-                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'delete_twitterfix': True}})
+                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'announcements': True}})
                     await ctx.send(embed=gen_embed(title='serverconfig',
-                                                   content=f'Automatic deletion of original messages for video twitter links has been enabled for {ctx.guild.name}'))
+                                                   content=f'Bot update announcements have been enabled for {ctx.guild.name}'))
                 if value == 'disable':
-                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'delete_twitterfix': False}})
+                    await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'announcements': False}})
                     await ctx.send(embed=gen_embed(title='serverconfig',
-                                                   content=f'Automatic deletion of original messages for video twitter links has been disabled for {ctx.guild.name}'))
+                                                   content=f'Bot update announcements have been disabled for {ctx.guild.name}'))
             else:
                 log.warning("Error: Invalid input")
                 await ctx.send(embed=gen_embed(title='Input Error',

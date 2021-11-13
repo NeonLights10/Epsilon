@@ -186,7 +186,7 @@ async def _check_document(guild, id):
                 "chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]},
                 "announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]},
                 "verify": {'$cond': [{'$not': ["$verify"]}, [], "$verify"]},
-                "delete_twitterfix": {'$cond': [{'$not': ["$delete_twitterfix"]}, False, "$delete_twitterfix"]}
+                "announcements": {'$cond': [{'$not': ["$announcements"]}, False, "$announcements"]}
             }}]
         )
 
@@ -405,7 +405,7 @@ async def on_message(message):
                             return
                         log.info("Found a reply to me, generating response...")
                         msg = await get_msgid(ctx.message)
-                        log.info(f"Message retrieved: {msg}\n")
+                        #log.info(f"Message retrieved: {msg}\n")
                         await ctx.message.reply(content=msg)
 
                 else:
@@ -427,7 +427,7 @@ async def on_message(message):
                         await new_message.reply(content=msg)
                     else:'''
                     msg = await get_msgid(ctx.message)
-                    log.info(f"Message retrieved: {msg}\n")
+                    #log.info(f"Message retrieved: {msg}\n")
                     await ctx.message.reply(content=msg)
             else:
                 if ctx.channel.id not in document['blacklist']:
