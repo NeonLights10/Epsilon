@@ -834,15 +834,28 @@ class Administration(commands.Cog):
 
     @commands.command(name='ban',
                       description='Ban user(s) from the server.',
-                      help='Usage\n\n%ban [user mentions/user id/user name + discriminator (ex: name#0000)] <reason>')
+                      help='Usage\n\n%ban [# days worth of messages to delete] [user mentions/user id/user name + discriminator (ex: name#0000)] <reason>')
     @commands.check_any(commands.has_guild_permissions(ban_members=True), has_modrole())
-    async def cmd_ban(self, ctx, users: commands.Greedy[discord.User], *, reason: Optional[str]):
+    async def cmd_ban(self, ctx, days: int, users: commands.Greedy[discord.User], *, reason: Optional[str]):
         async def modmail_enabled():
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if document['modmail_channel']:
                 return True
             else:
                 return False
+
+        if days > 7:
+            log.warning("Missing Required Argument")
+            params = ' '.join([x for x in ctx.command.clean_params])
+            sent = await ctx.send(embed=gen_embed(title="Invalid parameter(s) entered",
+                                                  content=f"The maximum number of days worth of messages to delete from the user is 7."))
+            return
+        elif days < 0:
+            log.warning("Missing Required Argument")
+            params = ' '.join([x for x in ctx.command.clean_params])
+            sent = await ctx.send(embed=gen_embed(title="Invalid parameter(s) entered",
+                                                  content=f"Please enter a non-negative number for the number of days worth of messages to delete from the user."))
+            return
 
         if not users:
             log.warning("Missing Required Argument")
@@ -872,9 +885,9 @@ class Administration(commands.Cog):
                 except:
                     await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs or there was an issue sending DM. I will proceed with banning the user.'))
             if reason:
-                await ctx.guild.ban(user, reason=reason[:511])
+                await ctx.guild.ban(user, reason=reason[:511], delete_message_days=days)
             else:
-                await ctx.guild.ban(user)
+                await ctx.guild.ban(user, delete_message_days=days)
             banned = banned + f'{user.name}#{user.discriminator} '
 
         embed = gen_embed(title='ban', content=f'{banned}has been banned.\nReason: {reason}')
@@ -926,6 +939,29 @@ class Administration(commands.Cog):
                                                content="Sorry, I didn't catch that or it was an invalid format."))
                 attempts += 1
                 return await mutetime(attempts)
+
+        async def bantime(attempts = 1):
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Message Deletion',
+                                           content='How many days worth of messages from the user would you like to delete? The minimum is 0 (no messages deleted) and the maximum is 7 days.\nAccepted answers: [0-7]'))
+            try:
+                bmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Ban via Stike',
+                                               content='No messages will be deleted. Strike has still been applied and I will proceed to ban the user.'))
+                return 0
+            if re.match(r'^[0-7]{1}$', bmsg.clean_content, flags=re.I):
+                return mmsg.clean_content
+            elif attempts > 3:
+                # exit out so we don't crash in a recursive loop due to user incompetency
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed=gen_embed(title='Ban via Strike',
+                                               content="Sorry, I didn't catch that or it was an invalid format."))
+                attempts += 1
+                return await bantime(attempts)
 
         async def imagemute(attempts = 1):
             def check(m):
@@ -1097,6 +1133,7 @@ class Administration(commands.Cog):
 
             # ban check should always come before mute
             if len(results) >= document['max_strike']:
+                msg = await banmute()
                 max_strike = document['max_strike']
                 dm_channel = member.dm_channel
                 if member.dm_channel is None:
@@ -1118,7 +1155,7 @@ class Administration(commands.Cog):
                     await ctx.send(embed=gen_embed(title='Warning',
                                                    content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and banning the user.'))
                 await ctx.guild.ban(member,
-                                    reason=f'You have accumulated {max_strike} strikes and therefore will be banned from the server.')
+                                    reason=f'You have accumulated {max_strike} strikes and therefore will be banned from the server.', delete_message_days=msg)
                 if document['log_channel'] and document['log_kbm']:
                     msglog = int(document['log_channel'])
                     logChannel = ctx.guild.get_channel(msglog)
@@ -1145,12 +1182,10 @@ class Administration(commands.Cog):
 
             elif severity != '2' and ctx.guild.id == 432379300684103699:
                 msg = await imagemute()
-                log.info(msg)
                 if msg is None:
                     return
                 else:
                     mtime = convert_to_seconds(msg)
-                    log.info('fetching image mute role and adding')
                     mutedRole = discord.utils.get(ctx.guild.roles, name="Image Mute")
 
                     await member.add_roles(mutedRole)
@@ -1170,7 +1205,6 @@ class Administration(commands.Cog):
                     except discord.Forbidden:
                         await ctx.send(embed=gen_embed(title='Warning',
                                                        content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
-                    log.info('image mute success')
                     await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
                     if document['log_channel'] and document['log_kbm']:
                         msglog = int(document['log_channel'])
