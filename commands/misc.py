@@ -151,36 +151,45 @@ class Miscellaneous(commands.Cog):
         for guild in self.bot.guilds:
             document = await db.servers.find_one({'server_id': guild.id})
             if document['announcements']:
+                log.info(f'Announcements enabled for {guild.name}, sending...')
                 if document['announcement_channel']:
                     try:
                         channel = self.bot.get_channel(document['announcement_channel'])
-                        await channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
-                        continue
-                    except:
+                        if channel.permissions_for(guild.me).send_messages:
+                            await channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                            log.info('Sent in announcement channel')
+                            continue
+                        else:
+                            raise Exception
+                    except Exception as e:
                         pass
                 try:
-                    if guild.public_updates_channel:
+                    if guild.public_updates_channel and guild.public_updates_channel.permissions_for(guild.me).send_messages:
                         await guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                        log.info('Sent in public update channel')
                         continue
-                except:
+                except Exception as e:
                     pass
                 try:
-                    if guild.system_channel:
+                    if guild.system_channel and guild.system_channel.permissions_for(guild.me).send_messages:
                         await guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                        log.info('Sent in system channel')
                         continue
-                except:
+                except Exception as e:
                     pass
                 try:
                     general = discord.utils.find(lambda x: x.name == 'general', guild.text_channels)
                     if general and general.permissions_for(guild.me).send_messages:
                         await general.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                        log.info('Sent in general channel')
                         continue
-                except:
+                except Exception as e:
                     pass
                 finally:
                     for channel in guild.text_channels:
                         if channel.permissions_for(guild.me).send_messages:
                             await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                            log.info('Sent in first available channel')
                             continue
 
     @commands.command(name = 'updatedb',
