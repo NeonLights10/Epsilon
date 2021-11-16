@@ -188,10 +188,13 @@ class Miscellaneous(commands.Cog):
                     pass
                 finally:
                     for channel in guild.text_channels:
-                        if channel.permissions_for(guild.me).send_messages:
-                            await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
-                            log.info('Sent in first available channel')
-                            break
+                        try:
+                            if channel.permissions_for(guild.me).send_messages:
+                                await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                                log.info('Sent in first available channel')
+                                break
+                        except Exception as e:
+                            pass
 
     @commands.command(name = 'updatedb',
                     description = 'dev only')
