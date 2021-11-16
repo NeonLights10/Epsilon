@@ -183,6 +183,17 @@ class Miscellaneous(commands.Cog):
                             await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
                             continue
 
+    @commands.command(name= 'fixannounce',
+                      description = 'dev only')
+    @is_owner()
+    async def fixannounce(self, ctx):
+        for guild in self.bot.guilds:
+            await db.servers.update_many(
+                {"server_id": guild.id},
+                [{'$set': {
+                    "announcements": True
+                }}]
+            )
 
     @commands.command(name = 'updatedb',
                     description = 'dev only')
