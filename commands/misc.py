@@ -65,6 +65,11 @@ class Miscellaneous(commands.Cog):
         content.add_field(name = "Invite Link:", value = url)
         await ctx.send(embed = content)
 
+    @commands.command(name = 'support',
+                      description = "Support the bot by donating for server costs!")
+    async def support(self, ctx):
+        await ctx.send(embed = gen_embed(title = 'Support Kanon Bot', content = 'Kanon costs money to run. I pay for her server costs out of pocket, so any donation helps!\nSupport: https://ko-fi.com/neonlights'))
+
     @commands.command(name = 'deleteguild',
                 description = 'Makes the bot leave the server specified and purges all information from database.')
     @is_owner()
