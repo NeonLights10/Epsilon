@@ -149,7 +149,7 @@ class Miscellaneous(commands.Cog):
     @is_owner()
     async def announce(self, ctx, *, message: str):
         for guild in self.bot.guilds:
-            document = db.servers.find_one({'server_id': ctx.guild.id})
+            document = await db.servers.find_one({'server_id': ctx.guild.id})
             if document['announcements']:
                 if document['announcement_channel']:
                     try:
