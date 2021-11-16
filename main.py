@@ -186,7 +186,7 @@ async def _check_document(guild, id):
                 "chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]},
                 "announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]},
                 "verify": {'$cond': [{'$not': ["$verify"]}, [], "$verify"]},
-                "announcements": {'$cond': [{'$not': ["$announcements"]}, False, "$announcements"]}
+                "announcements": {'$cond': [{'$not': ["$announcements"]}, True, "$announcements"]}
             }}]
         )
 
