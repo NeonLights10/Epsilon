@@ -43,6 +43,7 @@ dlog.setLevel(logging.WARNING)
 
 intents = discord.Intents.default()
 intents.members = True
+intents.messages = True
 
 default_prefix = "%"
 databaseName = config_json["database_name"]

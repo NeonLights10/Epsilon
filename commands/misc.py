@@ -149,6 +149,7 @@ class Miscellaneous(commands.Cog):
     async def announce(self, ctx, *, message: str):
         for guild in self.bot.guilds:
             document = await db.servers.find_one({'server_id': guild.id})
+            log.info(f'Checking document for {guild.name}')
             if document['announcements']:
                 log.info(f'Announcements enabled for {guild.name}, sending...')
                 if document['announcement_channel']:
