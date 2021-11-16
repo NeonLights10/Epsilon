@@ -191,7 +191,7 @@ class Miscellaneous(commands.Cog):
                         if channel.permissions_for(guild.me).send_messages:
                             await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
                             log.info('Sent in first available channel')
-                            continue
+                            break
 
     @commands.command(name = 'updatedb',
                     description = 'dev only')
