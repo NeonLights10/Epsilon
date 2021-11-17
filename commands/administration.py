@@ -863,6 +863,13 @@ class Administration(commands.Cog):
             sent = await ctx.send(embed=gen_embed(title="Invalid parameter(s) entered",
                                                   content=f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
             return
+
+        if len(reason) >= 1024:
+            log.warning('Error: Reason too long')
+            await ctx.send(embed=gen_embed(title='Max character limit reached',
+                                           content=f'Your reason message is too long ({len(reason) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
+            return
+
         banned = ""
         for user in users:
             if ctx.guild.get_member(user.id):
