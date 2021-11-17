@@ -1140,7 +1140,7 @@ class Administration(commands.Cog):
 
             # ban check should always come before mute
             if len(results) >= document['max_strike']:
-                msg = await banmute()
+                msg = await bantime()
                 max_strike = document['max_strike']
                 dm_channel = member.dm_channel
                 if member.dm_channel is None:
