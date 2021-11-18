@@ -35,7 +35,7 @@ class Miscellaneous(commands.Cog):
                 description = "Gives statistics about the bot.")
     async def stats(self, ctx):
         content = discord.Embed(colour = 0x1abc9c)
-        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.avatar_url)
+        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.display_avatar.url)
         content.set_footer(text = "Fueee~")
         content.add_field(name = "Author", value = "Neon#5555")
         content.add_field(name = "BotID", value = self.bot.user.id)
@@ -60,7 +60,7 @@ class Miscellaneous(commands.Cog):
     async def joinserver(self, ctx):
         url = await self.generate_invite_link()
         content = discord.Embed(colour = 0x1abc9c)
-        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.avatar_url)
+        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.display_avatar.url)
         content.set_footer(text = "Fueee~")
         content.add_field(name = "Invite Link:", value = url)
         await ctx.send(embed = content)

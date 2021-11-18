@@ -49,7 +49,7 @@ class Tiering(commands.Cog):
     async def efficiencyguide(self, ctx, channel: discord.TextChannel):
         embed = gen_embed(
                     name = f"{ctx.guild.name}",
-                    icon_url = ctx.guild.icon_url,
+                    icon_url = ctx.guild.icon.url,
                     title = 'Tiering Etiqeutte and Efficiency',
                     content = 'Efficiency guidelines taken from LH 2.0, originally made by Binh and edited by doom_chicken.'
                     )
@@ -101,7 +101,7 @@ class Tiering(commands.Cog):
     async def vsliveguide(self, ctx, channel: discord.TextChannel):
         embed = gen_embed(
             name=f"{ctx.guild.name}",
-            icon_url=ctx.guild.icon_url,
+            icon_url=ctx.guild.icon.url,
             title='Versus Live Tiering Info',
             content='Graciously stolen from **Zia** & **Blur** and the **Play Act! Challenge*Audition** server, edited by **Neon**'
         )

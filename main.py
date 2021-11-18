@@ -368,7 +368,7 @@ async def on_message(message):
                                 await ctx.channel.send(embed=embed)
                                 return
                             if document['modmail_channel']:
-                                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
+                                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
                                                   title="New Modmail",
                                                   content=f'{message.clean_content}\n\nYou may reply to this modmail using the reply function.')
                                 embed.set_footer(text=f"{ctx.guild.id}")
@@ -379,7 +379,7 @@ async def on_message(message):
                                 if len(ctx.message.attachments) > 0:
                                     attachnum = 1
                                     for attachment in ctx.message.attachments:
-                                        embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url,
+                                        embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
                                                           title='Attachment', content=f'Attachment #{attachnum}:')
                                         embed.set_image(url=attachment.url)
                                         embed.set_footer(text=f'{ctx.guild.id}')
@@ -458,7 +458,7 @@ async def on_message(message):
                     if document['modmail_channel']:
                         guild = discord.utils.find(lambda g: g.id == int(guild_id), bot.guilds)
                         embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
-                                          icon_url=ctx.author.avatar_url, title="New Modmail",
+                                          icon_url=ctx.author.display_avatar.url, title="New Modmail",
                                           content=f'{message.clean_content}\n\nYou may reply to this modmail using the reply function.')
                         embed.set_footer(text=f"{ctx.author.id}")
                         channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], guild.channels)
@@ -467,7 +467,7 @@ async def on_message(message):
                             attachnum = 1
                             for attachment in ctx.message.attachments:
                                 embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
-                                                  icon_url=ctx.author.avatar_url, title='Attachment',
+                                                  icon_url=ctx.author.display_avatar.url, title='Attachment',
                                                   content=f'Attachment #{attachnum}:')
                                 embed.set_image(url=attachment.url)
                                 embed.set_footer(text=f'{ctx.author.id}')
@@ -491,7 +491,7 @@ async def on_guild_join(guild):
     general = find(lambda x: x.name == 'general', guild.text_channels)
     if general and general.permissions_for(guild.me).send_messages:
         embed = gen_embed(name=f'{guild.name}',
-                          icon_url=guild.icon_url,
+                          icon_url=guild.icon.url,
                           title='Thanks for inviting me!',
                           content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555.')
         await general.send(embed=embed)
@@ -511,7 +511,7 @@ async def on_member_join(member):
     if document['welcome_message'] and document['welcome_channel']:
         welcome_channel = find(lambda c: c.id == int(document['welcome_channel']), member.guild.text_channels)
         embed = gen_embed(name=f"{member.name}#{member.discriminator}",
-                          icon_url=member.avatar_url,
+                          icon_url=member.display_avatar.url,
                           title=f"Welcome to {member.guild.name}",
                           content=document['welcome_message'])
         if document['welcome_banner']:
@@ -519,7 +519,7 @@ async def on_member_join(member):
         await welcome_channel.send(embed=embed)
     if document['log_joinleaves'] and document['log_channel']:
         embed = gen_embed(name=f"{member.name}#{member.discriminator}",
-                          icon_url=member.avatar_url,
+                          icon_url=member.display_avatar.url,
                           title="Member joined",
                           content=f"Member #{member.guild.member_count}")
         msglog = int(document['log_channel'])
@@ -532,9 +532,9 @@ async def on_member_remove(member):
     document = await db.servers.find_one({"server_id": member.guild.id})
     if document['log_joinleaves'] and document['log_channel']:
         jointime = member.joined_at
-        nowtime = datetime.datetime.utcnow()
+        nowtime = datetime.datetime.now(datetime.timezone.utc)
         embed = gen_embed(name=f"{member.name}#{member.discriminator}",
-                          icon_url=member.avatar_url,
+                          icon_url=member.display_avatar.url,
                           title="Member left",
                           content=f"Joined {member.joined_at} ({nowtime - jointime} ago)")
         msglog = int(document['log_channel'])

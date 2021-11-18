@@ -453,7 +453,7 @@ class Administration(commands.Cog):
 
                     else:
                         if time:
-                            after_value = datetime.datetime.utcnow()
+                            after_value = datetime.datetime.now(datetime.timezone.utc)
                             if isinstance(time, str):
                                 after_value = after_value - convert_to_timedelta(time)
                             elif isinstance(time, discord.MessageReference):
@@ -463,7 +463,7 @@ class Administration(commands.Cog):
                         else:
                             await delete_messages(limit=num, check=user_check)
                 elif time:
-                    after_value = datetime.datetime.utcnow()
+                    after_value = datetime.datetime.now(datetime.timezone.utc)
                     if isinstance(time, str):
                         after_value = after_value - convert_to_timedelta(time)
                     elif isinstance(time, discord.MessageReference):
@@ -480,7 +480,7 @@ class Administration(commands.Cog):
                 await sent.delete(delay=5)
             else:
                 if time:
-                    after_value = datetime.datetime.utcnow()
+                    after_value = datetime.datetime.now(datetime.timezone.utc)
                     if isinstance(time, str):
                         after_value = after_value - convert_to_timedelta(time)
                     elif isinstance(time, discord.MessageReference):
@@ -493,7 +493,7 @@ class Administration(commands.Cog):
                     await delete_messages(limit=num, before=ctx.message)
                     return
         elif time:
-            after_value = datetime.datetime.utcnow()
+            after_value = datetime.datetime.now(datetime.timezone.utc)
             if isinstance(time, str):
                 after_value = after_value - convert_to_timedelta(time)
             elif isinstance(time, discord.MessageReference):
@@ -627,7 +627,7 @@ class Administration(commands.Cog):
 
                     if embed_message:
                         if len(embed_message) < 1024:
-                            embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                            embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                                  title=f'Verification',
                                                  content=embed_message)
                             rmessage = await channel.send(embed=embed)
@@ -639,7 +639,7 @@ class Administration(commands.Cog):
                                                            content=f'Your reason message is too long ({len(reason) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
                             return
                     else:
-                        embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                        embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                           title=f'Verification',
                                           content='In order to access this server, you must react to this message. By reacting to this message, you are agreeing to the rules of this server and Discord TOS.')
                         rmessage = await channel.send(embed=embed)
@@ -723,11 +723,11 @@ class Administration(commands.Cog):
                 m = await modmail_enabled()
                 dm_embed = None
                 if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                          title=f'You have been muted for {seconds} seconds',
                                          content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                 else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                          title=f'You have been muted for {seconds} seconds',
                                          content=f'Reason: {reason}')
                 dm_embed.set_footer(text=time.ctime())
@@ -751,12 +751,12 @@ class Administration(commands.Cog):
                 m = await modmail_enabled()
                 dm_embed = None
                 if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                          title=f'You have been muted.',
                                          content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                     dm_embed.set_footer(text=ctx.guild.id)
                 else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                          title=f'You have been muted.', content=f'Reason: {reason}')
                     dm_embed.set_footer(text=time.ctime())
                 try:
@@ -808,11 +808,11 @@ class Administration(commands.Cog):
             m = await modmail_enabled()
             dm_embed = None
             if m:
-                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been kicked',
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been kicked',
                                      content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                 dm_embed.set_footer(text=ctx.guild.id)
             else:
-                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been kicked',
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been kicked',
                                      content=f'Reason: {reason}')
                 dm_embed.set_footer(text=time.ctime())
             try:
@@ -860,11 +860,11 @@ class Administration(commands.Cog):
                 m = await modmail_enabled()
                 dm_embed = None
                 if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been banned',
                                          content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                     dm_embed.set_footer(text=ctx.guild.id)
                 else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been banned',
                                          content=f'Reason: {reason}')
                 dm_embed.set_footer(text=time.ctime())
                 try:
@@ -952,7 +952,7 @@ class Administration(commands.Cog):
                 attempts += 1
                 return await imagemute(attempts)
 
-        time = datetime.datetime.utcnow()
+        time = datetime.datetime.now(datetime.timezone.utc)
         searchtime = time + relativedelta(seconds=10)
         if len(members) < 1:
             log.warning("Missing Required Argument")
@@ -1054,11 +1054,11 @@ class Administration(commands.Cog):
 
             dm_embed = None
             if m:
-                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                      title='You have been given a strike',
                                      content=embed_message)
             else:
-                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                      title='You have been given a strike',
                                      content=embed_message)
             dm_embed.set_footer(text=ctx.guild.id)
@@ -1071,14 +1071,14 @@ class Administration(commands.Cog):
             if len(ctx.message.attachments) > 0:
                 attachnum = 1
                 for attachment in ctx.message.attachments:
-                    embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url, title='Attachment',
+                    embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url, title='Attachment',
                                       content=f'Attachment #{attachnum}:')
                     embed.set_image(url = attachment.url)
                     embed.set_footer(text=f'{ctx.guild.id}')
                     await dm_channel.send(embed=embed)
                     attachnum += 1
 
-            embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.avatar_url,
+            embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar.url,
                               title='Strike recorded',
                               content=f'{ctx.author.name}#{ctx.author.discriminator} gave a strike to {member.name}#{member.discriminator} | {member.id}')
             embed.add_field(name='Severity', value=f'{severity} strike(s)', inline=False)
@@ -1105,11 +1105,11 @@ class Administration(commands.Cog):
                 m = await modmail_enabled()
                 dm_embed = None
                 if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been banned',
                                          content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                     dm_embed.set_footer(text=ctx.guild.id)
                 else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been banned',
                                          content=f'Reason: {reason}')
                     dm_embed.set_footer(text=time.ctime())
                 try:
@@ -1156,12 +1156,12 @@ class Administration(commands.Cog):
                     await member.add_roles(mutedRole)
 
                     if m:
-                        dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                        dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                              title=f'You have had your image/external emote privileges revoked for for {mtime} seconds',
                                              content=f'If you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                         dm_embed.set_footer(text=ctx.guild.id)
                     else:
-                        dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                        dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                              title=f'You have been image/external emote privileges revoked for for {mtime} seconds',
                                              content=f'This is a result of your strike.')
                         dm_embed.set_footer(text=time.ctime())
@@ -1186,12 +1186,12 @@ class Administration(commands.Cog):
                 await member.add_roles(mutedRole)
 
                 if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                          title=f'You have been muted for {mtime} seconds',
                                          content=f'Strike 2 - automatic mute\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                     dm_embed.set_footer(text=ctx.guild.id)
                 else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                          title=f'You have been muted for {mtime} seconds',
                                          content=f'Strike 2 - automatic mute')
                     dm_embed.set_footer(text=time.ctime())
@@ -1217,14 +1217,14 @@ class Administration(commands.Cog):
     @commands.check_any(commands.has_guild_permissions(view_audit_log=True), has_modrole())
     async def lookup(self, ctx, member: discord.User):
         valid_strikes = []  # probably redundant but doing it anyways to prevent anything stupid
-        results = await check_strike(ctx, member, time=datetime.datetime.utcnow() + relativedelta(minutes=2),
+        results = await check_strike(ctx, member, time=datetime.datetime.now(datetime.timezone.utc) + relativedelta(minutes=2),
                                      valid_strikes=valid_strikes)
         num_strikes = len(results)
         # pull all of the documents now, cross reference with active strikes to determine the expired ones
         expired_query = {'server_id': ctx.guild.id, 'user_id': member.id}
         expired_results = db.warns.find(expired_query).sort('time', pymongo.DESCENDING)
 
-        embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.avatar_url,
+        embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar.url,
                           title='Strike Lookup', content=f'Found {num_strikes} active strikes for this user.')
         for document in results:
             documentid = document['_id']
@@ -1312,7 +1312,7 @@ class Administration(commands.Cog):
                         logChannel = message.guild.get_channel(msglog)
                         content = discord.Embed(colour=0x1abc9c)
                         content.set_author(name=f"{message.author.name}#{message.author.discriminator}",
-                                           icon_url=message.author.avatar_url)
+                                           icon_url=message.author.display_avatar.url)
                         content.set_footer(text=f"UID: {message.author.id} | {time.ctime()}")
                         content.title = f"Message deleted in #{message.channel.name}"
                         content.description = f"**Message Content:** {cleanMessage}"
@@ -1337,7 +1337,7 @@ class Administration(commands.Cog):
                             logChannel = message.guild.get_channel(msglog)
                             content = discord.Embed(colour=0x1abc9c)
                             content.set_author(name=f"{message.author.name}#{message.author.discriminator}",
-                                               icon_url=message.author.avatar_url)
+                                               icon_url=message.author.display_avatar.url)
                             content.set_footer(text=f"UID: {message.author.id} | {time.ctime()}")
                             content.title = f"Message deleted in #{message.channel.name}"
                             content.description = f"**Message Content:** {cleanMessage}"
@@ -1359,7 +1359,7 @@ class Administration(commands.Cog):
                         logChannel = before.guild.get_channel(msglog)
                         content = discord.Embed(colour=0x1abc9c)
                         content.set_author(name=f"{before.author.name}#{before.author.discriminator}",
-                                           icon_url=before.author.avatar_url)
+                                           icon_url=before.author.display_avatar.url)
                         content.set_footer(text=f"UID: {before.author.id} | {time.ctime()}")
                         content.title = f"Message edited in #{before.channel.name}"
                         content.description = f"**Before:** {before.clean_content}\n**After:** {after.clean_content}"
@@ -1376,7 +1376,7 @@ class Administration(commands.Cog):
 #   3. One strike active due to the presence of two strikes within two months (First strike expired, second is still active)
 #   4. Two strikes active (past 2 months)
 #   5. Three strikes active (proceed to ban the user)
-async def check_strike(ctx, member, time=datetime.datetime.utcnow(), valid_strikes=[]):
+async def check_strike(ctx, member, time=datetime.datetime.now(datetime.timezone.utc), valid_strikes=[]):
     log.info(time)  # this is here for debugging race condition atm
 
     # Create the search query

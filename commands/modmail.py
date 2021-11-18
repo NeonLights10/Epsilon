@@ -41,7 +41,7 @@ class Modmail(commands.Cog):
         if isinstance(recipient_id, discord.Guild):
             document = await db.servers.find_one({"server_id": recipient_id.id})
             if document['modmail_channel']:
-                embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}', icon_url=ctx.author.avatar_url,
+                embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}', icon_url=ctx.author.display_avatar.url,
                                   title='New Modmail',
                                   content=f'{content}\n\nYou may reply to this modmail using the reply function.')
                 embed.set_footer(text=f'{ctx.author.id}')
@@ -51,7 +51,7 @@ class Modmail(commands.Cog):
                     attachnum = 1
                     for attachment in ctx.message.attachments:
                         embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
-                                          icon_url=ctx.author.avatar_url, title='Attachment',
+                                          icon_url=ctx.author.display_avatar.url, title='Attachment',
                                           content=f'Attachment #{attachnum}:')
                         embed.set_image(url=attachment.url)
                         embed.set_footer(text=f'{ctx.author.id}')
@@ -71,7 +71,7 @@ class Modmail(commands.Cog):
                                                content="It seems like you're trying to create and send a modmail to a specific user. Please send this from the server and not from DMs."))
                 return
             if document['modmail_channel']:
-                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url, title='New Modmail',
+                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url, title='New Modmail',
                                   content=f'{content}\n\nYou may reply to this modmail using the reply function.')
                 embed.set_footer(text=f'{ctx.guild.id}')
                 dm_channel = recipient_id.dm_channel
@@ -81,7 +81,7 @@ class Modmail(commands.Cog):
                 if len(ctx.message.attachments) > 0:
                     attachnum = 1
                     for attachment in ctx.message.attachments:
-                        embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url, title='Attachment',
+                        embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url, title='Attachment',
                                           content=f'Attachment #{attachnum}:')
                         embed.set_image(url=attachment.url)
                         embed.set_footer(text=f'{ctx.guild.id}')
