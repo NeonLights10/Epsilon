@@ -524,8 +524,7 @@ class Reminder(commands.Cog):
         repeat = (int(reminder_time_repeat.total_seconds()) if reminder_time_repeat else None)
         future_timeunix = int(time.time() + reminder_time.total_seconds())
         future_timestamp = humanize_timedelta(timedelta=reminder_time)
-        #query = {'user_id': ctx.author.id}
-        query = {'nid_index':{"$exists": True}}
+        query = {'nid_index': {"$exists": True}}
         qdocument = await db.reminders.find_one(query)
         old_nid = qdocument['nid_index']
         nid = old_nid + 1
@@ -543,7 +542,7 @@ class Reminder(commands.Cog):
             'location': location
         }
         reminder = await db.reminders.insert_one(post)
-        await db.reminds.update_one({"nid_index": old_nid}, {"$set": {'nid_index': nid}})
+        await db.reminders.update_one({"nid_index": old_nid}, {"$set": {'nid_index': nid}})
 
         message = f"I will remind you of {'that' if reminder_text else 'this'} "
         if repeat:
@@ -730,12 +729,14 @@ class Reminder(commands.Cog):
             future_timestamp = found_reminder['future_timestamp']
             jump_link = found_reminder['jump_link']
             location = found_reminder['location']
-            query = {'user_id': member.id}
-            nid = await db.reminders.count_documents(query) + 1
+            query = {'nid_index': {"$exists": True}}
+            qdocument = await db.reminders.find_one(query)
+            old_nid = qdocument['nid_index']
+            nid = old_nid + 1
             post = {
                 'nid': nid,
                 'user_id': member.id,
-                'channel_id': ctx.channel.id,
+                'channel_id': payload.channel.id,
                 'creation_date': time.time(),
                 'reminder': reminder_text,
                 'repeat': repeat,
@@ -748,6 +749,7 @@ class Reminder(commands.Cog):
             if await reminder_exists(post):
                 return
             await db.reminders.insert_one(post)
+            await db.reminders.update_one({'nid_index': old_nid}, {"$set": {'nid_index': nid}})
             message = 'Hello! I will also send you '
             if post['repeat']:
                 human_repeat = humanize_timedelta(seconds=post["repeat"])
