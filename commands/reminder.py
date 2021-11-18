@@ -524,8 +524,10 @@ class Reminder(commands.Cog):
         repeat = (int(reminder_time_repeat.total_seconds()) if reminder_time_repeat else None)
         future_timeunix = int(time.time() + reminder_time.total_seconds())
         future_timestamp = humanize_timedelta(timedelta=reminder_time)
-        query = {'user_id': ctx.author.id}
-        nid = await db.reminders.count_documents(query) + 1
+        query = {'nid_index': {"$exists": True}}
+        qdocument = await db.reminders.find_one(query)
+        old_nid = qdocument['nid_index']
+        nid = old_nid + 1
         post = {
             'nid': nid,
             'user_id': ctx.author.id,
@@ -540,6 +542,7 @@ class Reminder(commands.Cog):
             'location': location
         }
         reminder = await db.reminders.insert_one(post)
+        await db.reminds.update_one({"nid_index": old_nid}, {"$set": {'nid_index': nid}})
 
         message = f"I will remind you of {'that' if reminder_text else 'this'} "
         if repeat:
