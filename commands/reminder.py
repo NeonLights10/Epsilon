@@ -542,7 +542,7 @@ class Reminder(commands.Cog):
             'location': location
         }
         reminder = await db.reminders.insert_one(post)
-        await db.reminds.update_one({"nid_index": old_nid}, {"$set": {'nid_index': nid}})
+        await db.reminders.update_one({"nid_index": old_nid}, {"$set": {'nid_index': nid}})
 
         message = f"I will remind you of {'that' if reminder_text else 'this'} "
         if repeat:
@@ -749,7 +749,7 @@ class Reminder(commands.Cog):
             if await reminder_exists(post):
                 return
             await db.reminders.insert_one(post)
-            await db.reminds.update_one({"nid_index": old_nid}, {"$set": {'nid_index': nid}})
+            await db.reminders.update_one({'nid_index': old_nid}, {"$set": {'nid_index': nid}})
             message = 'Hello! I will also send you '
             if post['repeat']:
                 human_repeat = humanize_timedelta(seconds=post["repeat"])
