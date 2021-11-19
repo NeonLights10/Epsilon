@@ -505,7 +505,7 @@ async def on_guild_join(guild):
         for channel in guild.text_channels:
             if channel.permissions_for(guild.me).send_messages:
                 embed = gen_embed(name=f'{guild.name}',
-                                  icon_url=guild.icon_url,
+                                  icon_url=guild.icon.url,
                                   title='Thanks for inviting me!',
                                   content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555.')
                 await channel.send(embed=embed)
