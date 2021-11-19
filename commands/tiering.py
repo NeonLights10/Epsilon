@@ -64,6 +64,7 @@ class Tiering(commands.Cog):
     @commands.group(name='trackfiller',
                     description='Manage the filler tracking feature for the server.')
     async def trackfiller(self, ctx):
+        await ctx.send(embed = gen_embed(title='Before you use Kanon to track fillers', content= 'You or the server moderators will need to reauthorize Kanon to use application commands. You can do so by visiting the following link:\nhttps://s-neon.xyz/kanon'))
         pass
 
     @trackfiller.command(name='list',
