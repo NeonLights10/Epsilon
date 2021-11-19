@@ -3,6 +3,7 @@ import discord
 import re
 
 from discord.ext import commands
+from discord.commands import user_command
 from formatting.embed import gen_embed
 from typing import Union, Optional
 from __main__ import log, db
@@ -41,6 +42,48 @@ class Tiering(commands.Cog):
             else:
                 return False
         return commands.check(predicate)
+
+    @user_command(name = 'Add user to filler list')
+    async def addfiller(self, ctx, member: discord.Member):
+        document = await db.fillers.find_one({'server_id': ctx.guild.id})
+        fillers = document['fillers']
+        fillers.append(member.id)
+        await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": fillers}})
+
+    @commands.group(name='trackfiller',
+                    description='Manage the filler tracking feature for the server.')
+    async def trackfiller(self, ctx):
+        pass
+
+    @trackfiller.command(name='list',
+                         aliases=['get'],
+                         description='Show the list of all the fillers.')
+    async def list(self, ctx):
+        fillers = []
+        document = await db.fillers.find_one({'server_id': ctx.guild.id})
+        for memberid in document['fillers']:
+            member = self.bot.fetch_user(memberid)
+            fillers.append(member.name)
+        fillers_str = ", ".join()
+        embed = gen_embed(title='List of Fillers',
+                          content=f'{fillers_str}')
+        await embed_splitter(embed = embed, destination = ctx.channel)
+
+    @trackfiller.command(name='clear',
+                         description='Clear the list of all names.')
+    async def clear(self, ctx):
+        await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": []}})
+        await ctx.send(embed = gen_embed(title='Track Fillers - Clear', content = 'List of fillers has been cleared.'))
+
+    @trackfiller.command(name='remove',
+                         aliases=['delete'],
+                         description='Remove one or more users from the list.',
+                         help='Usage:\n\n%trackfiller remove [user mentions/user ids/user name + discriminator (ex: name#0000)]')
+    async def remove(self, ctx, members: commands.Greedy[discord.Member]):
+        document = await db.fillers.find_one({'server_id': ctx.guild.id})
+        fillers = document['fillers']
+        for member in members:
+            fillers.remove(member.id)
 
     @commands.command(name = 'efficiencyguide',
                       description = 'Generates an efficiency guide for tiering in the channel you specify.',
