@@ -733,7 +733,7 @@ class Administration(commands.Cog):
                 dm_embed.set_footer(text=time.ctime())
                 try:
                     await dm_channel.send(embed=dm_embed)
-                except discord.errors.Forbidden:
+                except discord.Forbidden:
                     await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with muting the user.'))
 
                 embed = gen_embed(title='mute', content=f'{member.mention} has been muted. \nReason: {reason}')
@@ -761,7 +761,7 @@ class Administration(commands.Cog):
                     dm_embed.set_footer(text=time.ctime())
                 try:
                     await dm_channel.send(embed=dm_embed)
-                except discord.errors.Forbidden:
+                except discord.Forbidden:
                     await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with muting the user.'))
                 muted = muted + f'{member.mention} '
 
@@ -1064,7 +1064,7 @@ class Administration(commands.Cog):
             dm_embed.set_footer(text=ctx.guild.id)
             try:
                 await dm_channel.send(embed=dm_embed)
-            except discord.errors.Forbidden:
+            except discord.Forbidden:
                 await ctx.send(embed=gen_embed(title='Warning',
                                                content='This user does not accept DMs. I could not send them the message, but I will proceed with striking the user.'))
 
@@ -1114,7 +1114,7 @@ class Administration(commands.Cog):
                     dm_embed.set_footer(text=time.ctime())
                 try:
                     await dm_channel.send(embed=dm_embed)
-                except discord.errors.Forbidden:
+                except discord.Forbidden:
                     await ctx.send(embed=gen_embed(title='Warning',
                                                    content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and banning the user.'))
                 await ctx.guild.ban(member,
@@ -1167,7 +1167,7 @@ class Administration(commands.Cog):
                         dm_embed.set_footer(text=time.ctime())
                     try:
                         await dm_channel.send(embed=dm_embed)
-                    except discord.errors.Forbidden:
+                    except discord.Forbidden:
                         await ctx.send(embed=gen_embed(title='Warning',
                                                        content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
                     log.info('image mute success')
@@ -1197,7 +1197,7 @@ class Administration(commands.Cog):
                     dm_embed.set_footer(text=time.ctime())
                 try:
                     await dm_channel.send(embed=dm_embed)
-                except discord.errors.Forbidden:
+                except discord.Forbidden:
                     await ctx.send(embed=gen_embed(title='Warning',
                                                    content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
                 await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))

@@ -6,6 +6,7 @@ from discord.ext import commands
 from discord.commands import user_command
 from formatting.embed import gen_embed
 from typing import Union, Optional
+from formatting.embed import embed_splitter
 from __main__ import log, db
 
 class Tiering(commands.Cog):
@@ -46,9 +47,19 @@ class Tiering(commands.Cog):
     @user_command(name = 'Add user to filler list')
     async def addfiller(self, ctx, member: discord.Member):
         document = await db.fillers.find_one({'server_id': ctx.guild.id})
-        fillers = document['fillers']
-        fillers.append(member.id)
-        await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": fillers}})
+        log.info('found document')
+        if document:
+            fillers = document['fillers']
+        else:
+            fillers = []
+        if member.id in fillers:
+            await ctx.respond(content = 'User is already in the list of fillers.', ephemeral=True)
+        else:
+            fillers.append(member.id)
+            log.info('appended')
+            await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": fillers}}, upsert=True)
+            log.info('updated one')
+            await ctx.respond(content = f"Added {member.name} to the list of fillers.", ephemeral=True)
 
     @commands.group(name='trackfiller',
                     description='Manage the filler tracking feature for the server.')
@@ -62,9 +73,9 @@ class Tiering(commands.Cog):
         fillers = []
         document = await db.fillers.find_one({'server_id': ctx.guild.id})
         for memberid in document['fillers']:
-            member = self.bot.fetch_user(memberid)
+            member = await self.bot.fetch_user(memberid)
             fillers.append(member.name)
-        fillers_str = ", ".join()
+        fillers_str = ", ".join(fillers)
         embed = gen_embed(title='List of Fillers',
                           content=f'{fillers_str}')
         await embed_splitter(embed = embed, destination = ctx.channel)

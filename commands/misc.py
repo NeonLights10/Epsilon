@@ -112,8 +112,7 @@ class Miscellaneous(commands.Cog):
     @is_owner()
     async def reload(self, ctx, cog_name: str):
         cog = f"commands.{cog_name.lower()}"
-        self.bot.unload_extension(cog)
-        self.bot.load_extension(cog)
+        self.bot.reload_extension(cog)
         await ctx.send(f"Successfully reloaded the {cog} cog")
 
     @commands.command(name = 'exec',

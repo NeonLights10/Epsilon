@@ -212,7 +212,7 @@ class Reminder(commands.Cog):
                 elif reminder['location'] == 'dm':
                     try:
                         await user.send(embed=embed)
-                    except (discord.errors.Forbidden, discord.errors.Forbidden):
+                    except discord.Forbidden:
                         # Can't send DMs to user, delete it
                         log.error('Could not send reminder dm to user, deleting reminder')
                         to_remove.append(reminder)

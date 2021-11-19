@@ -1,4 +1,5 @@
 from discord.ext import commands
+from discord.commands import user_command
 import discord
 
 class Help(commands.Cog):
@@ -18,6 +19,9 @@ class Help(commands.Cog):
                 if cog_commands and x not in ['Help','Admin']:
                     commands = []
                     for y in cog_commands:
+                        if isinstance(y, discord.commands.UserCommand):
+                            commands.append(y.name)
+                            continue
                         if y.hidden == False:
                             commands.append(y.name)
                     commands = ('\n'.join(map(str, sorted(commands))))
@@ -30,12 +34,16 @@ class Help(commands.Cog):
                 for x in self.bot.cogs:
                     cog_commands = (self.bot.get_cog(x)).get_commands()
                     for y in cog_commands:
+                        if isinstance(y, discord.commands.UserCommand):
+                            continue
                         if command == y.name or command in y.aliases:
                             if y.aliases:
                                 help=discord.Embed(title=f"{y.name.capitalize()} ({(', '.join(map(str, sorted(y.aliases))))})",color=discord.Color.blue())
                             else:
                                 help=discord.Embed(title=y.name.capitalize(),color=discord.Color.blue())
                             for c in self.bot.get_cog(y.cog_name).get_commands():
+                                if isinstance(c, discord.commands.UserCommand):
+                                    continue
                                 if command == c.name or command in c.aliases:
                                     help.add_field(name='Description',value=c.description, inline=False)
                                     help.add_field(name='Inputs',value=f"{ctx.prefix}{c.name} {c.signature}", inline=False)

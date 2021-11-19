@@ -1,5 +1,5 @@
 pip
-discord.py>=1.6
+py-cord
 colorlog
 motor
 pymongo
@@ -10,3 +10,4 @@ python-dateutil
 emoji
 objgraph
 humanfriendly
+twitter
