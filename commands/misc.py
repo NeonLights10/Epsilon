@@ -70,6 +70,11 @@ class Miscellaneous(commands.Cog):
     async def support(self, ctx):
         await ctx.send(embed = gen_embed(title = 'Support Kanon Bot', content = 'Kanon costs money to run. I pay for her server costs out of pocket, so any donation helps!\nSupport: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights'))
 
+    @commands.command(name = 'shoutout',
+                      description = "Shoutout all the patrons who support Kanon Bot!")
+    async def shoutout(self, ctx):
+        await ctx.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161')
+
     @commands.command(name = 'deleteguild',
                 description = 'Makes the bot leave the server specified and purges all information from database.')
     @is_owner()
