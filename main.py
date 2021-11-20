@@ -148,7 +148,7 @@ async def _initialize_document(guild, id):
             'log_kbm': False,
             'log_strikes': False,
             'welcome_channel': None,
-            'welcome_message': f"Welcome to the {guild.name}!",
+            'welcome_message': f"Welcome to {guild.name}!",
             'welcome_banner': None,
             'max_strike': 3,
             'modmail_channel': None,
@@ -180,7 +180,8 @@ async def _check_document(guild, id):
         await db.servers.update_many(
             {"server_id": id},
             [{'$set': {
-                "name": guild.name
+                "name": guild.name,
+                "welcome_message": f'Welcome to {guild.name}!'
                 #obsolete updates
                 #"log_joinleaves": {'$cond': [{'$not': ["$log_joinleaves"]}, False, "$log_joinleaves"]},
                 #"blacklist": {'$cond': [{'$not': ["$blacklist"]}, [], "$blacklist"]},
