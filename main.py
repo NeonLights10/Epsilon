@@ -502,7 +502,7 @@ async def on_guild_join(guild):
         embed = gen_embed(name=f'{guild.name}',
                           icon_url=guild.icon.url,
                           title='Thanks for inviting me!',
-                          content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555.')
+                          content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555 or join the server at https://discord.gg/AYTFJY8VhF')
         await general.send(embed=embed)
         return
     else:
@@ -511,7 +511,7 @@ async def on_guild_join(guild):
                 embed = gen_embed(name=f'{guild.name}',
                                   icon_url=guild.icon.url,
                                   title='Thanks for inviting me!',
-                                  content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555.')
+                                  content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555 or join the server at https://discord.gg/AYTFJY8VhF.')
                 await channel.send(embed=embed)
                 return
 
