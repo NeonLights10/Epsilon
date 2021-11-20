@@ -159,7 +159,8 @@ async def _initialize_document(guild, id):
             'prefix': None,
             'blacklist': [],
             'whitelist': [],
-            'verify': []
+            'verify': [],
+            'announcements': True
             }
     log.info(f"Creating document for {guild.name}...")
     await db.servers.insert_one(post)
@@ -179,15 +180,17 @@ async def _check_document(guild, id):
         await db.servers.update_many(
             {"server_id": id},
             [{'$set': {
-                "log_joinleaves": {'$cond': [{'$not': ["$log_joinleaves"]}, False, "$log_joinleaves"]},
-                "blacklist": {'$cond': [{'$not': ["$blacklist"]}, [], "$blacklist"]},
-                "whitelist": {'$cond': [{'$not': ["$whitelist"]}, [], "$whitelist"]},
-                "log_kbm": {'$cond': [{'$not': ["$log_kbm"]}, False, "$log_kbm"]},
-                "log_strikes": {'$cond': [{'$not': ["$log_strikes"]}, False, "$log_strikes"]},
-                "chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]},
-                "announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]},
-                "verify": {'$cond': [{'$not': ["$verify"]}, [], "$verify"]},
-                "announcements": {'$cond': [{'$not': ["$announcements"]}, True, "$announcements"]}
+                "name": guild.name
+                #obsolete updates
+                #"log_joinleaves": {'$cond': [{'$not': ["$log_joinleaves"]}, False, "$log_joinleaves"]},
+                #"blacklist": {'$cond': [{'$not': ["$blacklist"]}, [], "$blacklist"]},
+                #"whitelist": {'$cond': [{'$not': ["$whitelist"]}, [], "$whitelist"]},
+                #"log_kbm": {'$cond': [{'$not': ["$log_kbm"]}, False, "$log_kbm"]},
+                #"log_strikes": {'$cond': [{'$not': ["$log_strikes"]}, False, "$log_strikes"]},
+                #"chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]},
+                #"announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]},
+                #"verify": {'$cond': [{'$not': ["$verify"]}, [], "$verify"]},
+                #"announcements": {'$cond': [{'$not': ["$announcements"]}, True, "$announcements"]}```
             }}]
         )
 
