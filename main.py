@@ -22,7 +22,6 @@ from discord.utils import find, get
 from pymongo import MongoClient
 
 from formatting.constants import VERSION as BOTVERSION
-from misc import shoutout
 from formatting.constants import NAME
 from formatting.constants import FILTER
 
@@ -505,7 +504,7 @@ async def on_guild_join(guild):
                           title='Thanks for inviting me!',
                           content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555 or join the server at https://discord.gg/AYTFJY8VhF')
         await general.send(embed=embed)
-        await shoutout(ctx)
+        await general.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777'))
         return
     else:
         for channel in guild.text_channels:
@@ -515,7 +514,7 @@ async def on_guild_join(guild):
                                   title='Thanks for inviting me!',
                                   content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555 or join the server at https://discord.gg/AYTFJY8VhF.')
                 await channel.send(embed=embed)
-                await shoutout(ctx)
+                await channel.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777'))
                 return
 
 
