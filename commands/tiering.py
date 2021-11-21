@@ -47,7 +47,10 @@ class Tiering(commands.Cog):
     def can_trackfillers():
         async def predicate(ctx):
             document = await db.fillers.find_one({"server_id": ctx.guild.id})
-            return any(item in document['roles'] for item.id in ctx.author.roles)
+            roles = []
+            for role in ctx.author.roles:
+                roles.append(role.id)
+            return any(roleid in document['roles'] for roleid in roles)
         return commands.check(predicate)
 
     @user_command(name = 'Add user to filler list')
