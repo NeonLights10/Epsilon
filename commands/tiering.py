@@ -96,7 +96,7 @@ class Tiering(commands.Cog):
     @commands.group(name='trackfiller',
                     description='Filler tracking feature for the server.')
     async def trackfiller(self, ctx):
-        await ctx.send(embed = gen_embed(title='Before you use Kanon to track fillers', content= 'You or the server moderators will need to reauthorize Kanon to use application commands. You can do so by visiting the following link:\nhttps://s-neon.xyz/kanon\n\nThis feature is not complete. Permissions are configured now. Use %trackfiller rolepermission and %trackfiller settings to configure it.'))
+        await ctx.send(embed = gen_embed(title='Before you use Kanon to track fillers', content= 'You or the server moderators will need to reauthorize Kanon to use application commands. You can do so by visiting the following link:\nhttps://s-neon.xyz/kanon\n\nThis feature is not complete, but permissions are configured now. Below is an example of how to activate filler tracking for your server:\n`%trackfiller settings enable`\n`%trackfiller rolepermission "t10" 012345678999999999`'))
         pass
 
     @trackfiller.command(name='list',
@@ -156,7 +156,7 @@ class Tiering(commands.Cog):
 
     @trackfiller.command(name='rolepermission',
                          description='Configure which roles have access to trackfiller.',
-                         help = '\nUsage:\n\n%trackfiller rolepermission [role mentions/role ids/role names in quotations]')
+                         help = '\nUsage:\n\n%trackfiller rolepermission [enable/disable] [role mentions/role ids/role names in quotations]')
     @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
     async def rolepermission(self, ctx, option: str, value: commands.Greedy[discord.Role]):
         valid_options = {'enable', 'disable'}
