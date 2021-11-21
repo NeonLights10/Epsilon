@@ -62,7 +62,10 @@ class Tiering(commands.Cog):
             enabled = False
         if enabled:
             if document['roles']:
-                if any(roleid in document['roles'] for role.id in ctx.author.roles):
+                roles = []
+                for role in ctx.author.roles:
+                    roles.append(role.id)
+                if any(roleid in document['roles'] for roleid in roles):
                     if member.id in fillers:
                         await ctx.respond(content = 'User is already in the list of fillers.', ephemeral=True)
                     else:
@@ -90,7 +93,7 @@ class Tiering(commands.Cog):
     @commands.group(name='trackfiller',
                     description='Filler tracking feature for the server.')
     async def trackfiller(self, ctx):
-        await ctx.send(embed = gen_embed(title='Before you use Kanon to track fillers', content= 'You or the server moderators will need to reauthorize Kanon to use application commands. You can do so by visiting the following link:\nhttps://s-neon.xyz/kanon\n\nThis feature is not complete. Permissions are not configured at this time, meaning anyone can add someone to this list.'))
+        await ctx.send(embed = gen_embed(title='Before you use Kanon to track fillers', content= 'You or the server moderators will need to reauthorize Kanon to use application commands. You can do so by visiting the following link:\nhttps://s-neon.xyz/kanon\n\nThis feature is not complete. Permissions are configured now. Use %trackfiller rolepermission and %trackfiller settings to configure it.'))
         pass
 
     @trackfiller.command(name='list',
