@@ -207,7 +207,7 @@ class Tiering(commands.Cog):
 
     @trackfiller.command(name='clear',
                          description='Clear the list of all names.')
-    @commands.check_any(has_modrole(), can_trackfillers())
+    @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole(), can_trackfillers())
     async def clear(self, ctx):
         await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": []}})
         await ctx.send(embed = gen_embed(title='trackfiller - clear', content = 'List of fillers has been cleared.'))
@@ -216,7 +216,7 @@ class Tiering(commands.Cog):
                          aliases=['delete'],
                          description='Remove one or more users from the list.',
                          help='\nUsage:\n\n%trackfiller remove [user mentions/user ids/user name + discriminator (ex: name#0000)]')
-    @commands.check_any(has_modrole(), can_trackfillers())
+    @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole(), can_trackfillers())
     async def remove(self, ctx, members: commands.Greedy[discord.Member]):
         document = await db.fillers.find_one({'server_id': ctx.guild.id})
         fillers = document['fillers']
