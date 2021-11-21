@@ -163,14 +163,16 @@ class Tiering(commands.Cog):
             await ctx.send(embed=gen_embed(title='Input Error',
                                            content=f'That is not a valid option for this parameter. Valid options: <{params}>'))
             return
+
+        document = await db.fillers.find_one({'server_id': ctx.guild.id})
+        if document:
+            fillers = document['fillers']
+            roles = document['roles']
+        else:
+            fillers = []
+            roles = []
+
         for role in value:
-            document = await db.fillers.find_one({'server_id': ctx.guild.id})
-            if document:
-                fillers = document['fillers']
-                roles = document['roles']
-            else:
-                fillers = []
-                roles = []
             edited = []
             if option == 'enable':
                 if role.id in roles:
@@ -180,20 +182,18 @@ class Tiering(commands.Cog):
                 else:
                     roles.append(role.id)
                     edited.append(role.name)
-                await db.fillers.update_one({'server_id': ctx.guild.id},
-                                            {"$set": {"fillers": fillers, "roles": roles, "enabled": True}},
-                                            upsert=True)
             elif option == 'disable':
                 if role.id in roles:
                     roles.remove(role.id)
                     edited.append(role.name)
-                    await db.fillers.update_one({'server_id': ctx.guild.id},
-                                                {"$set": {"fillers": fillers, "roles": roles, "enabled": True}},
-                                                upsert=True)
                 else:
                     await ctx.send(embed=gen_embed(title='Input Error',
                                                    content=f'This role has already been disabled.'))
                     continue
+        await db.fillers.update_one({'server_id': ctx.guild.id},
+                                    {"$set": {"fillers": fillers, "roles": roles, "enabled": True}},
+                                    upsert=True)
+
         formatted_str = ", ".join(edited)
         if option == 'enable':
             await ctx.send(embed=gen_embed(title='trackfiller',
