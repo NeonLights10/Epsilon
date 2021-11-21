@@ -207,7 +207,7 @@ class Tiering(commands.Cog):
     @commands.check_any(has_modrole(), can_trackfillers())
     async def clear(self, ctx):
         await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": []}})
-        await ctx.send(embed = gen_embed(title='Track Fillers - Clear', content = 'List of fillers has been cleared.'))
+        await ctx.send(embed = gen_embed(title='trackfiller - clear', content = 'List of fillers has been cleared.'))
 
     @trackfiller.command(name='remove',
                          aliases=['delete'],
@@ -219,6 +219,8 @@ class Tiering(commands.Cog):
         fillers = document['fillers']
         for member in members:
             fillers.remove(member.id)
+        await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": fillers}})
+        await ctx.send(embed=gen_embed(title='trackfiller - remove', content='Fillers removed.'))
 
     @commands.command(name = 'efficiencyguide',
                       description = 'Generates an efficiency guide for tiering in the channel you specify.',
