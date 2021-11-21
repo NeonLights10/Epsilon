@@ -137,8 +137,10 @@ class Tiering(commands.Cog):
                         'enabled': True
                         }
                 await db.fillers.insert_one(post)
-            ctx.send(embed=gen_embed(title='trackfiller',
+            await ctx.send(embed=gen_embed(title='trackfiller',
                                      content=f'Enabled trackfiller for {ctx.guild.name}.'))
+            await ctx.send(content='How do I add a filler?')
+            await ctx.send(content='https://files.s-neon.xyz/share/DiscordPTB_QkOPfrdP4L.png')
         elif option == 'disable':
             document = await db.fillers.find_one({'server_id': ctx.guild.id})
             if document:
@@ -151,7 +153,7 @@ class Tiering(commands.Cog):
                         'enabled': False
                         }
                 await db.fillers.insert_one(post)
-            ctx.send(embed=gen_embed(title='trackfiller',
+            await ctx.send(embed=gen_embed(title='trackfiller',
                                      content=f'Disabled trackfiller for {ctx.guild.name}.'))
 
     @trackfiller.command(name='rolepermission',
