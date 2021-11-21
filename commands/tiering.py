@@ -44,25 +44,51 @@ class Tiering(commands.Cog):
                 return False
         return commands.check(predicate)
 
+    def can_trackfillers():
+        async def predicate(ctx):
+            document = await db.fillers.find_one({"server_id": ctx.guild.id})
+            return any(item in document['roles'] for item.id in ctx.author.roles)
+        return commands.check(predicate)
+
     @user_command(name = 'Add user to filler list')
     async def addfiller(self, ctx, member: discord.Member):
         document = await db.fillers.find_one({'server_id': ctx.guild.id})
         log.info('found document')
         if document:
             fillers = document['fillers']
+            enabled = document['enabled']
         else:
             fillers = []
-        if member.id in fillers:
-            await ctx.respond(content = 'User is already in the list of fillers.', ephemeral=True)
+            enabled = False
+        if enabled:
+            if document['roles']:
+                if any(roleid in document['roles'] for role.id in ctx.author.roles):
+                    if member.id in fillers:
+                        await ctx.respond(content = 'User is already in the list of fillers.', ephemeral=True)
+                    else:
+                        fillers.append(member.id)
+                        log.info('appended')
+                        await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": fillers, "roles": []}}, upsert=True)
+                        log.info('updated one')
+                        await ctx.respond(content = f"Added {member.name} to the list of fillers.", ephemeral=True)
+                        return
+                else:
+                    await ctx.respond(content = 'You do not have access to this feature.', ephemeral=True)
+            else:
+                if member.id in fillers:
+                    await ctx.respond(content='User is already in the list of fillers.', ephemeral=True)
+                else:
+                    fillers.append(member.id)
+                    log.info('appended')
+                    await db.fillers.update_one({'server_id': ctx.guild.id},
+                                                {"$set": {"fillers": fillers, "roles": []}}, upsert=True)
+                    log.info('updated one')
+                    await ctx.respond(content=f"Added {member.name} to the list of fillers.", ephemeral=True)
         else:
-            fillers.append(member.id)
-            log.info('appended')
-            await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": fillers}}, upsert=True)
-            log.info('updated one')
-            await ctx.respond(content = f"Added {member.name} to the list of fillers.", ephemeral=True)
+            await ctx.respond(content='This is not enabled for this server.', ephemeral=True)
 
     @commands.group(name='trackfiller',
-                    description='Manage the filler tracking feature for the server.')
+                    description='Filler tracking feature for the server.')
     async def trackfiller(self, ctx):
         await ctx.send(embed = gen_embed(title='Before you use Kanon to track fillers', content= 'You or the server moderators will need to reauthorize Kanon to use application commands. You can do so by visiting the following link:\nhttps://s-neon.xyz/kanon\n\nThis feature is not complete. Permissions are not configured at this time, meaning anyone can add someone to this list.'))
         pass
@@ -81,8 +107,101 @@ class Tiering(commands.Cog):
                           content=f'{fillers_str}')
         await embed_splitter(embed = embed, destination = ctx.channel)
 
+    @trackfiller.command(name='settings',
+                         description='Configure settings for trackfiller.',
+                         help='\nUsage:\n\n%trackfiller settings [option]\n\nAvailable settings: enable, disable')
+    @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
+    async def settings(self, ctx, option: str):
+        valid_options = {'enable', 'disable'}
+        option = option.lower()
+        if option not in valid_options:
+            params = ' '.join([x for x in valid_options])
+            await ctx.send(embed=gen_embed(title='Input Error',
+                                           content=f'That is not a valid option for this parameter. Valid options: <{params}>'))
+            return
+        if option == 'enable':
+            document = await db.fillers.find_one({'server_id': ctx.guild.id})
+            if document:
+                await db.fillers.update_one({'server_id': ctx.guild.id},
+                                            {"$set": {"enabled": True}})
+            else:
+                post = {'server_id': id,
+                        'fillers': [],
+                        'roles': [],
+                        'enabled': True
+                        }
+                await db.fillers.insert_one(post)
+            ctx.send(embed=gen_embed(title='trackfiller',
+                                     content=f'Enabled trackfiller for {ctx.guild.name}.'))
+        elif option == 'disable':
+            document = await db.fillers.find_one({'server_id': ctx.guild.id})
+            if document:
+                await db.fillers.update_one({'server_id': ctx.guild.id},
+                                            {"$set": {"enabled": False}})
+            else:
+                post = {'server_id': id,
+                        'fillers': [],
+                        'roles': [],
+                        'enabled': False
+                        }
+                await db.fillers.insert_one(post)
+            ctx.send(embed=gen_embed(title='trackfiller',
+                                     content=f'Disabled trackfiller for {ctx.guild.name}.'))
+
+    @trackfiller.command(name='rolepermission',
+                         description='Configure which roles have access to trackfiller.',
+                         help = '\nUsage:\n\n%trackfiller rolepermission [role mentions/role ids/role names in quotations]')
+    @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
+    async def rolepermission(self, ctx, option: str, value: commands.Greedy[discord.Role]):
+        valid_options = {'enable', 'disable'}
+        option = option.lower()
+        if option not in valid_options:
+            params = ' '.join([x for x in valid_options])
+            await ctx.send(embed=gen_embed(title='Input Error',
+                                           content=f'That is not a valid option for this parameter. Valid options: <{params}>'))
+            return
+        for role in value:
+            document = await db.fillers.find_one({'server_id': ctx.guild.id})
+            if document:
+                fillers = document['fillers']
+                roles = document['roles']
+            else:
+                fillers = []
+                roles = []
+            edited = []
+            if option == 'enable':
+                if role.id in roles:
+                    await ctx.send(embed=gen_embed(title='Input Error',
+                                                   content=f'This role has already been enabled.'))
+                    continue
+                else:
+                    roles.append(role.id)
+                    edited.append(role.name)
+                await db.fillers.update_one({'server_id': ctx.guild.id},
+                                            {"$set": {"fillers": fillers, "roles": roles, "enabled": True}},
+                                            upsert=True)
+            elif option == 'disable':
+                if role.id in roles:
+                    roles.remove(role.id)
+                    edited.append(role.name)
+                    await db.fillers.update_one({'server_id': ctx.guild.id},
+                                                {"$set": {"fillers": fillers, "roles": roles, "enabled": True}},
+                                                upsert=True)
+                else:
+                    await ctx.send(embed=gen_embed(title='Input Error',
+                                                   content=f'This role has already been disabled.'))
+                    continue
+        formatted_str = ", ".join(edited)
+        if option == 'enable':
+            await ctx.send(embed=gen_embed(title='trackfiller',
+                                           content=f'Enabled trackfiller for {formatted_str}.'))
+        elif option == 'disable':
+            await ctx.send(embed=gen_embed(title='trackfiller',
+                                           content=f'Disabled trackfiller for {formatted_str}.'))
+
     @trackfiller.command(name='clear',
                          description='Clear the list of all names.')
+    @commands.check_any(has_modrole(), can_trackfillers())
     async def clear(self, ctx):
         await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": []}})
         await ctx.send(embed = gen_embed(title='Track Fillers - Clear', content = 'List of fillers has been cleared.'))
@@ -90,7 +209,8 @@ class Tiering(commands.Cog):
     @trackfiller.command(name='remove',
                          aliases=['delete'],
                          description='Remove one or more users from the list.',
-                         help='Usage:\n\n%trackfiller remove [user mentions/user ids/user name + discriminator (ex: name#0000)]')
+                         help='\nUsage:\n\n%trackfiller remove [user mentions/user ids/user name + discriminator (ex: name#0000)]')
+    @commands.check_any(has_modrole(), can_trackfillers())
     async def remove(self, ctx, members: commands.Greedy[discord.Member]):
         document = await db.fillers.find_one({'server_id': ctx.guild.id})
         fillers = document['fillers']

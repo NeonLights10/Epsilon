@@ -163,7 +163,7 @@ class Administration(commands.Cog):
                 else:
                     await ctx.send(embed=gen_embed(title='Input Error',
                                                    content=f'This channel is already blacklisted!'))
-                    return
+                    continue
                 await db.msgid.delete_many({"channel_id": channel.id})
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
@@ -177,7 +177,7 @@ class Administration(commands.Cog):
                 else:
                     await ctx.send(embed=gen_embed(title='Input Error',
                                                    content=f'This channel is not blacklisted!'))
-                    return
+                    continue
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
                                            content=f'Unblacklisted channel {channels_removed} for {ctx.guild.name}'))
@@ -205,7 +205,7 @@ class Administration(commands.Cog):
                 else:
                     await ctx.send(embed=gen_embed(title='Input Error',
                                                    content=f'This channel is already whitelisted!'))
-                    return
+                    continue
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
                                            content=f'Whitelisted channel {channels_added} for {ctx.guild.name}'))
@@ -218,7 +218,7 @@ class Administration(commands.Cog):
                 else:
                     await ctx.send(embed=gen_embed(title='Input Error',
                                                    content=f'This channel is not whitelisted!'))
-                    return
+                    continue
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
                                            content=f'Unwhitelisted channel {channels_removed} for {ctx.guild.name}'))
