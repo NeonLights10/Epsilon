@@ -99,6 +99,12 @@ class Tiering(commands.Cog):
         await ctx.send(embed = gen_embed(title='Before you use Kanon to track fillers', content= 'You or the server moderators will need to reauthorize Kanon to use application commands. You can do so by visiting the following link:\nhttps://s-neon.xyz/kanon\n\nThis feature is not complete, but permissions are configured now. Below is an example of how to activate filler tracking for your server:\n`%trackfiller settings enable`\n`%trackfiller rolepermission "t10" 012345678999999999`'))
         pass
 
+    @trackfiller.command(name='help',
+                         description='Tutorial for adding a filler to the list.')
+    async def trackfillerhelp(self, ctx):
+        await ctx.send(content='How do I add a filler?')
+        await ctx.send(content='https://files.s-neon.xyz/share/DiscordPTB_QkOPfrdP4L.png')
+
     @trackfiller.command(name='list',
                          aliases=['get'],
                          description='Show the list of all the fillers.')
