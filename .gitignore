@@ -5,3 +5,4 @@ config.json
 warn_db.csv
 venv
 .idea
+temp.py
