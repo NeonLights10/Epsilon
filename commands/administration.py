@@ -35,6 +35,7 @@ class Confirm(discord.ui.View):
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
     async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
         #await interaction.response.send_message("Confirming", ephemeral=True)
+        button.disabled = True
         self.value = True
         self.stop()
 
@@ -42,6 +43,7 @@ class Confirm(discord.ui.View):
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True)
+        button.disabled = True
         self.value = False
         self.stop()
 
