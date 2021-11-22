@@ -843,7 +843,10 @@ class Administration(commands.Cog):
                 await ctx.send(embed=gen_embed(title='Warning',
                                                content='This user does not accept DMs or there was an issue with sending DMs. I could not send them the message, but I will proceed with kicking the user.'))
 
-            await ctx.guild.kick(member, reason=reason[:511])
+            if reason:
+                await ctx.guild.kick(member, reason=reason[:511])
+            else:
+                await ctx.guild.kick(member)
             kicked = kicked + f'{member.name}#{member.discriminator} '
 
         embed = gen_embed(title='kick', content=f'{kicked}has been kicked.\nReason: {reason}')
