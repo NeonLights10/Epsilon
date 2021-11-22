@@ -28,14 +28,14 @@ class Confirm(discord.ui.View):
     # We also send the user an ephemeral message that we're confirming their choice.
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
     async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Confirming", ephemeral=True)
+        #await interaction.response.send_message("Confirming", ephemeral=True)
         self.value = True
         self.stop()
 
     # This one is similar to the confirmation button except sets the inner value to `False`
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Cancelling", ephemeral=True)
+        #await interaction.response.send_message("Cancelling", ephemeral=True)
         self.value = False
         self.stop()
 
@@ -1211,7 +1211,7 @@ class Administration(commands.Cog):
 
             elif severity != '2' and ctx.guild.id == 432379300684103699:
                 view = Confirm()
-                await ctx.send("Do you want to continue?", view=view)
+                await ctx.send(embed=gen_embed(title='Image Mute', content="Do you want to revoke image/external emote privileges?"), view=view)
                 # Wait for the View to stop listening for input...
                 await view.wait()
                 if view.value is None:
