@@ -393,19 +393,6 @@ async def on_message(message):
                                 await ctx.send(embed=gen_embed(title='Modmail sent',
                                                                content=f'Sent modmail to {user.name}#{user.discriminator}.'))
                     elif document['chat']:
-                        '''new_message = await twtfix(message)
-                        if whitelist and ctx.channel not in whitelist:
-                            return
-                        log.info("Found a reply to me, generating response...")
-                        if new_message:
-                            return
-                        else:
-                            if re.search(r'https://fxtwitter', ref_message.clean_content):
-                                return
-                            msg = await get_msgid(ctx.message)
-                            log.info(f"Message retrieved: {msg}\n")
-                            await ctx.message.reply(content=msg)'''
-
                         if whitelist and ctx.channel not in whitelist:
                             return
                         log.info("Found a reply to me, generating response...")
@@ -426,11 +413,6 @@ async def on_message(message):
                     if whitelist and ctx.channel not in whitelist:
                         return
                     log.info("Found a reply to me, generating response...")
-                    '''if new_message:
-                        msg = await get_msgid(new_message)
-                        log.info(f"Message retrieved: {msg}\n")
-                        await new_message.reply(content=msg)
-                    else:'''
                     msg = await get_msgid(ctx.message)
                     #log.info(f"Message retrieved: {msg}\n")
                     await ctx.message.reply(content=msg)

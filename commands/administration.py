@@ -17,6 +17,28 @@ from formatting.embed import gen_embed
 from bson.objectid import ObjectId
 from __main__ import log, db, prefix_list, prefix
 
+# Define a simple View that gives us a confirmation menu
+class Confirm(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    # When the confirm button is pressed, set the inner value to `True` and
+    # stop the View from listening to more input.
+    # We also send the user an ephemeral message that we're confirming their choice.
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
+    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Confirming", ephemeral=True)
+        self.value = True
+        self.stop()
+
+    # This one is similar to the confirmation button except sets the inner value to `False`
+    @discord.ui.button(label="No", style=discord.ButtonStyle.red)
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Cancelling", ephemeral=True)
+        self.value = False
+        self.stop()
+
 
 class Administration(commands.Cog):
     def __init__(self, bot):
@@ -1188,39 +1210,49 @@ class Administration(commands.Cog):
                             await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
 
             elif severity != '2' and ctx.guild.id == 432379300684103699:
-                msg = await imagemute()
-                if msg is None:
+                view = Confirm()
+                await ctx.send("Do you want to continue?", view=view)
+                # Wait for the View to stop listening for input...
+                await view.wait()
+                if view.value is None:
+                    log.info("View timed out")
                     return
+                elif view.value:
+                    log.info("Pressed Confirm Button")
+                    msg = await mutetime()
+                    if msg:
+                        mtime = convert_to_seconds(msg)
+                        mutedRole = discord.utils.get(ctx.guild.roles, name="Image Mute")
+
+                        await member.add_roles(mutedRole)
+
+                        if m:
+                            dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                                 title=f'You have had your image/external emote privileges revoked for for {mtime} seconds',
+                                                 content=f'If you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                            dm_embed.set_footer(text=ctx.guild.id)
+                        else:
+                            dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                                 title=f'You have been image/external emote privileges revoked for for {mtime} seconds',
+                                                 content=f'This is a result of your strike.')
+                            dm_embed.set_footer(text=time.ctime())
+                        try:
+                            await dm_channel.send(embed=dm_embed)
+                        except discord.Forbidden:
+                            await ctx.send(embed=gen_embed(title='Warning',
+                                                           content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
+                        await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
+                        if document['log_channel'] and document['log_kbm']:
+                            msglog = int(document['log_channel'])
+                            logChannel = ctx.guild.get_channel(msglog)
+                            embed = gen_embed(title='mute',
+                                              content=f'{member.name} (ID: {member.id} has had their image/external emote privileges revoked for {mtime} seconds.\nReason: Moderator specified')
+                            await logChannel.send(embed=embed)  # do custom
+                        await asyncio.sleep(mtime)
+                        await member.remove_roles(mutedRole)
+                        return
                 else:
-                    mtime = convert_to_seconds(msg)
-                    mutedRole = discord.utils.get(ctx.guild.roles, name="Image Mute")
-
-                    await member.add_roles(mutedRole)
-
-                    if m:
-                        dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
-                                             title=f'You have had your image/external emote privileges revoked for for {mtime} seconds',
-                                             content=f'If you have any issues, you may reply (use the reply function) to this message and send a modmail.')
-                        dm_embed.set_footer(text=ctx.guild.id)
-                    else:
-                        dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
-                                             title=f'You have been image/external emote privileges revoked for for {mtime} seconds',
-                                             content=f'This is a result of your strike.')
-                        dm_embed.set_footer(text=time.ctime())
-                    try:
-                        await dm_channel.send(embed=dm_embed)
-                    except discord.Forbidden:
-                        await ctx.send(embed=gen_embed(title='Warning',
-                                                       content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
-                    await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
-                    if document['log_channel'] and document['log_kbm']:
-                        msglog = int(document['log_channel'])
-                        logChannel = ctx.guild.get_channel(msglog)
-                        embed = gen_embed(title='mute',
-                                          content=f'{member.name} (ID: {member.id} has had their image/external emote privileges revoked for {mtime} seconds.\nReason: Moderator specified')
-                        await logChannel.send(embed=embed)  # do custom
-                    await asyncio.sleep(mtime)
-                    await member.remove_roles(mutedRole)
+                    log.info("Pressed Cancel Button")
                     return
 
             if severity == '2' or len(results) == 2:
