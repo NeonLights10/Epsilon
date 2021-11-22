@@ -73,7 +73,7 @@ class Miscellaneous(commands.Cog):
     @commands.command(name = 'shoutout',
                       description = "Shoutout all the patrons who support Kanon Bot!")
     async def shoutout(self, ctx):
-        await ctx.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, Vince.#6969'))
+        await ctx.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115'))
 
     @commands.command(name = 'deleteguild',
                 description = 'Makes the bot leave the server specified and purges all information from database.')
