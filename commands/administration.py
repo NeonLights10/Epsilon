@@ -19,9 +19,15 @@ from __main__ import log, db, prefix_list, prefix
 
 # Define a simple View that gives us a confirmation menu
 class Confirm(discord.ui.View):
-    def __init__(self):
+    def __init__(self, ctx):
         super().__init__()
+        self.context = ctx
         self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
 
     # When the confirm button is pressed, set the inner value to `True` and
     # stop the View from listening to more input.
@@ -35,7 +41,7 @@ class Confirm(discord.ui.View):
     # This one is similar to the confirmation button except sets the inner value to `False`
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-        #await interaction.response.send_message("Cancelling", ephemeral=True)
+        await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True)
         self.value = False
         self.stop()
 
@@ -1213,7 +1219,7 @@ class Administration(commands.Cog):
                             await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
 
             elif severity != '2' and ctx.guild.id == 432379300684103699:
-                view = Confirm()
+                view = Confirm(ctx)
                 await ctx.send(embed=gen_embed(title='Image Mute', content="Do you want to revoke image/external emote privileges?"), view=view)
                 # Wait for the View to stop listening for input...
                 await view.wait()
