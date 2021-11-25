@@ -33,9 +33,9 @@ class Pubcord(commands.Cog):
                 log.info('found emote server member in pubcord, checking...')
                 if not pubcord_member.get_role(913239378598436966):
                     log.info('adding member to booster role - boosting emote server')
-                    roles = member.roles
+                    roles = pubcord_member.roles
                     roles.append(pubcord_booster_role)
-                    await member.edit(roles=roles, reason="Boosting emote server")
+                    await pubcord_member.edit(roles=roles, reason="Boosting emote server")
 
         for member in pubcord_booster_role.members:
             emoteserver_member = emoteserver.get_member(member.id)
