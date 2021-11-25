@@ -30,7 +30,6 @@ class Pubcord(commands.Cog):
         for member in emoteserver.premium_subscribers:
             pubcord_member = pubcord.get_member(member.id)
             if pubcord_member:
-                log.info('found emote server member in pubcord, checking...')
                 if not pubcord_member.get_role(913239378598436966):
                     log.info('adding member to booster role - boosting emote server')
                     roles = pubcord_member.roles
@@ -41,7 +40,6 @@ class Pubcord(commands.Cog):
             emoteserver_member = emoteserver.get_member(member.id)
             if emoteserver_member:
                 if emoteserver_member not in emoteserver.premium_subscribers:
-                    log.info('not boosting emote server, checking member in pubcord')
                     if member not in pubcord.premium_subscribers:
                         log.info('not boosting either server, removing')
                         roles = member.roles
