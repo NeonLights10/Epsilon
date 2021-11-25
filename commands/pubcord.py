@@ -15,6 +15,7 @@ class Pubcord(commands.Cog):
 
     @tasks.loop(seconds=120)
     async def check_boosters(self):
+        log.info('running pubcord booster role parity check')
         pubcord = self.bot.get_guild(432379300684103699)
         emoteserver = self.bot.get_guild(815821301700493323)
         for member in emoteserver.premium_subscribers:
