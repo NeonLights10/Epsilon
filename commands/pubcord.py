@@ -20,18 +20,23 @@ class Pubcord(commands.Cog):
         pubcord = self.bot.get_guild(432379300684103699)
         emoteserver = self.bot.get_guild(815821301700493323)
         for member in emoteserver.premium_subscribers:
+            log.info('checking member in emoteserver')
             pubcord_member = pubcord.get_member(member.id)
-            if not pubcord_member.get_role(pubcord.premium_subscriber_role.id):
-                roles = member.roles
-                roles.append(pubcord.premium_subscriber_role)
-                await member.edit(roles=roles, reason="Boosting emote server")
+            if pubcord_member:
+                if not pubcord_member.get_role(pubcord.premium_subscriber_role.id):
+                    roles = member.roles
+                    roles.append(pubcord.premium_subscriber_role)
+                    await member.edit(roles=roles, reason="Boosting emote server")
         for member in pubcord.premium_subscribers:
+            log.info('checking member in pubcord')
             if not member.premium_since:
                 emoteserver_member = emoteserver.get_member(member.id)
-                if not emoteserver_member.get_role(emoteserver.premium_subscriber_role.id):
-                    roles = member.roles
-                    roles.remove(pubcord.premium_subscriber_role)
-                    await member.edit(roles=roles, reason="No longer boosting emote server")
+                if emoteserver_member:
+                    if not emoteserver_member.get_role(emoteserver.premium_subscriber_role.id):
+                        roles = member.roles
+                        roles.remove(pubcord.premium_subscriber_role)
+                        await member.edit(roles=roles, reason="No longer boosting emote server")
+        log.info('parity check complete')
 
     @check_boosters.before_loop
     async def wait_ready(self):
