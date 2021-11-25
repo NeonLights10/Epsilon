@@ -1227,9 +1227,11 @@ class Administration(commands.Cog):
                 await view.wait()
                 if view.value is None:
                     log.info("View timed out")
+                    await ctx.edit(view=view)
                     return
                 elif view.value:
                     log.info("Pressed Confirm Button")
+                    await ctx.edit(view=view)
                     msg = await mutetime()
                     if msg:
                         mtime = convert_to_seconds(msg)
