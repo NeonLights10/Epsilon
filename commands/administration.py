@@ -34,7 +34,7 @@ class Confirm(discord.ui.View):
     # We also send the user an ephemeral message that we're confirming their choice.
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
     async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
-        for item in view.children:
+        for item in self.children:
             item.disabled = True
         await interaction.response.send_message("Confirming", ephemeral=True)
         self.value = True
@@ -43,7 +43,7 @@ class Confirm(discord.ui.View):
     # This one is similar to the confirmation button except sets the inner value to `False`
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-        for item in view.children:
+        for item in self.children:
             item.disabled = True
         await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True)
         self.value = False
