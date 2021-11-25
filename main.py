@@ -486,7 +486,7 @@ async def on_guild_join(guild):
                           title='Thanks for inviting me!',
                           content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555 or join the server at https://discord.gg/AYTFJY8VhF')
         await general.send(embed=embed)
-        await general.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115'))
+        await general.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, Hypnotic Rhythm#1260'))
         return
     else:
         for channel in guild.text_channels:
@@ -496,7 +496,7 @@ async def on_guild_join(guild):
                                   title='Thanks for inviting me!',
                                   content='You can get started by typing %help to find the current command list.\nChange the command prefix by typing %setprefix, and configure server settings with %serverconfig and %channelconfig.\n\nSource code: https://github.com/neon10lights/Epsilon\nSupport: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\nIf you have feedback or need help, please DM Neon#5555 or join the server at https://discord.gg/AYTFJY8VhF.')
                 await channel.send(embed=embed)
-                await channel.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115'))
+                await channel.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, Hypnotic Rhythm#1260'))
                 return
 
 
@@ -602,4 +602,5 @@ bot.load_extension("commands.administration")
 bot.load_extension("commands.modmail")
 bot.load_extension("commands.tiering")
 bot.load_extension("commands.reminder")
+bot.load_extension("commands.pubcord")
 bot.run(TOKEN)
