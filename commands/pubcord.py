@@ -21,14 +21,14 @@ class Pubcord(commands.Cog):
         emoteserver = self.bot.get_guild(815821301700493323)
         for member in emoteserver.premium_subscribers:
             pubcord_member = pubcord.get_member(member.id)
-            if not pubcord_member.get_role(pubcord.premium_subscriber_role):
+            if not pubcord_member.get_role(pubcord.premium_subscriber_role.id):
                 roles = member.roles
                 roles.append(pubcord.premium_subscriber_role)
                 await member.edit(roles=roles, reason="Boosting emote server")
         for member in pubcord.premium_subscribers:
             if not member.premium_since:
                 emoteserver_member = emoteserver.get_member(member.id)
-                if not emoteserver_member.get_role(emoteserver.premium_subscriber_role):
+                if not emoteserver_member.get_role(emoteserver.premium_subscriber_role.id):
                     roles = member.roles
                     roles.remove(pubcord.premium_subscriber_role)
                     await member.edit(roles=roles, reason="No longer boosting emote server")
