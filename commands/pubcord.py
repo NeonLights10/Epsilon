@@ -31,7 +31,7 @@ class Pubcord(commands.Cog):
                     roles.remove(pubcord.premium_subscriber_role)
                     await member.edit(roles=roles, reason="No longer boosting emote server")
 
-    @check_reminders.before_loop
+    @check_boosters.before_loop
     async def wait_ready(self):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
