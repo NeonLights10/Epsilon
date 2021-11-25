@@ -12,6 +12,7 @@ from __main__ import log, db
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.check_boosters.start()
 
     @tasks.loop(seconds=120)
     async def check_boosters(self):
