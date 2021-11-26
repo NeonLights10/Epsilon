@@ -1549,7 +1549,7 @@ class Administration(commands.Cog):
             if message_content:
                 modmail_cog = self.bot.get_cog('Modmail')
                 if modmail_cog is not None:
-                    await modmail_cog.modmail(ctx=ctx, recipient_id=member, content=message_content)
+                    await modmail_cog.modmail(context=ctx, recipient_id=member, content=message_content)
             return
         elif lookup_view.value == 2:
             log.info("Pressed Strike User")
@@ -1568,7 +1568,7 @@ class Administration(commands.Cog):
                 if strike_url:
                     strike_message_content = await strike_prompt()
                     if strike_message_content:
-                        await strike(ctx=ctx, severity=strike_view.children[0].values[0], members=member,
+                        await strike(context=ctx, severity=strike_view.children[0].values[0], members=member,
                                      message_link=strike_url, reason=strike_message_content)
             return
         elif lookup_view.value == 3:
@@ -1586,7 +1586,7 @@ class Administration(commands.Cog):
             if deletestrike_view.children[1].value:
                 log.info("Cancelled Delete Strike Operation.")
             elif deletestrike_view.children[0].values:
-                await removestrike(ctx=ctx,strikeid=str(deletestrike_view.children[0].values[0]))
+                await removestrike(context=ctx,strikeid=str(deletestrike_view.children[0].values[0]))
 
 
     @commands.command(name='removestrike',
