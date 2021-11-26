@@ -1568,8 +1568,10 @@ class Administration(commands.Cog):
                 if strike_url:
                     strike_message_content = await strike_prompt()
                     if strike_message_content:
-                        await strike(context=ctx, severity=strike_view.children[0].values[0], members=[member],
-                                     message_link=strike_url, reason=strike_message_content)
+                        admin_cog = self.bot.get_cog('Administration')
+                        if admin_cog is not None:
+                            await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[member],
+                                         message_link=strike_url, reason=strike_message_content)
             return
         elif lookup_view.value == 3:
             deletestrike_view = discord.ui.View()
@@ -1586,7 +1588,9 @@ class Administration(commands.Cog):
             if deletestrike_view.children[1].value:
                 log.info("Cancelled Delete Strike Operation.")
             elif deletestrike_view.children[0].values:
-                await removestrike(context=ctx,strikeid=str(deletestrike_view.children[0].values[0]))
+                admin_cog = self.bot.get_cog('Administration')
+                if admin_cog is not None:
+                    await admin_cog.removestrike(context=ctx,strikeid=str(deletestrike_view.children[0].values[0]))
 
 
     @commands.command(name='removestrike',
