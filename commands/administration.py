@@ -1576,7 +1576,7 @@ class Administration(commands.Cog):
         elif lookup_view.value == 3:
             deletestrike_view = discord.ui.View()
             options = []
-            for document in expired_results:
+            async for document in expired_results:
                 documentid = document['_id']
                 stime = document['time']
                 options.append(discord.SelectOption(label=stime.ctime(), value=documentid, description=f'Strike ID: {documentid}'))
