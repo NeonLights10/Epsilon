@@ -1557,7 +1557,8 @@ class Administration(commands.Cog):
             strike_view.add_item(StrikeSeverity())
             strike_view.add_item(Cancel())
             sent_message = await ctx.send(embed=gen_embed(title='Strike Severity',
-                                                          content='Please choose your strike severity from the dropdown below.'))
+                                                          content='Please choose your strike severity from the dropdown below.',
+                                                          view=strike_view))
             await strike_view.wait()
             await sent_message.edit(view=strike_view)
             if strike_view.children[1].value:
