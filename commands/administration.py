@@ -1499,7 +1499,7 @@ class Administration(commands.Cog):
                         value=f'Found {num_strikes} active strikes for this user.',
                         inline=False)
         for document in results:
-            documentid = document['_id']
+            documentid = str(document['_id'])
             stime = document['time']
             reason = document['reason']
             message_link = document['message_link']
@@ -1517,7 +1517,7 @@ class Administration(commands.Cog):
                                 inline=False)
         async for document in expired_results:
             if document not in results:
-                documentid = document['_id']
+                documentid = str(document['_id'])
                 stime = document['time']
                 reason = document['reason']
                 message_link = document['message_link']
@@ -1558,10 +1558,10 @@ class Administration(commands.Cog):
             strike_view = discord.ui.View()
             strike_view.add_item(StrikeSeverity())
             strike_view.add_item(Cancel())
-            sent_message = await ctx.send(embed=gen_embed(title='Strike Severity',
+            strikeseverity_sent_message = await ctx.send(embed=gen_embed(title='Strike Severity',
                                                           content='Please choose your strike severity from the dropdown below.'), view=strike_view)
             await strike_view.wait()
-            await sent_message.edit(view=strike_view)
+            await strikeseverity_sent_message.edit(view=strike_view)
             if strike_view.children[1].value:
                 log.info("Cancelled Strike Operation")
                 return
@@ -1585,7 +1585,7 @@ class Administration(commands.Cog):
             log.info(strikes)
 
             for document in strikes:
-                documentid = document['_id']
+                documentid = str(document['_id'])
                 stime = document['time']
                 options.append(discord.SelectOption(label=stime.ctime(), value=documentid, description=f'Strike ID: {documentid}'))
             log.info(options)
