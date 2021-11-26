@@ -1579,10 +1579,12 @@ class Administration(commands.Cog):
             deletestrike_view = discord.ui.View()
             options = []
             strikes = expired_results.to_list(length=num_strikes)
+            log.info(strikes)
             for document in strikes:
                 documentid = document['_id']
                 stime = document['time']
                 options.append(discord.SelectOption(label=stime.ctime(), value=documentid, description=f'Strike ID: {documentid}'))
+            log.info(options)
             deletestrike_view.add_item(StrikeSelect(options))
             deletestrike_view.add_item(Cancel())
             await sent_message.edit(view=deletestrike_view)
