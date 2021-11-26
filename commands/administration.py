@@ -16,7 +16,6 @@ from formatting.constants import UNITS
 from formatting.embed import gen_embed
 from bson.objectid import ObjectId
 from __main__ import log, db, prefix_list, prefix
-from commands.modmail import modmail
 
 class Cancel(discord.ui.Button):
     def __init__(self):
@@ -1532,7 +1531,9 @@ class Administration(commands.Cog):
             log.info("Pressed Send Modmail")
             message_content = await modmail_prompt()
             if message_content:
-                await modmail(ctx=ctx, recipient_id=member, content=message_content)
+                modmail_cog = self.bot.get_cog('Modmail')
+                if modmail_cog is not None:
+                    await modmail_cog.modmail(ctx=ctx, recipient_id=member, content=message_content)
             return
         elif lookup_view.value == 2:
             log.info("Pressed Strike User")
