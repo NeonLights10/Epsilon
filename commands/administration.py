@@ -16,6 +16,112 @@ from formatting.constants import UNITS
 from formatting.embed import gen_embed
 from bson.objectid import ObjectId
 from __main__ import log, db, prefix_list, prefix
+from commands.modmail import modmail
+
+class Cancel(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Cancel", style=discord.ButtonStyle.danger)
+        self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    async def callback(self, interaction):
+        await interaction.response.send_message("Cancelled Operation.", ephemeral=True)
+        for item in self.view.children:
+            item.disabled = True
+        self.value = True
+        self.view.stop()
+
+class StrikeSeverity(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label='Strike Level 1', value = 1, description='This is a warning strike', emoji='1️⃣'),
+            discord.SelectOption(label='Strike Level 2', value = 2, description='This strike will also mute the user', emoji='2️⃣'),
+            discord.SelectOption(label='Strike Level 3', value = 3, description='This strike will also ban the user', emoji='3️⃣')
+        ]
+        super().__init__(placeholder="Select the strike severity", min_values=1, max_values=1, options=options)
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    async def callback(self, interaction):
+        await interaction.response.send_message(f'You selected strike level {self.values[0]}', ephemeral=True)
+        for item in self.view.children:
+            item.disabled = True
+        self.view.stop()
+
+class StrikeSelect(discord.ui.Select):
+    def __init__(self, user_options):
+        self.user_options = user_options
+        super().__init__(placeholder="Select which strike to remove", min_values=1, max_values=1, options=self.user_options)
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    async def callback(self, interaction):
+        await interaction.response.send_message(f'You selected {self.values[0]}', ephemeral=True)
+        for item in self.view.children:
+            item.disabled = True
+        self.view.stop()
+
+# Define a view for the user lookup menu
+class LookupMenu(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__()
+        self.context = ctx
+        self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    # When the confirm button is pressed, set the inner value to `True` and
+    # stop the View from listening to more input.
+    # We also send the user an ephemeral message that we're confirming their choice.
+    @discord.ui.button(label="Send Modmail", style=discord.ButtonStyle.primary)
+    async def sendmodmail(self, button: discord.ui.Button, interaction: discord.Interaction):
+        async def modmail_enabled():
+            document = await db.servers.find_one({"server_id": self.context.guild.id})
+            if document['modmail_channel']:
+                return True
+            else:
+                return False
+
+        if modmail_enabled := await modmail_enabled():
+            await interaction.response.send_message("Acknowledged Send Modmail", ephemeral=True)
+            for item in self.children:
+                item.disabled = True
+            self.value = 1
+            self.stop()
+        else:
+            await interaction.response.send_message("Sorry, modmail is not enabled for this server.", ephemeral=True)
+            self.value = 4
+
+
+    # This one is similar to the confirmation button except sets the inner value to `False`
+    @discord.ui.button(label="Strike User", style=discord.ButtonStyle.primary)
+    async def strikeuser(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Acknowledged Strike User.", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = 2
+        self.stop()
+
+    @discord.ui.button(label="Delete Strike", style=discord.ButtonStyle.danger)
+    async def delstrike(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Please choose which strike to delete from the dropdown above.", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = 3
+        self.stop()
 
 # Define a simple View that gives us a confirmation menu
 class Confirm(discord.ui.View):
@@ -48,7 +154,6 @@ class Confirm(discord.ui.View):
             item.disabled = True
         self.value = False
         self.stop()
-
 
 class Administration(commands.Cog):
     def __init__(self, bot):
@@ -1303,6 +1408,57 @@ class Administration(commands.Cog):
                       help='Usage\n\n%lookup [user mention/user id]')
     @commands.check_any(commands.has_guild_permissions(view_audit_log=True), has_modrole())
     async def lookup(self, ctx, member: discord.User):
+        async def modmail_prompt():
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Modmail Message Contents',
+                                           content='Please type out your modmail below and send. Remember, you have a character limit (currently).'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Modmail Cancelled',
+                                               content='The modmail has been cancelled.'))
+                return
+            return mmsg.clean_content
+
+        async def strike_url_prompt(attempts=1):
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Modmail Message Contents',
+                                           content='Please type out your modmail below and send. Remember, you have a character limit (currently).'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Modmail Cancelled',
+                                               content='The modmail has been cancelled.'))
+                return
+            if validators.url(message_link):
+                return mmsg.clean_content
+            elif attempts > 3:
+                # exit out so we don't crash in a recursive loop due to user incompetency
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed=gen_embed(title='Mute Duration',
+                                               content="Sorry, I didn't catch that or it was an invalid format."))
+                attempts += 1
+                return await strike_url_prompt(attempts)
+
+        async def strike_prompt():
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Strike Message Contents',
+                                           content='Please type out your strike below and send. Remember, you have a character limit of 1024 characters.'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Strike Cancelled',
+                                               content='The strike has been cancelled.'))
+                return
+            return mmsg.clean_content
+
         valid_strikes = []  # probably redundant but doing it anyways to prevent anything stupid
         results = await check_strike(ctx, member, time=datetime.datetime.now(datetime.timezone.utc) + relativedelta(minutes=2),
                                      valid_strikes=valid_strikes)
@@ -1363,7 +1519,58 @@ class Administration(commands.Cog):
                                     value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
                                     inline=False)
         embed.set_footer(text=f'UID: {member.id}')
-        await ctx.send(embed=embed)
+        lookup_view = LookupMenu(ctx)
+        sent_message = await ctx.send(
+            embed=embed,
+            view=lookup_view)
+        await lookup_view.wait()
+        await sent_message.edit(view=lookup_view)
+        if lookup_view.value is None:
+            log.info("View timed out")
+            return
+        elif lookup_view.value == 1:
+            log.info("Pressed Send Modmail")
+            message_content = await modmail_prompt()
+            if message_content:
+                await modmail(ctx=ctx, recipient_id=member, content=message_content)
+            return
+        elif lookup_view.value == 2:
+            log.info("Pressed Strike User")
+            strike_view = discord.ui.View()
+            strike_view.add_item(StrikeSeverity())
+            strike_view.add_item(Cancel())
+            sent_message = await ctx.send(embed=gen_embed(title='Strike Severity',
+                                                          content='Please choose your strike severity from the dropdown below.'))
+            await strike_view.wait()
+            await sent_message.edit(view=strike_view)
+            if strike_view.children[1].value:
+                log.info("Cancelled Strike Operation")
+                return
+            elif strike_view.children[0].values:
+                strike_url = await strike_url_prompt()
+                if strike_url:
+                    strike_message_content = await strike_prompt()
+                    if strike_message_content:
+                        await strike(ctx=ctx, severity=strike_view.children[0].values[0], members=member,
+                                     message_link=strike_url, reason=strike_message_content)
+            return
+        elif lookup_view.value == 3:
+            deletestrike_view = discord.ui.View()
+            options = []
+            for document in expired_results:
+                documentid = document['_id']
+                stime = document['time']
+                options.append(discord.SelectOption(label=stime.ctime(), value=documentid, description=f'Strike ID: {documentid}'))
+            deletestrike_view.add_item(StrikeSelect(options))
+            deletestrike_view.add_item(Cancel())
+            await sent_message.edit(view=deletestrike_view)
+            await deletestrike_view.wait()
+            await sent_message.edit(view=deletestrike_view)
+            if deletestrike_view.children[1].value:
+                log.info("Cancelled Delete Strike Operation.")
+            elif deletestrike_view.children[0].values:
+                await removestrike(ctx=ctx,strikeid=str(deletestrike_view.children[0].values[0]))
+
 
     @commands.command(name='removestrike',
                       description='Remove a strike from the database.',

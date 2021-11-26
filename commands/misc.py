@@ -15,77 +15,6 @@ from formatting.embed import gen_embed
 from formatting.constants import VERSION as BOTVERSION
 from formatting.constants import NAME
 
-class CancelDeleteStrike(discord.ui.Button):
-    def __init__(self):
-        super().__init__(label="Cancel", style=discord.ButtonStyle.danger)
-        self.value = None
-
-    async def interaction_check(self, interaction):
-        if interaction.user != self.context.author:
-            return False
-        return True
-
-    async def callback(self, interaction):
-        await interaction.response.send_message("Cancelled Operation.", ephemeral=True)
-        self.disabled = True
-        self.value = True
-        self.view.stop()
-
-class StrikeSelect(discord.ui.Select):
-    def __init__(self, user_options):
-        self.user_options = user_options
-        super().__init__(placeholder="Select which strike to remove", min_values=1, max_values=1, options=self.user_options)
-
-    async def interaction_check(self, interaction):
-        if interaction.user != self.context.author:
-            return False
-        return True
-
-    async def callback(self, interaction):
-        await interaction.response.send_message(f'You selected {self.values[0]}', ephemeral=True)
-        self.view.stop()
-
-# Define a view for the user lookup menu
-class LookupMenu(discord.ui.View):
-    def __init__(self, ctx):
-        super().__init__()
-        self.context = ctx
-        self.value = None
-
-    async def interaction_check(self, interaction):
-        if interaction.user != self.context.author:
-            return False
-        return True
-
-    # When the confirm button is pressed, set the inner value to `True` and
-    # stop the View from listening to more input.
-    # We also send the user an ephemeral message that we're confirming their choice.
-    @discord.ui.button(label="Send Modmail", style=discord.ButtonStyle.primary)
-    async def sendmodmail(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Acknowledged Send Modmail", ephemeral=True)
-        for item in self.children:
-            item.disabled = True
-        self.value = 1
-        self.stop()
-
-    # This one is similar to the confirmation button except sets the inner value to `False`
-    @discord.ui.button(label="Strike User", style=discord.ButtonStyle.primary)
-    async def strikeuser(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Acknowledged Strike User.", ephemeral=True)
-        for item in self.children:
-            item.disabled = True
-        self.value = 2
-        self.stop()
-
-    @discord.ui.button(label="Delete Strike", style=discord.ButtonStyle.danger)
-    async def delstrike(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Please choose which strike to delete from the dropdown above.", ephemeral=True)
-        for item in self.children:
-            item.disabled = True
-        self.value = 3
-        self.stop()
-
-
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -145,40 +74,6 @@ class Miscellaneous(commands.Cog):
                       description = "Shoutout all the patrons who support Kanon Bot!")
     async def shoutout(self, ctx):
         await ctx.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, Hypnotic Rhythm#1260'))
-
-    @commands.command(name = 'buttontest',
-                      description = 'test buttons')
-    @is_owner()
-    async def testbutton(self, ctx):
-        view = LookupMenu(ctx)
-        sent_message = await ctx.send(
-            embed=gen_embed(title='User Lookup', content="Filler text here filler text here"),
-            view=view)
-        # Wait for the View to stop listening for input...
-        await view.wait()
-        await sent_message.edit(view=view)
-        if view.value is None:
-            log.info("View timed out")
-            return
-        elif view.value == 1:
-            log.info("Pressed Send Modmail")
-        elif view.value == 2:
-            log.info("Pressed Strike User")
-        elif view.value == 3:
-            deletestrike_view = discord.ui.View()
-            options = [
-                discord.SelectOption(label='Wed Aug 11 15:42:24 2021', description='Strike ID 1234', emoji='🟥'),
-                discord.SelectOption(label='Tue Aug 10 15:42:24 2021', description='Strike ID 1233', emoji='🟩'),
-                discord.SelectOption(label='Mon Aug 09 15:42:24 2021', description='Strike ID 1232', emoji='🟦')
-            ]
-            deletestrike_view.add_item(StrikeSelect(options))
-            deletestrike_view.add_item(CancelDeleteStrike())
-            await sent_message.edit(view=deletestrike_view)
-            await deletestrike_view.wait()
-            await sent_message.edit(view=deletestrike_view)
-            if deletestrike_view.children[0].value:
-                log.info("Cancelled Operation.")
-
 
     @commands.command(name = 'deleteguild',
                 description = 'Makes the bot leave the server specified and purges all information from database.')
