@@ -1453,7 +1453,7 @@ class Administration(commands.Cog):
                 await ctx.send(embed=gen_embed(title='Strike Cancelled',
                                                content='The strike has been cancelled.'))
                 return
-            if validators.url(mmsg):
+            if validators.url(mmsg.content):
                 return mmsg.clean_content
             elif attempts > 3:
                 # exit out so we don't crash in a recursive loop due to user incompetency
