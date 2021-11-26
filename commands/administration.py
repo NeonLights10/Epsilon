@@ -87,10 +87,6 @@ class Administration(commands.Cog):
 
         return commands.check(predicate)
 
-    def to_relativedelta(tdelta):
-        return relativedelta(seconds=int(tdelta.total_seconds()),
-                             microseconds=tdelta.microseconds)
-
     @commands.command(name='setprefix',
                       description='Sets the command prefix that the bot will use for this server.',
                       help='Usage:\n\n%setprefix !')
@@ -1314,6 +1310,10 @@ class Administration(commands.Cog):
         # pull all of the documents now, cross reference with active strikes to determine the expired ones
         expired_query = {'server_id': ctx.guild.id, 'user_id': member.id}
         expired_results = db.warns.find(expired_query).sort('time', pymongo.DESCENDING)
+
+        def to_relativedelta(tdelta):
+            return relativedelta(seconds=int(tdelta.total_seconds()),
+                                 microseconds=tdelta.microseconds)
 
         active_member = ctx.guild.get_member(member.id)
         if active_member:
