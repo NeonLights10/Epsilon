@@ -32,9 +32,9 @@ class CancelDeleteStrike(discord.ui.Button):
         self.view.stop()
 
 class StrikeSelect(discord.ui.Select):
-    def __init__(self, options):
-        self.options = options
-        super().__init__(placeholder="Select which strike to remove", min_values=1, max_values=1, options=self.options)
+    def __init__(self, user_options):
+        self.user_options = user_options
+        super().__init__(placeholder="Select which strike to remove", min_values=1, max_values=1, options=self.user_options)
 
     async def interaction_check(self, interaction):
         if interaction.user != self.context.author:
