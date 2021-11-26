@@ -1445,21 +1445,21 @@ class Administration(commands.Cog):
             def check(m):
                 return m.author == ctx.author and m.channel == ctx.channel
 
-            await ctx.send(embed=gen_embed(title='Modmail Message Contents',
-                                           content='Please type out your modmail below and send. Remember, you have a character limit (currently).'))
+            await ctx.send(embed=gen_embed(title='Message URL',
+                                           content='Please provide the message link/image URL for the strike below.'))
             try:
                 mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
             except asyncio.TimeoutError:
-                await ctx.send(embed=gen_embed(title='Modmail Cancelled',
-                                               content='The modmail has been cancelled.'))
+                await ctx.send(embed=gen_embed(title='Strike Cancelled',
+                                               content='The strike has been cancelled.'))
                 return
-            if validators.url(message_link):
+            if validators.url(mmsg):
                 return mmsg.clean_content
             elif attempts > 3:
                 # exit out so we don't crash in a recursive loop due to user incompetency
                 raise discord.ext.commands.BadArgument()
             else:
-                await ctx.send(embed=gen_embed(title='Mute Duration',
+                await ctx.send(embed=gen_embed(title='Message URL',
                                                content="Sorry, I didn't catch that or it was an invalid format."))
                 attempts += 1
                 return await strike_url_prompt(attempts)
