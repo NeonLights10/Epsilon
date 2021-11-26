@@ -62,7 +62,7 @@ class LookupMenu(discord.ui.View):
     # We also send the user an ephemeral message that we're confirming their choice.
     @discord.ui.button(label="Send Modmail", style=discord.ButtonStyle.primary)
     async def sendmodmail(self, button: discord.ui.Button, interaction: discord.Interaction):
-        #await interaction.response.send_message("Confirming", ephemeral=True)
+        await interaction.response.send_message("Acknowledged Send Modmail", ephemeral=True)
         for item in self.children:
             item.disabled = True
         self.value = 1
@@ -71,7 +71,7 @@ class LookupMenu(discord.ui.View):
     # This one is similar to the confirmation button except sets the inner value to `False`
     @discord.ui.button(label="Strike User", style=discord.ButtonStyle.primary)
     async def strikeuser(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True)
+        await interaction.response.send_message("Acknowledged Strike User.", ephemeral=True)
         for item in self.children:
             item.disabled = True
         self.value = 2
@@ -79,7 +79,7 @@ class LookupMenu(discord.ui.View):
 
     @discord.ui.button(label="Delete Strike", style=discord.ButtonStyle.danger)
     async def delstrike(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True)
+        await interaction.response.send_message("Please choose which strike to delete from the dropdown above.", ephemeral=True)
         for item in self.children:
             item.disabled = True
         self.value = 3
