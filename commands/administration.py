@@ -1581,7 +1581,7 @@ class Administration(commands.Cog):
 
             deletestrike_query = {'server_id': ctx.guild.id, 'user_id': member.id}
             deletestrike_results = db.warns.find(deletestrike_query).sort('time', pymongo.DESCENDING)
-            strikes = deletestrike_results.to_list(length=100)
+            strikes = await deletestrike_results.to_list(length=100)
             log.info(strikes)
 
             for document in strikes:
@@ -1589,7 +1589,7 @@ class Administration(commands.Cog):
                 stime = document['time']
                 options.append(discord.SelectOption(label=stime.ctime(), value=documentid, description=f'Strike ID: {documentid}'))
             log.info(options)
-            
+
             deletestrike_view.add_item(StrikeSelect(options))
             deletestrike_view.add_item(Cancel())
             await sent_message.edit(view=deletestrike_view)
