@@ -1407,6 +1407,26 @@ class Administration(commands.Cog):
                       help='Usage\n\n%lookup [user mention/user id]')
     @commands.check_any(commands.has_guild_permissions(view_audit_log=True), has_modrole())
     async def lookup(self, ctx, member: discord.User):
+        def to_relativedelta(tdelta):
+            assert isinstance(tdelta, timedelta)
+
+            seconds_in = {
+                'year': 365 * 24 * 60 * 60,
+                'month': 30 * 24 * 60 * 60,
+                'day': 24 * 60 * 60,
+                'hour': 60 * 60,
+                'minute': 60
+            }
+
+            years, rem = divmod(tdelta.total_seconds(), seconds_in['year'])
+            months, rem = divmod(rem, seconds_in['month'])
+            days, rem = divmod(rem, seconds_in['day'])
+            hours, rem = divmod(rem, seconds_in['hour'])
+            minutes, rem = divmod(rem, seconds_in['minute'])
+            seconds = rem
+
+            return relativedelta(years=years, months=months, days=days, hours=hours, minutes=minutes, seconds=seconds)
+
         async def modmail_prompt():
             def check(m):
                 return m.author == ctx.author and m.channel == ctx.channel
@@ -1465,10 +1485,6 @@ class Administration(commands.Cog):
         # pull all of the documents now, cross reference with active strikes to determine the expired ones
         expired_query = {'server_id': ctx.guild.id, 'user_id': member.id}
         expired_results = db.warns.find(expired_query).sort('time', pymongo.DESCENDING)
-
-        def to_relativedelta(tdelta):
-            return relativedelta(seconds=int(tdelta.total_seconds()),
-                                 microseconds=tdelta.microseconds)
 
         active_member = ctx.guild.get_member(member.id)
         if active_member:
