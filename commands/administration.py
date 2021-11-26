@@ -1578,13 +1578,18 @@ class Administration(commands.Cog):
         elif lookup_view.value == 3:
             deletestrike_view = discord.ui.View()
             options = []
-            strikes = expired_results.to_list(length=num_strikes)
+
+            deletestrike_query = {'server_id': ctx.guild.id, 'user_id': member.id}
+            deletestrike_results = db.warns.find(deletestrike_query).sort('time', pymongo.DESCENDING)
+            strikes = deletestrike_results.to_list(length=100)
             log.info(strikes)
+
             for document in strikes:
                 documentid = document['_id']
                 stime = document['time']
                 options.append(discord.SelectOption(label=stime.ctime(), value=documentid, description=f'Strike ID: {documentid}'))
             log.info(options)
+            
             deletestrike_view.add_item(StrikeSelect(options))
             deletestrike_view.add_item(Cancel())
             await sent_message.edit(view=deletestrike_view)
