@@ -56,7 +56,8 @@ class StrikeSeverity(discord.ui.Select):
 
 class StrikeSelect(discord.ui.Select):
     def __init__(self, user_options):
-        super().__init__(placeholder="Select which strike to remove", min_values=1, max_values=1, options=user_options)
+        options = user_options
+        super().__init__(placeholder="Select which strike to remove", min_values=1, max_values=1, options=options)
 
     async def interaction_check(self, interaction):
         if interaction.user != self.context.author:
@@ -1534,6 +1535,8 @@ class Administration(commands.Cog):
                                     inline=False)
         embed.set_footer(text=f'UID: {member.id}')
         lookup_view = LookupMenu(ctx)
+        if num_strikes == 0:
+            lookup_view.children[2].disabled = True
         sent_message = await ctx.send(
             embed=embed,
             view=lookup_view)
@@ -1575,7 +1578,7 @@ class Administration(commands.Cog):
         elif lookup_view.value == 3:
             deletestrike_view = discord.ui.View()
             options = []
-            strikes = expired_results.to_list(length=None)
+            strikes = expired_results.to_list(length=num_strikes)
             for document in strikes:
                 documentid = document['_id']
                 stime = document['time']
