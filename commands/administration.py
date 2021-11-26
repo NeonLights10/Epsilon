@@ -34,8 +34,9 @@ class Confirm(discord.ui.View):
     # We also send the user an ephemeral message that we're confirming their choice.
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
     async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
-        #await interaction.response.send_message("Confirming", ephemeral=True)
-        button.disabled = True
+        await interaction.response.send_message("Confirming", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
         self.value = True
         self.stop()
 
@@ -43,7 +44,8 @@ class Confirm(discord.ui.View):
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True)
-        button.disabled = True
+        for item in self.children:
+            item.disabled = True
         self.value = False
         self.stop()
 
@@ -1222,9 +1224,10 @@ class Administration(commands.Cog):
 
             elif severity != '2' and ctx.guild.id == 432379300684103699:
                 view = Confirm(ctx)
-                await ctx.send(embed=gen_embed(title='Image Mute', content="Do you want to revoke image/external emote privileges?"), view=view)
+                sent_message = await ctx.send(embed=gen_embed(title='Image Mute', content="Do you want to revoke image/external emote privileges?"), view=view)
                 # Wait for the View to stop listening for input...
                 await view.wait()
+                await sent_message.edit(view=view)
                 if view.value is None:
                     log.info("View timed out")
                     return
