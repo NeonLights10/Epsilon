@@ -1315,10 +1315,15 @@ class Administration(commands.Cog):
         expired_query = {'server_id': ctx.guild.id, 'user_id': member.id}
         expired_results = db.warns.find(expired_query).sort('time', pymongo.DESCENDING)
 
-        member_duration = abs(member.joined_at - datetime.datetime.now(datetime.timezone.utc))
-        member_duration = to_relativedelta(member_duration)
-        embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar.url,
-                          title='User Lookup', content=f'This user has been a member for {member_duration.years} years, {member_duration.months} months, and {member_duration.days} days.\nThey joined on {member.joined_at.strftime("%B %d, %Y")}')
+        active_member = ctx.guild.get_member(member.id)
+        if active_member:
+            member_duration = abs(active_member.joined_at - datetime.datetime.now(datetime.timezone.utc))
+            member_duration = to_relativedelta(member_duration)
+            embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar.url,
+                              title='User Lookup', content=f'This user has been a member for {member_duration.years} years, {member_duration.months} months, and {member_duration.days} days.\nThey joined on {member.joined_at.strftime("%B %d, %Y")}')
+        else:
+            embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar.url,
+                              title='User Lookup', content=f'This user is no longer in the server.')
         embed.add_field(name='Strikes',
                         value=f'Found {num_strikes} active strikes for this user.',
                         inline=False)
