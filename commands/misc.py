@@ -15,6 +15,36 @@ from formatting.embed import gen_embed
 from formatting.constants import VERSION as BOTVERSION
 from formatting.constants import NAME
 
+# Define a simple View that gives us a confirmation menu
+class Confirm(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__()
+        self.context = ctx
+        self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    # When the confirm button is pressed, set the inner value to `True` and
+    # stop the View from listening to more input.
+    # We also send the user an ephemeral message that we're confirming their choice.
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
+    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
+        #await interaction.response.send_message("Confirming", ephemeral=True)
+        button.disabled = True
+        self.value = True
+        self.stop()
+
+    # This one is similar to the confirmation button except sets the inner value to `False`
+    @discord.ui.button(label="No", style=discord.ButtonStyle.red)
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True)
+        button.disabled = True
+        self.value = False
+        self.stop()
+
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -74,6 +104,23 @@ class Miscellaneous(commands.Cog):
                       description = "Shoutout all the patrons who support Kanon Bot!")
     async def shoutout(self, ctx):
         await ctx.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, Hypnotic Rhythm#1260'))
+
+    @commands.command(name = 'buttontest',
+                      description = 'test buttons')
+    @is_owner()
+    async def testbutton(self, ctx):
+        view = Confirm(ctx)
+        sent_message = await ctx.send(
+            embed=gen_embed(title='Image Mute', content="Do you want to revoke image/external emote privileges?"),
+            view=view)
+        # Wait for the View to stop listening for input...
+        await view.wait()
+        await sent_message.edit(view=view)
+        if view.value is None:
+            log.info("View timed out")
+            return
+        elif view.value:
+            log.info("Pressed Confirm Button")
 
     @commands.command(name = 'deleteguild',
                 description = 'Makes the bot leave the server specified and purges all information from database.')
