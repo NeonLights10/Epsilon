@@ -57,7 +57,7 @@ class StrikeSeverity(discord.ui.Select):
 class StrikeSelect(discord.ui.Select):
     def __init__(self, user_options):
         options = user_options
-        super().__init__(placeholder="Select which strike to remove", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Select which strike to remove", min_values=1, max_values=25, options=options)
 
     async def interaction_check(self, interaction):
         if interaction.user != self.context.author:
@@ -1600,7 +1600,8 @@ class Administration(commands.Cog):
             elif deletestrike_view.children[0].values:
                 admin_cog = self.bot.get_cog('Administration')
                 if admin_cog is not None:
-                    await admin_cog.removestrike(context=ctx,strikeid=str(deletestrike_view.children[0].values[0]))
+                    for strike in deletestrike_view.children[0].values:
+                        await admin_cog.removestrike(context=ctx,strikeid=str(strike))
 
 
     @commands.command(name='removestrike',
