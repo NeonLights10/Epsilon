@@ -1319,8 +1319,8 @@ class Administration(commands.Cog):
         if active_member:
             member_duration = abs(active_member.joined_at - datetime.datetime.now(datetime.timezone.utc))
             member_duration = to_relativedelta(member_duration)
-            embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar.url,
-                              title='User Lookup', content=f'This user has been a member for {member_duration.years} years, {member_duration.months} months, and {member_duration.days} days.\nThey joined on {member.joined_at.strftime("%B %d, %Y")}')
+            embed = gen_embed(name=f'{active_member.name}#{active_member.discriminator}', icon_url=active_member.display_avatar.url,
+                              title='User Lookup', content=f'This user has been a member for {member_duration.years} years, {member_duration.months} months, and {member_duration.days} days.\nThey joined on {active_member.joined_at.strftime("%B %d, %Y")}')
         else:
             embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar.url,
                               title='User Lookup', content=f'This user is no longer in the server.')
