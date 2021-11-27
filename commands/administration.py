@@ -154,6 +154,38 @@ class Confirm(discord.ui.View):
         self.value = False
         self.stop()
 
+# Define a simple View that gives us a confirmation menu
+class ConfirmStrike(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__()
+        self.context = ctx
+        self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    # When the confirm button is pressed, set the inner value to `True` and
+    # stop the View from listening to more input.
+    # We also send the user an ephemeral message that we're confirming their choice.
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
+    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
+        #await interaction.response.send_message("Confirming", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = True
+        self.stop()
+
+    # This one is similar to the confirmation button except sets the inner value to `False`
+    @discord.ui.button(label="No", style=discord.ButtonStyle.red)
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Strike cancelled.", ephemeral=True, delete_after=60.0)
+        for item in self.children:
+            item.disabled = True
+        self.value = False
+        self.stop()
+
 class Administration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -1576,7 +1608,7 @@ class Administration(commands.Cog):
                 if strike_url:
                     strike_message_content = await strike_prompt()
                     if strike_message_content:
-                        view = Confirm(ctx)
+                        view = ConfirmStrike(ctx)
                         sent_message = await ctx.send(embed=gen_embed(title='Does the reason message look correct?',
                                                                       content=f"{strike_message_content}"),
                                                       view=view)
