@@ -70,7 +70,7 @@ class Pubcord(commands.Cog):
                       description='Sends a embed with the latest status on EN Bandori.',
                       help='Usage\n\n%currentstatus')
     @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole())
-    async def currentstatus(self, ctx, message_id: Optional[discord.Message]):
+    async def currentstatus(self, ctx, message_id: Optional[str]):
         embed = gen_embed(
             title='Current Status of EN Bandori',
             content='Right now, the EN dev team is waiting for Google to investigate why the 4.10 app update was rejected. Progress is slow due to the holiday season. Find below a quoted message from Lucia, who is part of Bushiroad Staff.'
@@ -84,7 +84,7 @@ class Pubcord(commands.Cog):
                                 inline=False)
         embed.set_footer('Last Updated 11/26/2021')
         if message_id:
-            emessage = ctx.channel.fetch_message(message_id)
+            emessage = ctx.channel.fetch_message(int(message_id))
             if emessage:
                 await ctx.edit(embed=embed)
         else:
