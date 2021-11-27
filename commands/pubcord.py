@@ -82,7 +82,7 @@ class Pubcord(commands.Cog):
         embed.add_field(name=f'When will the update be done?',
                                 value=f'There is **no ETA** at this time. Best estimates are by next week.',
                                 inline=False)
-        embed.set_footer('Last Updated 11/26/2021')
+        embed.set_footer(text='Last Updated 11/26/2021')
         if message_id:
             emessage = ctx.channel.fetch_message(int(message_id))
             if emessage:

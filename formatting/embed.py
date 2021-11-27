@@ -60,6 +60,6 @@ async def embed_splitter(embed: discord.Embed, footer: str = None, destination: 
         if destination:
             for split_embed in split_embeds:
                 if footer:
-                    split_embed.set_footer(f'{footer}')
+                    split_embed.set_footer(text=f'{footer}')
                 await destination.send(embed=split_embed)
         return split_embeds
