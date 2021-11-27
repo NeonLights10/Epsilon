@@ -86,7 +86,7 @@ class Pubcord(commands.Cog):
         if message_id:
             emessage = ctx.channel.fetch_message(int(message_id))
             if emessage:
-                await ctx.edit(embed=embed)
+                await emessage.edit(embed=embed)
         else:
             await ctx.send(embed=embed)
 
