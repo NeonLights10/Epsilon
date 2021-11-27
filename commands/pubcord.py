@@ -14,6 +14,9 @@ class Pubcord(commands.Cog):
         self.bot = bot
         self.check_boosters.start()
 
+    def cog_unload(self):
+        self.check_boosters.cancel()
+
     @tasks.loop(seconds=120)
     async def check_boosters(self):
         log.info('running pubcord booster role parity check')
@@ -51,6 +54,34 @@ class Pubcord(commands.Cog):
     async def wait_ready(self):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
+
+    @commands.command(name='currentstatus',
+                      description='Sends a embed with the latest status on EN Bandori.',
+                      help='Usage\n\n%currentstatus')
+    @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole())
+    async def currentstatus(self, ctx):
+        embed = gen_embed(
+            title='Current Status of EN Bandori',
+            content='Right now, the EN dev team is waiting for Google to investigate why the 4.10 app update was rejected. Progress is slow due to the holiday season. Find below a quoted message from Lucia, who is part of Bushiroad Staff.'
+        )
+        embed.set_image(url='https://media.discordapp.net/attachments/432382183072858131/913234967067262976/IMG_6952.png?width=646&height=675')
+        embed.add_field(name=f'What does this mean for us?',
+                        value=f'The delay means that the scheduled collaboration, any related gacha, and related event are all postponed. As of right now, there is no active event or active gacha in game.',
+                        inline=False)
+        embed.add_field(name=f'What will the update be done?',
+                                value=f'There is **no ETA** at this time.',
+                                inline=False)
+        await ctx.send(embed=embed)
+
+        qmember = ctx.guild.get_member(137977559546724352)
+        qcontent = await qmember.fetch_message(913238519072321567)
+        qembed = gen_embed(
+            name=qmember.name,
+            icon_url=qmember.display_avatar.url,
+            title='Quoted Message:',
+            content= qcontent.content
+        )
+        await ctx.send(embed=qembed)
 
 def setup(bot):
     bot.add_cog(Pubcord(bot))
