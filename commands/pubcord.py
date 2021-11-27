@@ -17,6 +17,17 @@ class Pubcord(commands.Cog):
     def cog_unload(self):
         self.check_boosters.cancel()
 
+    def has_modrole():
+        async def predicate(ctx):
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if document['modrole']:
+                role = discord.utils.find(lambda r: r.id == document['modrole'], ctx.guild.roles)
+                return role in ctx.author.roles
+            else:
+                return False
+
+        return commands.check(predicate)
+
     @tasks.loop(seconds=120)
     async def check_boosters(self):
         log.info('running pubcord booster role parity check')
