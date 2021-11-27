@@ -1464,18 +1464,24 @@ class Administration(commands.Cog):
                 attempts += 1
                 return await strike_url_prompt(attempts)
 
-        async def strike_prompt():
+        async def strike_prompt(attempts = 1):
             def check(m):
                 return m.author == ctx.author and m.channel == ctx.channel
 
             await ctx.send(embed=gen_embed(title='Strike Message Contents',
                                            content='Please type out your strike below and send. Remember, you have a character limit of 1024 characters.'))
             try:
-                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
             except asyncio.TimeoutError:
                 await ctx.send(embed=gen_embed(title='Strike Cancelled',
                                                content='The strike has been cancelled.'))
                 return
+            if len(mmsg.content) > 1024:
+                log.warning('Error: Reason too long')
+                await ctx.send(embed=gen_embed(title='Max character limit reached',
+                                               content=f'Your reason message is too long ({len(mmsg.content) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
+                attempts += 1
+                return await strike_prompt(attempts)
             return mmsg.clean_content
 
         valid_strikes = []  # probably redundant but doing it anyways to prevent anything stupid
@@ -1570,10 +1576,21 @@ class Administration(commands.Cog):
                 if strike_url:
                     strike_message_content = await strike_prompt()
                     if strike_message_content:
-                        admin_cog = self.bot.get_cog('Administration')
-                        if admin_cog is not None:
-                            await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[member],
-                                         message_link=strike_url, reason=strike_message_content)
+                        view = Confirm(ctx)
+                        sent_message = await ctx.send(embed=gen_embed(title='Does the reason message look correct?',
+                                                                      content=f"{strike_message_content}"),
+                                                      view=view)
+                        # Wait for the View to stop listening for input...
+                        await view.wait()
+                        await sent_message.edit(view=view)
+                        if view.value is None:
+                            log.info("View timed out")
+                            return
+                        elif view.value:
+                            admin_cog = self.bot.get_cog('Administration')
+                            if admin_cog is not None:
+                                await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[member],
+                                             message_link=strike_url, reason=strike_message_content)
             return
         elif lookup_view.value == 3:
             deletestrike_view = discord.ui.View()
