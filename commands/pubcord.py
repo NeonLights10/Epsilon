@@ -85,14 +85,20 @@ class Pubcord(commands.Cog):
         await ctx.send(embed=embed)
 
         qmember = ctx.guild.get_member(137977559546724352)
-        qcontent = await qmember.fetch_message(913238519072321567)
         qembed = gen_embed(
             name=qmember.name,
             icon_url=qmember.display_avatar.url,
             title='Quoted Message:',
-            content= qcontent.content
-        )
+            content= '''Summary of situation:\n
+            - Google wanted something changed in all apps\n
+            - We said we need more time, Google approved for the deadline to be March 2022\n
+            - App update was rejected because change was not implemented yet\n
+            - We're checking with them now why the system has issues\n
+            - Google says more time needed to investigate\n
+            - No idea how long anything will take (<- we are now here)'
+            ''')
         await ctx.send(embed=qembed)
+        await ctx.message.delete()
 
 def setup(bot):
     bot.add_cog(Pubcord(bot))
