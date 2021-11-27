@@ -84,7 +84,7 @@ class Pubcord(commands.Cog):
                                 inline=False)
         embed.set_footer(text='Last Updated 11/26/2021')
         if message_id:
-            emessage = ctx.channel.fetch_message(int(message_id))
+            emessage = await ctx.channel.fetch_message(int(message_id))
             if emessage:
                 await emessage.edit(embed=embed)
         else:
