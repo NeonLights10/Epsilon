@@ -29,7 +29,7 @@ class Pubcord(commands.Cog):
 
         return commands.check(predicate)
 
-    @user_command(guild_ids=[432379300684103699], name='Verify User')
+    @user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
     @permissions.has_role("Moderator")
     async def verifyrank(self, ctx, member: discord.Member):
         roles = member.roles
