@@ -38,20 +38,11 @@ class Pubcord(commands.Cog):
             if verified_role not in roles:
                 roles.append(verified_role)
                 await member.edit(roles=roles)
-                try:
-                    await ctx.respond(content='Verified user.', ephemeral=True, delete_after=5.0)
-                except discord.NotFound:
-                    pass
+                await ctx.respond(content='Verified user.', ephemeral=True)
             else:
-                try:
-                    await ctx.respond(content='User already verified.', ephemeral=True, delete_after=5.0)
-                except discord.NotFound:
-                    pass
+                await ctx.respond(content='User already verified.', ephemeral=True)
         else:
-            try:
-                await ctx.respond(content='You do not have access to this command.', ephemeral=True, delete_after=5.0)
-            except discord.NotFound:
-                pass
+            await ctx.respond(content='You do not have access to this command.', ephemeral=True)
 
     @tasks.loop(seconds=120)
     async def check_boosters(self):

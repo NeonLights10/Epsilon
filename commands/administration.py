@@ -28,7 +28,7 @@ class Cancel(discord.ui.Button):
         return True
 
     async def callback(self, interaction):
-        await interaction.response.send_message("Cancelled Operation.", ephemeral=True, delete_after=20.0)
+        await interaction.response.send_message("Cancelled Operation.", ephemeral=True)
         for item in self.view.children:
             item.disabled = True
         self.value = True
@@ -49,7 +49,7 @@ class StrikeSeverity(discord.ui.Select):
         return True
 
     async def callback(self, interaction):
-        await interaction.response.send_message(f'You selected strike level {self.values[0]}', ephemeral=True, delete_after=60.0)
+        await interaction.response.send_message(f'You selected strike level {self.values[0]}', ephemeral=True)
         for item in self.view.children:
             item.disabled = True
         self.view.stop()
@@ -65,7 +65,7 @@ class StrikeSelect(discord.ui.Select):
         return True
 
     async def callback(self, interaction):
-        await interaction.response.send_message(f'You selected {self.values[0]}', ephemeral=True, delete_after=20.0)
+        await interaction.response.send_message(f'You selected {self.values[0]}', ephemeral=True_
         for item in self.view.children:
             item.disabled = True
         self.view.stop()
@@ -101,7 +101,7 @@ class LookupMenu(discord.ui.View):
             self.value = 1
             self.stop()
         else:
-            await interaction.response.send_message("Sorry, modmail is not enabled for this server.", ephemeral=True, delete_after=20.0)
+            await interaction.response.send_message("Sorry, modmail is not enabled for this server.", ephemeral=True)
             self.value = 4
 
 
@@ -116,7 +116,7 @@ class LookupMenu(discord.ui.View):
 
     @discord.ui.button(label="Delete Strike", style=discord.ButtonStyle.danger)
     async def delstrike(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Please choose which strike to delete from the dropdown above.", ephemeral=True, delete_after=180.0)
+        await interaction.response.send_message("Please choose which strike to delete from the dropdown above.", ephemeral=True)
         for item in self.children:
             item.disabled = True
         self.value = 3
@@ -148,7 +148,7 @@ class Confirm(discord.ui.View):
     # This one is similar to the confirmation button except sets the inner value to `False`
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True, delete_after=60.0)
+        await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True)
         for item in self.children:
             item.disabled = True
         self.value = False
@@ -180,7 +180,7 @@ class ConfirmStrike(discord.ui.View):
     # This one is similar to the confirmation button except sets the inner value to `False`
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Strike cancelled.", ephemeral=True, delete_after=60.0)
+        await interaction.response.send_message("Strike cancelled.", ephemeral=True)
         for item in self.children:
             item.disabled = True
         self.value = False
