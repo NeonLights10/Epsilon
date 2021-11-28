@@ -28,6 +28,14 @@ class Pubcord(commands.Cog):
 
         return commands.check(predicate)
 
+    @user_command(guild_ids=[432379300684103699], name='Verify User')
+    @permissions.has_role("Moderator")
+    async def verifyrank(self, ctx, member: discord.Member):
+        roles = member.roles
+        roles.append(ctx.guild.get_role(719791739367325706))
+        await member.edit(roles=roles)
+        await ctx.respond(content='Verified user.', ephemeral=True, delete_after=5.0)
+
     @tasks.loop(seconds=120)
     async def check_boosters(self):
         log.info('running pubcord booster role parity check')
