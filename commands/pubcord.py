@@ -33,9 +33,13 @@ class Pubcord(commands.Cog):
     @permissions.has_role("Moderator")
     async def verifyrank(self, ctx, member: discord.Member):
         roles = member.roles
-        roles.append(ctx.guild.get_role(719791739367325706))
-        await member.edit(roles=roles)
-        await ctx.respond(content='Verified user.', ephemeral=True, delete_after=5.0)
+        verified_role = ctx.guild.get_role(719791739367325706)
+        if verified_role not in roles:
+            roles.append(verified_role)
+            await member.edit(roles=roles)
+            await ctx.respond(content='Verified user.', ephemeral=True, delete_after=5.0)
+        else:
+            await ctx.respond(content='User already verified.', ephemeral=True, delete_after=5.0)
 
     @tasks.loop(seconds=120)
     async def check_boosters(self):
