@@ -32,14 +32,26 @@ class Pubcord(commands.Cog):
     @user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
     @permissions.has_role("Moderator")
     async def verifyrank(self, ctx, member: discord.Member):
-        roles = member.roles
-        verified_role = ctx.guild.get_role(719791739367325706)
-        if verified_role not in roles:
-            roles.append(verified_role)
-            await member.edit(roles=roles)
-            await ctx.respond(content='Verified user.', ephemeral=True, delete_after=5.0)
+        if ctx.guild.get_role(432388746072293387) in ctx.author.roles:
+            roles = member.roles
+            verified_role = ctx.guild.get_role(719791739367325706)
+            if verified_role not in roles:
+                roles.append(verified_role)
+                await member.edit(roles=roles)
+                try:
+                    await ctx.respond(content='Verified user.', ephemeral=True, delete_after=5.0)
+                except discord.NotFound:
+                    pass
+            else:
+                try:
+                    await ctx.respond(content='User already verified.', ephemeral=True, delete_after=5.0)
+                except discord.NotFound:
+                    pass
         else:
-            await ctx.respond(content='User already verified.', ephemeral=True, delete_after=5.0)
+            try:
+                await ctx.respond(content='You do not have access to this command.', ephemeral=True, delete_after=5.0)
+            except discord.NotFound:
+                pass
 
     @tasks.loop(seconds=120)
     async def check_boosters(self):
