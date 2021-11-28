@@ -65,7 +65,7 @@ class StrikeSelect(discord.ui.Select):
         return True
 
     async def callback(self, interaction):
-        await interaction.response.send_message(f'You selected {self.values[0]}', ephemeral=True_
+        await interaction.response.send_message(f'You selected {self.values[0]}', ephemeral=True)
         for item in self.view.children:
             item.disabled = True
         self.view.stop()
