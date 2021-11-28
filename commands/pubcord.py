@@ -5,7 +5,7 @@ import pymongo
 
 from typing import Union, Optional, Literal
 from discord.ext import commands, tasks
-from discord.commands import user_command
+from discord.commands import user_command, permissions
 from formatting.constants import UNITS
 from formatting.embed import gen_embed
 from __main__ import log, db
