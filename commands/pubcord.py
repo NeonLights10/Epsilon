@@ -89,11 +89,12 @@ class Pubcord(commands.Cog):
     async def currentstatus(self, ctx, message_id: Optional[str]):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content='Right now, the dev team is in discussions with Google and the facts of the case have been established, so they are working on resolution now. Progress is slow due to the holiday season. Find below a quoted message and additional update from our community manager, who is part of Bushiroad Staff.'
+            content='As updated from the official social media accounts, Google Play has been in contact they are already working on a solution. Expect confirmation soon this week before they can announce the rescheduled v4.10.0.'
         )
         embed.set_image(url='https://media.discordapp.net/attachments/432382183072858131/913234967067262976/IMG_6952.png?width=646&height=675')
         embed.add_field(name=f'What does this mean for us?',
-                        value=f'The delay means that the scheduled collaboration, any related gacha, and related event are all postponed. As of right now, there is no active event or active gacha in game.',
+                        value=f'The delay means that the scheduled collaboration will be postponed to 12/11-12/19 (subject to change). Subsequent events will follow in order after the collab, and the duration of events will not be shortened any further to compensate for the delay. The accelerated schedule will continue as planned.
+.',
                         inline=False)
         embed.add_field(name=f'When will the update be done?',
                                 value=f'There is **no ETA** at this time. Our community manager states that we should not "**expect any events in the next few (2-3) days**"',
