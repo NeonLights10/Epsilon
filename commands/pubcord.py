@@ -93,8 +93,7 @@ class Pubcord(commands.Cog):
         )
         embed.set_image(url='https://media.discordapp.net/attachments/432382183072858131/913234967067262976/IMG_6952.png?width=646&height=675')
         embed.add_field(name=f'What does this mean for us?',
-                        value=f'The delay means that the scheduled collaboration will be postponed to 12/11-12/19 (subject to change). Subsequent events will follow in order after the collab, and the duration of events will not be shortened any further to compensate for the delay. The accelerated schedule will continue as planned.
-.',
+                        value=f'The delay means that the scheduled collaboration will be postponed to 12/11-12/19 (subject to change). Subsequent events will follow in order after the collab, and the duration of events will not be shortened any further to compensate for the delay. The accelerated schedule will continue as planned.',
                         inline=False)
         embed.add_field(name=f'When will the update be done?',
                                 value=f'There is **no ETA** at this time. Our community manager states that we should not "**expect any events in the next few (2-3) days**"',
