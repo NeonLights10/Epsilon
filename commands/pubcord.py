@@ -89,16 +89,16 @@ class Pubcord(commands.Cog):
     async def currentstatus(self, ctx, message_id: Optional[str]):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content='Right now, the EN dev team is waiting for Google to investigate why the 4.10 app update was rejected. Progress is slow due to the holiday season. Find below a quoted message from Lucia, who is part of Bushiroad Staff.'
+            content='Right now, the dev team is in discussions with Google and the facts of the case have been established, so they are working on resolution now. Progress is slow due to the holiday season. Find below a quoted message and additional update from Lucia, who is part of Bushiroad Staff.'
         )
         embed.set_image(url='https://media.discordapp.net/attachments/432382183072858131/913234967067262976/IMG_6952.png?width=646&height=675')
         embed.add_field(name=f'What does this mean for us?',
                         value=f'The delay means that the scheduled collaboration, any related gacha, and related event are all postponed. As of right now, there is no active event or active gacha in game.',
                         inline=False)
         embed.add_field(name=f'When will the update be done?',
-                                value=f'There is **no ETA** at this time. Best estimates are by next week.',
+                                value=f'There is **no ETA** at this time. Lucia states that we should not "**expect any events in the next few (2-3) days**"',
                                 inline=False)
-        embed.set_footer(text='Last Updated 11/26/2021')
+        embed.set_footer(text='Last Updated 11/28/2021')
         if message_id:
             emessage = await ctx.channel.fetch_message(int(message_id))
             if emessage:
@@ -111,13 +111,9 @@ class Pubcord(commands.Cog):
                 name=qmember.name,
                 icon_url=qmember.display_avatar.url,
                 title='Quoted Message:',
-                content= '''Summary of situation:
-                - Google wanted something changed in all apps
-                - We said we need more time, Google approved for the deadline to be March 2022
-                - App update was rejected because change was not implemented yet
-                - We're checking with them now why the system has issues
-                - Google says more time needed to investigate
-                - No idea how long anything will take (<- we are now here)'
+                content='''Latest update:
+                - We're in discussions with Google and the facts of the case have been established, so we're working on resolution now.
+                - Still awaiting confirmation on what will be done, but don't expect any events in the next few (2-3) days either.'
                 ''')
             await ctx.send(embed=qembed)
         await ctx.message.delete()
