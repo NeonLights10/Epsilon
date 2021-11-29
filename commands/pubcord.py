@@ -103,19 +103,18 @@ class Pubcord(commands.Cog):
             emessage = await ctx.channel.fetch_message(int(message_id))
             if emessage:
                 await emessage.edit(embed=embed)
-        else:
-            await ctx.send(embed=embed)
 
-            qmember = ctx.guild.get_member(137977559546724352)
-            qembed = gen_embed(
-                name=qmember.name,
-                icon_url=qmember.display_avatar.url,
-                title='Quoted Message:',
-                content='''Latest update:
-                - We're in discussions with Google and the facts of the case have been established, so we're working on resolution now.
-                - Still awaiting confirmation on what will be done, but don't expect any events in the next few (2-3) days either.'
-                ''')
-            await ctx.send(embed=qembed)
+        qmember = ctx.guild.get_member(137977559546724352)
+        qembed = gen_embed(
+            name=qmember.name,
+            icon_url=qmember.display_avatar.url,
+            title='Quoted Message:',
+            content='''Latest update:
+                        - We're in discussions with Google and the facts of the case have been established, so we're working on resolution now.
+                        - Still awaiting confirmation on what will be done, but don't expect any events in the next few (2-3) days either.'
+                        ''')
+        e2message = await ctx.channel.fetch_message(913960026920591380)
+        await e2message.edit(embed=qembed)
         await ctx.message.delete()
 
 def setup(bot):
