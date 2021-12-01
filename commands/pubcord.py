@@ -96,7 +96,7 @@ class Pubcord(commands.Cog):
                         value=f'The delay means that the scheduled collaboration will be postponed to 12/11-12/19 (subject to change). Subsequent events will follow in order after the collab, and the duration of events will not be shortened any further to compensate for the delay. The accelerated schedule will continue as planned.',
                         inline=False)
         embed.add_field(name=f'What is the next event?',
-                                value=f'We are not 100% sure, but best guesses would be the first skipped event, One of Us."',
+                                value=f'We are not 100% sure, but best guesses would be the first skipped event, One of Us.',
                                 inline=False)
         embed.set_footer(text='Last Updated 12/1/2021')
         if message_id:
