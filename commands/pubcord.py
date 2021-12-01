@@ -89,29 +89,33 @@ class Pubcord(commands.Cog):
     async def currentstatus(self, ctx, message_id: Optional[str]):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content='As updated from the official social media accounts, Google Play has been in contact they are already working on a solution. Expect confirmation soon this week before they can announce the rescheduled v4.10.0.'
+            content='v4.10.0 will arrive <t:1638439200>, as stated by official social media sources.'
         )
-        embed.set_image(url='https://media.discordapp.net/attachments/432382183072858131/913234967067262976/IMG_6952.png?width=646&height=675')
+        embed.set_image(url='https://cdn.discordapp.com/attachments/913958768105103390/915513276987768842/EwwL0hoUYAADTHm.png')
         embed.add_field(name=f'What does this mean for us?',
                         value=f'The delay means that the scheduled collaboration will be postponed to 12/11-12/19 (subject to change). Subsequent events will follow in order after the collab, and the duration of events will not be shortened any further to compensate for the delay. The accelerated schedule will continue as planned.',
                         inline=False)
-        embed.add_field(name=f'When will the update be done?',
-                                value=f'There is **no ETA** at this time. Our community manager states that we should not "**expect any events in the next few (2-3) days**"',
+        embed.add_field(name=f'What is the next event?',
+                                value=f'We are not 100% sure, but best guesses would be the first skipped event, One of Us."',
                                 inline=False)
-        embed.set_footer(text='Last Updated 11/28/2021')
+        embed.set_footer(text='Last Updated 12/1/2021')
         if message_id:
             emessage = await ctx.channel.fetch_message(int(message_id))
             if emessage:
                 await emessage.edit(embed=embed)
 
-        qmember = ctx.guild.get_member(137977559546724352)
         qembed = gen_embed(
-            name=qmember.name,
-            icon_url=qmember.display_avatar.url,
-            title='Quoted Message:',
-            content='''Latest update:
-                        - We're in discussions with Google and the facts of the case have been established, so we're working on resolution now.
-                        - Still awaiting confirmation on what will be done, but don't expect any events in the next few (2-3) days either.'
+            name=None,
+            icon_url=None,
+            title='Common Q&A We Have Been Seeing',
+            content='''**Q:** Are we skipping events?
+                    **A:** No, we are not skipping any events. This is confirmed by our community manager.
+                    
+                    **Q:** Are we not getting the collab anymore? What is the next event?.
+                    **A:** We will still get the collab, but it is postponed. We don't know what the next event is as the schedule is being shuffled.
+                    
+                    **Q:** Will we get compensated for this delay?
+                    **A:** Yes, this is confirmed, but the amount is currently unknown.'
                         ''')
         e2message = await ctx.channel.fetch_message(913960026920591380)
         await e2message.edit(embed=qembed)
