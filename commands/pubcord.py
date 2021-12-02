@@ -77,7 +77,7 @@ class Pubcord(commands.Cog):
             last_message = await channel.fetch_message(channel.last_message_id)
             log.info(last_message.content)
             log.info(channel.last_message_id)
-            if channel.last_message_id is not message_id:
+            if channel.last_message_id is not int(message_id):
                 prev_message = await channel.fetch_message(int(message_id))
                 log.info(f'prev_message: {prev_message.id}')
                 if self.view:
