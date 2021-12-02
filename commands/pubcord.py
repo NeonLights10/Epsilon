@@ -90,14 +90,21 @@ class Pubcord(commands.Cog):
     async def currentstatus(self, ctx, message_id: Optional[str]):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content='v4.10.0 will arrive <t:1638439200>, as stated by official social media sources.'
+            content='v4.10.0 will arrive at <t:1638439200>.'
         )
-        embed.set_image(url='https://cdn.discordapp.com/attachments/913958768105103390/915513276987768842/EwwL0hoUYAADTHm.png')
-        embed.add_field(name=f'What does this mean for us?',
-                        value=f'The delay means that the scheduled collaboration will be postponed to 12/11-12/19 (subject to change). Subsequent events will follow in order after the collab, and the duration of events will not be shortened any further to compensate for the delay. The accelerated schedule will continue as planned.',
+        embed.set_image(url='https://cdn.discordapp.com/attachments/611629664540295191/915809575331069962/Screenshot_20211201-223932_Google_Play_Store.png')
+        embed.add_field(name=f'Current Event',
+                        value=("Welcome to the Shrine\n"
+                               "<t:1638493200> to <t:1639033140>\n\n"
+                               "**Event Type**: Live Goals\n"
+                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
+                               "**Characters**: Arisa, Kaoru, Yukina, Mashiro, LAYER\n\n"
+                               "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
-        embed.add_field(name=f'What is the next event?',
-                                value=f'We are not 100% sure, but best guesses would be the first skipped event, One of Us.',
+        embed.add_field(name=f'Gacha',
+                                value=("2022 New Year Dream Festival Gacha\n"
+                                       "Gorgeous New Year Parade Gacha [LIMITED]\n\n"
+                                       "This list is subject to change. More information coming soon."),
                                 inline=False)
         embed.set_footer(text='Last Updated 12/1/2021')
         if message_id:
