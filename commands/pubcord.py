@@ -12,7 +12,7 @@ from formatting.embed import gen_embed
 from __main__ import log, db, PersistentEvent
 
 class Pubcord(commands.Cog):
-    def __init__(self, bot):
+    async def __init__(self, bot):
         self.bot = bot
         self.prev_message = None
         self.check_boosters.start()
