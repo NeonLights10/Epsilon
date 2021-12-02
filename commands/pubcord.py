@@ -14,18 +14,11 @@ from __main__ import log, db
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.prev_message = None
+        self.init = False
         self.check_boosters.start()
-
-        #pubcord = self.bot.get_guild(281815539267928064)#432379300684103699)
-        #channel = pubcord.get_channel(828380651735744512)#913958768105103390)
-        #message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
-        #self.prev_message = message
 
     def cog_unload(self):
         self.check_boosters.cancel()
-        #await self.prev_message.delete()
-        #self.prev_message = None
 
     def has_modrole():
         async def predicate(ctx):
@@ -40,12 +33,17 @@ class Pubcord(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(913958768105103390)
-        if message.channel == channel and self.prev_message:
-            await self.prev_message.delete()
+        if message.channel == channel or not self.init:
+            if document['prev_message']:
+                message_id = document['prev_message']
+                prev_message = await channel.fetch_message(int(message_id))
+                await prev_message.delete()
             new_message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
-            self.prev_message = new_message
+            self.init = True
+            await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message': new_message.id}})
 
     #@user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
     #@permissions.has_role("Moderator")

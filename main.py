@@ -300,12 +300,14 @@ except:
 uptime = time.time()
 message_count = 0
 command_count = 0
+persistent_views_added = False
 
 
 ####################
 
 @bot.event
 async def on_ready():
+    global persistent_views_added
     for guild in bot.guilds:
         await _check_document(guild, guild.id)
 
@@ -331,6 +333,10 @@ async def on_ready():
         ser = (f'{s.name} (unavailable)' if s.unavailable else s.name)
         log.info(f" - {ser}")
     print(flush=True)
+
+    if not persistent_views_added:
+        bot.add_view(PersistentEvent())
+        persistent_views_added = True
 
 # TODO - refactor and move modmail logic and fun logic out to separate helper methods
 @bot.event
@@ -602,5 +608,36 @@ bot.load_extension("commands.modmail")
 bot.load_extension("commands.tiering")
 bot.load_extension("commands.reminder")
 bot.load_extension("commands.pubcord")
-#bot.add_view(PersistentEvent())
 bot.run(TOKEN)
+
+class PersistentEvent(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="What's the current event?",
+        style=discord.ButtonStyle.green,
+        custom_id="persistent_view:currentevent",
+    )
+    async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = gen_embed(
+            title='Current Status of EN Bandori',
+            content='v4.10.0 arrives <t:1638439200>.'
+        )
+        embed.set_image(
+            url='https://cdn.discordapp.com/attachments/611629664540295191/915809575331069962/Screenshot_20211201-223932_Google_Play_Store.png')
+        embed.add_field(name=f'Current Event',
+                        value=("Welcome to the Shrine\n"
+                               "<t:1638493200> to <t:1639033140>\n\n"
+                               "**Event Type**: Live Goals\n"
+                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
+                               "**Characters**: Arisa, Kaoru, Yukina, Mashiro, LAYER\n\n"
+                               "※The event period above is automatically converted to the timezone set on your system."),
+                        inline=False)
+        embed.add_field(name=f'Gacha',
+                        value=("2022 New Year Dream Festival Gacha\n"
+                               "Gorgeous New Year Parade Gacha [LIMITED]\n\n"
+                               "This list is subject to change. More information coming soon."),
+                        inline=False)
+        embed.set_footer(text='Last Updated 12/1/2021')
+        await interaction.response.send_message(embed=embed, ephemeral=True)
