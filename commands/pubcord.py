@@ -73,7 +73,8 @@ class Pubcord(commands.Cog):
             if document['prev_message']:
                 message_id = document['prev_message']
                 prev_message = await channel.fetch_message(int(message_id))
-                self.view.stop()
+                if self.view:
+                    self.view.stop()
                 await prev_message.delete()
             self.view = PersistentEvent()
             new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
