@@ -53,6 +53,8 @@ class Pubcord(commands.Cog):
 
     def cog_unload(self):
         self.check_boosters.cancel()
+        self.start_currentevent.cancel()
+        self.check_currentevent.cancel()
 
     def has_modrole():
         async def predicate(ctx):
