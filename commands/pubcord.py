@@ -69,7 +69,7 @@ class Pubcord(commands.Cog):
         document = await db.servers.find_one({"server_id": 281815539267928064})
         pubcord = self.bot.get_guild(281815539267928064)#432379300684103699)
         channel = pubcord.get_channel(828380651735744512)#913958768105103390)
-        if (message.channel == channel and not message.embed) or not self.init:
+        if (message.channel == channel and not message.flags.ephemeral) or not self.init:
             if document['prev_message']:
                 message_id = document['prev_message']
                 prev_message = await channel.fetch_message(int(message_id))
