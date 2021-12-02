@@ -112,20 +112,22 @@ class Pubcord(commands.Cog):
             if emessage:
                 await emessage.edit(embed=embed)
 
-        qembed = gen_embed(
-            name=None,
-            icon_url=None,
-            title='Common Q&A We Have Been Seeing',
-            content=("**Q:** Are we skipping events?\n"
-                    "**A:** No, we are not skipping any events. This is confirmed by our community manager.\n\n"
-                    "**Q:** Are we not getting the collab anymore? What is the next event?.\n"
-                    "**A:** We will still get the collab, but it is postponed. We don't know what the next event is as the schedule is being shuffled.\n\n"
-                    "**Q:** Will we get compensated for this delay?\n"
-                    "**A:** Yes, this is confirmed, but the amount is currently unknown.")
-        )
-        e2message = await ctx.channel.fetch_message(913960026920591380)
-        await e2message.edit(embed=qembed)
-        await ctx.message.delete()
+            qembed = gen_embed(
+                name=None,
+                icon_url=None,
+                title='Common Q&A We Have Been Seeing',
+                content=("**Q:** Are we skipping events?\n"
+                        "**A:** No, we are not skipping any events. This is confirmed by our community manager.\n\n"
+                        "**Q:** Are we not getting the collab anymore? What is the next event?.\n"
+                        "**A:** We will still get the collab, but it is postponed. We don't know what the next event is as the schedule is being shuffled.\n\n"
+                        "**Q:** Will we get compensated for this delay?\n"
+                        "**A:** Yes, this is confirmed, but the amount is currently unknown.")
+            )
+            e2message = await ctx.channel.fetch_message(913960026920591380)
+            await e2message.edit(embed=qembed)
+            await ctx.message.delete()
+        else:
+            await ctx.send(embed=embed)
 
     @commands.command(name='maintenance',
                       description='Sends an embed to notify of game maintenance. Needs unix timestamps.',
