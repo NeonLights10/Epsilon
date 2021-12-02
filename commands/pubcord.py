@@ -75,10 +75,9 @@ class Pubcord(commands.Cog):
         if document['prev_message']:
             message_id = document['prev_message']
             last_message = await channel.fetch_message(channel.last_message_id)
-            log.info(last_message.content)
+            prev_message = await channel.fetch_message(int(message_id))
             log.info(channel.last_message_id)
-            if channel.last_message_id != last_message.id:
-                prev_message = await channel.fetch_message(int(message_id))
+            if channel.last_message_id != prev_message.id:
                 log.info(f'prev_message: {prev_message.id}')
                 if self.view:
                     self.view.stop()
