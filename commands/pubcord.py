@@ -68,7 +68,7 @@ class Pubcord(commands.Cog):
     async def on_ready(self):
         if not self.persistent_views_added:
             log.info('add view')
-            self.add_view(PersistentEvent())
+            self.bot.add_view(PersistentEvent())
             self.persistent_views_added = True
             log.info('get guild and channel')
             pubcord = self.bot.get_guild(281815539267928064) #432379300684103699
