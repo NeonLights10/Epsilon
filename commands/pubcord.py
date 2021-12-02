@@ -153,5 +153,16 @@ class Pubcord(commands.Cog):
         await asyncio.sleep(end_difference.total_seconds())
         await sent_message.delete()
 
+    @commands.command(name='delmaintenance',
+                      description='Sends an embed to notify of game maintenance. Needs unix timestamps.',
+                      help='Usage\n\n%maintenance [game version (ex: 4.10.0)] [start unix timestamp] [end unix timestamp]\nUse https://www.epochconverter.com/ to convert.')
+    async def delmaintenance(self, ctx, message_id: int, end_unix: int):
+        await ctx.message.delete()
+        emessage = await ctx.channel.fetch_message(message_id)
+        end_datetime = datetime.datetime.fromtimestamp(end_unix, datetime.timezone.utc)
+        end_difference = end_datetime - start_datetime
+        await asyncio.sleep(end_difference.total_seconds())
+        await emessage.delete()
+
 def setup(bot):
     bot.add_cog(Pubcord(bot))
