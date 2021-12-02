@@ -47,6 +47,7 @@ class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.init = False
+        self.view = None
         self.check_boosters.start()
 
     def cog_unload(self):
@@ -72,9 +73,10 @@ class Pubcord(commands.Cog):
             if document['prev_message']:
                 message_id = document['prev_message']
                 prev_message = await channel.fetch_message(int(message_id))
-                prev_message.view.stop()
+                self.view.stop()
                 await prev_message.delete()
-            new_message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
+            self.view = PersistentEvent()
+            new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
             self.init = True
             await db.servers.update_one({"server_id": 281815539267928064}, {"$set": {'prev_message': new_message.id}})
 
