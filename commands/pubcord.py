@@ -11,7 +11,7 @@ from formatting.constants import UNITS
 from formatting.embed import gen_embed
 from __main__ import log, db
 
-class PresistentEvent(discord.ui.View):
+class PersistentEvent(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
