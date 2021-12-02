@@ -150,6 +150,8 @@ class Pubcord(commands.Cog):
         log.info('parity check complete')
 
     @check_boosters.before_loop
+    @check_currentevent.before_loop
+    @start_currentevent.before_loop
     async def wait_ready(self):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
