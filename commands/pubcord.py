@@ -13,7 +13,7 @@ from __main__ import log, db
 
 class PersistentEvent(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None)
+        super().__init__(timeout=9999.0)
 
     @discord.ui.button(
         label="What's the current event?",
