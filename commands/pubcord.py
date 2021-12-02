@@ -69,9 +69,9 @@ class Pubcord(commands.Cog):
 
     @tasks.loop(seconds=5.0)
     async def check_currentevent(self):
-        document = await db.servers.find_one({"server_id": 326894674901991425})
-        pubcord = self.bot.get_guild(326894674901991425)
-        channel = pubcord.get_channel(915864544985907230)
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390)
         if document['prev_message']:
             message_id = document['prev_message']
             prev_message = await channel.fetch_message(int(message_id))
@@ -84,14 +84,14 @@ class Pubcord(commands.Cog):
                 self.view = PersistentEvent()
                 new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
                 log.info('posted')
-                await db.servers.update_one({"server_id": 326894674901991425},
+                await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message': new_message.id}})
 
     @tasks.loop(seconds=1.0, count=1)
     async def start_currentevent(self):
-        document = await db.servers.find_one({"server_id": 326894674901991425})
-        pubcord = self.bot.get_guild(326894674901991425)
-        channel = pubcord.get_channel(915864544985907230)
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390)
         if document['prev_message']:
             message_id = document['prev_message']
             prev_message = await channel.fetch_message(int(message_id))
@@ -100,7 +100,7 @@ class Pubcord(commands.Cog):
         self.view = PersistentEvent()
         new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
         log.info('initial posted')
-        await db.servers.update_one({"server_id": 326894674901991425}, {"$set": {'prev_message': new_message.id}})
+        await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message': new_message.id}})
 
     #@user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
     #@permissions.has_role("Moderator")
