@@ -48,8 +48,8 @@ class Pubcord(commands.Cog):
         self.bot = bot
         self.view = None
         self.check_boosters.start()
-        #self.start_currentevent.start()
-        #self.check_currentevent.start()
+        self.start_currentevent.start()
+        self.check_currentevent.start()
 
     def cog_unload(self):
         self.check_boosters.cancel()
@@ -74,7 +74,7 @@ class Pubcord(commands.Cog):
         channel = pubcord.get_channel(913958768105103390)
         if document['prev_message']:
             message_id = document['prev_message']
-            if channel.last_message_id is not message_id:
+            if channel.last_message_id is not message_id and not is_system():
                 prev_message = await channel.fetch_message(int(message_id))
                 if self.view:
                     self.view.stop()
