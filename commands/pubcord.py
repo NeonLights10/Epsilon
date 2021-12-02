@@ -75,7 +75,7 @@ class Pubcord(commands.Cog):
             self.prev_message = message
 
     @commands.Cog.listener()
-    async def on_message(message):
+    async def on_message(self, message):
         pubcord = self.bot.get_guild(281815539267928064)  # 432379300684103699
         channel = pubcord.get_channel(828380651735744512)  # 913958768105103390
         if message.channel == channel:
