@@ -13,7 +13,7 @@ from __main__ import log, db
 
 class PersistentEvent(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=9999.0)
+        super().__init__(timeout=None)
 
     @discord.ui.button(
         label="What's the current event?",
@@ -48,7 +48,6 @@ class Pubcord(commands.Cog):
         self.bot = bot
         self.init = False
         self.check_boosters.start()
-        self.view = PersistentEvent()
 
     def cog_unload(self):
         self.check_boosters.cancel()
