@@ -2,6 +2,7 @@ import discord
 import traceback
 import asyncio
 import pymongo
+import datetime
 
 from typing import Union, Optional, Literal
 from discord.ext import commands, tasks
@@ -108,18 +109,40 @@ class Pubcord(commands.Cog):
             name=None,
             icon_url=None,
             title='Common Q&A We Have Been Seeing',
-            content='''**Q:** Are we skipping events?
-                    **A:** No, we are not skipping any events. This is confirmed by our community manager.
-                    
-                    **Q:** Are we not getting the collab anymore? What is the next event?.
-                    **A:** We will still get the collab, but it is postponed. We don't know what the next event is as the schedule is being shuffled.
-                    
-                    **Q:** Will we get compensated for this delay?
-                    **A:** Yes, this is confirmed, but the amount is currently unknown.'
-                        ''')
+            content=("**Q:** Are we skipping events?\n"
+                    "**A:** No, we are not skipping any events. This is confirmed by our community manager.\n\n"
+                    "**Q:** Are we not getting the collab anymore? What is the next event?.\n"
+                    "**A:** We will still get the collab, but it is postponed. We don't know what the next event is as the schedule is being shuffled.\n\n"
+                    "**Q:** Will we get compensated for this delay?\n"
+                    "**A:** Yes, this is confirmed, but the amount is currently unknown.")
+        )
         e2message = await ctx.channel.fetch_message(913960026920591380)
         await e2message.edit(embed=qembed)
         await ctx.message.delete()
+
+    @commands.command(name='maintenance',
+                      description='Sends an embed to notify of game maintenance. Needs unix timestamps.',
+                      help='Usage\n\n%maintenance [game version (ex: 4.10.0)] [start unix timestamp] [end unix timestamp]\nUse https://www.epochconverter.com/ to convert.')
+    async def maintenance(self, ctx, version: str, start_unix: int, end_unix: int):
+        embed = gen_embed(
+            title='Maintenance Notice',
+            content=(f"Maintenance for the version {version} update has begun.\n\n"
+                    f"**Maintenance Period**: <t:{start_unix}> to <t:{end_unix}>\n\n"
+                    "※If maintenance begins during a Live Show, the results may not be recorded.\n"
+                    "※The maintenance period above is automatically converted to the timezone set on your system.")
+        )
+        embed.set_image(url='https://files.s-neon.xyz/share/EwwL0hoUYAADTHm.png')
+
+        start_datetime = datetime.datetime.fromtimestamp(start_unix, datetime.timezone.utc)
+        end_datetime = datetime.datetime.fromtimestamp(end_unix, datetime.timezone.utc)
+        start_difference = start_datetime - datetime.datetime.now(datetime.timezone.utc)
+        end_difference = end_datetime - start_datetime
+
+        await ctx.message.delete()
+        await asyncio.sleep(start_difference.total_seconds())
+        sent_message = await ctx.send(embed=embed)
+        await asyncio.sleep(end_difference.total_seconds())
+        await sent_message.delete()
 
 def setup(bot):
     bot.add_cog(Pubcord(bot))
