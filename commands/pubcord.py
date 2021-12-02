@@ -12,20 +12,20 @@ from formatting.embed import gen_embed
 from __main__ import log, db, PersistentEvent
 
 class Pubcord(commands.Cog):
-    async def __init__(self, bot):
+    def __init__(self, bot):
         self.bot = bot
         self.prev_message = None
         self.check_boosters.start()
 
-        pubcord = self.bot.get_guild(281815539267928064)#432379300684103699)
-        channel = pubcord.get_channel(828380651735744512)#913958768105103390)
-        message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
-        self.prev_message = message
+        #pubcord = self.bot.get_guild(281815539267928064)#432379300684103699)
+        #channel = pubcord.get_channel(828380651735744512)#913958768105103390)
+        #message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
+        #self.prev_message = message
 
-    async def cog_unload(self):
+    def cog_unload(self):
         self.check_boosters.cancel()
-        await self.prev_message.delete()
-        self.prev_message = None
+        #await self.prev_message.delete()
+        #self.prev_message = None
 
     def has_modrole():
         async def predicate(ctx):
