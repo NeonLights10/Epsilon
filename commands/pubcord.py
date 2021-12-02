@@ -211,11 +211,11 @@ class Pubcord(commands.Cog):
     @commands.command(name='delmaintenance',
                       description='Sends an embed to notify of game maintenance. Needs unix timestamps.',
                       help='Usage\n\n%delmaintenance [message_id] [end_unix]')
-    async def delmaintenance(self, ctx, message_id: int, end_unix: int):
+    async def delmaintenance(self, ctx, message_id: int, start_unix: int, end_unix: int):
         await ctx.message.delete()
         emessage = await ctx.channel.fetch_message(message_id)
         end_datetime = datetime.datetime.fromtimestamp(end_unix, datetime.timezone.utc)
-        end_difference = end_datetime - start_datetime
+        end_difference = end_datetime - datetime.datetime.now(datetime.timezone.utc)
         await asyncio.sleep(end_difference.total_seconds())
         await emessage.delete()
 
