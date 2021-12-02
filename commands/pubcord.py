@@ -48,8 +48,8 @@ class Pubcord(commands.Cog):
         self.bot = bot
         self.view = None
         self.check_boosters.start()
-        self.start_currentevent.start()
-        self.check_currentevent.start()
+        #self.start_currentevent.start()
+        #self.check_currentevent.start()
 
     def cog_unload(self):
         self.check_boosters.cancel()
