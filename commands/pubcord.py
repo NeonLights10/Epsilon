@@ -67,10 +67,13 @@ class Pubcord(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         if not self.persistent_views_added:
+            log.info('add view')
             self.add_view(PersistentEvent())
             self.persistent_views_added = True
+            log.info('get guild and channel')
             pubcord = self.bot.get_guild(281815539267928064) #432379300684103699
             channel = pubcord.get_channel(828380651735744512) #913958768105103390
+            log.info('send')
             message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
             self.prev_message = message
 
