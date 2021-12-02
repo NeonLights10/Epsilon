@@ -72,16 +72,18 @@ class Pubcord(commands.Cog):
         if (message.channel == channel and not message.flags.ephemeral) or not self.init:
             if document['prev_message']:
                 message_id = document['prev_message']
-                prev_message = await channel.fetch_message(int(message_id))
-                if self.view:
-                    self.view.stop()
-                await prev_message.delete()
-                log.info('deleted')
+                if message.id is not message_id:
+                    prev_message = await channel.fetch_message(int(message_id))
+                    if self.view:
+                        self.view.stop()
+                    await prev_message.delete()
+                    log.info('deleted')
             self.view = PersistentEvent()
             new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
             log.info('posted')
             self.init = True
             await db.servers.update_one({"server_id": 281815539267928064}, {"$set": {'prev_message': new_message.id}})
+            asyncio.sleep(1)
 
     #@user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
     #@permissions.has_role("Moderator")
