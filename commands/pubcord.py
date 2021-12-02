@@ -48,8 +48,8 @@ class Pubcord(commands.Cog):
         self.bot = bot
         self.view = None
         self.check_boosters.start()
-        #self.start_currentevent.start()
-        #self.check_currentevent.start()
+        self.start_currentevent.start()
+        self.check_currentevent.start()
 
     def cog_unload(self):
         self.check_boosters.cancel()
@@ -159,7 +159,7 @@ class Pubcord(commands.Cog):
     @check_currentevent.before_loop
     async def wait_ready_long(self):
         await self.bot.wait_until_ready()
-        asyncio.sleep(5)
+        await asyncio.sleep(10)
 
     @commands.command(name='currentstatus',
                       description='Sends a embed with the latest status on EN Bandori.',
