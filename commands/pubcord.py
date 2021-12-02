@@ -22,7 +22,7 @@ class Pubcord(commands.Cog):
         message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
         self.prev_message = message
 
-    def cog_unload(self):
+    async def cog_unload(self):
         self.check_boosters.cancel()
         await self.prev_message.delete()
         self.prev_message = None
