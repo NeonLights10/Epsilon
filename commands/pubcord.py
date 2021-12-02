@@ -47,8 +47,8 @@ class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.init = False
-        #self.view = PersistentEvent()
         self.check_boosters.start()
+        self.view = PersistentEvent()
 
     def cog_unload(self):
         self.check_boosters.cancel()
