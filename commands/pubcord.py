@@ -23,7 +23,7 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content='v4.10.0 arrives <t:1638439200>.'
+            content='v4.10.0 has arrived!'
         )
         embed.set_image(
             url='https://cdn.discordapp.com/attachments/611629664540295191/915809575331069962/Screenshot_20211201-223932_Google_Play_Store.png')
@@ -37,7 +37,8 @@ class PersistentEvent(discord.ui.View):
                         inline=False)
         embed.add_field(name=f'Gacha',
                         value=("2022 New Year Dream Festival Gacha\n"
-                               "Gorgeous New Year Parade Gacha [LIMITED]\n\n"
+                               "Gorgeous New Year Parade Gacha [LIMITED]\n"
+                               "2022 New Year 4* Limited Member Guaranteed Gacha\n\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
         embed.set_footer(text='Last Updated 12/1/2021')
