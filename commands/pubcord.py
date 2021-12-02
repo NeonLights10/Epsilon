@@ -89,9 +89,14 @@ class Pubcord(commands.Cog):
         document = await db.servers.find_one({"server_id": 281815539267928064})
         pubcord = self.bot.get_guild(281815539267928064)  # 432379300684103699)
         channel = pubcord.get_channel(828380651735744512)  # 913958768105103390)
+        if document['prev_message']:
+            message_id = document['prev_message']
+            prev_message = await channel.fetch_message(int(message_id))
+            await prev_message.delete()
+            log.info('initial deleted')
         self.view = PersistentEvent()
         new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
-        log.info('posted')
+        log.info('initial posted')
         await db.servers.update_one({"server_id": 281815539267928064}, {"$set": {'prev_message': new_message.id}})
 
     #@user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
