@@ -11,9 +11,43 @@ from formatting.constants import UNITS
 from formatting.embed import gen_embed
 from __main__ import log, db
 
+class PresistentEvent(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="What's the current event?",
+        style=discord.ButtonStyle.green,
+        custom_id="persistent_view:currentevent",
+    )
+    async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = gen_embed(
+            title='Current Status of EN Bandori',
+            content='v4.10.0 arrives <t:1638439200>.'
+        )
+        embed.set_image(
+            url='https://cdn.discordapp.com/attachments/611629664540295191/915809575331069962/Screenshot_20211201-223932_Google_Play_Store.png')
+        embed.add_field(name=f'Current Event',
+                        value=("Welcome to the Shrine\n"
+                               "<t:1638493200> to <t:1639033140>\n\n"
+                               "**Event Type**: Live Goals\n"
+                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
+                               "**Characters**: Arisa, Kaoru, Yukina, Mashiro, LAYER\n\n"
+                               "※The event period above is automatically converted to the timezone set on your system."),
+                        inline=False)
+        embed.add_field(name=f'Gacha',
+                        value=("2022 New Year Dream Festival Gacha\n"
+                               "Gorgeous New Year Parade Gacha [LIMITED]\n\n"
+                               "This list is subject to change. More information coming soon."),
+                        inline=False)
+        embed.set_footer(text='Last Updated 12/1/2021')
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.prev_message = None
+        self.persistent_views_added = False
         self.check_boosters.start()
 
     def cog_unload(self):
@@ -29,6 +63,27 @@ class Pubcord(commands.Cog):
                 return False
 
         return commands.check(predicate)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        if not self.persistent_views_added:
+            self.add_view(PersistentEvent())
+            self.persistent_views_added = True
+            pubcord = self.bot.get_guild(281815539267928064) #432379300684103699
+            channel = pubcord.get_channel(828380651735744512) #913958768105103390
+            message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
+            self.prev_message = message
+
+    @commands.Cog.listener()
+    async def on_message(message):
+        pubcord = self.bot.get_guild(281815539267928064)  # 432379300684103699
+        channel = pubcord.get_channel(828380651735744512)  # 913958768105103390
+        if message.channel == channel:
+            await self.prev_message.delete()
+            pubcord = self.bot.get_guild(281815539267928064)  # 432379300684103699
+            channel = pubcord.get_channel(828380651735744512)  # 913958768105103390
+            new_message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
+            self.prev_message = new_message
 
     @user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
     @permissions.has_role("Moderator")
@@ -155,7 +210,7 @@ class Pubcord(commands.Cog):
 
     @commands.command(name='delmaintenance',
                       description='Sends an embed to notify of game maintenance. Needs unix timestamps.',
-                      help='Usage\n\n%maintenance [game version (ex: 4.10.0)] [start unix timestamp] [end unix timestamp]\nUse https://www.epochconverter.com/ to convert.')
+                      help='Usage\n\n%delmaintenance [message_id] [end_unix]')
     async def delmaintenance(self, ctx, message_id: int, end_unix: int):
         await ctx.message.delete()
         emessage = await ctx.channel.fetch_message(message_id)
