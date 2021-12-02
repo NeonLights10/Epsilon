@@ -72,8 +72,9 @@ class Pubcord(commands.Cog):
             if document['prev_message']:
                 message_id = document['prev_message']
                 prev_message = await channel.fetch_message(int(message_id))
+                prev_message.view.stop()
                 await prev_message.delete()
-            new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
+            new_message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
             self.init = True
             await db.servers.update_one({"server_id": 281815539267928064}, {"$set": {'prev_message': new_message.id}})
 
