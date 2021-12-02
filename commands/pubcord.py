@@ -9,7 +9,7 @@ from discord.ext import commands, tasks
 from discord.commands import user_command, permissions
 from formatting.constants import UNITS
 from formatting.embed import gen_embed
-from __main__ import log, db, PersistentEvent
+from __main__ import log, db
 
 class Pubcord(commands.Cog):
     def __init__(self, bot):
