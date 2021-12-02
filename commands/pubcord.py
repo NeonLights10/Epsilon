@@ -127,7 +127,7 @@ class Pubcord(commands.Cog):
         embed = gen_embed(
             title='Maintenance Notice',
             content=(f"Maintenance for the version {version} update has begun.\n\n"
-                    f"**Maintenance Period**: <t:{start_unix}> to <t:{end_unix}>\n\n"
+                    f"**Maintenance Period**:\n<t:{start_unix}> to <t:{end_unix}>\n\n"
                     "※If maintenance begins during a Live Show, the results may not be recorded.\n"
                     "※The maintenance period above is automatically converted to the timezone set on your system.")
         )

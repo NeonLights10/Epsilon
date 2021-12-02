@@ -594,13 +594,14 @@ class Administration(commands.Cog):
                                 re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)})
 
         async def delete_messages(limit=None, check=None, before=None, after=None):
-            deleted = await ctx.channel.purge(limit=limit, check=check, before=before, after=after)
             if check:
+                deleted = await ctx.channel.purge(limit=limit, check=check, before=before, after=after)
                 sent = await ctx.send(embed=gen_embed(title='purge',
                                                       content=f'The last {len(deleted)} messages by {member.name}#{member.discriminator} were deleted.'))
                 await ctx.message.delete()
                 await sent.delete(delay=5)
             else:
+                deleted = await ctx.channel.purge(limit=limit, before=before, after=after)
                 sent = await ctx.send(
                     embed=gen_embed(title='purge', content=f'The last {len(deleted)} messages were deleted.'))
                 await ctx.message.delete()
