@@ -9,49 +9,23 @@ from discord.ext import commands, tasks
 from discord.commands import user_command, permissions
 from formatting.constants import UNITS
 from formatting.embed import gen_embed
-from __main__ import log, db
-
-class PersistentEvent(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(
-        label="What's the current event?",
-        style=discord.ButtonStyle.green,
-        custom_id="persistent_view:currentevent",
-    )
-    async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = gen_embed(
-            title='Current Status of EN Bandori',
-            content='v4.10.0 arrives <t:1638439200>.'
-        )
-        embed.set_image(
-            url='https://cdn.discordapp.com/attachments/611629664540295191/915809575331069962/Screenshot_20211201-223932_Google_Play_Store.png')
-        embed.add_field(name=f'Current Event',
-                        value=("Welcome to the Shrine\n"
-                               "<t:1638493200> to <t:1639033140>\n\n"
-                               "**Event Type**: Live Goals\n"
-                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
-                               "**Characters**: Arisa, Kaoru, Yukina, Mashiro, LAYER\n\n"
-                               "※The event period above is automatically converted to the timezone set on your system."),
-                        inline=False)
-        embed.add_field(name=f'Gacha',
-                        value=("2022 New Year Dream Festival Gacha\n"
-                               "Gorgeous New Year Parade Gacha [LIMITED]\n\n"
-                               "This list is subject to change. More information coming soon."),
-                        inline=False)
-        embed.set_footer(text='Last Updated 12/1/2021')
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+from __main__ import log, db, PersistentEvent
 
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.prev_message = None
-        self.persistent_views_added = False
         self.check_boosters.start()
+
+        pubcord = self.bot.get_guild(281815539267928064)#432379300684103699)
+        channel = pubcord.get_channel(828380651735744512)#913958768105103390)
+        message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
+        self.prev_message = message
 
     def cog_unload(self):
         self.check_boosters.cancel()
+        await self.prev_message.delete()
+        self.prev_message = None
 
     def has_modrole():
         async def predicate(ctx):
@@ -65,43 +39,28 @@ class Pubcord(commands.Cog):
         return commands.check(predicate)
 
     @commands.Cog.listener()
-    async def on_ready(self):
-        if not self.persistent_views_added:
-            log.info('add view')
-            self.bot.add_view(PersistentEvent())
-            self.persistent_views_added = True
-            log.info('get guild and channel')
-            pubcord = self.bot.get_guild(281815539267928064) #432379300684103699
-            channel = pubcord.get_channel(828380651735744512) #913958768105103390
-            log.info('send')
-            message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
-            self.prev_message = message
-
-    @commands.Cog.listener()
     async def on_message(self, message):
-        pubcord = self.bot.get_guild(281815539267928064)  # 432379300684103699
-        channel = pubcord.get_channel(828380651735744512)  # 913958768105103390
-        if message.channel == channel:
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390)
+        if message.channel == channel and self.prev_message:
             await self.prev_message.delete()
-            pubcord = self.bot.get_guild(281815539267928064)  # 432379300684103699
-            channel = pubcord.get_channel(828380651735744512)  # 913958768105103390
             new_message = await channel.send("Check out the current event by clicking below!", view=PersistentEvent())
             self.prev_message = new_message
 
-    @user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
-    @permissions.has_role("Moderator")
-    async def verifyrank(self, ctx, member: discord.Member):
-        if ctx.guild.get_role(432388746072293387) in ctx.author.roles:
-            roles = member.roles
-            verified_role = ctx.guild.get_role(719791739367325706)
-            if verified_role not in roles:
-                roles.append(verified_role)
-                await member.edit(roles=roles)
-                await ctx.respond(content='Verified user.', ephemeral=True)
-            else:
-                await ctx.respond(content='User already verified.', ephemeral=True)
-        else:
-            await ctx.respond(content='You do not have access to this command.', ephemeral=True)
+    #@user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
+    #@permissions.has_role("Moderator")
+    #async def verifyrank(self, ctx, member: discord.Member):
+    #    if ctx.guild.get_role(432388746072293387) in ctx.author.roles:
+    #        roles = member.roles
+    #        verified_role = ctx.guild.get_role(719791739367325706)
+    #        if verified_role not in roles:
+    #            roles.append(verified_role)
+    #            await member.edit(roles=roles)
+    #            await ctx.respond(content='Verified user.', ephemeral=True)
+    #        else:
+    #            await ctx.respond(content='User already verified.', ephemeral=True)
+    #    else:
+    #        await ctx.respond(content='You do not have access to this command.', ephemeral=True)
 
     @tasks.loop(seconds=120)
     async def check_boosters(self):
