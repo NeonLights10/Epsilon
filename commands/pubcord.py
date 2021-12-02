@@ -49,6 +49,7 @@ class Pubcord(commands.Cog):
         self.view = None
         self.check_boosters.start()
         self.start_currentevent.start()
+        self.check_currentevent.start()
 
     def cog_unload(self):
         self.check_boosters.cancel()
@@ -64,31 +65,30 @@ class Pubcord(commands.Cog):
 
         return commands.check(predicate)
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        document = await db.servers.find_one({"server_id": 281815539267928064})
-        pubcord = self.bot.get_guild(281815539267928064)#432379300684103699)
-        channel = pubcord.get_channel(828380651735744512)#913958768105103390)
-        if message.channel == channel and not message.flags.ephemeral:
-            if document['prev_message']:
-                message_id = document['prev_message']
-                if message.id is not message_id:
-                    prev_message = await channel.fetch_message(int(message_id))
-                    if self.view:
-                        self.view.stop()
-                    await prev_message.delete()
-                    log.info('deleted')
-                    self.view = PersistentEvent()
-                    new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
-                    log.info('posted')
-                    await db.servers.update_one({"server_id": 281815539267928064},
-                                                {"$set": {'prev_message': new_message.id}})
+    @tasks.loop(seconds=5.0)
+    async def check_currentevent(self):
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390)
+        if document['prev_message']:
+            message_id = document['prev_message']
+            if channel.last_message_id is not message_id:
+                prev_message = await channel.fetch_message(int(message_id))
+                if self.view:
+                    self.view.stop()
+                await prev_message.delete()
+                log.info('deleted')
+                self.view = PersistentEvent()
+                new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
+                log.info('posted')
+                await db.servers.update_one({"server_id": 432379300684103699},
+                                            {"$set": {'prev_message': new_message.id}})
 
     @tasks.loop(seconds=1.0, count=1)
     async def start_currentevent(self):
-        document = await db.servers.find_one({"server_id": 281815539267928064})
-        pubcord = self.bot.get_guild(281815539267928064)  # 432379300684103699)
-        channel = pubcord.get_channel(828380651735744512)  # 913958768105103390)
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390)
         if document['prev_message']:
             message_id = document['prev_message']
             prev_message = await channel.fetch_message(int(message_id))
@@ -97,7 +97,7 @@ class Pubcord(commands.Cog):
         self.view = PersistentEvent()
         new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
         log.info('initial posted')
-        await db.servers.update_one({"server_id": 281815539267928064}, {"$set": {'prev_message': new_message.id}})
+        await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message': new_message.id}})
 
     #@user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
     #@permissions.has_role("Moderator")
