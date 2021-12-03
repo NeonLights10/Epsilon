@@ -37,8 +37,10 @@ class PersistentEvent(discord.ui.View):
                         inline=False)
         embed.add_field(name=f'Gacha',
                         value=("2022 New Year Dream Festival Gacha\n"
+                               "2022 New Year Dream Festival Special Set 10Play Gacha\n"
                                "Gorgeous New Year Parade Gacha [LIMITED]\n"
-                               "2022 New Year 4* Limited Member Guaranteed Gacha\n\n"
+                               "2022 New Year's 4* Limited Member Guaranteed Gacha\n"
+                               "2022 New Year's All Members Free Gacha\n\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
         embed.set_footer(text='Last Updated 12/1/2021')
