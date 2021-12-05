@@ -79,7 +79,12 @@ class Modmail(commands.Cog):
                     dm_channel = rid.dm_channel
                     if rid.dm_channel is None:
                         dm_channel = await rid.create_dm()
-                    await dm_channel.send(embed=embed)
+                    try:
+                        await dm_channel.send(embed=embed)
+                    except discord.Forbidden:
+                        await ctx.send(embed=gen_embed(title='Warning',
+                                                       content='This user does not accept DMs. I could not send them the message.'))
+                        return
                     if len(ctx.message.attachments) > 0:
                         attachnum = 1
                         for attachment in ctx.message.attachments:
@@ -92,6 +97,7 @@ class Modmail(commands.Cog):
                             except discord.Forbidden:
                                 await ctx.send(embed=gen_embed(title='Warning',
                                                                content='This user does not accept DMs. I could not send them the message.'))
+                                return
                             attachnum += 1
                     await ctx.send(embed=gen_embed(title='Modmail sent',
                                                    content=f'Sent modmail to {rid.name}#{rid.discriminator}.'))
