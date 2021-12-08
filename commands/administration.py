@@ -1622,7 +1622,7 @@ class Administration(commands.Cog):
                         elif view.value:
                             admin_cog = self.bot.get_cog('Administration')
                             if admin_cog is not None:
-                                await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[member],
+                                await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[active_member],
                                              message_link=strike_url, reason=strike_message_content)
             return
         elif lookup_view.value == 3:
