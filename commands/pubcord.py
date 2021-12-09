@@ -23,27 +23,22 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content='v4.10.0 has arrived!'
+            content='The next event will be the long awaited collab event.!'
         )
         embed.set_image(
             url='https://cdn.discordapp.com/attachments/611629664540295191/915809575331069962/Screenshot_20211201-223932_Google_Play_Store.png')
         embed.add_field(name=f'Current Event',
                         value=("Welcome to the Shrine\n"
                                "<t:1638493200> to <t:1639033140>\n\n"
-                               "**Event Type**: Live Goals\n"
-                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
-                               "**Characters**: Arisa, Kaoru, Yukina, Mashiro, LAYER\n\n"
-                               "※The event period above is automatically converted to the timezone set on your system."),
+                               "This event has ended."),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("2022 New Year Dream Festival Gacha\n"
-                               "2022 New Year Dream Festival Special Set 10Play Gacha\n"
-                               "Gorgeous New Year Parade Gacha [LIMITED]\n"
+                        value=("Gorgeous New Year Parade Gacha [LIMITED]\n"
                                "2022 New Year's 4* Limited Member Guaranteed Gacha\n"
                                "2022 New Year's All Members Free Gacha\n\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 12/1/2021')
+        embed.set_footer(text='Last Updated 12/9/2021')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class Pubcord(commands.Cog):
