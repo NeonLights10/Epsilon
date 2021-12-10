@@ -60,7 +60,7 @@ class PersistentEvent(discord.ui.View):
                                "\n"
                                "> Collab Celebration 1 4* Member Guaranteed Gacha Vol. 1\n"
                                "> Collab Celebration 1 4* Member Guaranteed Gacha Vol. 2\n"
-                               "> <t:1639184400> to <t:1610326740>\n"
+                               "> <t:1639184400> to <t:1641862740>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
