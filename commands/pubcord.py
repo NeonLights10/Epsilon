@@ -41,26 +41,26 @@ class PersistentEvent(discord.ui.View):
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=(">Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
-                               "><t:1639209600> to <t:1641023940>\n"
+                        value=("> Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
+                               "> <t:1639209600> to <t:1641023940>\n"
                                "\n"
-                               ">Magical DoReMi Collaboration - <:StarGem:432995521892843520> x2500, Collab Pin Set, & Tone Crystal x50\n"
-                               "><t:1639184400> to <t:1639875540>\n"
+                               "> Magical DoReMi Collaboration - <:StarGem:432995521892843520> x2500, Collab Pin Set, & Tone Crystal x50\n"
+                               "> <t:1639184400> to <t:1639875540>\n"
                                "\n"
                                "Collab Celebration Happy Box - <:StarGem:432995521892843520> x2210 (810 Paid, 1400 Free) & 1 OY! Cola\n"
                                "><t:1639184400> to <t:1639702740>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=(">No Secrets! Magical Gacha [LIMITED]\n"
-                               ">No Secrets! Magical 10 Play Gacha - Collab Member Guaranteed Gacha\n"
-                               "><t:1639184400> to <t:1639875540>\n"
+                        value=("> No Secrets! Magical Gacha [LIMITED]\n"
+                               "> No Secrets! Magical 10 Play Gacha - Collab Member Guaranteed Gacha\n"
+                               "> <t:1639184400> to <t:1639875540>\n"
                                "\n"
-                               ">Hello Happy World! Gacha\n"
-                               "><t:1639270800> to <t:1639724340>\n"
+                               "> Hello Happy World! Gacha\n"
+                               "> <t:1639270800> to <t:1639724340>\n"
                                "\n"
-                               ">Collab Celebration 1 4* Member Guaranteed Gacha Vol. 1\n"
-                               ">Collab Celebration 1 4* Member Guaranteed Gacha Vol. 2\n"
-                               "><t:1639184400> to <t:1610326740>\n"
+                               "> Collab Celebration 1 4* Member Guaranteed Gacha Vol. 1\n"
+                               "> Collab Celebration 1 4* Member Guaranteed Gacha Vol. 2\n"
+                               "> <t:1639184400> to <t:1610326740>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
