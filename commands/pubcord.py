@@ -47,8 +47,8 @@ class PersistentEvent(discord.ui.View):
                                "> Magical DoReMi Collaboration - <:StarGem:432995521892843520> x2500, Collab Pin Set, & Tone Crystal x50\n"
                                "> <t:1639184400> to <t:1639875540>\n"
                                "\n"
-                               "Collab Celebration Happy Box - <:StarGem:432995521892843520> x2210 (810 Paid, 1400 Free) & 1 OY! Cola\n"
-                               "><t:1639184400> to <t:1639702740>"),
+                               "> Collab Celebration Happy Box - <:StarGem:432995521892843520> x2210 (810 Paid, 1400 Free) & 1 OY! Cola\n"
+                               "> <t:1639184400> to <t:1639702740>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
                         value=("> No Secrets! Magical Gacha [LIMITED]\n"
