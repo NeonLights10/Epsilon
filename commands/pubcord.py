@@ -23,22 +23,43 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content='The next event will be the long awaited collab event.!'
+            content=("Special Collaboration with Magical DoReMi!\nClearing Collab Missions can earn you:\n"
+                     "```diff\n"
+                     "+ Collab Live Costume for Kokoro\n"
+                     "+ Oy! Cola (Recovers 10 Live Boosts)\n"
+                     "+ Stars x300\n"
+                     "```")
         )
         embed.set_image(
-            url='https://cdn.discordapp.com/attachments/611629664540295191/915809575331069962/Screenshot_20211201-223932_Google_Play_Store.png')
+            url='https://pbs.twimg.com/media/FGIy9HzVkAAbeGL.jpg:large')
         embed.add_field(name=f'Current Event',
-                        value=("Welcome to the Shrine\n"
-                               "<t:1638493200> to <t:1639033140>\n\n"
-                               "This event has ended."),
+                        value=("Happy! Lucky! Magic of Smiles!\n"
+                               "<t:1639184400> to <t:1639875540>\n\n"
+                               "**Event Type**: Mission Live\n"
+                               "**Attribute**: Powerful <:attrPowerful:432978890064134145>\n"
+                               "**Characters**: <:kokoro:613183278119125012> <:kaoru:613183278031306782> <:hagumi:613183277569933324> <:kanon:613183278249148446> <:misaki:613183278068924416>\n\n"
+                               "※The event period above is automatically converted to the timezone set on your system."),
+                        inline=False)
+        embed.add_field(name='Campaigns',
+                        value=("Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
+                               "<t:1639209600> to <t:1641023940>\n\n"
+                               "Magical DoReMi Collaboration - <:StarGem:432995521892843520> x2500, Collab Pin Set, & Tone Crystal x50\n"
+                               "<t:1639184400> to <t:1639875540>\n\n"
+                               "Collab Celebration Happy Box - <:StarGem:432995521892843520> x2210 (810 Paid, 1400 Free) & 1 OY! Cola\n"
+                               "<t:1639184400> to <t:1639702740>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("Gorgeous New Year Parade Gacha [LIMITED]\n"
-                               "2022 New Year's 4* Limited Member Guaranteed Gacha\n"
-                               "2022 New Year's All Members Free Gacha\n\n"
+                        value=("No Secrets! Magical Gacha [LIMITED]\n"
+                               "No Secrets! Magical 10 Play Gacha - Collab Member Guaranteed Gacha\n"
+                               "<t:1639184400> to <t:1639875540>\n\n"
+                               "Hello Happy World! Gacha\n"
+                               "<t:1639270800> to <t:1639724340>\n\n"
+                               "Collab Celebration 1 4* Member Guaranteed Gacha Vol. 1\n"
+                               "Collab Celebration 1 4* Member Guaranteed Gacha Vol. 2\n"
+                               "<t:1639184400> to <t:1610326740>"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 12/9/2021')
+        embed.set_footer(text='Last Updated 12/10/2021')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class Pubcord(commands.Cog):
