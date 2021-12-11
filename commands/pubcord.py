@@ -34,7 +34,7 @@ class PersistentEvent(discord.ui.View):
             url='https://pbs.twimg.com/media/FGIy9HzVkAAbeGL.jpg:large')
         embed.add_field(name=f'Current Event',
                         value=("Happy! Lucky! Magic of Smiles!\n"
-                               "<t:1639184400> to <t:1639875540>\n\n"
+                               "<t:1639184400> to <t:1639724340>\n\n"
                                "**Event Type**: Mission Live\n"
                                "**Attribute**: Powerful <:attrPowerful:432978890064134145>\n"
                                "**Characters**: Kokoro, Kaoru, Hagumi, Kanon, Misaki\n\n"
