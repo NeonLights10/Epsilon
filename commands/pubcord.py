@@ -67,6 +67,23 @@ class PersistentEvent(discord.ui.View):
         embed.set_footer(text='Last Updated 12/10/2021')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+    @discord.ui.button(
+        label="My game crashes!",
+        style=discord.ButtonStyle.primary,
+        custom_id="persistent_view:currentevent",
+    )
+    async def gamecrash(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = gen_embed(
+            title='I have an android and my game keeps crashing! What do I do?',
+            content=("The community has come up with a few workarounds for Android users while the issue is being worked on. Please note that these workarounds will not work 100% of the time, and the game can still crash at any moment.\n\n"
+                     "※ If you are crashing before downloading the update, download the update on Mobile Data instead of WiFi.  (Please only do this if your data plan is forgiving/unlimited as the update is very large.)\n"
+                     "※ If the update is already downloaded, log into the game with Mobile Data. Once you're on the main menu, you are free to switch back to WiFi.\n"
+                     "※ Obtain a VM that runs Android 7, which runs perfectly on the update. Please note that the gameplay experience will not be the best in this situation.\n"
+                     "※ Use VPNs such as Proton VPN and connect that to JP.\n\n"
+                     "If none of these workarounds end up working for you, please be patient as the issue gets fixed.")
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -106,7 +123,7 @@ class Pubcord(commands.Cog):
                 await prev_message.delete()
                 log.info('deleted')
                 self.view = PersistentEvent()
-                new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
+                new_message = await channel.send("Access quick links by clicking the buttons below!", view=self.view)
                 log.info('posted')
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message': new_message.id}})
@@ -122,7 +139,7 @@ class Pubcord(commands.Cog):
             await prev_message.delete()
             log.info('initial deleted')
         self.view = PersistentEvent()
-        new_message = await channel.send("Check out the current event by clicking below!", view=self.view)
+        new_message = await channel.send("Access quick links by clicking the buttons below!", view=self.view)
         log.info('initial posted')
         await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message': new_message.id}})
 
