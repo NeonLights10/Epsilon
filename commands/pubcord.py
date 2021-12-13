@@ -70,7 +70,7 @@ class PersistentEvent(discord.ui.View):
     @discord.ui.button(
         label="My game crashes!",
         style=discord.ButtonStyle.primary,
-        custom_id="persistent_view:currentevent",
+        custom_id="persistent_view:gamecrash",
     )
     async def gamecrash(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
