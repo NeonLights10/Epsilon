@@ -48,7 +48,10 @@ class PersistentEvent(discord.ui.View):
                                "> <t:1639184400> to <t:1639875540>\n"
                                "\n"
                                "> Collab Celebration Happy Box - <:StarGem:432995521892843520> x2210 (810 Paid, 1400 Free) & 1 OY! Cola\n"
-                               "> <t:1639184400> to <t:1639702740>"),
+                               "> <t:1639184400> to <t:1639702740>\n"
+                               "\n"
+                               "> Afterglow Band Story 3 Release Countdown Login Campaign - <:StarGem:432995521892843520> x150\n"
+                               "> <t:1639641600> to <t:1639641600>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
                         value=("> No Secrets! Magical Gacha [LIMITED]\n"
@@ -64,7 +67,7 @@ class PersistentEvent(discord.ui.View):
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 12/10/2021')
+        embed.set_footer(text='Last Updated 12/15/2021')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @discord.ui.button(
