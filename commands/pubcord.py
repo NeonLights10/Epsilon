@@ -9,7 +9,7 @@ from discord.ext import commands, tasks
 from discord.commands import user_command, permissions
 from formatting.constants import UNITS
 from formatting.embed import gen_embed
-from __main__ import log, db
+from __main__ import log, db, t
 
 class PersistentEvent(discord.ui.View):
     def __init__(self):
@@ -85,6 +85,7 @@ class PersistentEvent(discord.ui.View):
                      "※ Use VPNs such as Proton VPN and connect that to JP.\n\n"
                      "If none of these workarounds end up working for you, please be patient as the issue gets fixed.")
         )
+        embed.set_footer(text='# of times Evets has posted about this on Twitter: 18+')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class Pubcord(commands.Cog):
