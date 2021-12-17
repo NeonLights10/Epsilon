@@ -267,7 +267,7 @@ class GiftboxMenu(discord.ui.View):
                                        f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
                                        f"Should I pull? **No** ({self.probability}% probability)"))
         embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.edit_original_message(embed=embed, view=self)
 
 class Tiering(commands.Cog):
     def __init__(self, bot):
