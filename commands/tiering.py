@@ -560,7 +560,7 @@ class Tiering(commands.Cog):
                 await ctx.send(embed=gen_embed(title='Modmail Cancelled',
                                                content='The modmail has been cancelled.'))
                 return
-            if validators.between(mms.clean_content, min=1, max=99999):
+            if validators.between(mmsg.clean_content, min=1, max=99999):
                 return mmsg.clean_content
             elif attempts > 3:
                 raise discord.ext.commands.BadArgument()
