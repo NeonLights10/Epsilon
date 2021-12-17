@@ -1,6 +1,7 @@
 import asyncio
 import discord
 import re
+import validators
 
 from discord.ext import commands
 from discord.commands import user_command
