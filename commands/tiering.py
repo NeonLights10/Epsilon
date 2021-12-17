@@ -76,7 +76,7 @@ class GiftboxMenu(discord.ui.View):
                                    f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
                                    f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
         embed.set_footer(text='Press cancel to stop using the calculator.')
-        await interaction.edit_original_message(embed=embed)
+        await interaction.response.edit_message(embed=embed)
 
 
     @discord.ui.button(label='-1', style=discord.ButtonStyle.secondary)
@@ -89,7 +89,7 @@ class GiftboxMenu(discord.ui.View):
                                    f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
                                    f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
         embed.set_footer(text='Press cancel to stop using the calculator.')
-        await interaction.edit_original_message(embed=embed)
+        await interaction.response.edit_message(embed=embed)
 
     @discord.ui.button(label='-10', style=discord.ButtonStyle.secondary)
     async def minusten(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -101,7 +101,7 @@ class GiftboxMenu(discord.ui.View):
                                    f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
                                    f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
         embed.set_footer(text='Press cancel to stop using the calculator.')
-        await interaction.edit_original_message(embed=embed)
+        await interaction.response.edit_message(embed=embed)
 
     @discord.ui.button(label='Next Box', style=discord.ButtonStyle.green)
     async def nextbox(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -148,7 +148,7 @@ class GiftboxMenu(discord.ui.View):
                                    f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
                                    f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
         embed.set_footer(text='Press cancel to stop using the calculator.')
-        await interaction.edit_original_message(embed=embed)
+        await interaction.response.edit_message(embed=embed)
 
     @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
