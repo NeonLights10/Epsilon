@@ -21,6 +21,7 @@ class GiftboxMenu(discord.ui.View):
         self.can_remaining = 0
         self.remaining = 0
         self.base_probabilities = [.1, .1, .1429, .0833, .0588, .0556]
+        self.base_probability = 0
         self.probability = 0
 
         if self.boxnum == 1:
@@ -29,36 +30,42 @@ class GiftboxMenu(discord.ui.View):
             self.boxsize = 30
             self.cansize = 3
             self.probability = self.base_probabilities[0]
+            self.base_probability = self.base_probabilities[0]
         elif self.boxnum == 2:
             self.remaining = 50
             self.can_remaining = 5
             self.boxsize = 50
             self.cansize = 5
             self.probability = self.base_probabilities[1]
+            self.base_probability = self.base_probabilities[1]
         elif self.boxnum == 3:
             self.remaining = 70
             self.can_remaining = 10
             self.boxsize = 70
             self.cansize = 10
             self.probability = self.base_probabilities[2]
+            self.base_probability = self.base_probabilities[2]
         elif self.boxnum == 4:
             self.remaining = 120
             self.can_remaining = 10
             self.boxsize = 120
             self.cansize = 10
             self.probability = self.base_probabilities[3]
+            self.base_probability = self.base_probabilities[3]
         elif self.boxnum == 5:
             self.remaining = 170
             self.can_remaining = 10
             self.boxsize = 170
             self.cansize = 10
             self.probability = self.base_probabilities[4]
+            self.base_probability = self.base_probabilities[4]
         elif self.boxnum > 5:
             self.remaining = 180
             self.can_remaining = 10
             self.boxsize = 180
             self.cansize = 10
             self.probability = self.base_probabilities[5]
+            self.base_probability = self.base_probabilities[5]
 
     async def interaction_check(self, interaction):
         if interaction.user != self.context.author:
@@ -74,10 +81,16 @@ class GiftboxMenu(discord.ui.View):
             self.children[0].disabled = False
         self.value = 1
         self.probability = self.can_remaining / self.remaining
-        embed = gen_embed(title=f'Gift Box #{self.boxnum}',
-                          content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
-                                   f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                   f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
+        if self.probability > self.base_probability:
+            embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                              content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                       f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
+                                       f"Should I pull? **Yes** ({self.probability}% probability)"))
+        else:
+            embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                              content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                       f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
+                                       f"Should I pull? **No** ({self.probability}% probability)"))
         embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -94,11 +107,21 @@ class GiftboxMenu(discord.ui.View):
         if self.remaining < 10:
             self.children[2].disabled = True
         self.value = 2
-        self.probability = self.can_remaining / self.remaining
-        embed = gen_embed(title=f'Gift Box #{self.boxnum}',
-                          content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
-                                   f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                   f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
+        if self.remaining != 0:
+            self.probability = self.can_remaining / self.remaining
+            self.probability = round(self.probability * 100, 2)
+        else:
+            self.probability = 0
+        if self.probability > self.base_probability:
+            embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                              content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                       f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
+                                       f"Should I pull? **Yes** ({self.probability}% probability)"))
+        else:
+            embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                              content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                       f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
+                                       f"Should I pull? **No** ({self.probability}% probability)"))
         embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -112,11 +135,21 @@ class GiftboxMenu(discord.ui.View):
         else:
             self.children[2].disabled = False
         self.value = 3
-        self.probability = self.can_remaining / self.remaining
-        embed = gen_embed(title=f'Gift Box #{self.boxnum}',
-                          content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
-                                   f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                   f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
+        if self.remaining != 0:
+            self.probability = self.can_remaining / self.remaining
+            self.probability = round(self.probability * 100, 2)
+        else:
+            self.probability= 0
+        if self.probability > self.base_probability:
+            embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                              content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                       f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
+                                       f"Should I pull? **Yes** ({self.probability}% probability)"))
+        else:
+            embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                              content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                       f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
+                                       f"Should I pull? **No** ({self.probability}% probability)"))
         embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -129,36 +162,42 @@ class GiftboxMenu(discord.ui.View):
             self.boxsize = 30
             self.cansize = 3
             self.probability = self.base_probabilities[0]
+            self.base_probability = self.base_probabilities[0]
         elif self.boxnum == 2:
             self.remaining = 50
             self.can_remaining = 5
             self.boxsize = 50
             self.cansize = 5
             self.probability = self.base_probabilities[1]
+            self.base_probability = self.base_probabilities[1]
         elif self.boxnum == 3:
             self.remaining = 70
             self.can_remaining = 10
             self.boxsize = 70
             self.cansize = 10
             self.probability = self.base_probabilities[2]
+            self.base_probability = self.base_probabilities[2]
         elif self.boxnum == 4:
             self.remaining = 120
             self.can_remaining = 10
             self.boxsize = 120
             self.cansize = 10
             self.probability = self.base_probabilities[3]
+            self.base_probability = self.base_probabilities[3]
         elif self.boxnum == 5:
             self.remaining = 170
             self.can_remaining = 10
             self.boxsize = 170
             self.cansize = 10
             self.probability = self.base_probabilities[4]
+            self.base_probability = self.base_probabilities[4]
         elif self.boxnum > 5:
             self.remaining = 180
             self.can_remaining = 10
             self.boxsize = 180
             self.cansize = 10
             self.probability = self.base_probabilities[5]
+            self.base_probability = self.base_probabilities[5]
         self.value = 4
         for item in self.children:
             item.disabled = False
