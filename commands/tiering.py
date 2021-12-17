@@ -9,6 +9,155 @@ from typing import Union, Optional
 from formatting.embed import embed_splitter
 from __main__ import log, db
 
+class GiftboxMenu(discord.ui.View):
+    def __init__(self, ctx, boxnum):
+        super().__init(timeout=900.0)
+        self.context = ctx
+        self.boxnum = boxnum
+        self.value = None
+        self.boxsize = 0
+        self.cansize = 0
+        self.can_remaining = 0
+        self.remaining = 0
+        self.base_probabilities = [.1, .1, .1429, .0833, .0588, .0556]
+        self.probability = 0
+
+        if self.boxnum == 1:
+            self.remaining = 30
+            self.can_remaining = 3
+            self.boxsize = 30
+            self.cansize = 3
+            self.probability = self.base_probabilities[0]
+        elif self.boxnum == 2:
+            self.remaining = 50
+            self.can_remaining = 5
+            self.boxsize = 50
+            self.cansize = 5
+            self.probability = self.base_probabilities[1]
+        elif self.boxnum == 3:
+            self.remaining = 70
+            self.can_remaining = 10
+            self.boxsize = 70
+            self.cansize = 10
+            self.probability = self.base_probabilities[2]
+        elif self.boxnum == 4:
+            self.remaining = 120
+            self.can_remaining = 10
+            self.boxsize = 120
+            self.cansize = 10
+            self.probability = self.base_probabilities[3]
+        elif self.boxnum == 5:
+            self.remaining = 170
+            self.can_remaining = 10
+            self.boxsize = 170
+            self.cansize = 10
+            self.probability = self.base_probabilities[4]
+        elif self.boxnum > 5:
+            self.remaining = 180
+            self.can_remaining = 10
+            self.boxsize = 180
+            self.cansize = 10
+            self.probability = self.base_probabilities[5]
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    @discord.ui.button(label='-1 Can', style=discord.ButtonStyle.primary)
+    async def minusonecan(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.remaining -= 1
+        self.can_remaining -= 1
+        self.value = 1
+        self.probability = self.can_remaining / self.remaining
+        embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                          content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                   f"{self.can_remaining}/{self.cansize} cams remaining\n\n"
+                                   f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
+        embed.set_footer(text='Press cancel to stop using the calculator.')
+        await edit_original_message(embed=embed)
+
+
+    @discord.ui.button(label='-1', style=discord.ButtonStyle.secondary)
+    async def minusone(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.remaining -= 1
+        self.value = 2
+        self.probability = self.can_remaining / self.remaining
+        embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                          content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                   f"{self.can_remaining}/{self.cansize} cams remaining\n\n"
+                                   f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
+        embed.set_footer(text='Press cancel to stop using the calculator.')
+        await edit_original_message(embed=embed)
+
+    @discord.ui.button(label='-10', style=discord.ButtonStyle.secondary)
+    async def minusten(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.remaining -= 10
+        self.value = 3
+        self.probability = self.can_remaining / self.remaining
+        embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                          content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                   f"{self.can_remaining}/{self.cansize} cams remaining\n\n"
+                                   f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
+        embed.set_footer(text='Press cancel to stop using the calculator.')
+        await edit_original_message(embed=embed)
+
+    @discord.ui.button(label='Next Box', style=discord.ButtonStyle.green)
+    async def nextbox(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.boxnum += 1
+        if self.boxnum == 1:
+            self.remaining = 30
+            self.can_remaining = 3
+            self.boxsize = 30
+            self.cansize = 3
+            self.probability = self.base_probabilities[0]
+        elif self.boxnum == 2:
+            self.remaining = 50
+            self.can_remaining = 5
+            self.boxsize = 50
+            self.cansize = 5
+            self.probability = self.base_probabilities[1]
+        elif self.boxnum == 3:
+            self.remaining = 70
+            self.can_remaining = 10
+            self.boxsize = 70
+            self.cansize = 10
+            self.probability = self.base_probabilities[2]
+        elif self.boxnum == 4:
+            self.remaining = 120
+            self.can_remaining = 10
+            self.boxsize = 120
+            self.cansize = 10
+            self.probability = self.base_probabilities[3]
+        elif self.boxnum == 5:
+            self.remaining = 170
+            self.can_remaining = 10
+            self.boxsize = 170
+            self.cansize = 10
+            self.probability = self.base_probabilities[4]
+        elif self.boxnum > 5:
+            self.remaining = 180
+            self.can_remaining = 10
+            self.boxsize = 180
+            self.cansize = 10
+            self.probability = self.base_probabilities[5]
+        self.value = 4
+        embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                          content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                   f"{self.can_remaining}/{self.cansize} cams remaining\n\n"
+                                   f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
+        embed.set_footer(text='Press cancel to stop using the calculator.')
+        await edit_original_message(embed=embed)
+
+    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message('Closing gift box calculator.', ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = False
+        self.stop()
+
+
 class Tiering(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -345,8 +494,8 @@ class Tiering(commands.Cog):
     async def room(self, ctx, open_spots: Optional[convert_spot], room_num: Union[convert_room, None]):
         currentname = ctx.channel.name
         namesuffix = ""
-        if re.search('^g\d-', currentname):
-            nameprefix=re.match("^g\d-", currentname).group(0)
+        if re.search('^[A-Za-z]\d-', currentname):
+            nameprefix=re.match("^[A-Za-z]\d-", currentname).group(0)
         else:
             log.warning('Error: Invalid Channel')
             await ctx.send(embed=gen_embed(title='Invalid Channel',
@@ -376,10 +525,10 @@ class Tiering(commands.Cog):
                 open_spots = int(open_spots)
                 if 0 < open_spots <= 4:
                     namesuffix=f'-{open_spots}'
-                    nameprefix=re.search("(^g\d-.+)(?![^-])(?<!-[\df]$)",currentname).group(0)
+                    nameprefix=re.search("(^[A-Za-z]\d-.+)(?![^-])(?<!-[\df]$)",currentname).group(0)
                 elif open_spots == 0:
                     namesuffix='-f'
-                    nameprefix = re.search("(^g\d-.+)(?![^-])(?<!-[\df]$)", currentname).group(0)
+                    nameprefix = re.search("(^[A-Za-z]\d-.+)(?![^-])(?<!-[\df]$)", currentname).group(0)
                 else:
                     log.warning('Error: Invalid Input')
                     await ctx.send(embed=gen_embed(title='Input Error',
@@ -393,8 +542,42 @@ class Tiering(commands.Cog):
                 await ctx.send(embed=gen_embed(title='room',
                                                content=f'Closed room'))
 
-    #async def connect(self, ctx, label, dest_server):
+    @commands.command(name='giftbox',
+                      aliases=['gb', 'marinagiftbox', 'giftboxcalc'],
+                      description='Helps you calculate the optimal pulls for getting small boost cans.',
+                      help='Usage:\n\n%giftbox')
+    async def giftbox(self, ctx):
+        async def box_number_prompt(attempts = 1):
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
 
+            await ctx.send(embed=gen_embed(title='Gift Box #',
+                                           content='What gift box number are you currently on?'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Modmail Cancelled',
+                                               content='The modmail has been cancelled.'))
+                return
+            if validators.between(mms.clean_content, min=1, max=99999):
+                return mmsg.clean_content
+            elif attempts > 3:
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed=gen_embed(title='Gift Box #',
+                                               content="Sorry, I didn't catch that or it was an invalid format.\nPlease enter a number from 1-99999."))
+                attempts += 1
+                return await box_number_prompt(attempts)
+        boxnum = await box_number_prompt()
+        giftbox_view = GiftboxMenu(ctx, boxnum)
+        current_probability = giftbox_view.can_remaining / giftbox_view.remaining
+        embed = gen_embed(title=f'Gift Box #{boxnum}',
+                          content=(f"**{giftbox_view.remaining}/{giftbox_view.boxsize} remaining**\n"
+                                   f"{giftbox_view.can_remaining}/{giftbox_view.cansize} cams remaining\n\n"
+                                   f"Should I pull? **Yes** ({current_probability*100}% probability)"))
+        embed.set_footer(text='Press cancel to stop using the calculator.')
+        sent_message = await ctx.send(embed=embed, view=giftbox_view)
+    #async def connect(self, ctx, label, dest_server):
 
 def setup(bot):
     bot.add_cog(Tiering(bot))
