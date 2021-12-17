@@ -238,6 +238,14 @@ class GiftboxMenu(discord.ui.View):
                     for message in sent_messages:
                         await message.delete()
                     return int(mmsg.clean_content)
+                elif attempts > 3:
+                    raise discord.ext.commands.BadArgument()
+                else:
+                    sent_message = await self.context.send(embed=gen_embed(title='Items remaining',
+                                                                           content=f"Sorry, I didn't catch that or it was an invalid format.\nPlease enter a number from 1-{self.boxsize}."))
+                    sent_messages.append(sent_message)
+                    attempts += 1
+                    return await remaining_prompt(attempts, sent_messages)
             elif attempts > 3:
                 raise discord.ext.commands.BadArgument()
             else:
@@ -245,7 +253,7 @@ class GiftboxMenu(discord.ui.View):
                                                content=f"Sorry, I didn't catch that or it was an invalid format.\nPlease enter a number from 1-{self.boxsize}."))
                 sent_messages.append(sent_message)
                 attempts += 1
-                return await box_number_prompt(attempts, sent_messages)
+                return await remaining_prompt(attempts, sent_messages)
 
         await interaction.response.defer()
         self.remaining = await remaining_prompt()
