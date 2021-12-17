@@ -222,7 +222,7 @@ class GiftboxMenu(discord.ui.View):
     async def manualinput(self, button: discord.ui.Button, interaction: discord.Interaction):
         async def remaining_prompt(attempts=1, sent_messages = []):
             def check(m):
-                return m.author == ctx.author and m.channel == ctx.channel
+                return m.author == self.context.author and m.channel == self.context.channel
 
             sent_message = await self.context.send(embed=gen_embed(title='Items remaining',
                                            content='How many items are remaining in the box?'))
