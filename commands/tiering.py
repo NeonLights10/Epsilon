@@ -82,6 +82,8 @@ class GiftboxMenu(discord.ui.View):
         self.value = 1
         self.probability = self.can_remaining / self.remaining
         self.probability = round(self.probability * 100, 2)
+        log.info(str(self.probability))
+        log.info(str(self.base_probability))
         if self.probability > self.base_probability:
             embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                               content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
