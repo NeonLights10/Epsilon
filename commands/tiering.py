@@ -218,6 +218,51 @@ class GiftboxMenu(discord.ui.View):
         self.value = False
         self.stop()
 
+    @discord.ui.button(label='Manual Input', style=discord.ButtonStyle.secondary, row=1)
+    async def manualinput(self, button: discord.ui.Button, interaction: discord.Interaction):
+        async def remaining_prompt(attempts=1):
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Items remaining',
+                                           content='How many items are remaining in the box?'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Gift box Cancelled',
+                                               content='Gift box calculator cancelled.'))
+                return
+            if re.match('^[0-9]+$', mmsg.clean_content):
+                if validators.between(int(mmsg.clean_content), min=0, max=self.boxsize):
+                    return int(mmsg.clean_content)
+            elif attempts > 3:
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed=gen_embed(title='Items remaining',
+                                               content=f"Sorry, I didn't catch that or it was an invalid format.\nPlease enter a number from 1-{self.boxsize}."))
+                attempts += 1
+                return await box_number_prompt(attempts)
+
+        self.remaining = await remaining_prompt()
+        if self.remaining != 0:
+            self.probability = self.can_remaining / self.remaining
+            self.probability = round(self.probability * 100, 2)
+        else:
+            self.probability = 0
+            self.children[1].disabled = True
+            self.children[2].disabled = True
+        if self.probability > self.base_probability:
+            embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                              content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                       f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
+                                       f"Should I pull? **Yes** ({self.probability}% probability)"))
+        else:
+            embed = gen_embed(title=f'Gift Box #{self.boxnum}',
+                              content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
+                                       f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
+                                       f"Should I pull? **No** ({self.probability}% probability)"))
+        embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
+        await interaction.response.edit_message(embed=embed, view=self)
 
 class Tiering(commands.Cog):
     def __init__(self, bot):
@@ -617,8 +662,8 @@ class Tiering(commands.Cog):
             try:
                 mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
             except asyncio.TimeoutError:
-                await ctx.send(embed=gen_embed(title='Modmail Cancelled',
-                                               content='The modmail has been cancelled.'))
+                await ctx.send(embed=gen_embed(title='Gift box cancelled',
+                                               content='Gift box calculator cancelled.'))
                 return
             if re.match('^[0-9]+$', mmsg.clean_content):
                 if validators.between(int(mmsg.clean_content), min=1, max=99999):
