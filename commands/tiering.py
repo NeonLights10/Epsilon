@@ -247,6 +247,7 @@ class GiftboxMenu(discord.ui.View):
                 attempts += 1
                 return await box_number_prompt(attempts, sent_messages)
 
+        interaction.response.defer()
         self.remaining = await remaining_prompt()
         if self.remaining != 0:
             self.probability = self.can_remaining / self.remaining
