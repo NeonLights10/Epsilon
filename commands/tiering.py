@@ -67,41 +67,58 @@ class GiftboxMenu(discord.ui.View):
 
     @discord.ui.button(label='-1 Can', style=discord.ButtonStyle.primary)
     async def minusonecan(self, button: discord.ui.Button, interaction: discord.Interaction):
-        self.remaining -= 1
         self.can_remaining -= 1
+        if self.can_remaining <= 0:
+            self.children[0].disabled = True
+        else:
+            self.children[0].disabled = False
         self.value = 1
         self.probability = self.can_remaining / self.remaining
         embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                           content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                    f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                   f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
-        embed.set_footer(text='Press cancel to stop using the calculator.')
-        await interaction.response.edit_message(embed=embed)
+                                   f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
+        embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
+        await interaction.response.edit_message(embed=embed, view=self)
 
 
     @discord.ui.button(label='-1', style=discord.ButtonStyle.secondary)
     async def minusone(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.remaining -= 1
+        if self.remaining <= 0:
+            self.children[0].disabled = True
+            self.children[1].disabled = True
+            self.children[2].disabled = True
+        else:
+            self.children[1].disabled = False
+        if self.remaining < 10:
+            self.children[2].disabled = True
         self.value = 2
         self.probability = self.can_remaining / self.remaining
         embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                           content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                    f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                   f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
-        embed.set_footer(text='Press cancel to stop using the calculator.')
-        await interaction.response.edit_message(embed=embed)
+                                   f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
+        embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
+        await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='-10', style=discord.ButtonStyle.secondary)
     async def minusten(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if (self.remaining - 10) < 0:
+            raise RuntimeError('Gift box - tried to subtract more items than are available')
         self.remaining -= 10
+        if self.remaining < 10:
+            self.children[2].disabled = True
+        else:
+            self.children[2].disabled = False
         self.value = 3
         self.probability = self.can_remaining / self.remaining
         embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                           content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                    f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                   f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
-        embed.set_footer(text='Press cancel to stop using the calculator.')
-        await interaction.response.edit_message(embed=embed)
+                                   f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
+        embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
+        await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='Next Box', style=discord.ButtonStyle.green)
     async def nextbox(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -143,12 +160,14 @@ class GiftboxMenu(discord.ui.View):
             self.cansize = 10
             self.probability = self.base_probabilities[5]
         self.value = 4
+        for item in self.children:
+            item.disabled = False
         embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                           content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                    f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                   f"Should I pull? **Yes** ({self.probability * 100}% probability)"))
-        embed.set_footer(text='Press cancel to stop using the calculator.')
-        await interaction.response.edit_message(embed=embed)
+                                   f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
+        embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
+        await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -577,8 +596,10 @@ class Tiering(commands.Cog):
                           content=(f"**{giftbox_view.remaining}/{giftbox_view.boxsize} remaining**\n"
                                    f"{giftbox_view.can_remaining}/{giftbox_view.cansize} cans remaining\n\n"
                                    f"Should I pull? **Yes** ({current_probability*100}% probability)"))
-        embed.set_footer(text='Press cancel to stop using the calculator.')
+        embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
         sent_message = await ctx.send(embed=embed, view=giftbox_view)
+        await giftbox_view.wait()
+        await sent_message.edit(view=giftbox_view)
     #async def connect(self, ctx, label, dest_server):
 
 def setup(bot):
