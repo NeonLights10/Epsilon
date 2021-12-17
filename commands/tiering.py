@@ -12,7 +12,7 @@ from __main__ import log, db
 
 class GiftboxMenu(discord.ui.View):
     def __init__(self, ctx, boxnum):
-        super().__init(timeout=900.0)
+        super().__init__(timeout=900.0)
         self.context = ctx
         self.boxnum = boxnum
         self.value = None
