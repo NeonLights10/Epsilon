@@ -81,19 +81,16 @@ class GiftboxMenu(discord.ui.View):
             self.children[0].disabled = False
         self.value = 1
         self.probability = self.can_remaining / self.remaining
-        self.probability = round(self.probability * 100, 2)
-        log.info(str(self.probability))
-        log.info(str(self.base_probability))
         if self.probability > self.base_probability:
             embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                               content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                        f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                       f"Should I pull? **Yes** ({self.probability}% probability)"))
+                                       f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
         else:
             embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                               content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                        f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                       f"Should I pull? **No** ({self.probability}% probability)"))
+                                       f"Should I pull? **No** ({round(self.probability * 100, 2)}% probability)"))
         embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -112,19 +109,18 @@ class GiftboxMenu(discord.ui.View):
         self.value = 2
         if self.remaining != 0:
             self.probability = self.can_remaining / self.remaining
-            self.probability = round(self.probability * 100, 2)
         else:
             self.probability = 0
         if self.probability > self.base_probability:
             embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                               content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                        f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                       f"Should I pull? **Yes** ({self.probability}% probability)"))
+                                       f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
         else:
             embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                               content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                        f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                       f"Should I pull? **No** ({self.probability}% probability)"))
+                                       f"Should I pull? **No** ({round(self.probability * 100, 2)}% probability)"))
         embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -140,7 +136,6 @@ class GiftboxMenu(discord.ui.View):
         self.value = 3
         if self.remaining != 0:
             self.probability = self.can_remaining / self.remaining
-            self.probability = round(self.probability * 100, 2)
         else:
             self.probability= 0
             self.children[1].disabled = True
@@ -148,12 +143,12 @@ class GiftboxMenu(discord.ui.View):
             embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                               content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                        f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                       f"Should I pull? **Yes** ({self.probability}% probability)"))
+                                       f"Should I pull? **Yes** ({round(self.probability * 100, 2)}% probability)"))
         else:
             embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                               content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                        f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                       f"Should I pull? **No** ({self.probability}% probability)"))
+                                       f"Should I pull? **No** ({round(self.probability * 100, 2)}% probability)"))
         embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -696,7 +691,7 @@ class Tiering(commands.Cog):
         embed = gen_embed(title=f'Gift Box #{boxnum}',
                           content=(f"**{giftbox_view.remaining}/{giftbox_view.boxsize} remaining**\n"
                                    f"{giftbox_view.can_remaining}/{giftbox_view.cansize} cans remaining\n\n"
-                                   f"Should I pull? **Yes** ({current_probability*100}% probability)"))
+                                   f"Should I pull? **Yes** ({round(current_probability*100, 2)}% probability)"))
         embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
         sent_message = await ctx.send(embed=embed, view=giftbox_view)
         await giftbox_view.wait()

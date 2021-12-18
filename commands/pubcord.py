@@ -14,6 +14,7 @@ from __main__ import log, db, t
 class PersistentEvent(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
+        self.count = 0
 
     @discord.ui.button(
         label="What's the current event?",
@@ -23,43 +24,56 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content=("Special Collaboration with Magical DoReMi!\nClearing Collab Missions can earn you:\n"
-                     "```diff\n"
-                     "+ Collab Live Costume for Kokoro\n"
-                     "+ Oy! Cola (Recovers 10 Live Boosts)\n"
-                     "+ Stars x300\n"
-                     "```")
+            content=("Afterglow Band Story 3 Release\n"
+                     "Christmas time in Bandori land! Lots of special collaborations are in store this week.\n"
+                     "A total of 3050 <:StarGem:432995521892843520> can be earned through collaborations."
+                     )
         )
         embed.set_image(
-            url='https://pbs.twimg.com/media/FGIy9HzVkAAbeGL.jpg:large')
+            url='https://files.s-neon.xyz/share/FGzscaxaMAIXATM.jpg')
         embed.add_field(name=f'Current Event',
-                        value=("Happy! Lucky! Magic of Smiles!\n"
-                               "<t:1639184400> to <t:1639724340>\n\n"
+                        value=("One of Us\n"
+                               "<t:1639875600> to <t:1640588340>\n\n"
                                "**Event Type**: Mission Live\n"
-                               "**Attribute**: Powerful <:attrPowerful:432978890064134145>\n"
-                               "**Characters**: Kokoro, Kaoru, Hagumi, Kanon, Misaki\n\n"
+                               "**Attribute**: Cool <:attrCool:432978841162612756> \n"
+                               "**Characters**: Ran, Moca, Himari, Tomoe, Tsurugi\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
                         value=("> Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
                                "> <t:1639209600> to <t:1641023940>\n"
                                "\n"
-                               "> Magical DoReMi Collaboration - <:StarGem:432995521892843520> x2500, Collab Pin Set, & Tone Crystal x50\n"
-                               "> <t:1639184400> to <t:1639875540>\n"
+                               "> 2021 Christmas Special Gift - <:StarGem:432995521892843520> x250 + Christmas Cake x1\n"
+                               "> <t:1640332800> to <t:1640505540>\n"
                                "\n"
-                               "> Collab Celebration Happy Box - <:StarGem:432995521892843520> x2210 (810 Paid, 1400 Free) & 1 OY! Cola\n"
-                               "> <t:1639184400> to <t:1639702740>\n"
+                               "> End of Year Special Present - Rabbit Mashiro & LAYER Pins\n"
+                               "> <t:1640505600> to <t:1640937540>\n"
                                "\n"
-                               "> Afterglow Band Story 3 Release Countdown Login Campaign - <:StarGem:432995521892843520> x150\n"
-                               "> <t:1639641600> to <t:1639641600>"),
+                               "> New Year's Countdown Login Campaign - <:StarGem:432995521892843520> x50 + Tone Crystals x10 everyday\n"
+                               "> <t:1640505600> to <t:1641023940>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> No Secrets! Magical Gacha [LIMITED]\n"
-                               "> No Secrets! Magical 10 Play Gacha - Collab Member Guaranteed Gacha\n"
-                               "> <t:1639184400> to <t:1639875540>\n"
+                        value=("> Burning Sky Grateful for All Gacha\n"
+                               "> <t:1639875600> to <t:1640782740>\n"
                                "\n"
-                               "> Hello Happy World! Gacha\n"
-                               "> <t:1639270800> to <t:1639724340>\n"
+                               "> A Merry Silent Night Gacha [LIMITED]\n"
+                               "> A Merry Silent Night Special Set 10 Play Gacha\n"
+                               "> <t:1640307600> to <t:1640912340>\n"
+                               "\n"
+                               "> Xmas Step Up Gacha [Recieve Stamps!]\n"
+                               "> <t:1639987200> to <t:1640419140>\n"
+                               "\n"
+                               "> Special Set 5 Play Gacha\n"
+                               "> <t:1640134800> to <t:1640739540>\n"
+                               "\n"
+                               "> 2022 New Year's All Members Free Gacha\n"
+                               "> <t:1638493200> to <t:16418195400>\n"
+                               "\n"
+                               "> 2022 New Year's ★4 Limited Member Guaranteed Gacha [LIMITED]\n"
+                               "> <t:1638493200> to <t:1641171540>\n"
+                               "\n"
+                               "> Come back ★4 Miracle Ticket Set Gacha\n"
+                               "> <t:1639184400> onwards, available for 30 days\n"
                                "\n"
                                "> Collab Celebration 1 4* Member Guaranteed Gacha Vol. 1\n"
                                "> Collab Celebration 1 4* Member Guaranteed Gacha Vol. 2\n"
@@ -67,7 +81,9 @@ class PersistentEvent(discord.ui.View):
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 12/15/2021')
+        embed.set_footer(text='Last Updated 12/18/2021')
+        self.count += 1
+        log.info(self.count)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @discord.ui.button(
@@ -86,6 +102,8 @@ class PersistentEvent(discord.ui.View):
                      "If none of these workarounds end up working for you, please be patient as the issue gets fixed.")
         )
         embed.set_footer(text='# of times Evets has posted about this on Twitter: 18+')
+        self.count += 1
+        log.info(self.count)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class Pubcord(commands.Cog):
