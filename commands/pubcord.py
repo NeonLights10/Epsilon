@@ -54,7 +54,7 @@ class PersistentEvent(discord.ui.View):
                         inline=False)
         embed.add_field(name=f'Gacha',
                         value=("> Burning Sky Grateful for All Gacha\n"
-                               "> <t:1639875600> to <t:1640782740>\n"
+                               "> <t:1639875600> to <t:1640721540>\n"
                                "\n"
                                "> A Merry Silent Night Gacha [LIMITED]\n"
                                "> A Merry Silent Night Special Set 10 Play Gacha\n"
@@ -67,7 +67,7 @@ class PersistentEvent(discord.ui.View):
                                "> <t:1640134800> to <t:1640739540>\n"
                                "\n"
                                "> 2022 New Year's All Members Free Gacha\n"
-                               "> <t:1638493200> to <t:16418195400>\n"
+                               "> <t:1638493200> to <t:1641758340>\n"
                                "\n"
                                "> 2022 New Year's ★4 Limited Member Guaranteed Gacha [LIMITED]\n"
                                "> <t:1638493200> to <t:1641171540>\n"
@@ -83,7 +83,7 @@ class PersistentEvent(discord.ui.View):
                         inline=False)
         embed.set_footer(text='Last Updated 12/18/2021')
         self.count += 1
-        log.info(self.count)
+        log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @discord.ui.button(
@@ -103,7 +103,7 @@ class PersistentEvent(discord.ui.View):
         )
         embed.set_footer(text='# of times Evets has posted about this on Twitter: 18+')
         self.count += 1
-        log.info(self.count)
+        log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class Pubcord(commands.Cog):
