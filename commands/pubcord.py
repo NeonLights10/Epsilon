@@ -67,7 +67,7 @@ class PersistentEvent(discord.ui.View):
                                "> <t:1640134800> to <t:1640739540>\n"
                                "\n"
                                "> 2022 New Year's All Members Free Gacha\n"
-                               "> <t:1638493200> to <t:1641758340>\n"
+                               "> <t:1638493200> to <t:1641776340>\n"
                                "\n"
                                "> 2022 New Year's ★4 Limited Member Guaranteed Gacha [LIMITED]\n"
                                "> <t:1638493200> to <t:1641171540>\n"
