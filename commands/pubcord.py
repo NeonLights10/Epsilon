@@ -26,7 +26,7 @@ class PersistentEvent(discord.ui.View):
             title='Current Status of EN Bandori',
             content=("Afterglow Band Story 3 Release\n"
                      "Christmas time in Bandori land! Lots of special collaborations are in store this week.\n"
-                     "A total of 3050 <:StarGem:432995521892843520> can be earned through collaborations."
+                     "A total of 4050 <:StarGem:432995521892843520> can be earned through collaborations."
                      )
         )
         embed.set_image(
@@ -42,6 +42,9 @@ class PersistentEvent(discord.ui.View):
         embed.add_field(name='Campaigns',
                         value=("> Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
                                "> <t:1639209600> to <t:1641023940>\n"
+                               "\n"
+                               "> Afterglow Band Story 3 Release Special Present - <:StarGem:432995521892843520> x1000\n"
+                               "> <t:1639875600> to <t:1640588340>\n"
                                "\n"
                                "> 2021 Christmas Special Gift - <:StarGem:432995521892843520> x250 + Christmas Cake x1\n"
                                "> <t:1640332800> to <t:1640505540>\n"
@@ -101,7 +104,7 @@ class PersistentEvent(discord.ui.View):
                      "※ Use VPNs such as Proton VPN and connect that to JP.\n\n"
                      "If none of these workarounds end up working for you, please be patient as the issue gets fixed.")
         )
-        embed.set_footer(text='# of times Evets has posted about this on Twitter: 18+')
+        embed.set_footer(text='# of times Evets has posted about this on Twitter: 19+')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
