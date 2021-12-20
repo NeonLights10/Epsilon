@@ -72,6 +72,7 @@ class ManageMenu(discord.ui.View):
     async def kickuser(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user = self.user)
         await interaction.response.edit_message(content='Which user do you want to kick?', view=roompos_view)
+        await roompos_view.wait()
         #do stuff
         for item in self.children:
             item.disabled = True

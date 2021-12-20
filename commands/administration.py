@@ -1710,7 +1710,7 @@ class Administration(commands.Cog):
                             content.add_field(name="Attachment:", value="\u200b")
                             content.set_image(url=message.attachments[0].proxy_url)
                         await logChannel.send(embed=content)
-        except:
+        except Exception as e:
             pass
 
     @commands.Cog.listener()
@@ -1735,12 +1735,15 @@ class Administration(commands.Cog):
                                 content.add_field(name="Attachment:", value="\u200b")
                                 content.set_image(url=message.attachments[0].proxy_url)
                             await logChannel.send(embed=content)
-        except:
+        except Exception as e:
             pass
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
-        document = await db.servers.find_one({"server_id": before.guild.id})
+        try:
+            document = await db.servers.find_one({"server_id": before.guild.id})
+        except AttributeError: #prevent error when editing ephemerals
+            return
         try:
             if document['log_channel']:
                 msglog = int(document['log_channel'])
@@ -1754,7 +1757,7 @@ class Administration(commands.Cog):
                         content.title = f"Message edited in #{before.channel.name}"
                         content.description = f"**Before:** {before.clean_content}\n**After:** {after.clean_content}"
                         await logChannel.send(embed=content)
-        except:
+        except Exception as e:
             pass
 
 
