@@ -115,23 +115,23 @@ class RoomMenu(discord.ui.View):
         self.members[0] = self.leader
         self.room = roomnum
 
-    @discord.ui.button(label='Join Room', style=discord.ButtonStyle.green, custom_id="persistent_view:joinroom")
+    @discord.ui.button(label='Join Room', row = 0, style=discord.ButtonStyle.green, custom_id="persistent_view:joinroom")
     async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user=interaction.user)
         await interaction.response.send_message(content='Which position are you joining?', view=roompos_view, ephemeral=True)
         # do stuff
-        sent_message = interaction.original_message()
+        sent_message = await interaction.original_message()
         await sent_message.delete()
 
-    @discord.ui.button(label='Leave Room', style=discord.ButtonStyle.danger, custom_id="persistent_view:leaveroom")
+    @discord.ui.button(label='Leave Room', row = 0, style=discord.ButtonStyle.danger, custom_id="persistent_view:leaveroom")
     async def leaveroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         pass
 
-    @discord.ui.button(label='Join/Leave Queue', style=discord.ButtonStyle.primary, custom_id="persistent_view:roomqueue")
+    @discord.ui.button(label='Join/Leave Queue', row = 0, style=discord.ButtonStyle.primary, custom_id="persistent_view:roomqueue")
     async def roomqueue(self, button: discord.ui.Button, interaction: discord.Interaction):
         pass
 
-    @discord.ui.button(label='Manage Room', style=discord.ButtonStyle.primary, custom_id="persistent_view:manageroom")
+    @discord.ui.button(label='Manage Room', row = 1, style=discord.ButtonStyle.primary, custom_id="persistent_view:manageroom")
     async def manageroom(self, button:discord.ui.Button, interaction: discord.Interaction):
         if interaction.user != self.leader:
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
@@ -140,10 +140,10 @@ class RoomMenu(discord.ui.View):
             manageroom_view = ManageMenu(user = self.leader, members = self.members)
             await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
             self.members = manageroom_view.members
-            sent_message = interaction.original_message()
+            sent_message = await interaction.original_message()
             await sent_message.delete()
 
-    @discord.ui.button(label='Close Room', style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
+    @discord.ui.button(label='Close Room', row = 2, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
     async def closeroom(self, button:discord.ui.Button, interaction: discord.Interaction):
         for item in self.children:
             item.disabled = True
