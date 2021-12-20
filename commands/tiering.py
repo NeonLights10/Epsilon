@@ -120,8 +120,6 @@ class RoomMenu(discord.ui.View):
         roompos_view = RoomPositionMenu(user=interaction.user)
         await interaction.response.send_message(content='Which position are you joining?', view=roompos_view, ephemeral=True)
         # do stuff
-        sent_message = await interaction.original_message()
-        await sent_message.delete()
 
     @discord.ui.button(label='Leave Room', row = 0, style=discord.ButtonStyle.danger, custom_id="persistent_view:leaveroom")
     async def leaveroom(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -140,10 +138,8 @@ class RoomMenu(discord.ui.View):
             manageroom_view = ManageMenu(user = self.leader, members = self.members)
             await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
             self.members = manageroom_view.members
-            sent_message = await interaction.original_message()
-            await sent_message.delete()
 
-    @discord.ui.button(label='Close Room', row = 2, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
+    @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
     async def closeroom(self, button:discord.ui.Button, interaction: discord.Interaction):
         for item in self.children:
             item.disabled = True
