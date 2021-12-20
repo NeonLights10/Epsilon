@@ -118,8 +118,9 @@ class RoomMenu(discord.ui.View):
     @discord.ui.button(label='Join Room', style=discord.ButtonStyle.green, custom_id="persistent_view:joinroom")
     async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user=interaction.user)
-        sent_message = await interaction.response.send_message(content='Which position are you joining?', view=roompos_view, ephemeral=True)
+        await interaction.response.send_message(content='Which position are you joining?', view=roompos_view, ephemeral=True)
         # do stuff
+        sent_message = interaction.original_message()
         await sent_message.delete()
 
     @discord.ui.button(label='Leave Room', style=discord.ButtonStyle.danger, custom_id="persistent_view:leaveroom")
@@ -136,9 +137,10 @@ class RoomMenu(discord.ui.View):
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
             raise RuntimeError('Non-authorized user attempted to manage room')
         else:
-            manangeroom_view = ManageMenu(user = self.leader, members = self.members)
-            sent_message = await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
+            manageroom_view = ManageMenu(user = self.leader, members = self.members)
+            await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
             self.members = manageroom_view.members
+            sent_message = interaction.original_message()
             await sent_message.delete()
 
     @discord.ui.button(label='Close Room', style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
