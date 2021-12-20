@@ -901,7 +901,7 @@ class Administration(commands.Cog):
             if document['log_channel'] and document['log_kbm']:
                 msglog = int(document['log_channel'])
                 logChannel = member.guild.get_channel(msglog)
-                await logChannel.send(embed=embed)
+                await logChannel.send(embed=gen_embed(title='mute', content=f'{member.mention} has been put in timeout. \nReason: {reason}'))
 
             await ctx.send(embed=gen_embed(title='mute', content=f'{muted}has been put in timeout. \nReason: {reason}'))
 
