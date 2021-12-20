@@ -897,7 +897,6 @@ class Administration(commands.Cog):
                 await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with putting the user in timeout.'))
 
             muted = muted + f'{member.mention} '
-            await ctx.send(embed=embed)
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if document['log_channel'] and document['log_kbm']:
                 msglog = int(document['log_channel'])
