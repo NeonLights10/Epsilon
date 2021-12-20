@@ -834,7 +834,7 @@ class Tiering(commands.Cog):
         await giftbox_view.wait()
         await sent_message.edit(view=giftbox_view)
 
-    @commands.command(name=roomview,
+    @commands.command(name='roomview',
                       aliases=['rmv', 'rv'],
                       description='CONCEPT TESTING ONLY DO NOT USE',
                       help='DO NOT USE')
