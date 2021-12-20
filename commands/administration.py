@@ -880,7 +880,6 @@ class Administration(commands.Cog):
             if member.dm_channel is None:
                 dm_channel = await member.create_dm()
 
-            seconds = convert_to_seconds(mtime)
             m = await modmail_enabled()
             dm_embed = None
             if m:
