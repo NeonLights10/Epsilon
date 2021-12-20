@@ -21,35 +21,35 @@ class RoomPositionMenu(discord.ui.View):
             return False
         return True
 
-    @discord.ui.button(emoji='1️⃣', style=discord.ButtonStyle.primary)
+    @discord.ui.button(emoji='1️⃣', style=discord.ButtonStyle.secondary)
     async def one(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = 1
         for item in self.children:
             item.disabled = True
         self.stop()
 
-    @discord.ui.button(emoji='2️⃣', style=discord.ButtonStyle.primary)
+    @discord.ui.button(emoji='2️⃣', style=discord.ButtonStyle.secondary)
     async def two(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = 2
         for item in self.children:
             item.disabled = True
         self.stop()
 
-    @discord.ui.button(emoji='3️⃣', style=discord.ButtonStyle.primary)
+    @discord.ui.button(emoji='3️⃣', style=discord.ButtonStyle.secondary)
     async def three(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = 3
         for item in self.children:
             item.disabled = True
         self.stop()
 
-    @discord.ui.button(emoji='4️⃣', style=discord.ButtonStyle.primary)
+    @discord.ui.button(emoji='4️⃣', style=discord.ButtonStyle.secondary)
     async def four(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = 4
         for item in self.children:
             item.disabled = True
         self.stop()
 
-    @discord.ui.button(emoji='5️⃣', style=discord.ButtonStyle.primary)
+    @discord.ui.button(emoji='5️⃣', style=discord.ButtonStyle.secondary)
     async def five(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = 5
         for item in self.children:
@@ -68,7 +68,7 @@ class ManageMenu(discord.ui.View):
             return False
         return True
 
-    @discord.ui.button(label='Kick User', style=discord.ButtonStyle.primary)
+    @discord.ui.button(label='Kick User', style=discord.ButtonStyle.secondary)
     async def kickuser(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user = self.user)
         await interaction.response.edit_message(content='Which user do you want to kick?', view=roompos_view)
@@ -78,14 +78,14 @@ class ManageMenu(discord.ui.View):
             item.disabled = True
         self.stop()
 
-    @discord.ui.button(label='Change User', style=discord.ButtonStyle.primary)
+    @discord.ui.button(label='Change User', style=discord.ButtonStyle.secondary)
     async def changeuser(self, button: discord.ui.Button, interaction: discord.Interaction):
         # do stuff
         for item in self.children:
             item.disabled = True
         self.stop()
 
-    @discord.ui.button(label='Transfer Ownership', style=discord.ButtonStyle.danger)
+    @discord.ui.button(label='Transfer Ownership', style=discord.ButtonStyle.primary)
     async def transferowner(self, button: discord.ui.Button, interaction: discord.Interaction):
         #do stuff
         for item in self.children:
@@ -115,15 +115,15 @@ class RoomMenu(discord.ui.View):
         await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
         # do stuff
 
-    @discord.ui.button(label='Leave Room', row = 0, style=discord.ButtonStyle.danger, custom_id="persistent_view:leaveroom")
+    @discord.ui.button(label='Leave Room', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:leaveroom")
     async def leaveroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         pass
 
-    @discord.ui.button(label='Join/Leave Queue', row = 0, style=discord.ButtonStyle.primary, custom_id="persistent_view:roomqueue")
+    @discord.ui.button(label='Join/Leave Queue', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:roomqueue")
     async def roomqueue(self, button: discord.ui.Button, interaction: discord.Interaction):
         pass
 
-    @discord.ui.button(label='Manage Room', row = 1, style=discord.ButtonStyle.primary, custom_id="persistent_view:manageroom")
+    @discord.ui.button(label='Manage Room', row = 1, style=discord.ButtonStyle.secondary, custom_id="persistent_view:manageroom")
     async def manageroom(self, button:discord.ui.Button, interaction: discord.Interaction):
         if interaction.user != self.leader:
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
