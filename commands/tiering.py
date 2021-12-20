@@ -107,7 +107,7 @@ class RoomMenu(discord.ui.View):
         self.members[0] = self.leader
         self.room = roomnum
 
-    @discord.ui.button(label='Join Room', row = 0, style=discord.ButtonStyle.green, custom_id="persistent_view:joinroom")
+    @discord.ui.button(emoji='📥', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:joinroom")
     async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user=interaction.user)
         await interaction.response.send_message(content='Which position are you joining?', view=roompos_view, ephemeral=True)
@@ -115,7 +115,7 @@ class RoomMenu(discord.ui.View):
         await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
         # do stuff
 
-    @discord.ui.button(label='Leave Room', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:leaveroom")
+    @discord.ui.button(emoji='📤', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:leaveroom")
     async def leaveroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         pass
 

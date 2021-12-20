@@ -852,17 +852,17 @@ class Administration(commands.Cog):
                     role = discord.utils.find(lambda r: r.name == 'Verified', rmessage.guild.roles)
                     await payload.member.add_roles(role)
 
-    @commands.command(name='mute',
-                      description='Mute user(s) for a certain amount of time.',
-                      help='Usage\n\n%mute [user mentions/user ids/user name + discriminator (ex: name#0000)] <time> <reason>')
+    @commands.command(name='timeout',
+                      description='Timeout user(s) for a certain amount of time.',
+                      help='Usage\n\n%timeout [user mentions/user ids/user name + discriminator (ex: name#0000)] <time> <reason>')
     @commands.check_any(commands.has_guild_permissions(mute_members=True), has_modrole())
-    async def mute(self, ctx, members: commands.Greedy[discord.Member], mtime: Optional[str] = None, *,
+    async def timeout(self, ctx, members: commands.Greedy[discord.Member], mtime: Optional[str] = None, *,
                    reason: Optional[str]):
-        def convert_to_seconds(s):
-            return int(timedelta(**{
+        def convert_to_timedelta(s):
+            return timedelta(**{
                 UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val'))
                 for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)
-            }).total_seconds())
+            })
 
         async def modmail_enabled():
             document = await db.servers.find_one({"server_id": ctx.guild.id})
@@ -871,84 +871,53 @@ class Administration(commands.Cog):
             else:
                 return False
 
-        mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
-
-        if not mutedRole:
-            mutedRole = await ctx.guild.create_role(name="Muted")
-
-            for channel in ctx.guild.channels:
-                await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
-
         muted = ""
+        mute_duration = datetime.datetime.now(datetime.timezone.utc) + convert_to_timedelta(mtime)
         for member in members:
-            await member.add_roles(mutedRole)
+            await member.timeout(mute_duration, reason[:512])
 
             dm_channel = member.dm_channel
             if member.dm_channel is None:
                 dm_channel = await member.create_dm()
 
-            if mtime:
-                seconds = convert_to_seconds(mtime)
-                m = await modmail_enabled()
-                dm_embed = None
-                if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
-                                         title=f'You have been muted for {seconds} seconds',
-                                         content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
-                else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
-                                         title=f'You have been muted for {seconds} seconds',
-                                         content=f'Reason: {reason}')
-                dm_embed.set_footer(text=time.ctime())
-                try:
-                    await dm_channel.send(embed=dm_embed)
-                except discord.Forbidden:
-                    await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with muting the user.'))
-
-                embed = gen_embed(title='mute', content=f'{member.mention} has been muted. \nReason: {reason}')
-                await ctx.send(embed=embed)
-                document = await db.servers.find_one({"server_id": ctx.guild.id})
-                if document['log_channel'] and document['log_kbm']:
-                    msglog = int(document['log_channel'])
-                    logChannel = member.guild.get_channel(msglog)
-                    await logChannel.send(embed=embed)
-
-                await asyncio.sleep(seconds)
-                await member.remove_roles(mutedRole)
-                return
+            seconds = convert_to_seconds(mtime)
+            m = await modmail_enabled()
+            dm_embed = None
+            if m:
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                     title=f'You have been put in timeout. Your timeout will end <t:{int(time.mktime(mute_duration.timetuple()))}:R>',
+                                     content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
             else:
-                m = await modmail_enabled()
-                dm_embed = None
-                if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
-                                         title=f'You have been muted.',
-                                         content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
-                    dm_embed.set_footer(text=ctx.guild.id)
-                else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
-                                         title=f'You have been muted.', content=f'Reason: {reason}')
-                    dm_embed.set_footer(text=time.ctime())
-                try:
-                    await dm_channel.send(embed=dm_embed)
-                except discord.Forbidden:
-                    await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with muting the user.'))
-                muted = muted + f'{member.mention} '
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                     title=f'You have been put in timeout. Your timeout will end <t:{int(time.mktime(mute_duration.timetuple()))}:R>',
+                                     content=f'Reason: {reason}')
+            dm_embed.set_footer(text=time.ctime())
+            try:
+                await dm_channel.send(embed=dm_embed)
+            except discord.Forbidden:
+                await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with putting the user in timeout.'))
 
-            await ctx.send(embed=gen_embed(title='mute', content=f'{muted} has been muted. \nReason: {reason}'))
+            muted = muted + f'{member.mention} '
+            await ctx.send(embed=embed)
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if document['log_channel'] and document['log_kbm']:
+                msglog = int(document['log_channel'])
+                logChannel = member.guild.get_channel(msglog)
+                await logChannel.send(embed=embed)
 
-    @commands.command(name='unmute',
-                      description='Unmute a user',
-                      help='Usage\n\n %unmute [user mentions/user ids/user name + discriminator (ex: name#0000)]')
-    @commands.check_any(commands.has_guild_permissions(mute_members=True), has_modrole())
-    async def unmute(self, ctx, members: commands.Greedy[discord.Member]):
-        mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
+            await ctx.send(embed=gen_embed(title='mute', content=f'{muted}has been put in timeout. \nReason: {reason}'))
 
-        unmuted = ""
+    @commands.command(name='removetimeout',
+                      alises=['rtimeout'],
+                      description="Remove a user's timeout",
+                      help='Usage\n\n %removetimeout [user mentions/user ids/user name + discriminator (ex: name#0000)]')
+    @commands.check_any(commands.has_guild_permissions(moderate_members=True), has_modrole())
+    async def removetimeout(self, ctx, members: commands.Greedy[discord.Member]):
         for member in members:
-            await member.remove_roles(mutedRole)
+            await member.remove_timeout(reason=f'{ctx.author.name}{ctx.author.discriminator} removed the timeout.')
             unmuted = unmuted + f'{member.mention} '
 
-        await ctx.send(embed=gen_embed(title='unmute', content=f'{unmuted}has been unmuted.'))
+        await ctx.send(embed=gen_embed(title='removetimeout', content=f'{unmuted}has had their timeout removed.'))
 
     @commands.command(name='kick',
                       description='Kick user(s) from the server.',
@@ -1083,11 +1052,11 @@ class Administration(commands.Cog):
     @commands.check_any(commands.has_guild_permissions(ban_members=True), has_modrole())
     async def strike(self, ctx, severity: convert_severity, members: commands.Greedy[discord.Member], message_link: str,
                      *, reason):
-        def convert_to_seconds(s):
-            return int(timedelta(**{
+        def convert_to_timedelta(s):
+            return timedelta(**{
                 UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val'))
                 for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)
-            }).total_seconds())
+            })
 
         async def modmail_enabled():
             document = await db.servers.find_one({"server_id": ctx.guild.id})
@@ -1095,6 +1064,29 @@ class Administration(commands.Cog):
                 return True
             else:
                 return False
+
+        async def timeouttime(attempts = 1):
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Timeout Duration',
+                                           content='How long do you want to timeout the user? Accepted format: ##[smhdw] (these correspond to seconds, minutes, hours, days, weeks)\n Example: 3d 6h -> 3 days, 6 hours'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Timeout cancelled',
+                                               content='Strike has still been applied.'))
+                return
+            if re.match(r'(\d+)([smhdw]?)', mmsg.clean_content, flags=re.I):
+                return mmsg.clean_content
+            elif attempts > 3:
+                # exit out so we don't crash in a recursive loop due to user incompetency
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed=gen_embed(title='Timeout Duration',
+                                               content="Sorry, I didn't catch that or it was an invalid format."))
+                attempts += 1
+                return await mutetime(attempts)
 
         async def mutetime(attempts = 1):
             def check(m):
@@ -1205,14 +1197,7 @@ class Administration(commands.Cog):
         if severity == '2':
             msg = await mutetime()
             if msg:
-                mtime = convert_to_seconds(msg)
-                mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
-
-                if not mutedRole:
-                    mutedRole = await ctx.guild.create_role(name="Muted")
-
-                    for channel in ctx.guild.channels:
-                        await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
+                mute_duration = datetime.datetime.now(datetime.timezone.utc) + convert_to_timedelta(msg)
 
         for member in members:
             dm_channel = member.dm_channel
@@ -1350,14 +1335,7 @@ class Administration(commands.Cog):
                 if msg is None:
                     return
                 else:
-                    mtime = convert_to_seconds(msg)
-                    mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
-
-                    if not mutedRole:
-                        mutedRole = await ctx.guild.create_role(name="Muted")
-
-                        for channel in ctx.guild.channels:
-                            await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
+                    mute_duration = datetime.datetime.now(datetime.timezone.utc) + convert_to_timedelta(msg)
 
             elif severity != '2' and ctx.guild.id == 432379300684103699:
                 view = Confirm(ctx)
@@ -1372,7 +1350,8 @@ class Administration(commands.Cog):
                     log.info("Pressed Confirm Button")
                     msg = await mutetime()
                     if msg:
-                        mtime = convert_to_seconds(msg)
+                        mtime = convert_to_timedelta(msg)
+                        mtime = int(mtime.total_seconds())
                         mutedRole = discord.utils.get(ctx.guild.roles, name="Image Mute")
 
                         await member.add_roles(mutedRole)
@@ -1407,16 +1386,16 @@ class Administration(commands.Cog):
                     return
 
             if severity == '2' or len(results) == 2:
-                await member.add_roles(mutedRole)
+                await member.timeout(mute_duration, reason='Automatic timeout due to accumulating 2 strikes')
 
                 if m:
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
-                                         title=f'You have been muted for {mtime} seconds',
-                                         content=f'Strike 2 - automatic mute\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                                         title=f'You have been put in timeout. Your timeout will end <t:{int(time.mktime(mute_duration.timetuple()))}:R>',
+                                         content=f'Strike 2 - automatic timeout\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                     dm_embed.set_footer(text=ctx.guild.id)
                 else:
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
-                                         title=f'You have been muted for {mtime} seconds',
+                                         title=f'You have been put in timeout. Your timeout will end <t:{int(time.mktime(mute_duration.timetuple()))}:R>',
                                          content=f'Strike 2 - automatic mute')
                     dm_embed.set_footer(text=time.ctime())
                 try:
@@ -1431,8 +1410,6 @@ class Administration(commands.Cog):
                     embed = gen_embed(title='mute',
                                       content=f'{member.name} (ID: {member.id} has been muted for {mtime} seconds.\nReason: Strike severity 2')
                     await logChannel.send(embed=embed)  # do custom
-                await asyncio.sleep(mtime)
-                await member.remove_roles(mutedRole)
                 return
 
     @commands.command(name='lookup',
