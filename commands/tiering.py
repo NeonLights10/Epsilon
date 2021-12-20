@@ -10,6 +10,143 @@ from typing import Union, Optional
 from formatting.embed import embed_splitter
 from __main__ import log, db
 
+class RoomPositionMenu(discord.ui.View):
+    def __init__(self, user):
+        super().__init__(timeout=900)
+        self.value = None
+        self.user = user
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.user:
+            return False
+        return True
+
+    @discord.ui.Button(emoji='1️⃣', style=discord.ButtonStyle.primary)
+    async def one(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.value = 1
+        for item in self.children:
+            item.disabled = True
+        await interaction.edit_original_message(content='You selected position 1', view=self)
+        self.stop()
+
+    @discord.ui.Button(emoji='2️⃣', style=discord.ButtonStyle.primary)
+    async def two(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.value = 2
+        for item in self.children:
+            item.disabled = True
+        await interaction.edit_original_message(content='You selected position 2', view=self)
+        self.stop()
+
+    @discord.ui.Button(emoji='3️⃣', style=discord.ButtonStyle.primary)
+    async def three(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.value = 3
+        for item in self.children:
+            item.disabled = True
+        await interaction.edit_original_message(content='You selected position 3', view=self)
+        self.stop()
+
+    @discord.ui.Button(emoji='4️⃣', style=discord.ButtonStyle.primary)
+    async def four(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.value = 4
+        for item in self.children:
+            item.disabled = True
+        await interaction.edit_original_message(content='You selected position 4', view=self)
+        self.stop()
+
+    @discord.ui.Button(emoji='5️⃣', style=discord.ButtonStyle.primary)
+    async def five(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.value = 5
+        for item in self.children:
+            item.disabled = True
+        await interaction.edit_original_message(content='You selected position 5', view=self)
+        self.stop()
+
+class ManageMenu(discord.ui.View):
+    def __init__(self, user, members):
+        super().__init__(timeout=900)
+        self.value = None
+        self.user = user
+        self.members = members
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.user:
+            return False
+        return True
+
+    @discord.ui.Button(label='Kick User', style=discord.ButtonStyle.primary)
+    async def kickuser(self, button: discord.ui.Button, interaction: discord.Interaction):
+        roompos_view = RoomPositionMenu(user = self.user)
+        await interaction.edit_original_message(content='Which user do you want to kick?', view=roompos_view)
+        #do stuff
+        for item in self.children:
+            item.disabled = True
+        await interaction.edit_original_message(content='Operation Completed', view=self)
+        self.stop()
+
+    @discord.ui.Button(label='Change User', style=discord.ButtonStyle.primary)
+    async def changeuser(self, button: discord.ui.Button, interaction: discord.Interaction):
+        # do stuff
+        for item in self.children:
+            item.disabled = True
+        await interaction.edit_original_message(content='Operation Completed', view=self)
+        self.stop()
+
+    @discord.ui.Button(label='Transfer Ownership', style=discord.ButtonStyle.danger)
+    async def transferowner(self, button: discord.ui.Button, interaction: discord.Interaction):
+        #do stuff
+        for item in self.children:
+            item.disabled = True
+        await interaction.edit_original_message(content='Operation Completed', view=self)
+        self.stop()
+
+    @discord.ui.Button(label='Cancel', style=discord.ButtonStyle.danger)
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        for item in self.children:
+            item.disabled = True
+        await interaction.edit_original_message(content='Operation Cancelled', view=self)
+        self.stop()
+
+class RoomMenu(discord.ui.View):
+    def __init__(self, ctx, roomnum):
+        super().__init__(timeout=None)
+        self.context = ctx
+        self.leader = ctx.author
+        self.members = [None] * 5
+        self.members[0] = self.leader
+        self.room = roomnum
+
+    @discord.ui.Button(label='Join Room', style=discord.ButtonStyle.green, custom_id="persistent_view:joinroom")
+    async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
+        roompos_view = RoomPositionMenu(user=interaction.user)
+        sent_message = await interaction.response.send_message(content='Which position are you joining?', view=roompos_view, ephemeral=True)
+        # do stuff
+        await sent_message.delete()
+
+    @discord.ui.Button(label='Leave Room', style=discord.ButtonStyle.danger, custom_id="persistent_view:leaveroom")
+    async def leaveroom(self, button: discord.ui.Button, interaction: discord.Interaction):
+        pass
+
+    @discord.ui.Button(label='Join/Leave Queue', style=discord.ButtonStyle.primary, custom_id="persistent_view:roomqueue")
+    async def roomqueue(self, button: discord.ui.Button, interaction: discord.Interaction):
+        pass
+
+    @discord.ui.Button(label='Manage Room', style=discord.ButtonStyle.primary, custom_id="persistent_view:manageroom")
+    async def manageroom(self, button:discord.ui.Button, interaction: discord.Interaction):
+        if interaction.user != self.leader:
+            await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
+            raise RuntimeError('Non-authorized user attempted to manage room')
+        else:
+            manangeroom_view = ManageMenu(user = self.leader, members = self.members)
+            sent_message = await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
+            self.members = manageroom_view.members
+            await sent_message.delete()
+
+    @discord.ui.Button(label='Close Room', style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
+    async def closeroom(self, button:discord.ui.Button, interaction: discord.Interaction):
+        for item in self.children:
+            item.disabled = True
+        self.stop()
+
 class GiftboxMenu(discord.ui.View):
     def __init__(self, ctx, boxnum):
         super().__init__(timeout=900.0)
@@ -696,6 +833,24 @@ class Tiering(commands.Cog):
         sent_message = await ctx.send(embed=embed, view=giftbox_view)
         await giftbox_view.wait()
         await sent_message.edit(view=giftbox_view)
+
+    @commands.command(name=roomview,
+                      aliases=['rmv', 'rv'],
+                      description='CONCEPT TESTING ONLY DO NOT USE',
+                      help='DO NOT USE')
+    async def roomview(self, ctx, room_num: convert_room):
+        room_view = RoomMenu(ctx, room_num)
+        embed = gen_embed(title=f'Room Code: {room_num}',
+                          content=(f"> P1 - Player\n"
+                                   f"> P2 - Player\n"
+                                   f"> P3 - Player\n"
+                                   f"> P4 - Player\n"
+                                   f"> P5 - Player\n"
+                                   "\n"
+                                   f"Standby Queue: user1, user2"))
+        sent_message = await ctx.send(embed=embed, view=room_view)
+        await room_view.wait()
+        await sent_message.edit(view=room_view)
     #async def connect(self, ctx, label, dest_server):
 
 def setup(bot):
