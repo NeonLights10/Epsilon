@@ -26,7 +26,6 @@ class RoomPositionMenu(discord.ui.View):
         self.value = 1
         for item in self.children:
             item.disabled = True
-        await interaction.edit_original_message(content='You selected position 1', view=self)
         self.stop()
 
     @discord.ui.button(emoji='2️⃣', style=discord.ButtonStyle.primary)
@@ -34,7 +33,6 @@ class RoomPositionMenu(discord.ui.View):
         self.value = 2
         for item in self.children:
             item.disabled = True
-        await interaction.edit_original_message(content='You selected position 2', view=self)
         self.stop()
 
     @discord.ui.button(emoji='3️⃣', style=discord.ButtonStyle.primary)
@@ -42,7 +40,6 @@ class RoomPositionMenu(discord.ui.View):
         self.value = 3
         for item in self.children:
             item.disabled = True
-        await interaction.edit_original_message(content='You selected position 3', view=self)
         self.stop()
 
     @discord.ui.button(emoji='4️⃣', style=discord.ButtonStyle.primary)
@@ -50,7 +47,6 @@ class RoomPositionMenu(discord.ui.View):
         self.value = 4
         for item in self.children:
             item.disabled = True
-        await interaction.edit_original_message(content='You selected position 4', view=self)
         self.stop()
 
     @discord.ui.button(emoji='5️⃣', style=discord.ButtonStyle.primary)
@@ -58,7 +54,6 @@ class RoomPositionMenu(discord.ui.View):
         self.value = 5
         for item in self.children:
             item.disabled = True
-        await interaction.edit_original_message(content='You selected position 5', view=self)
         self.stop()
 
 class ManageMenu(discord.ui.View):
@@ -80,7 +75,6 @@ class ManageMenu(discord.ui.View):
         #do stuff
         for item in self.children:
             item.disabled = True
-        await interaction.edit_original_message(content='Operation Completed', view=self)
         self.stop()
 
     @discord.ui.button(label='Change User', style=discord.ButtonStyle.primary)
@@ -88,7 +82,6 @@ class ManageMenu(discord.ui.View):
         # do stuff
         for item in self.children:
             item.disabled = True
-        await interaction.edit_original_message(content='Operation Completed', view=self)
         self.stop()
 
     @discord.ui.button(label='Transfer Ownership', style=discord.ButtonStyle.danger)
@@ -96,14 +89,12 @@ class ManageMenu(discord.ui.View):
         #do stuff
         for item in self.children:
             item.disabled = True
-        await interaction.edit_original_message(content='Operation Completed', view=self)
         self.stop()
 
     @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
         for item in self.children:
             item.disabled = True
-        await interaction.edit_original_message(content='Operation Cancelled', view=self)
         self.stop()
 
 class RoomMenu(discord.ui.View):
@@ -119,6 +110,7 @@ class RoomMenu(discord.ui.View):
     async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user=interaction.user)
         await interaction.response.send_message(content='Which position are you joining?', view=roompos_view, ephemeral=True)
+        await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
         # do stuff
 
     @discord.ui.button(label='Leave Room', row = 0, style=discord.ButtonStyle.danger, custom_id="persistent_view:leaveroom")
@@ -138,6 +130,7 @@ class RoomMenu(discord.ui.View):
             manageroom_view = ManageMenu(user = self.leader, members = self.members)
             await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
             self.members = manageroom_view.members
+            await interaction.edit_original_message(content='Operation Completed', view=manageroom_view)
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
     async def closeroom(self, button:discord.ui.Button, interaction: discord.Interaction):
