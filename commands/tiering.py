@@ -110,6 +110,7 @@ class RoomMenu(discord.ui.View):
     async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user=interaction.user)
         await interaction.response.send_message(content='Which position are you joining?', view=roompos_view, ephemeral=True)
+        await roompos_view.wait()
         await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
         # do stuff
 
@@ -129,6 +130,7 @@ class RoomMenu(discord.ui.View):
         else:
             manageroom_view = ManageMenu(user = self.leader, members = self.members)
             await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
+            await manageroom_view.wait()
             self.members = manageroom_view.members
             await interaction.edit_original_message(content='Operation Completed', view=manageroom_view)
 
