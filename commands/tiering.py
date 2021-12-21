@@ -413,21 +413,22 @@ class Tiering(commands.Cog):
         if re.search('^\d{5}$', argument):
             return argument
         elif re.search('^\w+',argument):
-            log.warning('Bad Argument - Room Code')
-            raise discord.ext.commands.BadArgument(message="This is not a valid room code.")
+            log.warning('Room Code not found, skipping')
+            return None #attempt new logic here
+            #raise discord.ext.commands.BadArgument(message="This is not a valid room code.")
         else:
             return None
 
     def convert_spot(argument):
         if re.search('^\d{5}$', argument):
-            log.warning('Bad Argument - Room Code')
-            raise discord.ext.commands.BadArgument()
+            log.warning('Bad Argument - Spots Open')
+            raise discord.ext.commands.BadArgument(message="This is not a valid option. Open spots must be a single digit number.")
         elif re.search('^\d{1}$', argument):
             return argument
         elif re.search('^[Ff]$', argument):
             return "0"
         else:
-            log.warning('Bad Argument - Room Code')
+            log.warning('Bad Argument - Spots Open')
             raise discord.ext.commands.BadArgument(message="This is not a valid option. Open spots must be a single digit number.")
 
     def has_modrole():
@@ -735,10 +736,10 @@ class Tiering(commands.Cog):
 
     @commands.command(name='room',
                       aliases=['rm'],
-                      description='Changes the room name without having to go through the menu. If no arguments are provided, the room will be changed to a dead room. Rooms must start with the standard tiering prefix "g#-".\nBoth parameters are optional.',
-                      help='Usage:\n\n%room <open spots> <room number>\n\nExample:\n\n`%room 1 12345`\nFor just changing room number - `%room 12345`\nFor just changing open spots - `%room 3`')
+                      description='Changes the room name without having to go through the menu. If no arguments are provided, the room will be changed to a dead room. Rooms must start with the standard tiering prefix, i.e. "g#-".\nBoth parameters are optional.',
+                      help='Usage:\n\n%room <room number> <open spots>\n\nExample:\n\n`%room 12345 1`\nFor just changing room number - `%room 12345`\nFor just changing open spots - `%room 3`')
     @commands.cooldown(rate=2,per=600.00,type=commands.BucketType.channel)
-    async def room(self, ctx, open_spots: Optional[convert_spot], room_num: Union[convert_room, None]):
+    async def room(self, ctx, room_num: Union[convert_room, None], open_spots: Optional[convert_spot]):
         currentname = ctx.channel.name
         namesuffix = ""
         if re.search('^[A-Za-z]\d-', currentname):

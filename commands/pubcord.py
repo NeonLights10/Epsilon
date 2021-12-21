@@ -69,6 +69,9 @@ class PersistentEvent(discord.ui.View):
                                "> Special Set 5 Play Gacha\n"
                                "> <t:1640134800> to <t:1640739540>\n"
                                "\n"
+                               "> Band Story 3 Afterglow ★4 Member Guaranteed Gacha\n"
+                               "> <t:1640048400> to <t:1641776340>\n"
+                               "\n"
                                "> 2022 New Year's All Members Free Gacha\n"
                                "> <t:1638493200> to <t:1641776340>\n"
                                "\n"
@@ -104,7 +107,7 @@ class PersistentEvent(discord.ui.View):
                      "※ Use VPNs such as Proton VPN and connect that to JP.\n\n"
                      "If none of these workarounds end up working for you, please be patient as the issue gets fixed.")
         )
-        embed.set_footer(text='# of times Evets has posted about this on Twitter: 19+')
+        embed.set_footer(text='# of times Evets has posted about this on Twitter: 20+')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
