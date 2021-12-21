@@ -739,7 +739,7 @@ class Tiering(commands.Cog):
                       description='Changes the room name without having to go through the menu. If no arguments are provided, the room will be changed to a dead room. Rooms must start with the standard tiering prefix, i.e. "g#-".\nBoth parameters are optional.',
                       help='Usage:\n\n%room <room number> <open spots>\n\nExample:\n\n`%room 12345 1`\nFor just changing room number - `%room 12345`\nFor just changing open spots - `%room 3`')
     @commands.cooldown(rate=2,per=600.00,type=commands.BucketType.channel)
-    async def room(self, ctx, room_num: Union[convert_room, None], open_spots: Optional[convert_spot]):
+    async def room(self, ctx, room_num: Optional[convert_room], open_spots: Optional[convert_spot]):
         currentname = ctx.channel.name
         namesuffix = ""
         if re.search('^[A-Za-z]\d-', currentname):
