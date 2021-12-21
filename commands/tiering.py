@@ -414,10 +414,9 @@ class Tiering(commands.Cog):
             return argument
         elif re.search('^\w+',argument):
             log.warning('Room Code not found, skipping')
-            return None #attempt new logic here
-            #raise discord.ext.commands.BadArgument(message="This is not a valid room code.")
+            raise discord.ext.commands.BadArgument(message="This is not a valid room code.")
         else:
-            return None
+            raise discord.ext.commands.BadArgument(message="This is not a valid room code.")
 
     def convert_spot(argument):
         if re.search('^\d{5}$', argument):
