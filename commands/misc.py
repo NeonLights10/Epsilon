@@ -27,9 +27,9 @@ class Miscellaneous(commands.Cog):
                 return False
         return commands.check(predicate)
 
-    async def generate_invite_link(self, permissions=discord.Permissions(340126934), guild=None):
+    async def generate_invite_link(self, permissions=discord.Permissions(1632444476630)):
         app_info = await self.bot.application_info()
-        return discord.utils.oauth_url(app_info.id, permissions=permissions, guild=guild)
+        return discord.utils.oauth_url(app_info.id, permissions=permissions, scopes=['bot', 'applications.commands'])
 
     @commands.command(name = "stats",
                 description = "Gives statistics about the bot.")
