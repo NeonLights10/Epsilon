@@ -126,6 +126,7 @@ class RoomMenu(discord.ui.View):
     @discord.ui.button(emoji='📥', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:joinroom")
     async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         log.info(f'{interaction.user.name} triggered the joinroom button')
+        log.info(f"[{', '.join(self.members)}]")
         if interaction.user in self.members:
             raise RuntimeError('User is already in room')
         if len(self.members) >= 5:
@@ -155,11 +156,13 @@ class RoomMenu(discord.ui.View):
         embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
+        log.info(f"[{', '.join(self.members)}]")
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(emoji='📤', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:leaveroom")
     async def leaveroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         log.info(f'{interaction.user.name} triggered the leaveroom button')
+        log.info(f"[{', '.join(self.members)}]")
         if interaction.user not in self.members:
             raise RuntimeError('User is not in the room')
         if interaction.user == self.leader:
@@ -207,6 +210,7 @@ class RoomMenu(discord.ui.View):
         embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
+        log.info(f"[{', '.join(self.members)}]")
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='Join/Leave Queue', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:roomqueue")
@@ -216,6 +220,7 @@ class RoomMenu(discord.ui.View):
     @discord.ui.button(label='Manage Room', row = 1, style=discord.ButtonStyle.secondary, custom_id="persistent_view:manageroom")
     async def manageroom(self, button:discord.ui.Button, interaction: discord.Interaction):
         log.info(f'{interaction.user.name} triggered the manageroom button')
+        log.info(f"[{', '.join(self.members)}]")
         if interaction.user != self.leader:
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
             raise RuntimeError('Non-authorized user attempted to manage room')
@@ -253,6 +258,7 @@ class RoomMenu(discord.ui.View):
             embed.add_field(name='Standby Queue',
                             value=f'{embed_value}',
                             inline=False)
+            log.info(f"[{', '.join(self.members)}]")
             await interaction.followup.edit_message(original_message.id, embed=embed, view=self)
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
