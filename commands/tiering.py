@@ -127,9 +127,9 @@ class RoomMenu(discord.ui.View):
     async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         log.info(f'{interaction.user.name} triggered the joinroom button')
         debug_output = "["
-        for member in self.members:
-            debug_output = debug_output + f'{member.name}, '
-        log.info(debug_output)
+        #for member in self.members:
+        #    debug_output = debug_output + f'{member.name}, '
+        #log.info(debug_output)
         if interaction.user in self.members:
             raise RuntimeError('User is already in room')
         if len(self.members) >= 5:
@@ -160,18 +160,18 @@ class RoomMenu(discord.ui.View):
                         value=f'{embed_value}',
                         inline=False)
         debug_output = "["
-        for member in self.members:
-            debug_output = debug_output + f'{member.name}, '
-        log.info(debug_output)
+        #for member in self.members:
+        #    debug_output = debug_output + f'{member.name}, '
+        #log.info(debug_output)
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(emoji='📤', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:leaveroom")
     async def leaveroom(self, button: discord.ui.Button, interaction: discord.Interaction):
         log.info(f'{interaction.user.name} triggered the leaveroom button')
         debug_output = "["
-        for member in self.members:
-            debug_output = debug_output + f'{member.name}, '
-        log.info(debug_output)
+        #for member in self.members:
+        #    debug_output = debug_output + f'{member.name}, '
+        #log.info(debug_output)
         if interaction.user not in self.members:
             raise RuntimeError('User is not in the room')
         if interaction.user == self.leader:
@@ -220,9 +220,9 @@ class RoomMenu(discord.ui.View):
                         value=f'{embed_value}',
                         inline=False)
         debug_output = "["
-        for member in self.members:
-            debug_output = debug_output + f'{member.name}, '
-        log.info(debug_output)
+        #for member in self.members:
+        #    debug_output = debug_output + f'{member.name}, '
+        #log.info(debug_output)
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='Join/Leave Queue', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:roomqueue")
@@ -233,9 +233,9 @@ class RoomMenu(discord.ui.View):
     async def manageroom(self, button:discord.ui.Button, interaction: discord.Interaction):
         log.info(f'{interaction.user.name} triggered the manageroom button')
         debug_output = "["
-        for member in self.members:
-            debug_output = debug_output + f'{member.name}, '
-        log.info(debug_output)
+        #for member in self.members:
+        #    debug_output = debug_output + f'{member.name}, '
+        #log.info(debug_output)
         if interaction.user != self.leader:
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
             raise RuntimeError('Non-authorized user attempted to manage room')
@@ -274,9 +274,9 @@ class RoomMenu(discord.ui.View):
                             value=f'{embed_value}',
                             inline=False)
             debug_output = "["
-            for member in self.members:
-                debug_output = debug_output + f'{member.name}, '
-            log.info(debug_output)
+            #for member in self.members:
+            #    debug_output = debug_output + f'{member.name}, '
+            #log.info(debug_output)
             await interaction.followup.edit_message(original_message.id, embed=embed, view=self)
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
@@ -987,7 +987,7 @@ class Tiering(commands.Cog):
         room_view = RoomMenu(ctx, room_num)
         embed = gen_embed(title=f'Room Code: {room_num}')
         embed.add_field(name='Currently Playing',
-                        value=f"P1 - {ctx.author.name}#{ctx.author.discriminator}",
+                        value=f"P1 - {ctx.author.name}#{ctx.author.discriminator} | P2 - Empty | P3 - Empty | P4 - Empty | P5 - Empty",
                         inline=False)
         embed.add_field(name='Standby Queue',
                         value=f'Empty',
