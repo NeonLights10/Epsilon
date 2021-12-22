@@ -131,13 +131,13 @@ class RoomMenu(discord.ui.View):
             raise RuntimeError('Room is full')
         self.members.append(interaction.user)
         embed = gen_embed(title=f'Room Code: {room_num}')
-        embed.add_field(title='Currently Playing',
+        embed.add_field(name='Currently Playing',
                         value=f"P1 - {self.members[0]} | P2 - {self.members[1]} | P3 - {self.members[2]} | P4 - {self.members[3]} | P5 - {self.members[4]}\n",
                         inline=False)
         embed_value = ""
         for member in self.queue:
             embed_value = embed_value + f'{member.name}{member.discriminator} '
-        embed.add_field(title='Standby Queue',
+        embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
         await interaction.response.edit_message(embed=embed, view=self)
@@ -163,13 +163,13 @@ class RoomMenu(discord.ui.View):
                 self.members[0], self.members[roompos_view.value] = self.members[roompos_view.value], self.members[0]
         self.members.remove(interaction.user)
         embed = gen_embed(title=f'Room Code: {room_num}')
-        embed.add_field(title='Currently Playing',
+        embed.add_field(name='Currently Playing',
                         value=f"P1 - {self.members[0]} | P2 - {self.members[1]} | P3 - {self.members[2]} | P4 - {self.members[3]} | P5 - {self.members[4]}\n",
                         inline=False)
         embed_value = ""
         for member in self.queue:
             embed_value = embed_value + f'{member.name}{member.discriminator} '
-        embed.add_field(title='Standby Queue',
+        embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
         await interaction.response.edit_message(embed=embed, view=self)
@@ -192,13 +192,13 @@ class RoomMenu(discord.ui.View):
             await interaction.edit_original_message(content='Operation Completed', view=manageroom_view)
 
             embed = gen_embed(title=f'Room Code: {room_num}')
-            embed.add_field(title='Currently Playing',
+            embed.add_field(name='Currently Playing',
                             value=f"P1 - {self.members[0]} | P2 - {self.members[1]} | P3 - {self.members[2]} | P4 - {self.members[3]} | P5 - {self.members[4]}\n",
                             inline=False)
             embed_value = ""
             for member in self.queue:
                 embed_value = embed_value + f'{member.name}{member.discriminator} '
-            embed.add_field(title='Standby Queue',
+            embed.add_field(name='Standby Queue',
                             value=f'{embed_value}',
                             inline=False)
             await interaction.response.edit_message(embed=embed, view=self)
@@ -906,10 +906,10 @@ class Tiering(commands.Cog):
     async def roomview(self, ctx, room_num: convert_room):
         room_view = RoomMenu(ctx, room_num)
         embed = gen_embed(title=f'Room Code: {room_num}')
-        embed.add_field(title='Currently Playing',
+        embed.add_field(name='Currently Playing',
                         value=f"P1 - {ctx.author.name}{ctx.author.discriminator}",
                         inline=False)
-        embed.add_field(title='Standby Queue',
+        embed.add_field(name='Standby Queue',
                         value=f'Empty',
                         inline=False)
         sent_message = await ctx.send(embed=embed, view=room_view)
