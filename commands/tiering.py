@@ -125,6 +125,7 @@ class RoomMenu(discord.ui.View):
 
     @discord.ui.button(emoji='📥', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:joinroom")
     async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
+        log.info(f'{interaction.user.name} triggered the joinroom button')
         if interaction.user in self.members:
             raise RuntimeError('User is already in room')
         if len(self.members) >= 5:
@@ -133,7 +134,7 @@ class RoomMenu(discord.ui.View):
         embed = gen_embed(title=f'Room Code: {self.room}')
         embed_msg = ""
         for x in range(1,6):
-            if x <= len(self.members) and len(self.members) != 5:
+            if x <= len(self.members) != 5:
                 embed_msg = embed_msg + f"P{x} - {self.members[x-1].name}#{self.members[x-1].discriminator} | "
             elif x == len(self.members) and len(self.members) == 5:
                 embed_msg = embed_msg + f"P{x} - {self.members[x-1].name}#{self.members[x-1].discriminator}"
@@ -158,6 +159,7 @@ class RoomMenu(discord.ui.View):
 
     @discord.ui.button(emoji='📤', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:leaveroom")
     async def leaveroom(self, button: discord.ui.Button, interaction: discord.Interaction):
+        log.info(f'{interaction.user.name} triggered the leaveroom button')
         if interaction.user not in self.members:
             raise RuntimeError('User is not in the room')
         if interaction.user == self.leader:
@@ -184,7 +186,7 @@ class RoomMenu(discord.ui.View):
         embed = gen_embed(title=f'Room Code: {self.room}')
         embed_msg = ""
         for x in range(1, 6):
-            if x < len(self.members):
+            if x <= len(self.members) != 5:
                 embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator} | "
             elif x == len(self.members) and len(self.members) == 5:
                 embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator}"
@@ -213,6 +215,7 @@ class RoomMenu(discord.ui.View):
 
     @discord.ui.button(label='Manage Room', row = 1, style=discord.ButtonStyle.secondary, custom_id="persistent_view:manageroom")
     async def manageroom(self, button:discord.ui.Button, interaction: discord.Interaction):
+        log.info(f'{interaction.user.name} triggered the manageroom button')
         if interaction.user != self.leader:
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
             raise RuntimeError('Non-authorized user attempted to manage room')
@@ -229,7 +232,7 @@ class RoomMenu(discord.ui.View):
             embed = gen_embed(title=f'Room Code: {self.room}')
             embed_msg = ""
             for x in range(1, 6):
-                if x < len(self.members):
+                if x <= len(self.members) != 5:
                     embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator} | "
                 elif x == len(self.members) and len(self.members) == 5:
                     embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator}"
