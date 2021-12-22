@@ -150,6 +150,11 @@ class RoomMenu(discord.ui.View):
             if len(self.members) == 1:
                 for item in self.children:
                     item.disabled = True
+                embed = gen_embed(title=f'Room Code: {self.room}',
+                                  content='Room Closed')
+                for item in self.children:
+                    item.disabled = True
+                await interaction.response.edit_message(embed=embed, view=self)
                 self.stop()
                 return
             else:
