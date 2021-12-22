@@ -128,7 +128,7 @@ class RoomMenu(discord.ui.View):
         log.info(f'{interaction.user.name} triggered the joinroom button')
         debug_output = "["
         for member in self.members:
-            debug_output = debug_output + f'{self.members.name}, '
+            debug_output = debug_output + f'{member.name}, '
         log.info(debug_output)
         if interaction.user in self.members:
             raise RuntimeError('User is already in room')
@@ -167,7 +167,7 @@ class RoomMenu(discord.ui.View):
         log.info(f'{interaction.user.name} triggered the leaveroom button')
         debug_output = "["
         for member in self.members:
-            debug_output = debug_output + f'{self.members.name}, '
+            debug_output = debug_output + f'{member.name}, '
         log.info(debug_output)
         if interaction.user not in self.members:
             raise RuntimeError('User is not in the room')
@@ -228,7 +228,7 @@ class RoomMenu(discord.ui.View):
         log.info(f'{interaction.user.name} triggered the manageroom button')
         debug_output = "["
         for member in self.members:
-            debug_output = debug_output + f'{self.members.name}, '
+            debug_output = debug_output + f'{member.name}, '
         log.info(debug_output)
         if interaction.user != self.leader:
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
