@@ -57,10 +57,11 @@ class RoomPositionMenu(discord.ui.View):
         self.stop()
 
 class ManageMenu(discord.ui.View):
-    def __init__(self, user, members):
+    def __init__(self, user, leader, members):
         super().__init__(timeout=900)
         self.value = None
         self.user = user
+        self.leader = leader
         self.members = members
 
     async def interaction_check(self, interaction):
@@ -71,14 +72,17 @@ class ManageMenu(discord.ui.View):
     @discord.ui.button(label='Kick User', style=discord.ButtonStyle.secondary)
     async def kickuser(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user = self.user)
-        await interaction.response.edit_message(content='Which user do you want to kick?', view=roompos_view)
+        roompos_view.children[0].disabled = True
+        await interaction.response.send_message(content='Which user do you want to kick?', view=roompos_view,
+                                                ephemeral=True)
         await roompos_view.wait()
-        #do stuff
+        await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
+        del self.members[roompos_view.value]
         for item in self.children:
             item.disabled = True
         self.stop()
 
-    @discord.ui.button(label='Change User', style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label='Add/Change User', style=discord.ButtonStyle.secondary)
     async def changeuser(self, button: discord.ui.Button, interaction: discord.Interaction):
         # do stuff
         for item in self.children:
@@ -87,10 +91,21 @@ class ManageMenu(discord.ui.View):
 
     @discord.ui.button(label='Transfer Ownership', style=discord.ButtonStyle.primary)
     async def transferowner(self, button: discord.ui.Button, interaction: discord.Interaction):
-        #do stuff
+        roompos_view = RoomPositionMenu(user=interaction.user)
+        roompos_view.children[0].disabled = True
+        await interaction.response.send_message(content='Please transfer ownership to another user.', view=roompos_view,
+                                                ephemeral=True)
+        await roompos_view.wait()
+        await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
+        self.leader = self.members[roompos_view.value]
+        self.members[0], self.members[roompos_view.value] = self.members[roompos_view.value], self.members[0]
         for item in self.children:
             item.disabled = True
         self.stop()
+
+    @discord.ui.button(label='Sync Room', style=discord.ButtonStyle.green)
+    async def syncroom(self, button: discord.ui.Button, interaction: discord.Interaction):
+        pass
 
     @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -106,18 +121,58 @@ class RoomMenu(discord.ui.View):
         self.members = [None] * 5
         self.members[0] = self.leader
         self.room = roomnum
+        self.queue = []
 
     @discord.ui.button(emoji='📥', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:joinroom")
     async def joinroom(self, button: discord.ui.Button, interaction: discord.Interaction):
-        roompos_view = RoomPositionMenu(user=interaction.user)
-        await interaction.response.send_message(content='Which position are you joining?', view=roompos_view, ephemeral=True)
-        await roompos_view.wait()
-        await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
-        # do stuff
+        if interaction.user in self.members:
+            raise RuntimeError('User is already in room')
+        if len(self.members) >= 5:
+            raise RuntimeError('Room is full')
+        self.members.append(interaction.user)
+        embed = gen_embed(title=f'Room Code: {room_num}')
+        embed.add_field(title='Currently Playing',
+                        value=f"P1 - {self.members[0]} | P2 - {self.members[1]} | P3 - {self.members[2]} | P4 - {self.members[3]} | P5 - {self.members[4]}\n",
+                        inline=False)
+        embed_value = ""
+        for member in self.queue:
+            embed_value = embed_value + f'{member.name}{member.discriminator} '
+        embed.add_field(title='Standby Queue',
+                        value=f'{embed_value}',
+                        inline=False)
+        await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(emoji='📤', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:leaveroom")
     async def leaveroom(self, button: discord.ui.Button, interaction: discord.Interaction):
-        pass
+        if interaction.user not in self.members:
+            raise RuntimeError('User is not in the room')
+        if interaction.user == self.leader:
+            if len(self.members) == 1:
+                for item in self.children:
+                    item.disabled = True
+                self.stop()
+                return
+            else:
+                roompos_view = RoomPositionMenu(user=interaction.user)
+                roompos_view.children[0].disabled = True
+                await interaction.response.send_message(content='Please transfer ownership to another user.', view=roompos_view,
+                                                        ephemeral=True)
+                await roompos_view.wait()
+                await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
+                self.leader = self.members[roompos_view.value]
+                self.members[0], self.members[roompos_view.value] = self.members[roompos_view.value], self.members[0]
+        self.members.remove(interaction.user)
+        embed = gen_embed(title=f'Room Code: {room_num}')
+        embed.add_field(title='Currently Playing',
+                        value=f"P1 - {self.members[0]} | P2 - {self.members[1]} | P3 - {self.members[2]} | P4 - {self.members[3]} | P5 - {self.members[4]}\n",
+                        inline=False)
+        embed_value = ""
+        for member in self.queue:
+            embed_value = embed_value + f'{member.name}{member.discriminator} '
+        embed.add_field(title='Standby Queue',
+                        value=f'{embed_value}',
+                        inline=False)
+        await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='Join/Leave Queue', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:roomqueue")
     async def roomqueue(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -133,12 +188,28 @@ class RoomMenu(discord.ui.View):
             await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
             await manageroom_view.wait()
             self.members = manageroom_view.members
+            self.leader = manageroom_view.leader
             await interaction.edit_original_message(content='Operation Completed', view=manageroom_view)
+
+            embed = gen_embed(title=f'Room Code: {room_num}')
+            embed.add_field(title='Currently Playing',
+                            value=f"P1 - {self.members[0]} | P2 - {self.members[1]} | P3 - {self.members[2]} | P4 - {self.members[3]} | P5 - {self.members[4]}\n",
+                            inline=False)
+            embed_value = ""
+            for member in self.queue:
+                embed_value = embed_value + f'{member.name}{member.discriminator} '
+            embed.add_field(title='Standby Queue',
+                            value=f'{embed_value}',
+                            inline=False)
+            await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
     async def closeroom(self, button:discord.ui.Button, interaction: discord.Interaction):
+        embed = gen_embed(title=f'Room Code: {room_num}',
+                          content='Room Closed')
         for item in self.children:
             item.disabled = True
+        await interaction.response.edit_message(embed=embed, view=self)
         self.stop()
 
 class GiftboxMenu(discord.ui.View):
@@ -834,14 +905,13 @@ class Tiering(commands.Cog):
                       help='DO NOT USE')
     async def roomview(self, ctx, room_num: convert_room):
         room_view = RoomMenu(ctx, room_num)
-        embed = gen_embed(title=f'Room Code: {room_num}',
-                          content=(f"> P1 - Player\n"
-                                   f"> P2 - Player\n"
-                                   f"> P3 - Player\n"
-                                   f"> P4 - Player\n"
-                                   f"> P5 - Player\n"
-                                   "\n"
-                                   f"Standby Queue: user1, user2"))
+        embed = gen_embed(title=f'Room Code: {room_num}')
+        embed.add_field(title='Currently Playing',
+                        value=f"P1 - {ctx.author.name}{ctx.author.discriminator}",
+                        inline=False)
+        embed.add_field(title='Standby Queue',
+                        value=f'Empty',
+                        inline=False)
         sent_message = await ctx.send(embed=embed, view=room_view)
         await room_view.wait()
         await sent_message.edit(view=room_view)
