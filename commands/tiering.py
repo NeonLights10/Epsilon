@@ -146,8 +146,11 @@ class RoomMenu(discord.ui.View):
                         value=embed_msg,
                         inline=False)
         embed_value = ""
-        for member in self.queue:
-            embed_value = embed_value + f'{member.name}#{member.discriminator} '
+        if self.queue:
+            for member in self.queue:
+                embed_value = embed_value + f'{member.name}#{member.discriminator} '
+        else:
+            embed_value = "Empty"
         embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
@@ -194,8 +197,11 @@ class RoomMenu(discord.ui.View):
                         value=embed_msg,
                         inline=False)
         embed_value = ""
-        for member in self.queue:
-            embed_value = embed_value + f'{member.name}#{member.discriminator} '
+        if self.queue:
+            for member in self.queue:
+                embed_value = embed_value + f'{member.name}#{member.discriminator} '
+        else:
+            embed_value = "Empty"
         embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
@@ -233,8 +239,12 @@ class RoomMenu(discord.ui.View):
             embed.add_field(name='Currently Playing',
                             value=embed_msg,
                             inline=False)
-            for member in self.queue:
-                embed_value = embed_value + f'{member.name}#{member.discriminator} '
+            embed_value=""
+            if self.queue:
+                for member in self.queue:
+                    embed_value = embed_value + f'{member.name}#{member.discriminator} '
+            else:
+                embed_value = "Empty"
             embed.add_field(name='Standby Queue',
                             value=f'{embed_value}',
                             inline=False)
