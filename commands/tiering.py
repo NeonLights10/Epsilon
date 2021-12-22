@@ -159,7 +159,10 @@ class RoomMenu(discord.ui.View):
         embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
-        log.info(f"[{', '.join(self.members)}]")
+        debug_output = "["
+        for member in self.members:
+            debug_output = debug_output + f'{member.name}, '
+        log.info(debug_output)
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(emoji='📤', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:leaveroom")
@@ -216,7 +219,10 @@ class RoomMenu(discord.ui.View):
         embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
-        log.info(f"[{', '.join(self.members)}]")
+        debug_output = "["
+        for member in self.members:
+            debug_output = debug_output + f'{member.name}, '
+        log.info(debug_output)
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label='Join/Leave Queue', row = 0, style=discord.ButtonStyle.secondary, custom_id="persistent_view:roomqueue")
@@ -267,7 +273,10 @@ class RoomMenu(discord.ui.View):
             embed.add_field(name='Standby Queue',
                             value=f'{embed_value}',
                             inline=False)
-            log.info(f"[{', '.join(self.members)}]")
+            debug_output = "["
+            for member in self.members:
+                debug_output = debug_output + f'{member.name}, '
+            log.info(debug_output)
             await interaction.followup.edit_message(original_message.id, embed=embed, view=self)
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
