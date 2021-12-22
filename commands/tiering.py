@@ -131,8 +131,19 @@ class RoomMenu(discord.ui.View):
             raise RuntimeError('Room is full')
         self.members.append(interaction.user)
         embed = gen_embed(title=f'Room Code: {self.room}')
+        embed_msg = ""
+        for x in range(1,6):
+            if x < len(self.members):
+                embed_msg = embed_msg + f"P{x} - {self.members[x-1].name}#{self.members[x-1].discriminator} | "
+            if x == len(self.members) and len(self.members) == 5:
+                embed_msg = embed_msg + f"P{x} - {self.members[x-1].name}#{self.members[x-1].discriminator}"
+            else:
+                if x == 5:
+                    embed_msg = embed_msg + f"P{x} - Empty"
+                else:
+                    embed_msg = embed_msg + f"P{x} - Empty | "
         embed.add_field(name='Currently Playing',
-                        value=f"P1 - {self.members[0].name}#{self.members[0].discriminator} | P2 - {self.members[1]}#{self.members[1].discriminator} | P3 - {self.members[2]}#{self.members[2].discriminator} | P4 - {self.members[3]}#{self.members[3].discriminator} | P5 - {self.members[4]}#{self.members[4].discriminator}",
+                        value=embed_msg,
                         inline=False)
         embed_value = ""
         for member in self.queue:
@@ -168,8 +179,19 @@ class RoomMenu(discord.ui.View):
                 self.members[0], self.members[roompos_view.value] = self.members[roompos_view.value], self.members[0]
         self.members.remove(interaction.user)
         embed = gen_embed(title=f'Room Code: {self.room}')
+        embed_msg = ""
+        for x in range(1, 6):
+            if x < len(self.members):
+                embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator} | "
+            if x == len(self.members) and len(self.members) == 5:
+                embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator}"
+            else:
+                if x == 5:
+                    embed_msg = embed_msg + f"P{x} - Empty"
+                else:
+                    embed_msg = embed_msg + f"P{x} - Empty | "
         embed.add_field(name='Currently Playing',
-                        value=f"P1 - {self.members[0].name}#{self.members[0].discriminator} | P2 - {self.members[1]}#{self.members[1].discriminator} | P3 - {self.members[2]}#{self.members[2].discriminator} | P4 - {self.members[3]}#{self.members[3].discriminator} | P5 - {self.members[4]}#{self.members[4].discriminator}",
+                        value=embed_msg,
                         inline=False)
         embed_value = ""
         for member in self.queue:
@@ -196,11 +218,21 @@ class RoomMenu(discord.ui.View):
             self.leader = manageroom_view.leader
             await interaction.edit_original_message(content='Operation Completed', view=manageroom_view)
 
-            embed = gen_embed(title=f'Room Code: {room_num}')
+            embed = gen_embed(title=f'Room Code: {self.room}')
+            embed_msg = ""
+            for x in range(1, 6):
+                if x < len(self.members):
+                    embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator} | "
+                if x == len(self.members) and len(self.members) == 5:
+                    embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator}"
+                else:
+                    if x == 5:
+                        embed_msg = embed_msg + f"P{x} - Empty"
+                    else:
+                        embed_msg = embed_msg + f"P{x} - Empty | "
             embed.add_field(name='Currently Playing',
-                            value=f"P1 - {self.members[0].name}#{self.members[0].discriminator} | P2 - {self.members[1]}#{self.members[1].discriminator} | P3 - {self.members[2]}#{self.members[2].discriminator} | P4 - {self.members[3]}#{self.members[3].discriminator} | P5 - {self.members[4]}#{self.members[4].discriminator}",
+                            value=embed_msg,
                             inline=False)
-            embed_value = ""
             for member in self.queue:
                 embed_value = embed_value + f'{member.name}#{member.discriminator} '
             embed.add_field(name='Standby Queue',
