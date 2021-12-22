@@ -135,7 +135,7 @@ class RoomMenu(discord.ui.View):
         for x in range(1,6):
             if x < len(self.members):
                 embed_msg = embed_msg + f"P{x} - {self.members[x-1].name}#{self.members[x-1].discriminator} | "
-            if x == len(self.members) and len(self.members) == 5:
+            elif x == len(self.members) and len(self.members) == 5:
                 embed_msg = embed_msg + f"P{x} - {self.members[x-1].name}#{self.members[x-1].discriminator}"
             else:
                 if x == 5:
@@ -186,7 +186,7 @@ class RoomMenu(discord.ui.View):
         for x in range(1, 6):
             if x < len(self.members):
                 embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator} | "
-            if x == len(self.members) and len(self.members) == 5:
+            elif x == len(self.members) and len(self.members) == 5:
                 embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator}"
             else:
                 if x == 5:
@@ -217,19 +217,20 @@ class RoomMenu(discord.ui.View):
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
             raise RuntimeError('Non-authorized user attempted to manage room')
         else:
+            await interaction.response.defer()
             manageroom_view = ManageMenu(user = self.leader, leader = self.leader, members = self.members)
-            await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
+            sent_message = await interaction.followup.send(content='Manage Room', view=manageroom_view, ephemeral=True)
             await manageroom_view.wait()
             self.members = manageroom_view.members
             self.leader = manageroom_view.leader
-            await interaction.edit_original_message(content='Operation Completed', view=manageroom_view)
+            await sent_message.edit(content='Operation Completed', view=manageroom_view)
 
             embed = gen_embed(title=f'Room Code: {self.room}')
             embed_msg = ""
             for x in range(1, 6):
                 if x < len(self.members):
                     embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator} | "
-                if x == len(self.members) and len(self.members) == 5:
+                elif x == len(self.members) and len(self.members) == 5:
                     embed_msg = embed_msg + f"P{x} - {self.members[x - 1].name}#{self.members[x - 1].discriminator}"
                 else:
                     if x == 5:
@@ -252,6 +253,10 @@ class RoomMenu(discord.ui.View):
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
     async def closeroom(self, button:discord.ui.Button, interaction: discord.Interaction):
+        if interaction.user != self.leader:
+            await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
+            raise RuntimeError('Non-authorized user attempted to close room')
+        
         embed = gen_embed(title=f'Room Code: {self.room}',
                           content='Room Closed')
         for item in self.children:
