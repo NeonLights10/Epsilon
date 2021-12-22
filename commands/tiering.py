@@ -118,8 +118,8 @@ class RoomMenu(discord.ui.View):
         super().__init__(timeout=None)
         self.context = ctx
         self.leader = ctx.author
-        self.members = [None] * 5
-        self.members[0] = self.leader
+        self.members = []
+        self.members.append(self.leader)
         self.room = roomnum
         self.queue = []
 
@@ -130,13 +130,13 @@ class RoomMenu(discord.ui.View):
         if len(self.members) >= 5:
             raise RuntimeError('Room is full')
         self.members.append(interaction.user)
-        embed = gen_embed(title=f'Room Code: {room_num}')
+        embed = gen_embed(title=f'Room Code: {self.room}')
         embed.add_field(name='Currently Playing',
-                        value=f"P1 - {self.members[0]} | P2 - {self.members[1]} | P3 - {self.members[2]} | P4 - {self.members[3]} | P5 - {self.members[4]}\n",
+                        value=f"P1 - {self.members[0].name}#{self.members[0].discriminator} | P2 - {self.members[1]}#{self.members[1].discriminator} | P3 - {self.members[2]}#{self.members[2].discriminator} | P4 - {self.members[3]}#{self.members[3].discriminator} | P5 - {self.members[4]}#{self.members[4].discriminator}",
                         inline=False)
         embed_value = ""
         for member in self.queue:
-            embed_value = embed_value + f'{member.name}{member.discriminator} '
+            embed_value = embed_value + f'{member.name}#{member.discriminator} '
         embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
@@ -162,13 +162,13 @@ class RoomMenu(discord.ui.View):
                 self.leader = self.members[roompos_view.value]
                 self.members[0], self.members[roompos_view.value] = self.members[roompos_view.value], self.members[0]
         self.members.remove(interaction.user)
-        embed = gen_embed(title=f'Room Code: {room_num}')
+        embed = gen_embed(title=f'Room Code: {self.room}')
         embed.add_field(name='Currently Playing',
-                        value=f"P1 - {self.members[0]} | P2 - {self.members[1]} | P3 - {self.members[2]} | P4 - {self.members[3]} | P5 - {self.members[4]}\n",
+                        value=f"P1 - {self.members[0].name}#{self.members[0].discriminator} | P2 - {self.members[1]}#{self.members[1].discriminator} | P3 - {self.members[2]}#{self.members[2].discriminator} | P4 - {self.members[3]}#{self.members[3].discriminator} | P5 - {self.members[4]}#{self.members[4].discriminator}",
                         inline=False)
         embed_value = ""
         for member in self.queue:
-            embed_value = embed_value + f'{member.name}{member.discriminator} '
+            embed_value = embed_value + f'{member.name}#{member.discriminator} '
         embed.add_field(name='Standby Queue',
                         value=f'{embed_value}',
                         inline=False)
@@ -184,7 +184,7 @@ class RoomMenu(discord.ui.View):
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
             raise RuntimeError('Non-authorized user attempted to manage room')
         else:
-            manageroom_view = ManageMenu(user = self.leader, members = self.members)
+            manageroom_view = ManageMenu(user = self.leader, leader = self.leader, members = self.members)
             await interaction.response.send_message(content='Manage Room', view=manageroom_view, ephemeral=True)
             await manageroom_view.wait()
             self.members = manageroom_view.members
@@ -193,11 +193,11 @@ class RoomMenu(discord.ui.View):
 
             embed = gen_embed(title=f'Room Code: {room_num}')
             embed.add_field(name='Currently Playing',
-                            value=f"P1 - {self.members[0]} | P2 - {self.members[1]} | P3 - {self.members[2]} | P4 - {self.members[3]} | P5 - {self.members[4]}\n",
+                            value=f"P1 - {self.members[0].name}#{self.members[0].discriminator} | P2 - {self.members[1]}#{self.members[1].discriminator} | P3 - {self.members[2]}#{self.members[2].discriminator} | P4 - {self.members[3]}#{self.members[3].discriminator} | P5 - {self.members[4]}#{self.members[4].discriminator}",
                             inline=False)
             embed_value = ""
             for member in self.queue:
-                embed_value = embed_value + f'{member.name}{member.discriminator} '
+                embed_value = embed_value + f'{member.name}#{member.discriminator} '
             embed.add_field(name='Standby Queue',
                             value=f'{embed_value}',
                             inline=False)
@@ -205,7 +205,7 @@ class RoomMenu(discord.ui.View):
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
     async def closeroom(self, button:discord.ui.Button, interaction: discord.Interaction):
-        embed = gen_embed(title=f'Room Code: {room_num}',
+        embed = gen_embed(title=f'Room Code: {self.room}',
                           content='Room Closed')
         for item in self.children:
             item.disabled = True
@@ -907,7 +907,7 @@ class Tiering(commands.Cog):
         room_view = RoomMenu(ctx, room_num)
         embed = gen_embed(title=f'Room Code: {room_num}')
         embed.add_field(name='Currently Playing',
-                        value=f"P1 - {ctx.author.name}{ctx.author.discriminator}",
+                        value=f"P1 - {ctx.author.name}#{ctx.author.discriminator}",
                         inline=False)
         embed.add_field(name='Standby Queue',
                         value=f'Empty',
