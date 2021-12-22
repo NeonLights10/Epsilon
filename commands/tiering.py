@@ -219,6 +219,7 @@ class RoomMenu(discord.ui.View):
         else:
             await interaction.response.defer()
             manageroom_view = ManageMenu(user = self.leader, leader = self.leader, members = self.members)
+            original_message = await interaction.original_message()
             sent_message = await interaction.followup.send(content='Manage Room', view=manageroom_view, ephemeral=True)
             await manageroom_view.wait()
             self.members = manageroom_view.members
@@ -249,7 +250,7 @@ class RoomMenu(discord.ui.View):
             embed.add_field(name='Standby Queue',
                             value=f'{embed_value}',
                             inline=False)
-            await interaction.edit_original_message(embed=embed, view=self)
+            await interaction.followup.edit_message(original_message.id, embed=embed, view=self)
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
     async def closeroom(self, button:discord.ui.Button, interaction: discord.Interaction):
