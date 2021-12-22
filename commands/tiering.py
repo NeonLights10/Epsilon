@@ -133,7 +133,7 @@ class RoomMenu(discord.ui.View):
         embed = gen_embed(title=f'Room Code: {self.room}')
         embed_msg = ""
         for x in range(1,6):
-            if x < len(self.members):
+            if x <= len(self.members) and len(self.members) != 5:
                 embed_msg = embed_msg + f"P{x} - {self.members[x-1].name}#{self.members[x-1].discriminator} | "
             elif x == len(self.members) and len(self.members) == 5:
                 embed_msg = embed_msg + f"P{x} - {self.members[x-1].name}#{self.members[x-1].discriminator}"
@@ -249,14 +249,14 @@ class RoomMenu(discord.ui.View):
             embed.add_field(name='Standby Queue',
                             value=f'{embed_value}',
                             inline=False)
-            await interaction.response.edit_message(embed=embed, view=self)
+            await interaction.edit_original_message(embed=embed, view=self)
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
     async def closeroom(self, button:discord.ui.Button, interaction: discord.Interaction):
         if interaction.user != self.leader:
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
             raise RuntimeError('Non-authorized user attempted to close room')
-        
+
         embed = gen_embed(title=f'Room Code: {self.room}',
                           content='Room Closed')
         for item in self.children:

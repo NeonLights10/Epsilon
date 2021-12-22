@@ -166,7 +166,7 @@ class Miscellaneous(commands.Cog):
                     try:
                         channel = self.bot.get_channel(document['announcement_channel'])
                         if channel.permissions_for(guild.me).send_messages:
-                            await channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                            await channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                             log.info('Sent in announcement channel')
                             continue
                         else:
@@ -175,14 +175,14 @@ class Miscellaneous(commands.Cog):
                         pass
                 try:
                     if guild.public_updates_channel and guild.public_updates_channel.permissions_for(guild.me).send_messages:
-                        await guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                        await guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                         log.info('Sent in public update channel')
                         continue
                 except Exception as e:
                     pass
                 try:
                     if guild.system_channel and guild.system_channel.permissions_for(guild.me).send_messages:
-                        await guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                        await guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                         log.info('Sent in system channel')
                         continue
                 except Exception as e:
@@ -190,7 +190,7 @@ class Miscellaneous(commands.Cog):
                 try:
                     general = discord.utils.find(lambda x: x.name == 'general', guild.text_channels)
                     if general and general.permissions_for(guild.me).send_messages:
-                        await general.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                        await general.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                         log.info('Sent in general channel')
                         continue
                 except Exception as e:
@@ -199,7 +199,7 @@ class Miscellaneous(commands.Cog):
                     for channel in guild.text_channels:
                         try:
                             if channel.permissions_for(guild.me).send_messages:
-                                await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                                await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                                 log.info('Sent in first available channel')
                                 break
                         except Exception as e:
