@@ -4,14 +4,137 @@ import asyncio
 import time
 
 from typing import Union
-from discord.ext import commands
+from discord.ext import commands, tasks
 from formatting.embed import gen_embed
 from __main__ import log, db
 
+# Define a simple View that gives us a confirmation menu
+class Confirm(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    # When the confirm button is pressed, set the inner value to `True` and
+    # stop the View from listening to more input.
+    # We also send the user an ephemeral message that we're confirming their choice.
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
+    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
+        #await interaction.response.send_message("Confirming", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = True
+        self.stop()
+
+    # This one is similar to the confirmation button except sets the inner value to `False`
+    @discord.ui.button(label="No", style=discord.ButtonStyle.red)
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Modmail cancelled.", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = False
+        self.stop()
+
+
+class PersistentEvent(discord.ui.View):
+    def __init__(self, guild):
+        super().__init__(timeout=None)
+        self.guild = guild
+
+    @discord.ui.button(
+        label="Send a modmail!",
+        style=discord.ButtonStyle.primary,
+        custom_id="persistent_view:sendmodmail",
+    )
+    async def send_modmail(self, button: discord.ui.Button, interaction: discord.Interaction):
+        async def modmail_prompt(listen_channel: discord.DMChannel):
+            def check(m):
+                return m.author == interaction.user and m.channel == listen_channel
+
+            await listen_channel.send(embed=gen_embed(title='Modmail Message Contents',
+                                           content='Please type out your modmail below and send. You can send images by adding an attachement to the message you send.'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+            except asyncio.TimeoutError:
+                await listen_channel.send(embed=gen_embed(title='Modmail Cancelled',
+                                               content='The modmail has been cancelled.'))
+                return
+            return mmsg
+
+        interaction.response.defer()
+        dm_channel = interaction.user.dm_channel
+        if not dm_channel:
+            dm_channel = interaction.user.create_dm()
+        modmail_content = await modmail_prompt(dm_channel)
+
+        view = Confirm()
+        interaction.response.send_message(embed=gen_embed(title='Are you sure you want to send this?',
+                                                          content='Please verify the contents before confirming.'),
+                                          view=view)
+        await view.wait()
+        interaction.response.edit_message(embed=gen_embed(title='Are you sure you want to send this?',
+                                                          content='Please verify the contents before confirming.'),
+                                          view=view)
+
+        if view.value:
+            document = await db.servers.find_one({"server_id": guild.id})
+            if document['modmail_channel']:
+                embed = gen_embed(name=f'{mmsg.author.name}#{mmsg.author.discriminator}',
+                                  icon_url=mmsg.author.display_avatar.url,
+                                  title='New Modmail',
+                                  content=f'{mmsg.clean_content}\n\nYou may reply to this modmail using the reply function.')
+                embed.set_footer(text=f'{mmsg.author.id}')
+                channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], guild.channels)
+                await channel.send(embed=embed)
+                if len(ctx.message.attachments) > 0:
+                    attachnum = 1
+                    for attachment in ctx.message.attachments:
+                        embed = gen_embed(name=f'{mmsg.author.name}#{mmsg.author.discriminator}',
+                                          icon_url=mmsg.author.display_avatar.url, title='Attachment',
+                                          content=f'Attachment #{attachnum}:')
+                        embed.set_image(url=attachment.url)
+                        embed.set_footer(text=f'{mmsg.author.id}')
+                        await channel.send(embed=embed)
+                        attachnum += 1
+                await channel.send(content=f"{mmsg.author.mention}")
+                await dm_channel.send(embed=gen_embed(title='Modmail sent',
+                                               content='The moderators will review your message and get back to you shortly.'))
+            else:
+                log.warning("Error: Modmail is Disabled")
+                await dm_channel.send(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
+        else:
+            await dm_channel.send(embed=gen_embed(title='Modmail Cancelled',
+                                                      content='The modmail has been cancelled.'))
 
 class Modmail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.view = None
+        self.modmail_button.start()
+
+    @tasks.loop(seconds=1.0, count=1)
+    async def modmail_button(self):
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(804365790412406814)
+        if document['prev_message_modmail']:
+            message_id = document['prev_message_modmail']
+            prev_message = await channel.fetch_message(int(message_id))
+            await prev_message.delete()
+            log.info('initial deleted')
+        self.view = PersistentEvent(guild=pubcord)
+        new_message = await channel.send("Send a modmail to us by pressing the button below!", view=self.view)
+        log.info('initial posted')
+        await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message_modmail': new_message.id}})
+
+    @modmail_button.before_loop
+    async def wait_ready(self):
+        # log.info('wait till ready')
+        await self.bot.wait_until_ready()
 
     @commands.command(name='modmail',
                       description='Start a modmail. A modmail channel must be configured first before using this command.\nUse %serverconfig modmail [channel]',

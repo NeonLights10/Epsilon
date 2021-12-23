@@ -1442,7 +1442,7 @@ class Administration(commands.Cog):
             await ctx.send(embed=gen_embed(title='Modmail Message Contents',
                                            content='Please type out your modmail below and send. Remember, you have a character limit (currently).'))
             try:
-                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
             except asyncio.TimeoutError:
                 await ctx.send(embed=gen_embed(title='Modmail Cancelled',
                                                content='The modmail has been cancelled.'))

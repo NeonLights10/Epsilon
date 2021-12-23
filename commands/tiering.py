@@ -23,35 +23,35 @@ class RoomPositionMenu(discord.ui.View):
 
     @discord.ui.button(emoji='1️⃣', style=discord.ButtonStyle.secondary)
     async def one(self, button: discord.ui.Button, interaction: discord.Interaction):
-        self.value = 1
+        self.value = 0
         for item in self.children:
             item.disabled = True
         self.stop()
 
     @discord.ui.button(emoji='2️⃣', style=discord.ButtonStyle.secondary)
     async def two(self, button: discord.ui.Button, interaction: discord.Interaction):
-        self.value = 2
+        self.value = 1
         for item in self.children:
             item.disabled = True
         self.stop()
 
     @discord.ui.button(emoji='3️⃣', style=discord.ButtonStyle.secondary)
     async def three(self, button: discord.ui.Button, interaction: discord.Interaction):
-        self.value = 3
+        self.value = 2
         for item in self.children:
             item.disabled = True
         self.stop()
 
     @discord.ui.button(emoji='4️⃣', style=discord.ButtonStyle.secondary)
     async def four(self, button: discord.ui.Button, interaction: discord.Interaction):
-        self.value = 4
+        self.value = 3
         for item in self.children:
             item.disabled = True
         self.stop()
 
     @discord.ui.button(emoji='5️⃣', style=discord.ButtonStyle.secondary)
     async def five(self, button: discord.ui.Button, interaction: discord.Interaction):
-        self.value = 5
+        self.value = 4
         for item in self.children:
             item.disabled = True
         self.stop()
@@ -73,10 +73,13 @@ class ManageMenu(discord.ui.View):
     async def kickuser(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user = self.user)
         roompos_view.children[0].disabled = True
+        for x in range(0,5):
+            if x > len(self.members):
+                roompos_view.children[x].disabled = True
         await interaction.response.send_message(content='Which user do you want to kick?', view=roompos_view,
                                                 ephemeral=True)
         await roompos_view.wait()
-        await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
+        await interaction.edit_original_message(content=f'You selected position {roompos_view.value+1}', view=None)
         del self.members[roompos_view.value]
         for item in self.children:
             item.disabled = True
@@ -93,10 +96,13 @@ class ManageMenu(discord.ui.View):
     async def transferowner(self, button: discord.ui.Button, interaction: discord.Interaction):
         roompos_view = RoomPositionMenu(user=interaction.user)
         roompos_view.children[0].disabled = True
+        for x in range(0,5):
+            if x > len(self.members):
+                roompos_view.children[x].disabled = True
         await interaction.response.send_message(content='Please transfer ownership to another user.', view=roompos_view,
                                                 ephemeral=True)
         await roompos_view.wait()
-        await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
+        await interaction.edit_original_message(content=f'You selected position {roompos_view.value+1}', view=None)
         self.leader = self.members[roompos_view.value]
         self.members[0], self.members[roompos_view.value] = self.members[roompos_view.value], self.members[0]
         for item in self.children:
@@ -191,7 +197,7 @@ class RoomMenu(discord.ui.View):
                 await interaction.response.send_message(content='Please transfer ownership to another user.', view=roompos_view,
                                                         ephemeral=True)
                 await roompos_view.wait()
-                await interaction.edit_original_message(content=f'You selected position {roompos_view.value}', view=None)
+                await interaction.edit_original_message(content=f'You selected position {roompos_view.value+1}', view=None)
                 self.leader = self.members[roompos_view.value]
                 self.members[0], self.members[roompos_view.value] = self.members[roompos_view.value], self.members[0]
         self.members.remove(interaction.user)
@@ -233,10 +239,11 @@ class RoomMenu(discord.ui.View):
     async def manageroom(self, button:discord.ui.Button, interaction: discord.Interaction):
         log.info(f'{interaction.user.name} triggered the manageroom button')
         debug_output = "["
-        #for member in self.members:
-        #    debug_output = debug_output + f'{member.name}, '
-        #log.info(debug_output)
+        for member in self.members:
+            debug_output = debug_output + f'{member.name}, '
+        log.info(debug_output)
         if interaction.user != self.leader:
+            #ALLOW MODS TO CLOSE ROOMS
             await interaction.response.send_message(content='You do not have permission to manage this room.', ephemeral=True)
             raise RuntimeError('Non-authorized user attempted to manage room')
         else:
@@ -274,9 +281,9 @@ class RoomMenu(discord.ui.View):
                             value=f'{embed_value}',
                             inline=False)
             debug_output = "["
-            #for member in self.members:
-            #    debug_output = debug_output + f'{member.name}, '
-            #log.info(debug_output)
+            for member in self.members:
+                debug_output = debug_output + f'{member.name}, '
+            log.info(debug_output)
             await interaction.followup.edit_message(original_message.id, embed=embed, view=self)
 
     @discord.ui.button(label='Close Room', row = 1, style=discord.ButtonStyle.danger, custom_id="persistent_view:closeroom")
