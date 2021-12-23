@@ -566,6 +566,7 @@ class GiftboxMenu(discord.ui.View):
 class Tiering(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.active_timers = []
 
     def convert_room(argument):
         if re.search('^\d{5}$', argument):
@@ -985,6 +986,34 @@ class Tiering(commands.Cog):
         sent_message = await ctx.send(embed=embed, view=giftbox_view)
         await giftbox_view.wait()
         await sent_message.edit(view=giftbox_view)
+
+    @commands.command(name='refilltimer',
+                      aliases=['refill'],
+                      description='Starts a timer that will remind you to refill when you have 1-3 games left. Based on average of 2 minutes per game.',
+                      help='Usage:\n\n%refilltimer\nTo stop the time: %refilltimer cancel')
+    async def refilltimer(self, ctx, option: Optional[str]):
+        count = 0
+        if option:
+            if option == 'cancel' and ctx.channel.id in self.active_timers:
+                self.active_timers.remove(ctx.channel.id)
+            else:
+                ctx.send(embed=gen_embed(title='Refill Timer', content='Timer is not running in this channel!'))
+                return
+        else:
+            if ctx.channel.id in self.active_timers:
+                ctx.send(embed=gen_embed(title='Refill Timer', content='Timer is already running in this channel!'))
+                return
+            else:
+                self.active_timers.append(ctx.channel.id)
+                while count < 30 and ctx.channel.id in self.active_timers:
+                    if self.current_loop == 27:
+                        ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 3 games left! Prepare to refill.'))
+                    if self.current_loop == 28:
+                        ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 2 games left! Prepare to refill.'))
+                    if self.current_loop == 29:
+                        ctx.send(embed=gen_embed(title='Refill Timer', content='Refill after this game!'))
+                    count += 1
+                    await asyncio.sleep(120)
 
     @commands.command(name='roomview',
                       aliases=['rmv', 'rv'],
