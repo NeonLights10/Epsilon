@@ -65,18 +65,18 @@ class PersistentEvent(discord.ui.View):
                 return
             return mmsg
 
-        interaction.response.defer()
+        await interaction.response.defer()
         dm_channel = interaction.user.dm_channel
         if not dm_channel:
-            dm_channel = interaction.user.create_dm()
+            dm_channel = await interaction.user.create_dm()
         modmail_content = await modmail_prompt(dm_channel)
 
         view = Confirm()
-        interaction.response.send_message(embed=gen_embed(title='Are you sure you want to send this?',
+        await interaction.response.send_message(embed=gen_embed(title='Are you sure you want to send this?',
                                                           content='Please verify the contents before confirming.'),
                                           view=view)
         await view.wait()
-        interaction.response.edit_message(embed=gen_embed(title='Are you sure you want to send this?',
+        await interaction.response.edit_message(embed=gen_embed(title='Are you sure you want to send this?',
                                                           content='Please verify the contents before confirming.'),
                                           view=view)
 
