@@ -77,14 +77,14 @@ class PersistentEvent(discord.ui.View):
                                           view=view)
 
         if view.value:
-            document = await db.servers.find_one({"server_id": guild.id})
+            document = await db.servers.find_one({"server_id": self.guild.id})
             if document['modmail_channel']:
                 embed = gen_embed(name=f'{mmsg.author.name}#{mmsg.author.discriminator}',
                                   icon_url=mmsg.author.display_avatar.url,
                                   title='New Modmail',
                                   content=f'{mmsg.clean_content}\n\nYou may reply to this modmail using the reply function.')
                 embed.set_footer(text=f'{mmsg.author.id}')
-                channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], guild.channels)
+                channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], self.guild.channels)
                 await channel.send(embed=embed)
                 if len(ctx.message.attachments) > 0:
                     attachnum = 1
