@@ -14,11 +14,6 @@ class Confirm(discord.ui.View):
         super().__init__()
         self.value = None
 
-    async def interaction_check(self, interaction):
-        if interaction.user != self.context.author:
-            return False
-        return True
-
     # When the confirm button is pressed, set the inner value to `True` and
     # stop the View from listening to more input.
     # We also send the user an ephemeral message that we're confirming their choice.
