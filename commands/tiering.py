@@ -1008,15 +1008,18 @@ class Tiering(commands.Cog):
             else:
                 self.active_timers.append(ctx.channel.id)
                 await ctx.send(embed=gen_embed(title='Refill Timer', content='Started refill timer.'))
-                while count < 30 and ctx.channel.id in self.active_timers:
-                    if count == 27:
-                        await ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 3 games left! Prepare to refill.'))
-                    if count == 28:
-                        await ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 2 games left! Prepare to refill.'))
-                    if count == 29:
-                        await ctx.send(embed=gen_embed(title='Refill Timer', content='Refill after this game!'))
-                    count += 1
-                    await asyncio.sleep(120)
+                while count < 30:
+                    if ctx.channel.id in self.active_timers:
+                        if count == 27:
+                            await ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 3 games left! Prepare to refill.'))
+                        if count == 28:
+                            await ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 2 games left! Prepare to refill.'))
+                        if count == 29:
+                            await ctx.send(embed=gen_embed(title='Refill Timer', content='Refill after this game!'))
+                        count += 1
+                        await asyncio.sleep(120)
+                    else:
+                        break
 
     @commands.command(name='roomview',
                       aliases=['rmv', 'rv'],
