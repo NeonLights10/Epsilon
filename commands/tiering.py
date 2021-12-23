@@ -1006,11 +1006,11 @@ class Tiering(commands.Cog):
             else:
                 self.active_timers.append(ctx.channel.id)
                 while count < 30 and ctx.channel.id in self.active_timers:
-                    if self.current_loop == 27:
+                    if count == 27:
                         ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 3 games left! Prepare to refill.'))
-                    if self.current_loop == 28:
+                    if count == 28:
                         ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 2 games left! Prepare to refill.'))
-                    if self.current_loop == 29:
+                    if count == 29:
                         ctx.send(embed=gen_embed(title='Refill Timer', content='Refill after this game!'))
                     count += 1
                     await asyncio.sleep(120)
