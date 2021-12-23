@@ -41,9 +41,10 @@ class Confirm(discord.ui.View):
 
 
 class PersistentEvent(discord.ui.View):
-    def __init__(self, guild):
+    def __init__(self, guild, bot):
         super().__init__(timeout=None)
         self.guild = guild
+        self.bot = bot
 
     @discord.ui.button(
         label="Send a modmail!",
@@ -126,7 +127,7 @@ class Modmail(commands.Cog):
             prev_message = await channel.fetch_message(int(message_id))
             await prev_message.delete()
             log.info('initial deleted')
-        self.view = PersistentEvent(guild=pubcord)
+        self.view = PersistentEvent(guild=pubcord, bot=self.bot)
         new_message = await channel.send("Send a modmail to us by pressing the button below!", view=self.view)
         log.info('initial posted')
         await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message_modmail': new_message.id}})
