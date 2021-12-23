@@ -996,6 +996,8 @@ class Tiering(commands.Cog):
         if option:
             if option == 'cancel' and ctx.channel.id in self.active_timers:
                 self.active_timers.remove(ctx.channel.id)
+                await ctx.send(embed=gen_embed(title='Refill Timer', content='Timer cancelled.'))
+                return
             else:
                 await ctx.send(embed=gen_embed(title='Refill Timer', content='Timer is not running in this channel!'))
                 return
