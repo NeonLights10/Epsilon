@@ -1005,6 +1005,7 @@ class Tiering(commands.Cog):
                 return
             else:
                 self.active_timers.append(ctx.channel.id)
+                ctx.send(embed=gen_embed(title='Refill Timer', content='Started refill timer.'))
                 while count < 30 and ctx.channel.id in self.active_timers:
                     if count == 27:
                         ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 3 games left! Prepare to refill.'))
