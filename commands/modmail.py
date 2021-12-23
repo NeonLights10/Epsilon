@@ -79,24 +79,24 @@ class PersistentEvent(discord.ui.View):
         if view.value:
             document = await db.servers.find_one({"server_id": self.guild.id})
             if document['modmail_channel']:
-                embed = gen_embed(name=f'{mmsg.author.name}#{mmsg.author.discriminator}',
-                                  icon_url=mmsg.author.display_avatar.url,
+                embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                  icon_url=modmail_content.author.display_avatar.url,
                                   title='New Modmail',
-                                  content=f'{mmsg.clean_content}\n\nYou may reply to this modmail using the reply function.')
-                embed.set_footer(text=f'{mmsg.author.id}')
+                                  content=f'{modmail_content.clean_content}\n\nYou may reply to this modmail using the reply function.')
+                embed.set_footer(text=f'{modmail_content.author.id}')
                 channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], self.guild.channels)
                 await channel.send(embed=embed)
-                if len(ctx.message.attachments) > 0:
+                if len(modmail_content.attachments) > 0:
                     attachnum = 1
-                    for attachment in ctx.message.attachments:
-                        embed = gen_embed(name=f'{mmsg.author.name}#{mmsg.author.discriminator}',
-                                          icon_url=mmsg.author.display_avatar.url, title='Attachment',
+                    for attachment in modmail_content.attachments:
+                        embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                          icon_url=modmail_content.author.display_avatar.url, title='Attachment',
                                           content=f'Attachment #{attachnum}:')
                         embed.set_image(url=attachment.url)
-                        embed.set_footer(text=f'{mmsg.author.id}')
+                        embed.set_footer(text=f'{modmail_content.author.id}')
                         await channel.send(embed=embed)
                         attachnum += 1
-                await channel.send(content=f"{mmsg.author.mention}")
+                await channel.send(content=f"{modmail_content.author.mention}")
                 await dm_channel.send(embed=gen_embed(title='Modmail sent',
                                                content='The moderators will review your message and get back to you shortly.'))
             else:
