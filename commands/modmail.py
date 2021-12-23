@@ -68,7 +68,7 @@ class PersistentEvent(discord.ui.View):
         modmail_content = await modmail_prompt(dm_channel)
 
         view = Confirm()
-        sent_message = await interaction.followup.send(embed=gen_embed(title='Are you sure you want to send this?',
+        sent_message = await dm_channel.send(embed=gen_embed(title='Are you sure you want to send this?',
                                                           content='Please verify the contents before confirming.'),
                                           view=view)
         await view.wait()
