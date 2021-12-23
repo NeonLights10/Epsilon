@@ -997,22 +997,22 @@ class Tiering(commands.Cog):
             if option == 'cancel' and ctx.channel.id in self.active_timers:
                 self.active_timers.remove(ctx.channel.id)
             else:
-                ctx.send(embed=gen_embed(title='Refill Timer', content='Timer is not running in this channel!'))
+                await ctx.send(embed=gen_embed(title='Refill Timer', content='Timer is not running in this channel!'))
                 return
         else:
             if ctx.channel.id in self.active_timers:
-                ctx.send(embed=gen_embed(title='Refill Timer', content='Timer is already running in this channel!'))
+                await ctx.send(embed=gen_embed(title='Refill Timer', content='Timer is already running in this channel!'))
                 return
             else:
                 self.active_timers.append(ctx.channel.id)
-                ctx.send(embed=gen_embed(title='Refill Timer', content='Started refill timer.'))
+                await ctx.send(embed=gen_embed(title='Refill Timer', content='Started refill timer.'))
                 while count < 30 and ctx.channel.id in self.active_timers:
                     if count == 27:
-                        ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 3 games left! Prepare to refill.'))
+                        await ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 3 games left! Prepare to refill.'))
                     if count == 28:
-                        ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 2 games left! Prepare to refill.'))
+                        await ctx.send(embed=gen_embed(title='Refill Timer', content='Estimated 2 games left! Prepare to refill.'))
                     if count == 29:
-                        ctx.send(embed=gen_embed(title='Refill Timer', content='Refill after this game!'))
+                        await ctx.send(embed=gen_embed(title='Refill Timer', content='Refill after this game!'))
                     count += 1
                     await asyncio.sleep(120)
 
