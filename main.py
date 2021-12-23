@@ -466,7 +466,7 @@ async def on_message(message):
                     await bot.invoke(ctx)
             else:
                 #await ctx.send(embed=gen_embed(title='Sorry...',
-                                               content="Kanon does not accept regular messages in DM.\nAre you trying to send a modmail? Please make sure to use discord's reply function on any message from Kanon with the server id in the footer (see image below) OR send a command by doing %modmail <server id> <message content>."))
+                #                               content="Kanon does not accept regular messages in DM.\nAre you trying to send a modmail? Please make sure to use discord's reply function on any message from Kanon with the server id in the footer (see image below) OR send a command by doing %modmail <server id> <message content>."))
                 #await ctx.send(content="https://files.s-neon.xyz/share/DiscordPTB_OeITM0GLtA.png")
                 pass
 
