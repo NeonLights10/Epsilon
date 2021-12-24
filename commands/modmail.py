@@ -123,7 +123,7 @@ class Modmail(commands.Cog):
             await prev_message.delete()
             log.info('initial deleted')
         self.view = PersistentEvent(guild=pubcord, bot=self.bot)
-        new_message = await channel.send("Send a modmail to us by pressing the button below!", view=self.view)
+        new_message = await channel.send("Send a modmail to us by pressing the button below. This will notify the whole moderation team.\nPlease only use this to report any disruptions or issues. Abuse of this service will result in a strike.", view=self.view)
         log.info('initial posted')
         await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message_modmail': new_message.id}})
 
