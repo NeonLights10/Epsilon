@@ -1440,7 +1440,7 @@ class Administration(commands.Cog):
                 return m.author == ctx.author and m.channel == ctx.channel
 
             await ctx.send(embed=gen_embed(title='Modmail Message Contents',
-                                           content='Please type out your modmail below and send. Remember, you have a character limit (currently).'))
+                                           content='Please type out your modmail below and send.'))
             try:
                 mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
             except asyncio.TimeoutError:
