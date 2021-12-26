@@ -5,7 +5,7 @@ import time
 
 from typing import Union
 from discord.ext import commands, tasks
-from formatting.embed import gen_embed
+from formatting.embed import gen_embed, embed_splitter
 from __main__ import log, db
 
 # Define a simple View that gives us a confirmation menu
@@ -58,7 +58,7 @@ class PersistentEvent(discord.ui.View):
             except asyncio.TimeoutError:
                 await listen_channel.send(embed=gen_embed(title='Modmail Cancelled',
                                                content='The modmail has been cancelled.'))
-                return
+                return None
             return mmsg
 
         await interaction.response.defer()
@@ -67,44 +67,59 @@ class PersistentEvent(discord.ui.View):
             dm_channel = await interaction.user.create_dm()
         modmail_content = await modmail_prompt(dm_channel)
 
-        view = Confirm()
-        sent_message = await dm_channel.send(embed=gen_embed(title='Are you sure you want to send this?',
-                                                          content='Please verify the contents before confirming.'),
-                                          view=view)
-        await view.wait()
-        await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
-                                                          content='Please verify the contents before confirming.'),
-                                          view=view)
+        if modmail_content:
 
-        if view.value:
-            document = await db.servers.find_one({"server_id": self.guild.id})
-            if document['modmail_channel']:
-                embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
-                                  icon_url=modmail_content.author.display_avatar.url,
-                                  title='New Modmail',
-                                  content=f'{modmail_content.clean_content}\n\nYou may reply to this modmail using the reply function.')
-                embed.set_footer(text=f'{modmail_content.author.id}')
-                channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], self.guild.channels)
-                await channel.send(embed=embed)
-                if len(modmail_content.attachments) > 0:
-                    attachnum = 1
-                    for attachment in modmail_content.attachments:
-                        embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
-                                          icon_url=modmail_content.author.display_avatar.url, title='Attachment',
-                                          content=f'Attachment #{attachnum}:')
-                        embed.set_image(url=attachment.url)
-                        embed.set_footer(text=f'{modmail_content.author.id}')
-                        await channel.send(embed=embed)
-                        attachnum += 1
-                await channel.send(content=f"{modmail_content.author.mention}")
-                await dm_channel.send(embed=gen_embed(title='Modmail sent',
-                                               content='The moderators will review your message and get back to you shortly.'))
+            view = Confirm()
+            sent_message = await dm_channel.send(embed=gen_embed(title='Are you sure you want to send this?',
+                                                              content='Please verify the contents before confirming.'),
+                                              view=view)
+            timeout = await view.wait()
+            if timeout:
+                for item in view.children:
+                    item.disabled = True
+                    await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
+                                                            content='Please verify the contents before confirming.'),
+                                            view=view)
+                    return
+            await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
+                                                              content='Please verify the contents before confirming.'),
+                                              view=view)
+
+            if view.value:
+                document = await db.servers.find_one({"server_id": self.guild.id})
+                if document['modmail_channel']:
+                    embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                      icon_url=modmail_content.author.display_avatar.url,
+                                      title='New Modmail',
+                                      content=f'{modmail_content.clean_content}\n\nYou may reply to this modmail using the reply function.')
+                    embed.set_footer(text=f'{modmail_content.author.id}')
+                    channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], self.guild.channels)
+                    await embed_splitter(embed=embed, destination=channel, footer=str(modmail_content.author.id))
+                    if len(modmail_content.attachments) > 0:
+                        attachnum = 1
+                        valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif', 'image/heif',
+                                            'image/bmp', 'image/gif', 'image/vnd.mozilla.apng', 'image/tiff']
+                        for attachment in modmail_content.attachments:
+                            if attachment.content_type in valid_media_type:
+                                embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                                  icon_url=modmail_content.author.display_avatar.url, title='Attachment',
+                                                  content=f'Attachment #{attachnum}:')
+                                embed.set_image(url=attachment.url)
+                                embed.set_footer(text=f'{modmail_content.author.id}')
+                                await channel.send(embed=embed)
+                                attachnum += 1
+                            else:
+                                await dm_channel.send(content=f'Attachment #{attachnum} is not a supported media type.')
+                                attachnum += 1
+                    await channel.send(content=f"{modmail_content.author.mention}")
+                    await dm_channel.send(embed=gen_embed(title='Modmail sent',
+                                                   content='The moderators will review your message and get back to you shortly.'))
+                else:
+                    log.warning("Error: Modmail is Disabled")
+                    await dm_channel.send(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
             else:
-                log.warning("Error: Modmail is Disabled")
-                await dm_channel.send(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
-        else:
-            await dm_channel.send(embed=gen_embed(title='Modmail Cancelled',
-                                                      content='The modmail has been cancelled.'))
+                await dm_channel.send(embed=gen_embed(title='Modmail Cancelled',
+                                                          content='The modmail has been cancelled.'))
 
 class Modmail(commands.Cog):
     def __init__(self, bot):
@@ -166,17 +181,23 @@ class Modmail(commands.Cog):
                                       content=f'{content}\n\nYou may reply to this modmail using the reply function.')
                     embed.set_footer(text=f'{ctx.author.id}')
                     channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], rid.channels)
-                    await channel.send(embed=embed)
+                    await embed_splitter(embed=embed, destination=channel, footer=str(ctx.author.id))
                     if len(ctx.message.attachments) > 0:
                         attachnum = 1
+                        valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif', 'image/heif',
+                                            'image/bmp', 'image/gif', 'image/vnd.mozilla.apng', 'image/tiff']
                         for attachment in ctx.message.attachments:
-                            embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
-                                              icon_url=ctx.author.display_avatar.url, title='Attachment',
-                                              content=f'Attachment #{attachnum}:')
-                            embed.set_image(url=attachment.url)
-                            embed.set_footer(text=f'{ctx.author.id}')
-                            await channel.send(embed=embed)
-                            attachnum += 1
+                            if attachment.content_type in valid_media_type:
+                                embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
+                                                  icon_url=ctx.author.display_avatar.url, title='Attachment',
+                                                  content=f'Attachment #{attachnum}:')
+                                embed.set_image(url=attachment.url)
+                                embed.set_footer(text=f'{ctx.author.id}')
+                                await channel.send(embed=embed)
+                                attachnum += 1
+                            else:
+                                await ctx.send(content=f'Attachment #{attachnum} is not a supported media type.')
+                                attachnum += 1
                     await channel.send(content=f"{ctx.author.mention}")
                     await ctx.send(embed=gen_embed(title='Modmail sent',
                                                    content='The moderators will review your message and get back to you shortly.'))
@@ -199,7 +220,7 @@ class Modmail(commands.Cog):
                     if rid.dm_channel is None:
                         dm_channel = await rid.create_dm()
                     try:
-                        await dm_channel.send(embed=embed)
+                        await embed_splitter(embed=embed, destination=dm_channel, footer=str(ctx.guild.id))
                     except discord.Forbidden:
                         await ctx.send(embed=gen_embed(title='Warning',
                                                        content='This user does not accept DMs. I could not send them the message.'))
