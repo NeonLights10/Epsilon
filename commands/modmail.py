@@ -62,19 +62,21 @@ class PersistentEvent(discord.ui.View):
             return mmsg
 
         await interaction.response.defer()
+        log.info('Begin modmail interaction workflow')
         dm_channel = interaction.user.dm_channel
         if not dm_channel:
             dm_channel = await interaction.user.create_dm()
         modmail_content = await modmail_prompt(dm_channel)
 
         if modmail_content:
-
+            log.info('Message detected from user')
             view = Confirm()
             sent_message = await dm_channel.send(embed=gen_embed(title='Are you sure you want to send this?',
                                                               content='Please verify the contents before confirming.'),
                                               view=view)
             timeout = await view.wait()
             if timeout:
+                log.info('Confirmation view timed out')
                 for item in view.children:
                     item.disabled = True
                     await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
@@ -86,6 +88,7 @@ class PersistentEvent(discord.ui.View):
                                               view=view)
 
             if view.value:
+                log.info('Workflow confirm, compilation and send logic start')
                 document = await db.servers.find_one({"server_id": self.guild.id})
                 if document['modmail_channel']:
                     embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
@@ -118,6 +121,7 @@ class PersistentEvent(discord.ui.View):
                     log.warning("Error: Modmail is Disabled")
                     await dm_channel.send(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
             else:
+                log.info('Workflow cancelled')
                 await dm_channel.send(embed=gen_embed(title='Modmail Cancelled',
                                                           content='The modmail has been cancelled.'))
 
