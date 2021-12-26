@@ -113,6 +113,9 @@ class PersistentEvent(discord.ui.View):
                                 attachnum += 1
                             else:
                                 await dm_channel.send(content=f'Attachment #{attachnum} is not a supported media type.')
+                                await channel.send(embed=gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                                  icon_url=modmail_content.author.display_avatar.url, title='Attachment Failed',
+                                                  content=f'The user attempted to send an attachement that is not a supported media type.'))
                                 attachnum += 1
                     await channel.send(content=f"{modmail_content.author.mention}")
                     await dm_channel.send(embed=gen_embed(title='Modmail sent',
@@ -201,6 +204,10 @@ class Modmail(commands.Cog):
                                 attachnum += 1
                             else:
                                 await ctx.send(content=f'Attachment #{attachnum} is not a supported media type.')
+                                await channel.send(embed=gen_embed(
+                                    name=f'{ctx.author.name}#{ctx.author.discriminator}',
+                                    icon_url=ctx.author.display_avatar.url, title='Attachment Failed',
+                                    content=f'The user attempted to send an attachement that is not a supported media type.'))
                                 attachnum += 1
                     await channel.send(content=f"{ctx.author.mention}")
                     await ctx.send(embed=gen_embed(title='Modmail sent',
