@@ -138,7 +138,7 @@ class Modmail(commands.Cog):
     async def modmail_button(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(804365790412406814)
+        channel = pubcord.get_channel(924950003196256306)
         if document['prev_message_modmail']:
             message_id = document['prev_message_modmail']
             prev_message = await channel.fetch_message(int(message_id))
