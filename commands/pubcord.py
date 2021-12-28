@@ -41,8 +41,7 @@ class PersistentEvent(discord.ui.View):
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("Earn <:StarGem:432995521892843520> x3500 for new year!\n\n"
-                               "> Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
+                        value=("> Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
                                "> <t:1639209600> to <t:1641023940>\n"
                                "\n"
                                "> Worldwide 20M DL Celebration Mission - Earn up to 2000 items (3* Tickets, Stars, Miracle Crystals, etc.)\n"
@@ -53,7 +52,10 @@ class PersistentEvent(discord.ui.View):
                                "\n"
                                "> New Year's Countdown Login Campaign - <:StarGem:432995521892843520> x50 + Tone Crystals x10 everyday\n"
                                "> <t:1640505600> to <t:1641023940>\n"
-                               "\n"
+                               "\n"),
+                        inline=False)
+        embed.add_field(name='Campaigns Part 2',
+                        value=("Earn <:StarGem:432995521892843520> x3500 for new year!\n\n"
                                "> 2022 New Year's Star Present - <:StarGem:432995521892843520> x1500\n"
                                "> <t:1640937600> to <t:1642233540>\n"
                                "\n"
