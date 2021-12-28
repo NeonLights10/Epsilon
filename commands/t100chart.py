@@ -225,10 +225,11 @@ class Collection(commands.Cog):
                       description='Set the end of event for automated operations.',
                       help='Usage:\n\n%endofevent <unix_timestamp>')
     @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole(), in_pubcord())
-    async def endofevent(self, unix_timestamp: int):
+    async def endofevent(self, ctx, unix_timestamp: int):
         end_date = datetime.datetime.fromtimestamp(unix_timestamp, datetime.timezone.utc)
         await db.servers.update_one({"server_id": 432379300684103699},
                                     {"$set": {'end_of_event': end_date}})
+        await ctx.send(f'End of event set to <t:{unix_timestamp}>')
 
     #command to edit missing
     @commands.command(name='missing',
