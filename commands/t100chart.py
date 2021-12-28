@@ -167,7 +167,7 @@ class Collection(commands.Cog):
     async def sendscreenshot_button(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(924950003196256306)
+        channel = pubcord.get_channel(913958768105103390)
         end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.utc)
         if document['prev_message_screenshot']:
             if end_of_event_tz < datetime.datetime.now(datetime.timezone.utc):
@@ -189,7 +189,7 @@ class Collection(commands.Cog):
     async def checkscreenshot_button(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(924950003196256306)
+        channel = pubcord.get_channel(913958768105103390)
         if not document['prev_message_screenshot']:
             end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.utc)
             current_timedelta = end_of_event_tz - datetime.datetime.now(datetime.timezone.utc)
@@ -207,7 +207,7 @@ class Collection(commands.Cog):
     async def check_removescreenshot_button(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(924950003196256306)
+        channel = pubcord.get_channel(913958768105103390)
         if document['prev_message_screenshot']:
             end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.utc)
             current_timedelta = end_of_event_tz - datetime.datetime.now(datetime.timezone.utc)
