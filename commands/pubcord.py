@@ -41,7 +41,7 @@ class PersistentEvent(discord.ui.View):
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("Earn a total of <:StarGem:432995521892843520> x3500 from new year login campaign events!\n\n"
+                        value=("Earn <:StarGem:432995521892843520> x3500 for new year!\n\n"
                                "> Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
                                "> <t:1639209600> to <t:1641023940>\n"
                                "\n"
@@ -85,8 +85,10 @@ class PersistentEvent(discord.ui.View):
                                "\n"
                                "> Band Story 3 Afterglow ★4 Member Guaranteed Gacha\n"
                                "> <t:1640048400> to <t:1641776340>\n"
-                               "\n"
-                               "> 2022 New Year's All Members Free Gacha\n"
+                               ),
+                        inline=False)
+        embed.add_field(name=f'Gacha Part 2',
+                        value=("> 2022 New Year's All Members Free Gacha\n"
                                "> <t:1638493200> to <t:1641776340>\n"
                                "\n"
                                "> 2022 New Year's ★4 Limited Member Guaranteed Gacha [LIMITED]\n"
