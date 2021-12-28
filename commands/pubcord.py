@@ -9,7 +9,7 @@ from discord.ext import commands, tasks
 from discord.commands import user_command, permissions
 from formatting.constants import UNITS
 from formatting.embed import gen_embed
-from __main__ import log, db, t
+from __main__ import log, db
 
 class PersistentEvent(discord.ui.View):
     def __init__(self):
@@ -24,19 +24,20 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content=("Afterglow Band Story 3 Release\n"
-                     "Christmas time in Bandori land! Lots of special collaborations are in store this week.\n"
-                     "A total of 4050 <:StarGem:432995521892843520> can be earned through collaborations."
+            content=("Pastel*Palettes Band Story 3 Release\n"
+                     "※ Confused about the extended Event Period? "
+                     "This is put in place in order to allow the devs additional time in fixing the Android "
+                     "crashing bug without having to worry about spending more development time on future Events."
                      )
         )
         embed.set_image(
-            url='https://files.s-neon.xyz/share/FGzscaxaMAIXATM.jpg')
+            url='https://files.s-neon.xyz/share/FHWe1gKaUAAkQHs.jpg')
         embed.add_field(name=f'Current Event',
-                        value=("One of Us\n"
-                               "<t:1639875600> to <t:1640588340>\n\n"
+                        value=("Title Idol\n"
+                               "<t:1640739600> to <t:1641884340>\n\n"
                                "**Event Type**: Mission Live\n"
-                               "**Attribute**: Cool <:attrCool:432978841162612756> \n"
-                               "**Characters**: Ran, Moca, Himari, Tomoe, Tsurugi\n\n"
+                               "**Attribute**: Powerful <:attrPowerful:432978890064134145>  \n"
+                               "**Characters**: Aya, Chisato, Hina, Maya, Eve\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
@@ -50,7 +51,7 @@ class PersistentEvent(discord.ui.View):
                                "> <t:1640332800> to <t:1640505540>\n"
                                "\n"
                                "> Worldwide 20M DL Celebration Mission - Earn up to 2000 items (3* Tickets, Stars, Miracle Crystals, etc.)\n"
-                               "> <t:1640476800> to <t:1641859200>\n"
+                               "> <t:1640480400> to <t:1641862800>\n"
                                "\n"
                                "> End of Year Special Present - Rabbit Mashiro & LAYER Pins\n"
                                "> <t:1640505600> to <t:1640937540>\n"
@@ -90,7 +91,7 @@ class PersistentEvent(discord.ui.View):
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 12/18/2021')
+        embed.set_footer(text='Last Updated 12/27/2021')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -134,6 +135,15 @@ class Pubcord(commands.Cog):
             if document['modrole']:
                 role = discord.utils.find(lambda r: r.id == document['modrole'], ctx.guild.roles)
                 return role in ctx.author.roles
+            else:
+                return False
+
+        return commands.check(predicate)
+
+    def in_pubcord():
+        async def predicate(ctx):
+            if ctx.guild.id == 432379300684103699:
+                return True
             else:
                 return False
 
@@ -236,7 +246,7 @@ class Pubcord(commands.Cog):
     @commands.command(name='currentstatus',
                       description='Sends a embed with the latest status on EN Bandori.',
                       help='Usage\n\n%currentstatus')
-    @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole())
+    @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole(), in_pubcord())
     async def currentstatus(self, ctx, message_id: Optional[str]):
         embed = gen_embed(
             title='Purpose of #announcements-en',

@@ -358,13 +358,13 @@ async def on_message(message):
                 if ref_message.author == bot.user:
                     # modmail logic
                     if ctx.channel.id == document['modmail_channel']:
-                        valid_options = {'New Modmail', 'Attachment'}
+                        valid_options = {'New Modmail', 'Attachment', 'New Screenshot'}
                         if ref_message.embeds[0].title in valid_options:
                             ref_embed = ref_message.embeds[0].footer
                             user_id = ref_embed.text
                             try:
                                 user = await bot.fetch_user(user_id)
-                            except:
+                            except Exception as e:
                                 embed = gen_embed(title='Error',
                                                   content=f'Error finding user. This could be a server-side error, or you replied to the wrong message.')
                                 await ctx.channel.send(embed=embed)
@@ -372,7 +372,7 @@ async def on_message(message):
                             if document['modmail_channel']:
                                 embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
                                                   title="New Modmail",
-                                                  content=f'{message.clean_content}\n\nYou may reply to this modmail using the reply function.')
+                                                  content=f'{message.clean_content}\n\nYou may reply to this message using the reply function.')
                                 embed.set_footer(text=f"{ctx.guild.id}")
                                 dm_channel = user.dm_channel
                                 if user.dm_channel is None:
@@ -380,13 +380,26 @@ async def on_message(message):
                                 await dm_channel.send(embed=embed)
                                 if len(ctx.message.attachments) > 0:
                                     attachnum = 1
+                                    valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif',
+                                                        'image/heif',
+                                                        'image/bmp', 'image/gif', 'image/vnd.mozilla.apng',
+                                                        'image/tiff']
                                     for attachment in ctx.message.attachments:
-                                        embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
-                                                          title='Attachment', content=f'Attachment #{attachnum}:')
-                                        embed.set_image(url=attachment.url)
-                                        embed.set_footer(text=f'{ctx.guild.id}')
-                                        await dm_channel.send(embed=embed)
-                                        attachnum += 1
+                                        if attachment.content_type in valid_media_type:
+                                            embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
+                                                              title='Attachment', content=f'Attachment #{attachnum}:')
+                                            embed.set_image(url=attachment.url)
+                                            embed.set_footer(text=f'{ctx.guild.id}')
+                                            await dm_channel.send(embed=embed)
+                                            attachnum += 1
+                                        else:
+                                            await ctx.send(content=f'Attachment #{attachnum} is not a supported media type.')
+                                            await dm_channel.send(embed=gen_embed(
+                                                name=f'{ctx.guild.name}',
+                                                icon_url=ctx.guild.icon.url,
+                                                title='Attachment Failed',
+                                                content=f'The user attempted to send an attachement that is not a supported media type.'))
+                                            attachnum += 1
                                 await ctx.send(embed=gen_embed(title='Modmail sent',
                                                                content=f'Sent modmail to {user.name}#{user.discriminator}.'))
                     elif document['chat']:
@@ -449,14 +462,27 @@ async def on_message(message):
                         await channel.send(embed=embed)
                         if len(ctx.message.attachments) > 0:
                             attachnum = 1
+                            valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif',
+                                                'image/heif',
+                                                'image/bmp', 'image/gif', 'image/vnd.mozilla.apng',
+                                                'image/tiff']
                             for attachment in ctx.message.attachments:
-                                embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
-                                                  icon_url=ctx.author.display_avatar.url, title='Attachment',
-                                                  content=f'Attachment #{attachnum}:')
-                                embed.set_image(url=attachment.url)
-                                embed.set_footer(text=f'{ctx.author.id}')
-                                await channel.send(embed=embed)
-                                attachnum += 1
+                                if attachment.content_type in valid_media_type:
+                                    embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
+                                                      icon_url=ctx.author.display_avatar.url, title='Attachment',
+                                                      content=f'Attachment #{attachnum}:')
+                                    embed.set_image(url=attachment.url)
+                                    embed.set_footer(text=f'{ctx.author.id}')
+                                    await channel.send(embed=embed)
+                                    attachnum += 1
+                                else:
+                                    await ctx.send(content=f'Attachment #{attachnum} is not a supported media type.')
+                                    await channel.send(embed=gen_embed(
+                                        name=f'{ctx.author.name}#{ctx.author.discriminator}',
+                                        icon_url=ctx.author.display_avatar.url,
+                                        title='Attachment Failed',
+                                        content=f'The user attempted to send an attachement that is not a supported media type.'))
+                                    attachnum += 1
                         await channel.send(content=f"{ctx.author.mention}")
                         await ctx.send(embed=gen_embed(title='Modmail sent',
                                                        content='The moderators will review your message and get back to you shortly.'), )
@@ -601,4 +627,5 @@ bot.load_extension("commands.modmail")
 bot.load_extension("commands.tiering")
 bot.load_extension("commands.reminder")
 bot.load_extension("commands.pubcord")
+bot.load_extension("commands.t100chart")
 bot.run(TOKEN)

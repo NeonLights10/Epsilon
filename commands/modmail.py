@@ -28,6 +28,7 @@ class Confirm(discord.ui.View):
     # This one is similar to the confirmation button except sets the inner value to `False`
     @discord.ui.button(label="No", style=discord.ButtonStyle.red)
     async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        log.info('Workflow cancelled')
         await interaction.response.send_message("Modmail cancelled.", ephemeral=True)
         for item in self.children:
             item.disabled = True
@@ -123,10 +124,6 @@ class PersistentEvent(discord.ui.View):
                 else:
                     log.warning("Error: Modmail is Disabled")
                     await dm_channel.send(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
-            else:
-                log.info('Workflow cancelled')
-                await dm_channel.send(embed=gen_embed(title='Modmail Cancelled',
-                                                          content='The modmail has been cancelled.'))
 
 class Modmail(commands.Cog):
     def __init__(self, bot):
