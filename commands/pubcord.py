@@ -41,14 +41,9 @@ class PersistentEvent(discord.ui.View):
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("> Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
+                        value=("Earn a total of <:StarGem:432995521892843520> x3500 from new year login campaign events!\n\n"
+                               "> Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
                                "> <t:1639209600> to <t:1641023940>\n"
-                               "\n"
-                               "> Afterglow Band Story 3 Release Special Present - <:StarGem:432995521892843520> x1000\n"
-                               "> <t:1639875600> to <t:1640588340>\n"
-                               "\n"
-                               "> 2021 Christmas Special Gift - <:StarGem:432995521892843520> x250 + Christmas Cake x1\n"
-                               "> <t:1640332800> to <t:1640505540>\n"
                                "\n"
                                "> Worldwide 20M DL Celebration Mission - Earn up to 2000 items (3* Tickets, Stars, Miracle Crystals, etc.)\n"
                                "> <t:1640480400> to <t:1641862800>\n"
@@ -57,21 +52,36 @@ class PersistentEvent(discord.ui.View):
                                "> <t:1640505600> to <t:1640937540>\n"
                                "\n"
                                "> New Year's Countdown Login Campaign - <:StarGem:432995521892843520> x50 + Tone Crystals x10 everyday\n"
-                               "> <t:1640505600> to <t:1641023940>"),
+                               "> <t:1640505600> to <t:1641023940>\n"
+                               "\n"
+                               "> 2022 New Year's Star Present - <:StarGem:432995521892843520> x1500\n"
+                               "> <t:1640937600> to <t:1642233540>\n"
+                               "\n"
+                               "> 2022 New Year's Login Campaign - <:StarGem:432995521892843520> x1000 + Special Pins\n"
+                               "> <t:1641024000> to <t:1642751940>\n"
+                               "\n"
+                               "> Pastel*Palettes Band Story 3 Release Special Present - <:StarGem:432995521892843520> x1000\n"
+                               "> <t:1640739600> to <t:1641776340>\n"
+                               "\n"
+                               "> Bang Dream! Girls Band Party!☆PICO FEVER! Release Celebration Gift\n"
+                               "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Burning Sky Grateful for All Gacha\n"
-                               "> <t:1639875600> to <t:1640721540>\n"
+                        value=("> Interweaving Light Road to Prism Gacha\n"
+                               "> <t:1640739600> to <t:1642035540>\n"
                                "\n"
                                "> A Merry Silent Night Gacha [LIMITED]\n"
                                "> A Merry Silent Night Special Set 10 Play Gacha\n"
                                "> <t:1640307600> to <t:1640912340>\n"
                                "\n"
-                               "> Xmas Step Up Gacha [Recieve Stamps!]\n"
-                               "> <t:1639987200> to <t:1640419140>\n"
-                               "\n"
                                "> Special Set 5 Play Gacha\n"
-                               "> <t:1640134800> to <t:1640739540>\n"
+                               "> <t:1640912400> to <t:1642035540>\n"
+                               "\n"
+                               "> Bang Dream! Girls Band Party!☆PICO FEVER! Fan Appreciation ★4 Limited Member Guaranteed Gacha [LIMITED]\n"
+                               "> <t:1641456000> to <t:1642665540>\n"
+                               "\n"
+                               "> Band Story 3 Pastel*Palettes ★4 Member Guaranteed Gacha\n"
+                               "> <t:1640912400> to <t:1642726740>\n"
                                "\n"
                                "> Band Story 3 Afterglow ★4 Member Guaranteed Gacha\n"
                                "> <t:1640048400> to <t:1641776340>\n"
@@ -91,7 +101,7 @@ class PersistentEvent(discord.ui.View):
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 12/27/2021')
+        embed.set_footer(text='Last Updated 12/28/2021')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
