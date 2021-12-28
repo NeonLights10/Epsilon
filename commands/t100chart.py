@@ -209,7 +209,7 @@ class Collection(commands.Cog):
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message_screenshot': None}})
 
-    @send_screenshotbutton.before_loop
+    @sendscreenshot_button.before_loop
     @check_removescreenshot_button.before_loop
     async def wait_ready(self):
         # log.info('wait till ready')
