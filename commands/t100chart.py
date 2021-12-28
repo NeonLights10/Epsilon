@@ -249,7 +249,7 @@ class Collection(commands.Cog):
     async def missing(self, ctx, *, description: str):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(924950003196256306)
+        channel = pubcord.get_channel(913958768105103390)
         if document['prev_message_screenshot']:
             message_id = document['prev_message_screenshot']
             prev_message = await channel.fetch_message(int(message_id))
