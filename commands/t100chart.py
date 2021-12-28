@@ -221,11 +221,11 @@ class Collection(commands.Cog):
                                             {"$set": {'prev_message_screenshot': None}})
 
     @sendscreenshot_button.before_loop
-    @check_removescreenshot_button.before_loop
     async def wait_ready(self):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
 
+    @check_removescreenshot_button.before_loop
     @checkscreenshot_button.before_loop
     async def wait_ready_long(self):
         await self.bot.wait_until_ready()
@@ -256,9 +256,9 @@ class Collection(commands.Cog):
             prev_message = await channel.fetch_message(int(message_id))
             await prev_message.edit(content=f"We’re collecting T100 ranking screenshots for the most recent event.\nMissing: {description}")
             await db.servers.update_one({"server_id": 432379300684103699},
-                                        {"$set": {'missing': missing}})
+                                        {"$set": {'missing': description}})
             await ctx.send(embed=gen_embed(title='missing',
-                                           content=f'Updated message content:\n\nMissing: {missing}.'))
+                                           content=f'Updated message content:\n\nMissing: {description}.'))
         else:
             await ctx.send(embed=gen_embed(title='missing',
                                            content='The message is not currently up! Cannot change description.'))
