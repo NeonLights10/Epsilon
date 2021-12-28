@@ -132,9 +132,9 @@ class Collection(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.view = None
-        #self.sendscreenshot_button.start()
-        #self.checkscreenshot_button.start()
-        #self.check_removescreenshot_button.start()
+        self.sendscreenshot_button.start()
+        self.checkscreenshot_button.start()
+        self.check_removescreenshot_button.start()
 
     def has_modrole():
         async def predicate(ctx):
@@ -236,7 +236,7 @@ class Collection(commands.Cog):
                       description='Change the description for missing t100 screenshots. Only type in the numbers missing (see example below)',
                       help='Usage:\n\n%missing 1-10, 20-40')
     @commands.has_role(925458802734678066)
-    async def missing(self, *, description: str):
+    async def missing(self, ctx, *, description: str):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(924950003196256306)
