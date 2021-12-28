@@ -193,7 +193,7 @@ class Collection(commands.Cog):
         channel = pubcord.get_channel(913958768105103390)
         if not document['prev_message_screenshot']:
             end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.utc)
-            current_timedelta = end_of_event_tz - datetime.datetime.now(datetime.timezone.utc)
+            current_timedelta = datetime.datetime.now(datetime.timezone.utc) - end_of_event_tz
             if end_of_event_tz < datetime.datetime.now(datetime.timezone.utc) and current_timedelta < timedelta(days=2):
                 self.view = PersistentEvent(bot=self.bot)
                 missing = "1-100"
@@ -211,7 +211,7 @@ class Collection(commands.Cog):
         channel = pubcord.get_channel(913958768105103390)
         if document['prev_message_screenshot']:
             end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.utc)
-            current_timedelta = end_of_event_tz - datetime.datetime.now(datetime.timezone.utc)
+            current_timedelta = datetime.datetime.now(datetime.timezone.utc) - end_of_event_tz
             if current_timedelta > timedelta(days=2):
                 message_id = document['prev_message_screenshot']
                 prev_message = await channel.fetch_message(int(message_id))
@@ -255,6 +255,8 @@ class Collection(commands.Cog):
             message_id = document['prev_message_screenshot']
             prev_message = await channel.fetch_message(int(message_id))
             await prev_message.edit(content=f"We’re collecting T100 ranking screenshots for the most recent event.\nMissing: {description}")
+            await db.servers.update_one({"server_id": 432379300684103699},
+                                        {"$set": {'missing': missing}})
             await ctx.send(embed=gen_embed(title='missing',
                                            content=f'Updated message content:\n\nMissing: {missing}.'))
         else:
