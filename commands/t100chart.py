@@ -246,3 +246,6 @@ class Collection(commands.Cog):
         else:
             await ctx.send(embed=gen_embed(title='missing',
                                            content='The message is not currently up! Cannot change description.'))
+
+def setup(bot):
+    bot.add_cog(Collection(bot))
