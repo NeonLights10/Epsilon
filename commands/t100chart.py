@@ -3,6 +3,7 @@ import traceback
 import asyncio
 import pymongo
 import datetime
+import pytz
 
 from typing import Union, Optional, Literal
 from discord.ext import commands, tasks
@@ -162,12 +163,13 @@ class Collection(commands.Cog):
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(924950003196256306)
         if document['prev_message_screenshot']:
-            if document['end_of_event'] < datetime.datetime.now(datetime.timezone.utc):
+            end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.UTC)
+            if end_of_event_tz < datetime.datetime.now(datetime.timezone.utc):
                 message_id = document['prev_message_screenshot']
                 prev_message = await channel.fetch_message(int(message_id))
                 await prev_message.delete()
                 log.info('initial deleted')
-        if document['end_of_event'] < datetime.datetime.now(datetime.timezone.utc):
+        if end_of_event_tz < datetime.datetime.now(datetime.timezone.utc):
             self.view = PersistentEvent(bot=self.bot)
             if document['prev_message_screenshot']:
                 missing = document['missing']
@@ -183,8 +185,9 @@ class Collection(commands.Cog):
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(924950003196256306)
         if not document['prev_message_screenshot']:
-            timedelta = document['end_of_event'] - datetime.datetime.now(datetime.timezone.utc)
-            if document['end_of_event'] < datetime.datetime.now(datetime.timezone.utc) and timedelta < timedelta(days=2):
+            end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.UTC)
+            timedelta = end_of_event_tz - datetime.datetime.now(datetime.timezone.utc)
+            if end_of_event_tz < datetime.datetime.now(datetime.timezone.utc) and timedelta < timedelta(days=2):
                 self.view = PersistentEvent(bot=self.bot)
                 missing = "1-100"
                 new_message = await channel.send(
@@ -200,7 +203,8 @@ class Collection(commands.Cog):
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(924950003196256306)
         if document['prev_message_screenshot']:
-            timedelta = document['end_of_event'] - datetime.datetime.now(datetime.timezone.utc)
+            end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.UTC)
+            timedelta = end_of_event_tz - datetime.datetime.now(datetime.timezone.utc)
             if timedelta > timedelta(days=2):
                 message_id = document['prev_message_screenshot']
                 prev_message = await channel.fetch_message(int(message_id))
