@@ -137,7 +137,13 @@ class Collection(commands.Cog):
         self.checkscreenshot_button.start()
         self.check_removescreenshot_button.start()
 
-    def has_modrole():
+    def cog_unload(self):
+        self.sendscreenshot_button.cancel()
+        self.checkscreenshot_button.cancel()
+        self.check_removescreenshot_button.cancel()
+
+
+def has_modrole():
         async def predicate(ctx):
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if document['modrole']:
