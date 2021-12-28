@@ -169,7 +169,7 @@ class Collection(commands.Cog):
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(924950003196256306)
         if document['prev_message_screenshot']:
-            end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.UTC)
+            end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.utc)
             if end_of_event_tz < datetime.datetime.now(datetime.timezone.utc):
                 message_id = document['prev_message_screenshot']
                 prev_message = await channel.fetch_message(int(message_id))
@@ -191,7 +191,7 @@ class Collection(commands.Cog):
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(924950003196256306)
         if not document['prev_message_screenshot']:
-            end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.UTC)
+            end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.utc)
             timedelta = end_of_event_tz - datetime.datetime.now(datetime.timezone.utc)
             if end_of_event_tz < datetime.datetime.now(datetime.timezone.utc) and timedelta < timedelta(days=2):
                 self.view = PersistentEvent(bot=self.bot)
@@ -209,7 +209,7 @@ class Collection(commands.Cog):
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(924950003196256306)
         if document['prev_message_screenshot']:
-            end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.UTC)
+            end_of_event_tz = document['end_of_event'].replace(tzinfo=datetime.timezone.utc)
             timedelta = end_of_event_tz - datetime.datetime.now(datetime.timezone.utc)
             if timedelta > timedelta(days=2):
                 message_id = document['prev_message_screenshot']
