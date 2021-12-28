@@ -254,6 +254,8 @@ class Collection(commands.Cog):
             message_id = document['prev_message_screenshot']
             prev_message = await channel.fetch_message(int(message_id))
             await prev_message.edit(content=f"We’re collecting T100 ranking screenshots for the most recent event.\nMissing: {description}")
+            await ctx.send(embed=gen_embed(title='missing',
+                                           content=f'Updated message content:\n\nMissing: {missing}.'))
         else:
             await ctx.send(embed=gen_embed(title='missing',
                                            content='The message is not currently up! Cannot change description.'))
