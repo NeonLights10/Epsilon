@@ -182,7 +182,10 @@ class Collection(commands.Cog):
                 missing = document['missing']
             else:
                 missing = "1-100"
-            new_message = await channel.send(f"We’re collecting T100 ranking screenshots for the most recent event.\nMissing: {missing}", view=self.view)
+            if missing == "none":
+                new_message = await channel.send(f"All T100 ranking screenshots for the most recent event have been obtained! Thank you <3", view=self.view)
+            else:
+                new_message = await channel.send(f"We’re collecting T100 ranking screenshots for the most recent event.\nPlease check the pins in {pubcord.get_channel(432382183072858131).mention} for more info.\nMissing: {missing}", view=self.view)
             log.info('initial posted')
             await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message_screenshot': new_message.id, 'missing': missing}})
 
@@ -198,7 +201,7 @@ class Collection(commands.Cog):
                 self.view = PersistentEvent(bot=self.bot)
                 missing = "1-100"
                 new_message = await channel.send(
-                    f"We’re collecting T100 ranking screenshots for the most recent event.\nMissing: {missing}",
+                    f"We’re collecting T100 ranking screenshots for the most recent event.\nPlease check the pins in {pubcord.get_channel(432382183072858131).mention} for more info.\nMissing: {missing}",
                     view=self.view)
                 log.info('initial posted')
                 await db.servers.update_one({"server_id": 432379300684103699},
@@ -254,11 +257,19 @@ class Collection(commands.Cog):
         if document['prev_message_screenshot']:
             message_id = document['prev_message_screenshot']
             prev_message = await channel.fetch_message(int(message_id))
-            await prev_message.edit(content=f"We’re collecting T100 ranking screenshots for the most recent event.\nMissing: {description}")
-            await db.servers.update_one({"server_id": 432379300684103699},
-                                        {"$set": {'missing': description}})
-            await ctx.send(embed=gen_embed(title='missing',
-                                           content=f'Updated message content:\n\nMissing: {description}.'))
+            if description == "none":
+                await prev_message.edit(
+                    content=f"All T100 ranking screenshots for the most recent event have been obtained! Thank you <3")
+                await db.servers.update_one({"server_id": 432379300684103699},
+                                            {"$set": {'missing': description}})
+                await ctx.send(embed=gen_embed(title='missing',
+                                               content=f'Updated message content:\n\nAll T100 ranking screenshots for the most recent event have been obtained! Thank you <3.'))
+            else:
+                await prev_message.edit(content=f"We’re collecting T100 ranking screenshots for the most recent event.\nPlease check the pins in {pubcord.get_channel(432382183072858131).mention} for more info.\nMissing: {description}")
+                await db.servers.update_one({"server_id": 432379300684103699},
+                                            {"$set": {'missing': description}})
+                await ctx.send(embed=gen_embed(title='missing',
+                                               content=f'Updated message content:\n\nMissing: {description}.'))
         else:
             await ctx.send(embed=gen_embed(title='missing',
                                            content='The message is not currently up! Cannot change description.'))
