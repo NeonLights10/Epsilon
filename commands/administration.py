@@ -911,6 +911,7 @@ class Administration(commands.Cog):
                       help='Usage\n\n %removetimeout [user mentions/user ids/user name + discriminator (ex: name#0000)]')
     @commands.check_any(commands.has_guild_permissions(moderate_members=True), has_modrole())
     async def removetimeout(self, ctx, members: commands.Greedy[discord.Member]):
+        unmuted = ""
         for member in members:
             await member.remove_timeout(reason=f'{ctx.author.name}{ctx.author.discriminator} removed the timeout.')
             unmuted = unmuted + f'{member.mention} '
@@ -968,8 +969,8 @@ class Administration(commands.Cog):
         document = await db.servers.find_one({"server_id": ctx.guild.id})
         if document['log_channel'] and document['log_kbm']:
             msglog = int(document['log_channel'])
-            logChannel = member.guild.get_channel(msglog)
-            await logChannel.send(embed=embed)
+            log_channel = ctx.guild.get_channel(msglog)
+            await log_channel.send(embed=embed)
 
     @commands.command(name='ban',
                       description='Ban user(s) from the server.',
@@ -1404,10 +1405,10 @@ class Administration(commands.Cog):
                 await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
                 if document['log_channel'] and document['log_kbm']:
                     msglog = int(document['log_channel'])
-                    logChannel = ctx.guild.get_channel(msglog)
+                    log_channel = ctx.guild.get_channel(msglog)
                     embed = gen_embed(title='mute',
-                                      content=f'{member.name} (ID: {member.id} has been muted for {mtime} seconds.\nReason: Strike severity 2')
-                    await logChannel.send(embed=embed)  # do custom
+                                      content=f'{member.name} (ID: {member.id} has been muted until <t:{int(time.mktime(mute_duration.timetuple()))}>.\nReason: Strike severity 2')
+                    await log_channel.send(embed=embed)  # do custom
                 return
 
     @commands.command(name='lookup',
