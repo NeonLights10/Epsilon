@@ -103,7 +103,7 @@ if os.path.isfile(f"logs/{NAME}.log"):
         if os.path.isfile(f"logs/{NAME}.log.last"):
             os.unlink(f"logs/{NAME}.log.last")
         os.rename(f"logs/{NAME}.log", f"logs/{NAME}.log.last")
-    except:
+    except Exception:
         pass
 
 with open(f"logs/{NAME}.log", 'w', encoding='utf8') as f:
@@ -164,7 +164,6 @@ async def _initialize_document(guild, id):
     log.info(f"Creating document for {guild.name}...")
     await db.servers.insert_one(post)
 
-
 async def _check_document(guild, id):
     log.info("Checking db document for {}".format(guild.name))
     if await db.servers.find_one({"server_id": id}) is None:
@@ -193,7 +192,6 @@ async def _check_document(guild, id):
                 #"announcements": {'$cond': [{'$not': ["$announcements"]}, True, "$announcements"]}```
             }}]
         )
-
 
 ####################
 
@@ -254,7 +252,7 @@ async def twtfix(message):
                         try:
                             await channel.send(content=new_message_content)
                             log.info("Sent fxtwitter link")
-                        except:
+                        except Exception:
                             return None
         if document['delete_twitterfix'] and modified:
             try:
@@ -262,7 +260,7 @@ async def twtfix(message):
                 log.info("Deleted message, sending fxtwitter link")
                 return await channel.send(
                     content=f"**{author.display_name}** ({author.name}#{author.discriminator}) sent:\n{message_link}")
-            except:
+            except Exception:
                 return None
     return None
 
@@ -276,7 +274,7 @@ def prefix(bot, message):
     results = None
     try:
         results = prefix_list.get(message.guild.id)
-    except:
+    except Exception:
         pass
 
     if results:
@@ -293,7 +291,7 @@ bot = commands.Bot(command_prefix=prefix, intents=intents, case_insensitive=True
 
 try:
     sys.stdout.write(f"\x1b]2;{NAME} {BOTVERSION}\x07")
-except:
+except Exception:
     pass
 
 uptime = time.time()
@@ -347,24 +345,33 @@ async def on_message(message):
         whitelist = document['whitelist']
         if ctx.author.bot is False:
             if ctx.prefix:
-                if whitelist and ctx.channel.id not in whitelist:
+                #bypass check for now for t100 chart hub, keep prefix check first though
+                if ctx.guild.id == 616088522100703241 and ctx.message.reference:
+                    pass
+                else:
+                    if whitelist and ctx.channel.id not in whitelist:
+                        return
+                    log.info(
+                        f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
+                    await bot.invoke(ctx)
+                    command_count += 1
                     return
-                log.info(
-                    f"{ctx.message.author.id}/{ctx.message.author.name}{ctx.message.author.discriminator}: {ctx.message.content}")
-                await bot.invoke(ctx)
-                command_count += 1
-            elif ctx.message.reference:
+            if ctx.message.reference:
                 ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
                 if ref_message.author == bot.user:
                     # modmail logic
                     if ctx.channel.id == document['modmail_channel']:
                         valid_options = {'New Modmail', 'Attachment', 'New Screenshot'}
                         if ref_message.embeds[0].title in valid_options:
+                            #special check for the t100 chart hub
+                            if ctx.guild.id == 616088522100703241 and ctx.prefix:
+                                if ctx.invoked_with != "reply":
+                                    return
                             ref_embed = ref_message.embeds[0].footer
                             user_id = ref_embed.text
                             try:
                                 user = await bot.fetch_user(user_id)
-                            except Exception as e:
+                            except Exception:
                                 embed = gen_embed(title='Error',
                                                   content=f'Error finding user. This could be a server-side error, or you replied to the wrong message.')
                                 await ctx.channel.send(embed=embed)
@@ -550,8 +557,8 @@ async def on_member_join(member):
                           title="Member joined",
                           content=f"Member #{member.guild.member_count}")
         msglog = int(document['log_channel'])
-        logChannel = member.guild.get_channel(msglog)
-        await logChannel.send(embed=embed)
+        log_channel = member.guild.get_channel(msglog)
+        await log_channel.send(embed=embed)
 
 
 @bot.event
@@ -565,8 +572,8 @@ async def on_member_remove(member):
                           title="Member left",
                           content=f"Joined {member.joined_at} ({nowtime - jointime} ago)")
         msglog = int(document['log_channel'])
-        logchannel = member.guild.get_channel(msglog)
-        await logchannel.send(embed=embed)
+        log_channel = member.guild.get_channel(msglog)
+        await log_channel.send(embed=embed)
 
 
 ###################
@@ -578,12 +585,12 @@ async def get_msgid(message, attempts=1):
         {'$match': {'$and': [{'server_id': message.guild.id}, {'author_id': {'$not': {'$regex': str(bot.user.id)}}}]}},
         {'$sample': {'size': 1}}]
     async for msgid in db.msgid.aggregate(pipeline):
-        # This is jenky and I believe can be fixed to use ctx instead, but it searches each channel until it finds the channel the message was sent in.
+        # Searches each channel until it finds the channel the message was sent in.
         # This lets us fetch the message.
         for channel in message.guild.channels:
             if channel.id == msgid['channel_id']:
                 try:
-                    #We fetch the message, as we do not store any message contents for user privacy. If the message is deleted, we can't access it.
+                    # We fetch the message, as we do not store any message contents for user privacy. If the message is deleted, we can't access it.
                     msg = await channel.fetch_message(msgid['msg_id'])
 
                     # Now let's double check that we aren't mentioning ourself or another bot, and that the messages has no embeds or attachments.
