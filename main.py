@@ -364,7 +364,9 @@ async def on_message(message):
                         valid_options = {'New Modmail', 'Attachment', 'New Screenshot'}
                         if ref_message.embeds[0].title in valid_options:
                             #special check for the t100 chart hub
-                            if ctx.guild.id == 616088522100703241 and ctx.prefix:
+                            if ctx.guild.id == 616088522100703241 and not ctx.prefix:
+                                    return
+                            elif ctx.guild.id == 616088522100703241 and ctx.prefix:
                                 if ctx.invoked_with != "reply":
                                     return
                             ref_embed = ref_message.embeds[0].footer
