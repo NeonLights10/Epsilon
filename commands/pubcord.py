@@ -41,21 +41,10 @@ class PersistentEvent(discord.ui.View):
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("> Collaboration Login Campaign - <:StarGem:432995521892843520> x2500 (1000 first day!)\n"
-                               "> <t:1639209600> to <t:1641023940>\n"
-                               "\n"
+                        value=("Earn <:StarGem:432995521892843520> x3500 for new year!\n\n"
                                "> Worldwide 20M DL Celebration Mission - Earn up to 2000 items (3* Tickets, Stars, Miracle Crystals, etc.)\n"
                                "> <t:1640480400> to <t:1641862800>\n"
                                "\n"
-                               "> End of Year Special Present - Rabbit Mashiro & LAYER Pins\n"
-                               "> <t:1640505600> to <t:1640937540>\n"
-                               "\n"
-                               "> New Year's Countdown Login Campaign - <:StarGem:432995521892843520> x50 + Tone Crystals x10 everyday\n"
-                               "> <t:1640505600> to <t:1641023940>\n"
-                               "\n"),
-                        inline=False)
-        embed.add_field(name='Campaigns Part 2',
-                        value=("Earn <:StarGem:432995521892843520> x3500 for new year!\n\n"
                                "> 2022 New Year's Star Present - <:StarGem:432995521892843520> x1500\n"
                                "> <t:1640937600> to <t:1642233540>\n"
                                "\n"
@@ -71,10 +60,6 @@ class PersistentEvent(discord.ui.View):
         embed.add_field(name=f'Gacha',
                         value=("> Interweaving Light Road to Prism Gacha\n"
                                "> <t:1640739600> to <t:1642035540>\n"
-                               "\n"
-                               "> A Merry Silent Night Gacha [LIMITED]\n"
-                               "> A Merry Silent Night Special Set 10 Play Gacha\n"
-                               "> <t:1640307600> to <t:1640912340>\n"
                                "\n"
                                "> Special Set 5 Play Gacha\n"
                                "> <t:1640912400> to <t:1642035540>\n"
@@ -93,9 +78,6 @@ class PersistentEvent(discord.ui.View):
                         value=("> 2022 New Year's All Members Free Gacha\n"
                                "> <t:1638493200> to <t:1641776340>\n"
                                "\n"
-                               "> 2022 New Year's ★4 Limited Member Guaranteed Gacha [LIMITED]\n"
-                               "> <t:1638493200> to <t:1641171540>\n"
-                               "\n"
                                "> Come back ★4 Miracle Ticket Set Gacha\n"
                                "> <t:1639184400> onwards, available for 30 days\n"
                                "\n"
@@ -105,7 +87,7 @@ class PersistentEvent(discord.ui.View):
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 12/28/2021')
+        embed.set_footer(text='Last Updated 1/2/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
