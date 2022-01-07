@@ -356,7 +356,7 @@ async def on_message(message):
                     await bot.invoke(ctx)
                     command_count += 1
                     return
-            if ctx.message.reference:
+            if ctx.message.reference and ctx.message.type != discord.MessageType.pins_add: #ensure pinning a message doesn't trigger this
                 ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
                 if ref_message.author == bot.user:
                     # modmail logic
