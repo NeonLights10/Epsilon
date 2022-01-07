@@ -1158,8 +1158,8 @@ class Administration(commands.Cog):
                 attempts += 1
                 return await imagemute(attempts)
 
-        time = datetime.datetime.now(datetime.timezone.utc)
-        searchtime = time + relativedelta(seconds=10)
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        searchtime = current_time + relativedelta(seconds=10)
         if len(members) < 1:
             log.warning("Missing Required Argument")
             params = ' '.join([x for x in ctx.command.clean_params])
@@ -1205,7 +1205,7 @@ class Administration(commands.Cog):
 
             # move this out to a separate method
             post = {
-                'time': time,
+                'time': current_time,
                 'server_id': ctx.guild.id,
                 'user_name': f'{member.name}#{member.discriminator}',
                 'user_id': member.id,
@@ -1219,7 +1219,7 @@ class Administration(commands.Cog):
                 await db.warns.insert_one(post)
                 #this is stupid and i hate it but it is what it is
                 npost = {
-                    'time': time + relativedelta(seconds=1),
+                    'time': current_time + relativedelta(seconds=1),
                     'server_id': ctx.guild.id,
                     'user_name': f'{member.name}#{member.discriminator}',
                     'user_id': member.id,
@@ -1231,7 +1231,7 @@ class Administration(commands.Cog):
             elif severity == '3':
                 await db.warns.insert_one(post)
                 npost = {
-                    'time': time + relativedelta(seconds=1),
+                    'time': current_time + relativedelta(seconds=1),
                     'server_id': ctx.guild.id,
                     'user_name': f'{member.name}#{member.discriminator}',
                     'user_id': member.id,
@@ -1241,7 +1241,7 @@ class Administration(commands.Cog):
                 }
                 await db.warns.insert_one(npost)
                 nnpost = {
-                    'time': time + relativedelta(seconds=2),
+                    'time': current_time + relativedelta(seconds=2),
                     'server_id': ctx.guild.id,
                     'user_name': f'{member.name}#{member.discriminator}',
                     'user_id': member.id,
@@ -1282,7 +1282,7 @@ class Administration(commands.Cog):
                               content=f'{ctx.author.name}#{ctx.author.discriminator} gave a strike to {member.name}#{member.discriminator} | {member.id}')
             embed.add_field(name='Severity', value=f'{severity} strike(s)', inline=False)
             embed.add_field(name='Reason', value=f'{reason}\n\n[Go to message/evidence]({message_link})', inline=False)
-            embed.set_footer(text=time.ctime())
+            embed.set_footer(text=current_time.ctime())
             await ctx.send(embed=embed)
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if document['log_channel'] and document['log_strikes']:
@@ -1311,7 +1311,7 @@ class Administration(commands.Cog):
                 else:
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been banned',
                                          content=f'Reason: {reason}')
-                    dm_embed.set_footer(text=time.ctime())
+                    dm_embed.set_footer(text=current_time.ctime())
                 try:
                     await dm_channel.send(embed=dm_embed)
                 except discord.Forbidden:
@@ -1364,7 +1364,7 @@ class Administration(commands.Cog):
                             dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                                  title=f'You have been image/external emote privileges revoked for for {mtime} seconds',
                                                  content=f'This is a result of your strike.')
-                            dm_embed.set_footer(text=time.ctime())
+                            dm_embed.set_footer(text=current_time.ctime())
                         try:
                             await dm_channel.send(embed=dm_embed)
                         except discord.Forbidden:
@@ -1396,7 +1396,7 @@ class Administration(commands.Cog):
                     dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                          title=f'You have been put in timeout. Your timeout will end <t:{int(time.mktime(mute_duration.timetuple()))}:R>',
                                          content=f'Strike 2 - automatic mute')
-                    dm_embed.set_footer(text=time.ctime())
+                    dm_embed.set_footer(text=current_time.ctime())
                 try:
                     await dm_channel.send(embed=dm_embed)
                 except discord.Forbidden:
