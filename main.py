@@ -379,9 +379,13 @@ async def on_message(message):
                                 await ctx.channel.send(embed=embed)
                                 return
                             if document['modmail_channel']:
+                                mclean_content = message.clean_content
+                                #darn t100 chart hub people
+                                if ctx.invoked_with == "reply":
+                                    mclean_content = mclean_content.replace("%reply", "", 1)
                                 embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
                                                   title="New Modmail",
-                                                  content=f'{message.clean_content}\n\nYou may reply to this message using the reply function.')
+                                                  content=f'{mclean_content}\n\nYou may reply to this message using the reply function.')
                                 embed.set_footer(text=f"{ctx.guild.id}")
                                 dm_channel = user.dm_channel
                                 if user.dm_channel is None:
