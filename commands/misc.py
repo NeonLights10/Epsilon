@@ -162,6 +162,7 @@ class Miscellaneous(commands.Cog):
             log.info(f'Checking document for {guild.name}')
             if document['announcements']:
                 log.info(f'Announcements enabled for {guild.name}, sending...')
+                sent=False
                 if document['announcement_channel']:
                     try:
                         channel = self.bot.get_channel(document['announcement_channel'])
@@ -192,13 +193,14 @@ class Miscellaneous(commands.Cog):
                     if general and general.permissions_for(guild.me).send_messages:
                         await general.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                         log.info('Sent in general channel')
+                        sent=true
                         continue
                 except Exception as e:
                     pass
                 finally:
                     for channel in guild.text_channels:
                         try:
-                            if channel.permissions_for(guild.me).send_messages:
+                            if channel.permissions_for(guild.me).send_messages and not sent:
                                 await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                                 log.info('Sent in first available channel')
                                 break
