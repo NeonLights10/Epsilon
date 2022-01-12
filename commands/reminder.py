@@ -733,10 +733,11 @@ class Reminder(commands.Cog):
             qdocument = await db.reminders.find_one(query)
             old_nid = qdocument['nid_index']
             nid = old_nid + 1
+            channel = self.bot.get_guild(432379300684103699).get_channel(payload.channel.id)
             post = {
                 'nid': nid,
                 'user_id': member.id,
-                'channel_id': payload.channel.id,
+                'channel_id': channel,
                 'creation_date': time.time(),
                 'reminder': reminder_text,
                 'repeat': repeat,
