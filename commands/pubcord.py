@@ -24,70 +24,58 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content=("Pastel*Palettes Band Story 3 Release\n"
-                     "※ Confused about the extended Event Period? "
-                     "This is put in place in order to allow the devs additional time in fixing the Android "
-                     "crashing bug without having to worry about spending more development time on future Events."
+            content=("Update on Android Crashes\n"
+                     "※ The recent update to Version 4.10.2\n"
+                     "The Android Crashing bug was not able to be fixed. **Android devices running Android 11/12 are still heavily prone to crashing while playing.**\n"
+                     "However, there's been progress made regarding a fix: The bug is relating to the in-game ad system that's exclusive to EN."
+                     "As such, it's taking more time than anticipated to fix, but now the devs know where to lead their focus toward."
                      )
         )
         embed.set_image(
-            url='https://files.s-neon.xyz/share/FHWe1gKaUAAkQHs.jpg')
+            url='https://cdn.discordapp.com/attachments/913958768105103390/930733039921811476/FI3Q3MKVUAEXPjY.png')
         embed.add_field(name=f'Current Event',
-                        value=("Title Idol\n"
-                               "<t:1640739600> to <t:1641884340>\n\n"
+                        value=("Terrible Horror Night\n"
+                               "<t:1642035600> to <t:1642575540>\n\n"
                                "**Event Type**: Mission Live\n"
                                "**Attribute**: Powerful <:attrPowerful:432978890064134145>  \n"
-                               "**Characters**: Aya, Chisato, Hina, Maya, Eve\n\n"
+                               "**Characters**: Yukina, Sayo, Lisa, Ako, Rinko\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("Earn <:StarGem:432995521892843520> x3500 for new year!\n\n"
-                               "> Worldwide 20M DL Celebration Mission - Earn up to 2000 items (3* Tickets, Stars, Miracle Crystals, etc.)\n"
-                               "> <t:1640480400> to <t:1641862800>\n"
-                               "\n"
-                               "> 2022 New Year's Star Present - <:StarGem:432995521892843520> x1500\n"
+                        value=("> 2022 New Year's Star Present - <:StarGem:432995521892843520> x1500\n"
                                "> <t:1640937600> to <t:1642233540>\n"
                                "\n"
                                "> 2022 New Year's Login Campaign - <:StarGem:432995521892843520> x1000 + Special Pins\n"
                                "> <t:1641024000> to <t:1642751940>\n"
                                "\n"
-                               "> Pastel*Palettes Band Story 3 Release Special Present - <:StarGem:432995521892843520> x1000\n"
-                               "> <t:1640739600> to <t:1641776340>\n"
+                               "> Bang Dream! Episode of Roselia II: Song I am. Movie Release Celebration Login Campaign- <:StarGem:432995521892843520> x50 per day\n"
+                               "> <t:1642406400> to <t:1643011140>\n"
                                "\n"
                                "> Bang Dream! Girls Band Party!☆PICO FEVER! Release Celebration Gift\n"
                                "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Interweaving Light Road to Prism Gacha\n"
-                               "> <t:1640739600> to <t:1642035540>\n"
+                        value=("> Eternal Darkness, Flowering Pride Gacha\n"
+                               "> <t:1642035600> to <t:1642726740>\n"
+                               "\n"
+                               "> Roselia Gacha\n"
+                               "> <t:1642122000> to <t:1642575540>\n"
+                               "\n"
+                               "> Episode of Roselia Ⅱ : Song I am. Special Set 5 Play Gacha\n"
+                               "> <t:1642406400> to <t:1643011140>\n"
                                "\n"
                                "> Special Set 5 Play Gacha\n"
-                               "> <t:1640912400> to <t:1642035540>\n"
+                               "> <t:1642208400> to <t:1642726740>\n"
                                "\n"
                                "> Bang Dream! Girls Band Party!☆PICO FEVER! Fan Appreciation ★4 Limited Member Guaranteed Gacha [LIMITED]\n"
                                "> <t:1641456000> to <t:1642665540>\n"
                                "\n"
-                               "> Band Story 3 Pastel*Palettes ★4 Member Guaranteed Gacha\n"
-                               "> <t:1640912400> to <t:1642726740>\n"
-                               "\n"
-                               "> Band Story 3 Afterglow ★4 Member Guaranteed Gacha\n"
-                               "> <t:1640048400> to <t:1641776340>\n"
-                               ),
-                        inline=False)
-        embed.add_field(name=f'Gacha Part 2',
-                        value=("> 2022 New Year's All Members Free Gacha\n"
-                               "> <t:1638493200> to <t:1641776340>\n"
-                               "\n"
                                "> Come back ★4 Miracle Ticket Set Gacha\n"
                                "> <t:1639184400> onwards, available for 30 days\n"
                                "\n"
-                               "> Collab Celebration 1 4* Member Guaranteed Gacha Vol. 1\n"
-                               "> Collab Celebration 1 4* Member Guaranteed Gacha Vol. 2\n"
-                               "> <t:1639184400> to <t:1641862740>\n"
-                               "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 1/2/2022')
+        embed.set_footer(text='Last Updated 1/12/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -100,14 +88,15 @@ class PersistentEvent(discord.ui.View):
     async def gamecrash(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='I have an android and my game keeps crashing! What do I do?',
-            content=("The community has come up with a few workarounds for Android users while the issue is being worked on. Please note that these workarounds will not work 100% of the time, and the game can still crash at any moment.\n\n"
+            content=("There's been progress made regarding a fix: The bug is relating to the in-game ad system that's exclusive to EN. As such, it's taking more time than anticipated to fix, but now the devs know where to lead their focus toward."
+                     "The community has come up with a few workarounds for Android users while the issue is being worked on. Please note that these workarounds will not work 100% of the time, and the game can still crash at any moment.\n\n"
                      "※ If you are crashing before downloading the update, download the update on Mobile Data instead of WiFi.  (Please only do this if your data plan is forgiving/unlimited as the update is very large.)\n"
                      "※ If the update is already downloaded, log into the game with Mobile Data. Once you're on the main menu, you are free to switch back to WiFi.\n"
                      "※ Obtain a VM that runs Android 7, which runs perfectly on the update. Please note that the gameplay experience will not be the best in this situation.\n"
                      "※ Use VPNs such as Proton VPN and connect that to JP.\n\n"
                      "If none of these workarounds end up working for you, please be patient as the issue gets fixed.")
         )
-        embed.set_footer(text='# of times Evets has posted about this on Twitter: 20+')
+        embed.set_footer(text='Updated 1/12/22')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
