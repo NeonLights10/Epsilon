@@ -116,7 +116,7 @@ class PersistentEvent(discord.ui.View):
                                 await dm_channel.send(content=f'Attachment #{attachnum} is not a supported media type.')
                                 await channel.send(embed=gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
                                                   icon_url=modmail_content.author.display_avatar.url, title='Attachment Failed',
-                                                  content=f'The user attempted to send an attachement that is not a supported media type.'))
+                                                  content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                 attachnum += 1
                     await channel.send(content=f"{modmail_content.author.mention}")
                     await dm_channel.send(embed=gen_embed(title='Modmail sent',
@@ -194,7 +194,7 @@ class Modmail(commands.Cog):
                             if attachment.content_type in valid_media_type:
                                 embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
                                                   icon_url=ctx.author.display_avatar.url, title='Attachment',
-                                                  content=f'Attachment #{attachnum}:')
+                                                  content=f'Attachment #{attachnum} ({attachment.content_type}):')
                                 embed.set_image(url=attachment.url)
                                 embed.set_footer(text=f'{ctx.author.id}')
                                 await channel.send(embed=embed)
@@ -204,7 +204,7 @@ class Modmail(commands.Cog):
                                 await channel.send(embed=gen_embed(
                                     name=f'{ctx.author.name}#{ctx.author.discriminator}',
                                     icon_url=ctx.author.display_avatar.url, title='Attachment Failed',
-                                    content=f'The user attempted to send an attachement that is not a supported media type.'))
+                                    content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                 attachnum += 1
                     await channel.send(content=f"{ctx.author.mention}")
                     await ctx.send(embed=gen_embed(title='Modmail sent',
@@ -235,18 +235,25 @@ class Modmail(commands.Cog):
                         return
                     if len(ctx.message.attachments) > 0:
                         attachnum = 1
+                        valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif', 'image/heif',
+                                            'image/bmp', 'image/gif', 'image/vnd.mozilla.apng', 'image/tiff']
                         for attachment in ctx.message.attachments:
-                            embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url, title='Attachment',
-                                              content=f'Attachment #{attachnum}:')
-                            embed.set_image(url=attachment.url)
-                            embed.set_footer(text=f'{ctx.guild.id}')
-                            try:
-                                await dm_channel.send(embed=embed)
-                            except discord.Forbidden:
-                                await ctx.send(embed=gen_embed(title='Warning',
-                                                               content='This user does not accept DMs. I could not send them the message.'))
-                                return
-                            attachnum += 1
+                            if attachment.content_type in valid_media_type:
+                                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url, title='Attachment',
+                                                  content=f'Attachment #{attachnum}:')
+                                embed.set_image(url=attachment.url)
+                                embed.set_footer(text=f'{ctx.guild.id}')
+                                attachnum += 1
+                                try:
+                                    await dm_channel.send(embed=embed)
+                                except discord.Forbidden:
+                                    await ctx.send(embed=gen_embed(title='Warning',
+                                                                   content='This user does not accept DMs. I could not send them the message.'))
+                                    return
+                            else:
+                                await ctx.send(content=f'Attachment #{attachnum} is not a supported media type ({attachment.content_type}).')
+                                attachnum += 1
+
                     await ctx.send(embed=gen_embed(title='Modmail sent',
                                                    content=f'Sent modmail to {rid.name}#{rid.discriminator}.'))
                 else:

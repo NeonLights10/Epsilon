@@ -411,7 +411,7 @@ async def on_message(message):
                                                 name=f'{ctx.guild.name}',
                                                 icon_url=ctx.guild.icon.url,
                                                 title='Attachment Failed',
-                                                content=f'The user attempted to send an attachement that is not a supported media type.'))
+                                                content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                             attachnum += 1
                                 await ctx.send(embed=gen_embed(title='Modmail sent',
                                                                content=f'Sent modmail to {user.name}#{user.discriminator}.'))
@@ -494,7 +494,7 @@ async def on_message(message):
                                         name=f'{ctx.author.name}#{ctx.author.discriminator}',
                                         icon_url=ctx.author.display_avatar.url,
                                         title='Attachment Failed',
-                                        content=f'The user attempted to send an attachement that is not a supported media type.'))
+                                        content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                     attachnum += 1
                         await channel.send(content=f"{ctx.author.mention}")
                         await ctx.send(embed=gen_embed(title='Modmail sent',
