@@ -651,7 +651,7 @@ class Tiering(commands.Cog):
     @commands.group(name='trackfiller',
                     description='Filler tracking feature for the server.')
     async def trackfiller(self, ctx):
-        await ctx.send(embed = gen_embed(title='Before you use Kanon to track fillers', content= 'You or the server moderators will need to reauthorize Kanon to use application commands. You can do so by visiting the following link:\nhttps://s-neon.xyz/kanon\n\nThis feature is not complete, but permissions are configured now. Below is an example of how to activate filler tracking for your server:\n`%trackfiller settings enable`\n`%trackfiller rolepermission "t10" 012345678999999999`\n(This activates the feature for the roles t10 and the roleid listed after. You can use either format, or even mention the role.)'))
+        await ctx.send(embed = gen_embed(title='Before you use Kanon to track fillers', content= 'You or the server moderators will need to reauthorize Kanon to use application commands. You can do so by visiting the following link:\nhttps://s-neon.xyz/kanon\n\nThis feature is not complete, but permissions are configured now. Below is an example of how to activate filler tracking for your server:\n`%trackfiller settings enable`\n`%trackfiller rolepermission enable 012345678999999999`\n(This activates the feature for the role t10. You can use the name in quotations, the roleid, or even mention the role. You can do multiple at once.)'))
         pass
 
     @trackfiller.command(name='help',
