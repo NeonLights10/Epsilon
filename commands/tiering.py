@@ -692,7 +692,7 @@ class Tiering(commands.Cog):
                 await db.fillers.update_one({'server_id': ctx.guild.id},
                                             {"$set": {"enabled": True}})
             else:
-                post = {'server_id': id,
+                post = {'server_id': ctx.guild.id,
                         'fillers': [],
                         'roles': [],
                         'enabled': True
@@ -708,7 +708,7 @@ class Tiering(commands.Cog):
                 await db.fillers.update_one({'server_id': ctx.guild.id},
                                             {"$set": {"enabled": False}})
             else:
-                post = {'server_id': id,
+                post = {'server_id': ctx.guild.id,
                         'fillers': [],
                         'roles': [],
                         'enabled': False
