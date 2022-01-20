@@ -27,7 +27,7 @@ class PersistentEvent(discord.ui.View):
             content=("Update on Android Crashes\n"
                      "※ The recent update to Version 4.10.2\n"
                      "The Android Crashing bug was not able to be fixed. **Android devices running Android 11/12 are still heavily prone to crashing while playing.**\n"
-                     "However, there's been progress made regarding a fix: The bug is relating to the in-game ad system that's exclusive to EN."
+                     "However, there's been progress made regarding a fix: The bug is relating to the in-game ad system that's exclusive to EN. "
                      "As such, it's taking more time than anticipated to fix, but now the devs know where to lead their focus toward."
                      )
         )
@@ -58,8 +58,8 @@ class PersistentEvent(discord.ui.View):
                         value=("> Enchanted Melty Party Time Gacha [LIMITED]\n"
                                "> <t:1642726800> to <t:1643417940>\n"
                                "\n"
-                               "> Wavering Brocade Kimono Gacha\n"
-                               "> Special Set 10 Play Gacha (x5 Boost Drink)"
+                               "> Wavering Brocade Kimono Gacha [LIMITED]\n"
+                               "> Special Set 10 Play Gacha (x5 Boost Drink)\n"
                                "> <t:1642813200> to <t:1643417940>\n"
                                "\n"
                                "> Episode of Roselia Ⅱ : Song I am. Special Set 5 Play Gacha\n"
