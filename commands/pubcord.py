@@ -32,18 +32,18 @@ class PersistentEvent(discord.ui.View):
                      )
         )
         embed.set_image(
-            url='https://cdn.discordapp.com/attachments/913958768105103390/930733039921811476/FI3Q3MKVUAEXPjY.png')
+            url='https://cdn.discordapp.com/attachments/913958768105103390/933592227085692958/FJg_-9vVgAArurc.png')
         embed.add_field(name=f'Current Event',
-                        value=("Terrible Horror Night\n"
-                               "<t:1642035600> to <t:1642575540>\n\n"
-                               "**Event Type**: Mission Live\n"
-                               "**Attribute**: Powerful <:attrPowerful:432978890064134145>  \n"
-                               "**Characters**: Yukina, Sayo, Lisa, Ako, Rinko\n\n"
+                        value=("Valentine's Day Wasn't Built in a Day\n"
+                               "<t:1642726800> to <t:1643266740>\n\n"
+                               "**Event Type**: VS Live\n"
+                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
+                               "**Characters**: Kasumi, Arisa, Rimi, Sayaa, Tae\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("> 2022 New Year's Star Present - <:StarGem:432995521892843520> x1500\n"
-                               "> <t:1640937600> to <t:1642233540>\n"
+                        value=("> Hello Happy World! Band Story 3 Release Countdown - <:StarGem:432995521892843520> x150\n"
+                               "> <t:1643184000> to <t:1643443140>\n"
                                "\n"
                                "> 2022 New Year's Login Campaign - <:StarGem:432995521892843520> x1000 + Special Pins\n"
                                "> <t:1641024000> to <t:1642751940>\n"
@@ -55,27 +55,28 @@ class PersistentEvent(discord.ui.View):
                                "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Eternal Darkness, Flowering Pride Gacha\n"
-                               "> <t:1642035600> to <t:1642726740>\n"
+                        value=("> Enchanted Melty Party Time Gacha [LIMITED]\n"
+                               "> <t:1642726800> to <t:1643417940>\n"
                                "\n"
-                               "> Roselia Gacha\n"
-                               "> <t:1642122000> to <t:1642575540>\n"
+                               "> Wavering Brocade Kimono Gacha\n"
+                               "> Special Set 10 Play Gacha (x5 Boost Drink)"
+                               "> <t:1642813200> to <t:1643417940>\n"
                                "\n"
                                "> Episode of Roselia Ⅱ : Song I am. Special Set 5 Play Gacha\n"
                                "> <t:1642406400> to <t:1643011140>\n"
                                "\n"
-                               "> Special Set 5 Play Gacha\n"
-                               "> <t:1642208400> to <t:1642726740>\n"
+                               "> Poppin'Party Gacha\n"
+                               "> <t:1642813200> to <t:1643266740>\n"
                                "\n"
-                               "> Bang Dream! Girls Band Party!☆PICO FEVER! Fan Appreciation ★4 Limited Member Guaranteed Gacha [LIMITED]\n"
-                               "> <t:1641456000> to <t:1642665540>\n"
+                               "> Special Set 10 Play Gacha\n"
+                               "> <t:1642899600> to <t:1643417940>\n"
                                "\n"
                                "> Come back ★4 Miracle Ticket Set Gacha\n"
                                "> <t:1639184400> onwards, available for 30 days\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 1/12/2022')
+        embed.set_footer(text='Last Updated 1/20/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
