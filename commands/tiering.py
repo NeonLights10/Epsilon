@@ -629,7 +629,8 @@ class Tiering(commands.Cog):
                     else:
                         fillers.append(member.id)
                         log.info('appended')
-                        await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": fillers, "roles": []}}, upsert=True)
+                        drole = document['roles']
+                        await db.fillers.update_one({'server_id': ctx.guild.id}, {"$set": {"fillers": fillers, "roles": drole}}, upsert=True)
                         log.info('updated one')
                         await ctx.respond(content = f"Added {member.name} to the list of fillers.", ephemeral=True)
                         return
