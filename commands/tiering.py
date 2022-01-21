@@ -739,8 +739,8 @@ class Tiering(commands.Cog):
             fillers = []
             roles = []
 
+        edited = []
         for role in value:
-            edited = []
             if option == 'enable':
                 if role.id in roles:
                     await ctx.send(embed=gen_embed(title='Input Error',
@@ -761,13 +761,14 @@ class Tiering(commands.Cog):
                                     {"$set": {"fillers": fillers, "roles": roles, "enabled": True}},
                                     upsert=True)
 
-        formatted_str = ", ".join(edited)
-        if option == 'enable':
-            await ctx.send(embed=gen_embed(title='trackfiller',
-                                           content=f'Enabled trackfiller for {formatted_str}.'))
-        elif option == 'disable':
-            await ctx.send(embed=gen_embed(title='trackfiller',
-                                           content=f'Disabled trackfiller for {formatted_str}.'))
+        if edited:
+            formatted_str = ", ".join(edited)
+            if option == 'enable':
+                await ctx.send(embed=gen_embed(title='trackfiller',
+                                               content=f'Enabled trackfiller for {formatted_str}.'))
+            elif option == 'disable':
+                await ctx.send(embed=gen_embed(title='trackfiller',
+                                               content=f'Disabled trackfiller for {formatted_str}.'))
 
     @trackfiller.command(name='clear',
                          description='Clear the list of all names.')
