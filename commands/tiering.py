@@ -1019,7 +1019,7 @@ class Tiering(commands.Cog):
                         if count == 29:
                             await ctx.send(embed=gen_embed(title='Refill Timer', content='Refill after this game!'))
                         count += 1
-                        await asyncio.sleep(120)
+                        await asyncio.sleep(133)
                     else:
                         break
 
