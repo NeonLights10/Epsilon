@@ -24,55 +24,48 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content=("Update on Android Crashes\n"
-                     "※ The recent update to Version 4.10.2\n"
-                     "The Android Crashing bug was not able to be fixed. **Android devices running Android 11/12 are still heavily prone to crashing while playing.**\n"
-                     "However, there's been progress made regarding a fix: The bug is relating to the in-game ad system that's exclusive to EN. "
-                     "As such, it's taking more time than anticipated to fix, but now the devs know where to lead their focus toward."
+            content=("Lunar New Year Bundles\n"
+                     "※ 4 Bundles Available - One for each attribute!\n"
+                     "<:StarGem:432995521892843520> x1200, 3*+ Ticket x1, Miracle Crystal x10, Mandarin Oranges x10 (each recovers 10 flames),"
+                     " x1000 Small Shards, x500 Medium Shards, x50 Large Shards"
                      )
         )
         embed.set_image(
-            url='https://cdn.discordapp.com/attachments/913958768105103390/933592227085692958/FJg_-9vVgAArurc.png')
+            url='https://cdn.discordapp.com/attachments/913958768105103390/936463698464215090/FKJ3XNcUUAAD-Nl.png')
         embed.add_field(name=f'Current Event',
-                        value=("Valentine's Day Wasn't Built in a Day\n"
-                               "<t:1642726800> to <t:1643266740>\n\n"
-                               "**Event Type**: VS Live\n"
-                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
-                               "**Characters**: Kasumi, Arisa, Rimi, Sayaa, Tae\n\n"
+                        value=("Smile Connection!\n"
+                               "<t:1643418000> to <t:1643957940>\n\n"
+                               "**Event Type**: Mission Live\n"
+                               "**Attribute**: Pure <:attrPure:432978922892820495>\n"
+                               "**Characters**: Kokoro, Kaoru, Hagumi, Kanon, Misaki\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("> Hello Happy World! Band Story 3 Release Countdown - <:StarGem:432995521892843520> x150\n"
-                               "> <t:1643184000> to <t:1643443140>\n"
+                        value=("> 9M DL Celebration Login Campaign - <:StarGem:432995521892843520> x50 each day\n"
+                               "> <t:1643616000> to <t:1644220740>\n"
                                "\n"
-                               "> 2022 New Year's Login Campaign - <:StarGem:432995521892843520> x1000 + Special Pins\n"
-                               "> <t:1641024000> to <t:1642751940>\n"
-                               "\n"
-                               "> Bang Dream! Episode of Roselia II: Song I am. Movie Release Celebration Login Campaign- <:StarGem:432995521892843520> x50 per day\n"
-                               "> <t:1642406400> to <t:1643011140>\n"
+                               "> HHW Band Story 3 Release Special Present - <:StarGem:432995521892843520> x1000\n"
+                               "> <t:1643418000> to <t:1644109140>\n"
                                "\n"
                                "> Bang Dream! Girls Band Party!☆PICO FEVER! Release Celebration Gift\n"
                                "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Enchanted Melty Party Time Gacha [LIMITED]\n"
-                               "> <t:1642726800> to <t:1643417940>\n"
+                        value=("> Eternal ∞ Smiles Happiness Kingdom Gacha\n"
+                               "> <t:1643418000> to <t:1644109140>\n"
                                "\n"
-                               "> Wavering Brocade Kimono Gacha [LIMITED]\n"
+                               "> Heartful Colorful Chocolate Gacha [LIMITED]\n"
                                "> Special Set 10 Play Gacha (x5 Boost Drink)\n"
-                               "> <t:1642813200> to <t:1643417940>\n"
+                               "> <t:1643504400> to <t:1644109140>\n"
                                "\n"
-                               "> Episode of Roselia Ⅱ : Song I am. Special Set 5 Play Gacha\n"
-                               "> <t:1642406400> to <t:1643011140>\n"
+                               "> Band Story 3 HHW 4* Member Guaranteed Gacha\n"
+                               "> <t:1643590800> to <t:1646182740>\n"
                                "\n"
-                               "> Poppin'Party Gacha\n"
-                               "> <t:1642813200> to <t:1643266740>\n"
+                               "> Special Set 5 Play Gacha\n"
+                               "> <t:1643590800> to <t:1644109140>\n"
                                "\n"
-                               "> Special Set 10 Play Gacha\n"
-                               "> <t:1642899600> to <t:1643417940>\n"
-                               "\n"
-                               "> Come back ★4 Miracle Ticket Set Gacha\n"
-                               "> <t:1639184400> onwards, available for 30 days\n"
+                               "> 9M DL Celebration 4* Guaranteed Gacha\n"
+                               "> <t:1643616000> to <t:1644220740>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
