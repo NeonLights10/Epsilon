@@ -130,7 +130,7 @@ class PersistentEvent(discord.ui.View):
 
     async def on_error(self, error, item, interaction):
         if type(error) is RuntimeError:
-            await interaction.response.send_message('I could not send a DM to you! Please make sure to allow direct messages from server members.', ephemeral=True)
+            await interaction.followup.send('I could not send a DM to you! Please make sure to allow direct messages from server members.', ephemeral=True)
 
 class Modmail(commands.Cog):
     def __init__(self, bot):
