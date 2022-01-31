@@ -51,9 +51,12 @@ class PersistentEvent(discord.ui.View):
         async def modmail_prompt(listen_channel: discord.DMChannel):
             def check(m):
                 return m.author == interaction.user and m.channel == listen_channel
-
-            await listen_channel.send(embed=gen_embed(title='Modmail Message Contents',
+            try:
+                await listen_channel.send(embed=gen_embed(title='Modmail Message Contents',
                                            content='Please type out your modmail below and send. You can send images by adding an attachement to the message you send.'))
+            except discord.Forbidden:
+                raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+
             try:
                 mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
             except asyncio.TimeoutError:
@@ -124,6 +127,10 @@ class PersistentEvent(discord.ui.View):
                 else:
                     log.warning("Error: Modmail is Disabled")
                     await dm_channel.send(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
+
+    async def on_error(self, error, item, interaction):
+        if type(error) is RuntimeError:
+            await interaction.response.send_message('I could not send a DM to you! Please make sure to allow direct messages from server members.', ephemeral=True)
 
 class Modmail(commands.Cog):
     def __init__(self, bot):

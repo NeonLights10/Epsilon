@@ -349,6 +349,7 @@ async def on_message(message):
                 if ctx.guild.id == 616088522100703241 and ctx.message.reference:
                     pass
                 else:
+                    #whitelist check
                     if whitelist and ctx.channel.id not in whitelist:
                         return
                     log.info(
@@ -357,80 +358,80 @@ async def on_message(message):
                     command_count += 1
                     return
             if ctx.message.reference and ctx.message.type != discord.MessageType.pins_add: #ensure pinning a message doesn't trigger this
-                #need to add in a check to see if message_id is None, or use resolved instead of this. resolved has 3 types to worry about though so maybe not
-                ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
-                if ref_message.author == bot.user:
-                    # modmail logic
-                    if ctx.channel.id == document['modmail_channel']:
-                        valid_options = {'New Modmail', 'Attachment', 'New Screenshot'}
-                        if ref_message.embeds[0].title in valid_options:
-                            #special check for the t100 chart hub
-                            if ctx.guild.id == 616088522100703241 and not ctx.prefix:
+                if ctx.message.reference.message_id:
+                    ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
+                    if ref_message.author == bot.user:
+                        # modmail logic
+                        if ctx.channel.id == document['modmail_channel']:
+                            valid_options = {'New Modmail', 'Attachment', 'New Screenshot'}
+                            if ref_message.embeds[0].title in valid_options:
+                                #special check for the t100 chart hub
+                                if ctx.guild.id == 616088522100703241 and not ctx.prefix:
+                                        return
+                                elif ctx.guild.id == 616088522100703241 and ctx.prefix:
+                                    if ctx.invoked_with != "reply":
+                                        return
+                                ref_embed = ref_message.embeds[0].footer
+                                user_id = ref_embed.text
+                                try:
+                                    user = await bot.fetch_user(user_id)
+                                except Exception:
+                                    embed = gen_embed(title='Error',
+                                                      content=f'Error finding user. This could be a server-side error, or you replied to the wrong message.')
+                                    await ctx.channel.send(embed=embed)
                                     return
-                            elif ctx.guild.id == 616088522100703241 and ctx.prefix:
-                                if ctx.invoked_with != "reply":
-                                    return
-                            ref_embed = ref_message.embeds[0].footer
-                            user_id = ref_embed.text
-                            try:
-                                user = await bot.fetch_user(user_id)
-                            except Exception:
-                                embed = gen_embed(title='Error',
-                                                  content=f'Error finding user. This could be a server-side error, or you replied to the wrong message.')
-                                await ctx.channel.send(embed=embed)
+                                if document['modmail_channel']:
+                                    mclean_content = message.clean_content
+                                    #darn t100 chart hub people
+                                    if ctx.invoked_with == "reply":
+                                        mclean_content = mclean_content.replace("%reply", "", 1)
+                                    embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
+                                                      title="New Modmail",
+                                                      content=f'{mclean_content}\n\nYou may reply to this message using the reply function.')
+                                    embed.set_footer(text=f"{ctx.guild.id}")
+                                    dm_channel = user.dm_channel
+                                    if user.dm_channel is None:
+                                        dm_channel = await user.create_dm()
+                                    await dm_channel.send(embed=embed)
+                                    if len(ctx.message.attachments) > 0:
+                                        attachnum = 1
+                                        valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif',
+                                                            'image/heif',
+                                                            'image/bmp', 'image/gif', 'image/vnd.mozilla.apng',
+                                                            'image/tiff']
+                                        for attachment in ctx.message.attachments:
+                                            if attachment.content_type in valid_media_type:
+                                                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
+                                                                  title='Attachment', content=f'Attachment #{attachnum}:')
+                                                embed.set_image(url=attachment.url)
+                                                embed.set_footer(text=f'{ctx.guild.id}')
+                                                await dm_channel.send(embed=embed)
+                                                attachnum += 1
+                                            else:
+                                                await ctx.send(content=f'Attachment #{attachnum} is not a supported media type.')
+                                                await dm_channel.send(embed=gen_embed(
+                                                    name=f'{ctx.guild.name}',
+                                                    icon_url=ctx.guild.icon.url,
+                                                    title='Attachment Failed',
+                                                    content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
+                                                attachnum += 1
+                                    await ctx.send(embed=gen_embed(title='Modmail sent',
+                                                                   content=f'Sent modmail to {user.name}#{user.discriminator}.'))
+                        elif document['chat']:
+                            if whitelist and ctx.channel not in whitelist:
                                 return
-                            if document['modmail_channel']:
-                                mclean_content = message.clean_content
-                                #darn t100 chart hub people
-                                if ctx.invoked_with == "reply":
-                                    mclean_content = mclean_content.replace("%reply", "", 1)
-                                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
-                                                  title="New Modmail",
-                                                  content=f'{mclean_content}\n\nYou may reply to this message using the reply function.')
-                                embed.set_footer(text=f"{ctx.guild.id}")
-                                dm_channel = user.dm_channel
-                                if user.dm_channel is None:
-                                    dm_channel = await user.create_dm()
-                                await dm_channel.send(embed=embed)
-                                if len(ctx.message.attachments) > 0:
-                                    attachnum = 1
-                                    valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif',
-                                                        'image/heif',
-                                                        'image/bmp', 'image/gif', 'image/vnd.mozilla.apng',
-                                                        'image/tiff']
-                                    for attachment in ctx.message.attachments:
-                                        if attachment.content_type in valid_media_type:
-                                            embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
-                                                              title='Attachment', content=f'Attachment #{attachnum}:')
-                                            embed.set_image(url=attachment.url)
-                                            embed.set_footer(text=f'{ctx.guild.id}')
-                                            await dm_channel.send(embed=embed)
-                                            attachnum += 1
-                                        else:
-                                            await ctx.send(content=f'Attachment #{attachnum} is not a supported media type.')
-                                            await dm_channel.send(embed=gen_embed(
-                                                name=f'{ctx.guild.name}',
-                                                icon_url=ctx.guild.icon.url,
-                                                title='Attachment Failed',
-                                                content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
-                                            attachnum += 1
-                                await ctx.send(embed=gen_embed(title='Modmail sent',
-                                                               content=f'Sent modmail to {user.name}#{user.discriminator}.'))
-                    elif document['chat']:
-                        if whitelist and ctx.channel not in whitelist:
-                            return
-                        log.info("Found a reply to me, generating response...")
-                        msg = await get_msgid(ctx.message)
-                        #log.info(f"Message retrieved: {msg}\n")
-                        await ctx.message.reply(content=msg)
+                            log.info("Found a reply to me, generating response...")
+                            msg = await get_msgid(ctx.message)
+                            #log.info(f"Message retrieved: {msg}\n")
+                            await ctx.message.reply(content=msg)
 
-                else:
-                    if ctx.channel.id not in document['blacklist']:
-                        post = {'server_id': ctx.guild.id,
-                                'channel_id': ctx.channel.id,
-                                'msg_id': ctx.message.id}
-                        await db.msgid.insert_one(post)
-                        #await twtfix(message)
+                    else:
+                        if ctx.channel.id not in document['blacklist']:
+                            post = {'server_id': ctx.guild.id,
+                                    'channel_id': ctx.channel.id,
+                                    'msg_id': ctx.message.id}
+                            await db.msgid.insert_one(post)
+                            #await twtfix(message)
             elif bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
                 if document['chat']:
                     #new_message = await twtfix(message)
@@ -584,6 +585,9 @@ async def on_member_remove(member):
 
 
 ###################
+
+async def check_modmail(message, ctx):
+
 
 # This recursive function checks the database for a message ID for the bot to fetch a message and respond with when mentioned or replied to.
 async def get_msgid(message, attempts=1):
