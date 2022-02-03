@@ -64,7 +64,7 @@ class CommandErrorHandler(commands.Cog):
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             await ctx.send(embed = gen_embed(title = "Command on Cooldown", content = f"You are trying to change the name too many times. Discord's global rate limit per channel is twice per 10 minutes.\nPlease try again in {format_timespan(ctx.command.get_cooldown_retry_after(ctx))}."))
 
-        elif isinstance(error, discord.errors.Forbidden):
+        elif isinstance(error, discord.Forbidden):
             log.error("Permission Error: Bot does not have sufficient permissions. - Traceback below:")
             traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
             await ctx.send(embed = gen_embed(title = 'Bot Permission Error', content = "It seems like I don't have the permissions to do that. Check your server settings."))

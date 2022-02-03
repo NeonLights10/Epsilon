@@ -212,7 +212,7 @@ class Reminder(commands.Cog):
                 elif reminder['location'] == 'dm':
                     try:
                         await user.send(embed=embed)
-                    except (discord.errors.Forbidden, discord.errors.Forbidden):
+                    except discord.Forbidden:
                         # Can't send DMs to user, delete it
                         log.error('Could not send reminder dm to user, deleting reminder')
                         to_remove.append(reminder)
@@ -360,7 +360,7 @@ class Reminder(commands.Cog):
             title=f"Reminders for {ctx.author.display_name}",
             color= 0x1abc9c,
         )
-        embed.set_thumbnail(url=ctx.author.avatar_url)
+        embed.set_thumbnail(url=ctx.author.display_avatar.url)
         current_time = int(time.time())
         async for reminder in reminders:
             delta = reminder['future_time'] - current_time
@@ -733,10 +733,11 @@ class Reminder(commands.Cog):
             qdocument = await db.reminders.find_one(query)
             old_nid = qdocument['nid_index']
             nid = old_nid + 1
+            channel = self.bot.get_guild(432379300684103699).get_channel(payload.channel_id)
             post = {
                 'nid': nid,
                 'user_id': member.id,
-                'channel_id': payload.channel.id,
+                'channel_id': channel,
                 'creation_date': time.time(),
                 'reminder': reminder_text,
                 'repeat': repeat,

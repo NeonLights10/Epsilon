@@ -49,7 +49,7 @@ class Utility(commands.Cog):
             answer = random.randint(0, num)
             embed = gen_embed(
                         name = f"{ctx.author.name}#{ctx.author.discriminator}", 
-                        icon_url = ctx.author.avatar_url, 
+                        icon_url = ctx.author.display_avatar.url,
                         title = "roll",
                         content = f"{ctx.author.mention} rolled a {str(answer)}"
                         )
@@ -66,7 +66,7 @@ class Utility(commands.Cog):
             answer = num
             embed = gen_embed(
                         name = f"{ctx.author.name}#{ctx.author.discriminator}", 
-                        icon_url = ctx.author.avatar_url, 
+                        icon_url = ctx.author.display_avatar.url,
                         title = "roll",
                         content = f"{ctx.author.mention} rolled a {str(answer)}"
                         )
@@ -83,7 +83,7 @@ class Utility(commands.Cog):
         If a timezone is specified, the time will be displayed in that timezone.
         """        
         #Get current time in UTC.
-        current_time = datetime.datetime.utcnow()
+        current_time = datetime.datetime.now(datetime.timezone.utc)
        
         #If a timezone is specified let's convert time into that timezone.
         if timezone:

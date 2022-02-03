@@ -15,7 +15,7 @@ def gen_embed(name = None, icon_url = None, title = None, content = None):
         e.description = content
         return e
 
-async def embed_splitter(embed: discord.Embed, destination: discord.abc.Messageable = None) -> List[discord.Embed]:
+async def embed_splitter(embed: discord.Embed, destination: discord.abc.Messageable = None, footer: str = None) -> List[discord.Embed]:
         """Take an embed and split it so that each embed has at most 20 fields and a length of 5900.
         Each field value will also be checked to have a length no greater than 1024.
         If supplied with a destination, will also send those embeds to the destination.
@@ -59,5 +59,7 @@ async def embed_splitter(embed: discord.Embed, destination: discord.abc.Messagea
 
         if destination:
             for split_embed in split_embeds:
+                if footer:
+                    split_embed.set_footer(text=f'{footer}')
                 await destination.send(embed=split_embed)
         return split_embeds

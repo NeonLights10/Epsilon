@@ -17,6 +17,174 @@ from formatting.embed import gen_embed
 from bson.objectid import ObjectId
 from __main__ import log, db, prefix_list, prefix
 
+class Cancel(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Cancel", style=discord.ButtonStyle.danger)
+        self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    async def callback(self, interaction):
+        await interaction.response.send_message("Cancelled Operation.", ephemeral=True)
+        for item in self.view.children:
+            item.disabled = True
+        self.value = True
+        self.view.stop()
+
+class StrikeSeverity(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label='Strike Level 1', value = 1, description='This is a warning strike', emoji='1️⃣'),
+            discord.SelectOption(label='Strike Level 2', value = 2, description='This strike will also mute the user', emoji='2️⃣'),
+            discord.SelectOption(label='Strike Level 3', value = 3, description='This strike will also ban the user', emoji='3️⃣')
+        ]
+        super().__init__(placeholder="Select the strike severity", min_values=1, max_values=1, options=options)
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    async def callback(self, interaction):
+        await interaction.response.send_message(f'You selected strike level {self.values[0]}', ephemeral=True)
+        for item in self.view.children:
+            item.disabled = True
+        self.view.stop()
+
+class StrikeSelect(discord.ui.Select):
+    def __init__(self, user_options):
+        options = user_options
+        super().__init__(placeholder="Select which strike to remove", min_values=1, max_values=len(options), options=options)
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    async def callback(self, interaction):
+        await interaction.response.send_message(f'You selected {self.values[0]}', ephemeral=True)
+        for item in self.view.children:
+            item.disabled = True
+        self.view.stop()
+
+# Define a view for the user lookup menu
+class LookupMenu(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__()
+        self.context = ctx
+        self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    # When the confirm button is pressed, set the inner value to `True` and
+    # stop the View from listening to more input.
+    # We also send the user an ephemeral message that we're confirming their choice.
+    @discord.ui.button(label="Send Modmail", style=discord.ButtonStyle.primary)
+    async def sendmodmail(self, button: discord.ui.Button, interaction: discord.Interaction):
+        async def modmail_enabled():
+            document = await db.servers.find_one({"server_id": self.context.guild.id})
+            if document['modmail_channel']:
+                return True
+            else:
+                return False
+
+        if modmail_enabled := await modmail_enabled():
+            #await interaction.response.send_message("Acknowledged Send Modmail", ephemeral=True)
+            for item in self.children:
+                item.disabled = True
+            self.value = 1
+            self.stop()
+        else:
+            await interaction.response.send_message("Sorry, modmail is not enabled for this server.", ephemeral=True)
+            self.value = 4
+
+
+    # This one is similar to the confirmation button except sets the inner value to `False`
+    @discord.ui.button(label="Strike User", style=discord.ButtonStyle.primary)
+    async def strikeuser(self, button: discord.ui.Button, interaction: discord.Interaction):
+        #await interaction.response.send_message("Acknowledged Strike User.", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = 2
+        self.stop()
+
+    @discord.ui.button(label="Delete Strike", style=discord.ButtonStyle.danger)
+    async def delstrike(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Please choose which strike to delete from the dropdown above.", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = 3
+        self.stop()
+
+# Define a simple View that gives us a confirmation menu
+class Confirm(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__()
+        self.context = ctx
+        self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    # When the confirm button is pressed, set the inner value to `True` and
+    # stop the View from listening to more input.
+    # We also send the user an ephemeral message that we're confirming their choice.
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
+    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
+        #await interaction.response.send_message("Confirming", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = True
+        self.stop()
+
+    # This one is similar to the confirmation button except sets the inner value to `False`
+    @discord.ui.button(label="No", style=discord.ButtonStyle.red)
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Strike completed. User was not image muted.", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = False
+        self.stop()
+
+# Define a simple View that gives us a confirmation menu
+class ConfirmStrike(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__()
+        self.context = ctx
+        self.value = None
+
+    async def interaction_check(self, interaction):
+        if interaction.user != self.context.author:
+            return False
+        return True
+
+    # When the confirm button is pressed, set the inner value to `True` and
+    # stop the View from listening to more input.
+    # We also send the user an ephemeral message that we're confirming their choice.
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
+    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
+        #await interaction.response.send_message("Confirming", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = True
+        self.stop()
+
+    # This one is similar to the confirmation button except sets the inner value to `False`
+    @discord.ui.button(label="No", style=discord.ButtonStyle.red)
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Strike cancelled.", ephemeral=True)
+        for item in self.children:
+            item.disabled = True
+        self.value = False
+        self.stop()
 
 class Administration(commands.Cog):
     def __init__(self, bot):
@@ -163,7 +331,7 @@ class Administration(commands.Cog):
                 else:
                     await ctx.send(embed=gen_embed(title='Input Error',
                                                    content=f'This channel is already blacklisted!'))
-                    return
+                    continue
                 await db.msgid.delete_many({"channel_id": channel.id})
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
@@ -177,7 +345,7 @@ class Administration(commands.Cog):
                 else:
                     await ctx.send(embed=gen_embed(title='Input Error',
                                                    content=f'This channel is not blacklisted!'))
-                    return
+                    continue
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'blacklist': blacklist}})
             await ctx.send(embed=gen_embed(title='blacklist',
                                            content=f'Unblacklisted channel {channels_removed} for {ctx.guild.name}'))
@@ -205,7 +373,7 @@ class Administration(commands.Cog):
                 else:
                     await ctx.send(embed=gen_embed(title='Input Error',
                                                    content=f'This channel is already whitelisted!'))
-                    return
+                    continue
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
                                            content=f'Whitelisted channel {channels_added} for {ctx.guild.name}'))
@@ -218,7 +386,7 @@ class Administration(commands.Cog):
                 else:
                     await ctx.send(embed=gen_embed(title='Input Error',
                                                    content=f'This channel is not whitelisted!'))
-                    return
+                    continue
             await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'whitelist': whitelist}})
             await ctx.send(embed=gen_embed(title='whitelist',
                                            content=f'Unwhitelisted channel {channels_removed} for {ctx.guild.name}'))
@@ -426,13 +594,14 @@ class Administration(commands.Cog):
                                 re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)})
 
         async def delete_messages(limit=None, check=None, before=None, after=None):
-            deleted = await ctx.channel.purge(limit=limit, check=check, before=before, after=after)
             if check:
+                deleted = await ctx.channel.purge(limit=limit, check=check, before=before, after=after)
                 sent = await ctx.send(embed=gen_embed(title='purge',
                                                       content=f'The last {len(deleted)} messages by {member.name}#{member.discriminator} were deleted.'))
                 await ctx.message.delete()
                 await sent.delete(delay=5)
             else:
+                deleted = await ctx.channel.purge(limit=limit, before=before, after=after)
                 sent = await ctx.send(
                     embed=gen_embed(title='purge', content=f'The last {len(deleted)} messages were deleted.'))
                 await ctx.message.delete()
@@ -453,7 +622,7 @@ class Administration(commands.Cog):
 
                     else:
                         if time:
-                            after_value = datetime.datetime.utcnow()
+                            after_value = datetime.datetime.now(datetime.timezone.utc)
                             if isinstance(time, str):
                                 after_value = after_value - convert_to_timedelta(time)
                             elif isinstance(time, discord.MessageReference):
@@ -463,7 +632,7 @@ class Administration(commands.Cog):
                         else:
                             await delete_messages(limit=num, check=user_check)
                 elif time:
-                    after_value = datetime.datetime.utcnow()
+                    after_value = datetime.datetime.now(datetime.timezone.utc)
                     if isinstance(time, str):
                         after_value = after_value - convert_to_timedelta(time)
                     elif isinstance(time, discord.MessageReference):
@@ -480,7 +649,7 @@ class Administration(commands.Cog):
                 await sent.delete(delay=5)
             else:
                 if time:
-                    after_value = datetime.datetime.utcnow()
+                    after_value = datetime.datetime.now(datetime.timezone.utc)
                     if isinstance(time, str):
                         after_value = after_value - convert_to_timedelta(time)
                     elif isinstance(time, discord.MessageReference):
@@ -493,7 +662,7 @@ class Administration(commands.Cog):
                     await delete_messages(limit=num, before=ctx.message)
                     return
         elif time:
-            after_value = datetime.datetime.utcnow()
+            after_value = datetime.datetime.now(datetime.timezone.utc)
             if isinstance(time, str):
                 after_value = after_value - convert_to_timedelta(time)
             elif isinstance(time, discord.MessageReference):
@@ -627,7 +796,7 @@ class Administration(commands.Cog):
 
                     if embed_message:
                         if len(embed_message) < 1024:
-                            embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                            embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                                  title=f'Verification',
                                                  content=embed_message)
                             rmessage = await channel.send(embed=embed)
@@ -639,7 +808,7 @@ class Administration(commands.Cog):
                                                            content=f'Your reason message is too long ({len(reason) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
                             return
                     else:
-                        embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                        embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                           title=f'Verification',
                                           content='In order to access this server, you must react to this message. By reacting to this message, you are agreeing to the rules of this server and Discord TOS.')
                         rmessage = await channel.send(embed=embed)
@@ -683,17 +852,17 @@ class Administration(commands.Cog):
                     role = discord.utils.find(lambda r: r.name == 'Verified', rmessage.guild.roles)
                     await payload.member.add_roles(role)
 
-    @commands.command(name='mute',
-                      description='Mute user(s) for a certain amount of time.',
-                      help='Usage\n\n%mute [user mentions/user ids/user name + discriminator (ex: name#0000)] <time> <reason>')
+    @commands.command(name='timeout',
+                      description='Timeout user(s) for a certain amount of time.',
+                      help='Usage\n\n%timeout [user mentions/user ids/user name + discriminator (ex: name#0000)] <time> <reason>')
     @commands.check_any(commands.has_guild_permissions(mute_members=True), has_modrole())
-    async def mute(self, ctx, members: commands.Greedy[discord.Member], mtime: Optional[str] = None, *,
+    async def timeout(self, ctx, members: commands.Greedy[discord.Member], mtime: Optional[str] = None, *,
                    reason: Optional[str]):
-        def convert_to_seconds(s):
-            return int(timedelta(**{
+        def convert_to_timedelta(s):
+            return timedelta(**{
                 UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val'))
                 for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)
-            }).total_seconds())
+            })
 
         async def modmail_enabled():
             document = await db.servers.find_one({"server_id": ctx.guild.id})
@@ -702,84 +871,52 @@ class Administration(commands.Cog):
             else:
                 return False
 
-        mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
-
-        if not mutedRole:
-            mutedRole = await ctx.guild.create_role(name="Muted")
-
-            for channel in ctx.guild.channels:
-                await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
-
         muted = ""
+        mute_duration = datetime.datetime.now(datetime.timezone.utc) + convert_to_timedelta(mtime)
         for member in members:
-            await member.add_roles(mutedRole)
+            await member.timeout(mute_duration, reason[:512])
 
             dm_channel = member.dm_channel
             if member.dm_channel is None:
                 dm_channel = await member.create_dm()
 
-            if mtime:
-                seconds = convert_to_seconds(mtime)
-                m = await modmail_enabled()
-                dm_embed = None
-                if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                         title=f'You have been muted for {seconds} seconds',
-                                         content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
-                else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                         title=f'You have been muted for {seconds} seconds',
-                                         content=f'Reason: {reason}')
-                dm_embed.set_footer(text=time.ctime())
-                try:
-                    await dm_channel.send(embed=dm_embed)
-                except discord.errors.Forbidden:
-                    await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with muting the user.'))
-
-                embed = gen_embed(title='mute', content=f'{member.mention} has been muted. \nReason: {reason}')
-                await ctx.send(embed=embed)
-                document = await db.servers.find_one({"server_id": ctx.guild.id})
-                if document['log_channel'] and document['log_kbm']:
-                    msglog = int(document['log_channel'])
-                    logChannel = member.guild.get_channel(msglog)
-                    await logChannel.send(embed=embed)
-
-                await asyncio.sleep(seconds)
-                await member.remove_roles(mutedRole)
-                return
+            m = await modmail_enabled()
+            dm_embed = None
+            if m:
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                     title=f'You have been put in timeout. Your timeout will end <t:{int(time.mktime(mute_duration.timetuple()))}:R>',
+                                     content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
             else:
-                m = await modmail_enabled()
-                dm_embed = None
-                if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                         title=f'You have been muted.',
-                                         content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
-                    dm_embed.set_footer(text=ctx.guild.id)
-                else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                         title=f'You have been muted.', content=f'Reason: {reason}')
-                    dm_embed.set_footer(text=time.ctime())
-                try:
-                    await dm_channel.send(embed=dm_embed)
-                except discord.errors.Forbidden:
-                    await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with muting the user.'))
-                muted = muted + f'{member.mention} '
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                     title=f'You have been put in timeout. Your timeout will end <t:{int(time.mktime(mute_duration.timetuple()))}:R>',
+                                     content=f'Reason: {reason}')
+            dm_embed.set_footer(text=time.ctime())
+            try:
+                await dm_channel.send(embed=dm_embed)
+            except discord.Forbidden:
+                await ctx.send(embed = gen_embed(title='Warning', content = 'This user does not accept DMs. I could not send them the message, but I will proceed with putting the user in timeout.'))
 
-            await ctx.send(embed=gen_embed(title='mute', content=f'{muted} has been muted. \nReason: {reason}'))
+            muted = muted + f'{member.mention} '
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            if document['log_channel'] and document['log_kbm']:
+                msglog = int(document['log_channel'])
+                logChannel = member.guild.get_channel(msglog)
+                await logChannel.send(embed=gen_embed(title='mute', content=f'{member.mention} has been put in timeout. \nReason: {reason}'))
 
-    @commands.command(name='unmute',
-                      description='Unmute a user',
-                      help='Usage\n\n %unmute [user mentions/user ids/user name + discriminator (ex: name#0000)]')
-    @commands.check_any(commands.has_guild_permissions(mute_members=True), has_modrole())
-    async def unmute(self, ctx, members: commands.Greedy[discord.Member]):
-        mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
+            await ctx.send(embed=gen_embed(title='mute', content=f'{muted}has been put in timeout. \nReason: {reason}'))
 
+    @commands.command(name='removetimeout',
+                      alises=['rtimeout'],
+                      description="Remove a user's timeout",
+                      help='Usage\n\n %removetimeout [user mentions/user ids/user name + discriminator (ex: name#0000)]')
+    @commands.check_any(commands.has_guild_permissions(moderate_members=True), has_modrole())
+    async def removetimeout(self, ctx, members: commands.Greedy[discord.Member]):
         unmuted = ""
         for member in members:
-            await member.remove_roles(mutedRole)
+            await member.remove_timeout(reason=f'{ctx.author.name}{ctx.author.discriminator} removed the timeout.')
             unmuted = unmuted + f'{member.mention} '
 
-        await ctx.send(embed=gen_embed(title='unmute', content=f'{unmuted}has been unmuted.'))
+        await ctx.send(embed=gen_embed(title='removetimeout', content=f'{unmuted}has had their timeout removed.'))
 
     @commands.command(name='kick',
                       description='Kick user(s) from the server.',
@@ -808,11 +945,11 @@ class Administration(commands.Cog):
             m = await modmail_enabled()
             dm_embed = None
             if m:
-                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been kicked',
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been kicked',
                                      content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                 dm_embed.set_footer(text=ctx.guild.id)
             else:
-                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been kicked',
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been kicked',
                                      content=f'Reason: {reason}')
                 dm_embed.set_footer(text=time.ctime())
             try:
@@ -821,7 +958,10 @@ class Administration(commands.Cog):
                 await ctx.send(embed=gen_embed(title='Warning',
                                                content='This user does not accept DMs or there was an issue with sending DMs. I could not send them the message, but I will proceed with kicking the user.'))
 
-            await ctx.guild.kick(member, reason=reason[:511])
+            if reason:
+                await ctx.guild.kick(member, reason=reason[:511])
+            else:
+                await ctx.guild.kick(member)
             kicked = kicked + f'{member.name}#{member.discriminator} '
 
         embed = gen_embed(title='kick', content=f'{kicked}has been kicked.\nReason: {reason}')
@@ -829,8 +969,8 @@ class Administration(commands.Cog):
         document = await db.servers.find_one({"server_id": ctx.guild.id})
         if document['log_channel'] and document['log_kbm']:
             msglog = int(document['log_channel'])
-            logChannel = member.guild.get_channel(msglog)
-            await logChannel.send(embed=embed)
+            log_channel = ctx.guild.get_channel(msglog)
+            await log_channel.send(embed=embed)
 
     @commands.command(name='ban',
                       description='Ban user(s) from the server.',
@@ -880,11 +1020,11 @@ class Administration(commands.Cog):
                 m = await modmail_enabled()
                 dm_embed = None
                 if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been banned',
                                          content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                     dm_embed.set_footer(text=ctx.guild.id)
                 else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been banned',
                                          content=f'Reason: {reason}')
                 dm_embed.set_footer(text=time.ctime())
                 try:
@@ -911,11 +1051,11 @@ class Administration(commands.Cog):
     @commands.check_any(commands.has_guild_permissions(ban_members=True), has_modrole())
     async def strike(self, ctx, severity: convert_severity, members: commands.Greedy[discord.Member], message_link: str,
                      *, reason):
-        def convert_to_seconds(s):
-            return int(timedelta(**{
+        def convert_to_timedelta(s):
+            return timedelta(**{
                 UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val'))
                 for m in re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)
-            }).total_seconds())
+            })
 
         async def modmail_enabled():
             document = await db.servers.find_one({"server_id": ctx.guild.id})
@@ -923,6 +1063,29 @@ class Administration(commands.Cog):
                 return True
             else:
                 return False
+
+        async def timeouttime(attempts = 1):
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Timeout Duration',
+                                           content='How long do you want to timeout the user? Accepted format: ##[smhdw] (these correspond to seconds, minutes, hours, days, weeks)\n Example: 3d 6h -> 3 days, 6 hours'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Timeout cancelled',
+                                               content='Strike has still been applied.'))
+                return
+            if re.match(r'(\d+)([smhdw]?)', mmsg.clean_content, flags=re.I):
+                return mmsg.clean_content
+            elif attempts > 3:
+                # exit out so we don't crash in a recursive loop due to user incompetency
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed=gen_embed(title='Timeout Duration',
+                                               content="Sorry, I didn't catch that or it was an invalid format."))
+                attempts += 1
+                return await mutetime(attempts)
 
         async def mutetime(attempts = 1):
             def check(m):
@@ -995,8 +1158,8 @@ class Administration(commands.Cog):
                 attempts += 1
                 return await imagemute(attempts)
 
-        time = datetime.datetime.utcnow()
-        searchtime = time + relativedelta(seconds=10)
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        searchtime = current_time + relativedelta(seconds=10)
         if len(members) < 1:
             log.warning("Missing Required Argument")
             params = ' '.join([x for x in ctx.command.clean_params])
@@ -1033,14 +1196,7 @@ class Administration(commands.Cog):
         if severity == '2':
             msg = await mutetime()
             if msg:
-                mtime = convert_to_seconds(msg)
-                mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
-
-                if not mutedRole:
-                    mutedRole = await ctx.guild.create_role(name="Muted")
-
-                    for channel in ctx.guild.channels:
-                        await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
+                mute_duration = datetime.datetime.now(datetime.timezone.utc) + convert_to_timedelta(msg)
 
         for member in members:
             dm_channel = member.dm_channel
@@ -1049,7 +1205,7 @@ class Administration(commands.Cog):
 
             # move this out to a separate method
             post = {
-                'time': time,
+                'time': current_time,
                 'server_id': ctx.guild.id,
                 'user_name': f'{member.name}#{member.discriminator}',
                 'user_id': member.id,
@@ -1063,7 +1219,7 @@ class Administration(commands.Cog):
                 await db.warns.insert_one(post)
                 #this is stupid and i hate it but it is what it is
                 npost = {
-                    'time': time + relativedelta(seconds=1),
+                    'time': current_time + relativedelta(seconds=1),
                     'server_id': ctx.guild.id,
                     'user_name': f'{member.name}#{member.discriminator}',
                     'user_id': member.id,
@@ -1075,7 +1231,7 @@ class Administration(commands.Cog):
             elif severity == '3':
                 await db.warns.insert_one(post)
                 npost = {
-                    'time': time + relativedelta(seconds=1),
+                    'time': current_time + relativedelta(seconds=1),
                     'server_id': ctx.guild.id,
                     'user_name': f'{member.name}#{member.discriminator}',
                     'user_id': member.id,
@@ -1085,7 +1241,7 @@ class Administration(commands.Cog):
                 }
                 await db.warns.insert_one(npost)
                 nnpost = {
-                    'time': time + relativedelta(seconds=2),
+                    'time': current_time + relativedelta(seconds=2),
                     'server_id': ctx.guild.id,
                     'user_name': f'{member.name}#{member.discriminator}',
                     'user_id': member.id,
@@ -1097,36 +1253,36 @@ class Administration(commands.Cog):
 
             dm_embed = None
             if m:
-                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                      title='You have been given a strike',
                                      content=embed_message)
             else:
-                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
+                dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
                                      title='You have been given a strike',
                                      content=embed_message)
             dm_embed.set_footer(text=ctx.guild.id)
             try:
                 await dm_channel.send(embed=dm_embed)
-            except discord.errors.Forbidden:
+            except discord.Forbidden:
                 await ctx.send(embed=gen_embed(title='Warning',
                                                content='This user does not accept DMs. I could not send them the message, but I will proceed with striking the user.'))
 
             if len(ctx.message.attachments) > 0:
                 attachnum = 1
                 for attachment in ctx.message.attachments:
-                    embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon_url, title='Attachment',
+                    embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url, title='Attachment',
                                       content=f'Attachment #{attachnum}:')
                     embed.set_image(url = attachment.url)
                     embed.set_footer(text=f'{ctx.guild.id}')
                     await dm_channel.send(embed=embed)
                     attachnum += 1
 
-            embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.avatar_url,
+            embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar.url,
                               title='Strike recorded',
                               content=f'{ctx.author.name}#{ctx.author.discriminator} gave a strike to {member.name}#{member.discriminator} | {member.id}')
             embed.add_field(name='Severity', value=f'{severity} strike(s)', inline=False)
             embed.add_field(name='Reason', value=f'{reason}\n\n[Go to message/evidence]({message_link})', inline=False)
-            embed.set_footer(text=time.ctime())
+            embed.set_footer(text=current_time.ctime())
             await ctx.send(embed=embed)
             document = await db.servers.find_one({"server_id": ctx.guild.id})
             if document['log_channel'] and document['log_strikes']:
@@ -1149,16 +1305,16 @@ class Administration(commands.Cog):
                 m = await modmail_enabled()
                 dm_embed = None
                 if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been banned',
                                          content=f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                     dm_embed.set_footer(text=ctx.guild.id)
                 else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url, title='You have been banned',
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url, title='You have been banned',
                                          content=f'Reason: {reason}')
-                    dm_embed.set_footer(text=time.ctime())
+                    dm_embed.set_footer(text=current_time.ctime())
                 try:
                     await dm_channel.send(embed=dm_embed)
-                except discord.errors.Forbidden:
+                except discord.Forbidden:
                     await ctx.send(embed=gen_embed(title='Warning',
                                                    content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and banning the user.'))
                 await ctx.guild.ban(member,
@@ -1178,78 +1334,81 @@ class Administration(commands.Cog):
                 if msg is None:
                     return
                 else:
-                    mtime = convert_to_seconds(msg)
-                    mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
-
-                    if not mutedRole:
-                        mutedRole = await ctx.guild.create_role(name="Muted")
-
-                        for channel in ctx.guild.channels:
-                            await channel.set_permissions(mutedRole, speak=False, send_messages=False, add_reactions=False)
+                    mute_duration = datetime.datetime.now(datetime.timezone.utc) + convert_to_timedelta(msg)
 
             elif severity != '2' and ctx.guild.id == 432379300684103699:
-                msg = await imagemute()
-                if msg is None:
+                view = Confirm(ctx)
+                sent_message = await ctx.send(embed=gen_embed(title='Image Mute', content="Do you want to revoke image/external emote privileges?"), view=view)
+                # Wait for the View to stop listening for input...
+                await view.wait()
+                await sent_message.edit(view=view)
+                if view.value is None:
+                    log.info("View timed out")
                     return
+                elif view.value:
+                    log.info("Pressed Confirm Button")
+                    msg = await mutetime()
+                    if msg:
+                        mtime = convert_to_timedelta(msg)
+                        mtime = int(mtime.total_seconds())
+                        mutedRole = discord.utils.get(ctx.guild.roles, name="Image Mute")
+
+                        await member.add_roles(mutedRole)
+
+                        if m:
+                            dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                                 title=f'You have had your image/external emote privileges revoked for for {mtime} seconds',
+                                                 content=f'If you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                            dm_embed.set_footer(text=ctx.guild.id)
+                        else:
+                            dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                                 title=f'You have been image/external emote privileges revoked for for {mtime} seconds',
+                                                 content=f'This is a result of your strike.')
+                            dm_embed.set_footer(text=current_time.ctime())
+                        try:
+                            await dm_channel.send(embed=dm_embed)
+                        except discord.Forbidden:
+                            await ctx.send(embed=gen_embed(title='Warning',
+                                                           content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
+                        await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
+                        if document['log_channel'] and document['log_kbm']:
+                            msglog = int(document['log_channel'])
+                            logChannel = ctx.guild.get_channel(msglog)
+                            embed = gen_embed(title='mute',
+                                              content=f'{member.name} (ID: {member.id} has had their image/external emote privileges revoked for {mtime} seconds.\nReason: Moderator specified')
+                            await logChannel.send(embed=embed)  # do custom
+                        await asyncio.sleep(mtime)
+                        await member.remove_roles(mutedRole)
+                        return
                 else:
-                    mtime = convert_to_seconds(msg)
-                    mutedRole = discord.utils.get(ctx.guild.roles, name="Image Mute")
-
-                    await member.add_roles(mutedRole)
-
-                    if m:
-                        dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                             title=f'You have had your image/external emote privileges revoked for for {mtime} seconds',
-                                             content=f'If you have any issues, you may reply (use the reply function) to this message and send a modmail.')
-                        dm_embed.set_footer(text=ctx.guild.id)
-                    else:
-                        dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                             title=f'You have been image/external emote privileges revoked for for {mtime} seconds',
-                                             content=f'This is a result of your strike.')
-                        dm_embed.set_footer(text=time.ctime())
-                    try:
-                        await dm_channel.send(embed=dm_embed)
-                    except discord.errors.Forbidden:
-                        await ctx.send(embed=gen_embed(title='Warning',
-                                                       content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
-                    await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
-                    if document['log_channel'] and document['log_kbm']:
-                        msglog = int(document['log_channel'])
-                        logChannel = ctx.guild.get_channel(msglog)
-                        embed = gen_embed(title='mute',
-                                          content=f'{member.name} (ID: {member.id} has had their image/external emote privileges revoked for {mtime} seconds.\nReason: Moderator specified')
-                        await logChannel.send(embed=embed)  # do custom
-                    await asyncio.sleep(mtime)
-                    await member.remove_roles(mutedRole)
+                    log.info("Pressed Cancel Button")
                     return
 
             if severity == '2' or len(results) == 2:
-                await member.add_roles(mutedRole)
+                await member.timeout(mute_duration, reason='Automatic timeout due to accumulating 2 strikes')
 
                 if m:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                         title=f'You have been muted for {mtime} seconds',
-                                         content=f'Strike 2 - automatic mute\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                         title=f'You have been put in timeout. Your timeout will end <t:{int(time.mktime(mute_duration.timetuple()))}:R>',
+                                         content=f'Strike 2 - automatic timeout\n\nIf you have any issues, you may reply (use the reply function) to this message and send a modmail.')
                     dm_embed.set_footer(text=ctx.guild.id)
                 else:
-                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon_url,
-                                         title=f'You have been muted for {mtime} seconds',
+                    dm_embed = gen_embed(name=ctx.guild.name, icon_url=ctx.guild.icon.url,
+                                         title=f'You have been put in timeout. Your timeout will end <t:{int(time.mktime(mute_duration.timetuple()))}:R>',
                                          content=f'Strike 2 - automatic mute')
-                    dm_embed.set_footer(text=time.ctime())
+                    dm_embed.set_footer(text=current_time.ctime())
                 try:
                     await dm_channel.send(embed=dm_embed)
-                except discord.errors.Forbidden:
+                except discord.Forbidden:
                     await ctx.send(embed=gen_embed(title='Warning',
                                                    content='This user does not accept DMs. I could not send them the message, but I will proceed with striking and muting the user.'))
                 await ctx.send(embed=gen_embed(title='mute', content=f'{member.mention} has been muted.'))
                 if document['log_channel'] and document['log_kbm']:
                     msglog = int(document['log_channel'])
-                    logChannel = ctx.guild.get_channel(msglog)
+                    log_channel = ctx.guild.get_channel(msglog)
                     embed = gen_embed(title='mute',
-                                      content=f'{member.name} (ID: {member.id} has been muted for {mtime} seconds.\nReason: Strike severity 2')
-                    await logChannel.send(embed=embed)  # do custom
-                await asyncio.sleep(mtime)
-                await member.remove_roles(mutedRole)
+                                      content=f'{member.name} (ID: {member.id} has been muted until <t:{int(time.mktime(mute_duration.timetuple()))}>.\nReason: Strike severity 2')
+                    await log_channel.send(embed=embed)  # do custom
                 return
 
     @commands.command(name='lookup',
@@ -1257,18 +1416,105 @@ class Administration(commands.Cog):
                       help='Usage\n\n%lookup [user mention/user id]')
     @commands.check_any(commands.has_guild_permissions(view_audit_log=True), has_modrole())
     async def lookup(self, ctx, member: discord.User):
+        def to_relativedelta(tdelta):
+            assert isinstance(tdelta, timedelta)
+
+            seconds_in = {
+                'year': 365 * 24 * 60 * 60,
+                'month': 30 * 24 * 60 * 60,
+                'day': 24 * 60 * 60,
+                'hour': 60 * 60,
+                'minute': 60
+            }
+
+            years, rem = divmod(tdelta.total_seconds(), seconds_in['year'])
+            months, rem = divmod(rem, seconds_in['month'])
+            days, rem = divmod(rem, seconds_in['day'])
+            hours, rem = divmod(rem, seconds_in['hour'])
+            minutes, rem = divmod(rem, seconds_in['minute'])
+            seconds = rem
+
+            return relativedelta(years=years, months=months, days=days, hours=hours, minutes=minutes, seconds=seconds)
+
+        async def modmail_prompt():
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Modmail Message Contents',
+                                           content='Please type out your modmail below and send.'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Modmail Cancelled',
+                                               content='The modmail has been cancelled.'))
+                return
+            return mmsg.clean_content
+
+        async def strike_url_prompt(attempts=1):
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Message URL',
+                                           content='Please provide the message link/image URL for the strike below.'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Strike Cancelled',
+                                               content='The strike has been cancelled.'))
+                return
+            if validators.url(mmsg.content):
+                return mmsg.clean_content
+            elif attempts > 3:
+                # exit out so we don't crash in a recursive loop due to user incompetency
+                raise discord.ext.commands.BadArgument()
+            else:
+                await ctx.send(embed=gen_embed(title='Message URL',
+                                               content="Sorry, I didn't catch that or it was an invalid format."))
+                attempts += 1
+                return await strike_url_prompt(attempts)
+
+        async def strike_prompt(attempts = 1):
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            await ctx.send(embed=gen_embed(title='Strike Message Contents',
+                                           content='Please type out your strike below and send. Remember, you have a character limit of 1024 characters.'))
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+            except asyncio.TimeoutError:
+                await ctx.send(embed=gen_embed(title='Strike Cancelled',
+                                               content='The strike has been cancelled.'))
+                return
+            if len(mmsg.content) > 1024:
+                log.warning('Error: Reason too long')
+                await ctx.send(embed=gen_embed(title='Max character limit reached',
+                                               content=f'Your reason message is too long ({len(mmsg.content) - 1024} characters over limit). Please shorten the message to fit it in the embed.'))
+                attempts += 1
+                return await strike_prompt(attempts)
+            return mmsg.clean_content
+
         valid_strikes = []  # probably redundant but doing it anyways to prevent anything stupid
-        results = await check_strike(ctx, member, time=datetime.datetime.utcnow() + relativedelta(minutes=2),
+        results = await check_strike(ctx, member, time=datetime.datetime.now(datetime.timezone.utc) + relativedelta(minutes=2),
                                      valid_strikes=valid_strikes)
         num_strikes = len(results)
         # pull all of the documents now, cross reference with active strikes to determine the expired ones
         expired_query = {'server_id': ctx.guild.id, 'user_id': member.id}
         expired_results = db.warns.find(expired_query).sort('time', pymongo.DESCENDING)
 
-        embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.avatar_url,
-                          title='Strike Lookup', content=f'Found {num_strikes} active strikes for this user.')
+        active_member = ctx.guild.get_member(member.id)
+        if active_member:
+            member_duration = abs(active_member.joined_at - datetime.datetime.now(datetime.timezone.utc))
+            member_duration = to_relativedelta(member_duration)
+            embed = gen_embed(name=f'{active_member.name}#{active_member.discriminator}', icon_url=active_member.display_avatar.url,
+                              title='User Lookup', content=f'This user has been a member for **{member_duration.years} years, {member_duration.months} months, and {int(member_duration.days)} days**.\nThey joined on **{active_member.joined_at.strftime("%B %d, %Y")}**')
+        else:
+            embed = gen_embed(name=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar.url,
+                              title='User Lookup', content=f'This user is no longer in the server.')
+        embed.add_field(name='Strikes',
+                        value=f'Found {num_strikes} active strikes for this user.',
+                        inline=False)
         for document in results:
-            documentid = document['_id']
+            documentid = str(document['_id'])
             stime = document['time']
             reason = document['reason']
             message_link = document['message_link']
@@ -1286,7 +1532,7 @@ class Administration(commands.Cog):
                                 inline=False)
         async for document in expired_results:
             if document not in results:
-                documentid = document['_id']
+                documentid = str(document['_id'])
                 stime = document['time']
                 reason = document['reason']
                 message_link = document['message_link']
@@ -1303,7 +1549,86 @@ class Administration(commands.Cog):
                                     value=f'Strike UID: {documentid} | Moderator: {moderator}\nReason: {reason}\n[Go to message/evidence]({message_link})',
                                     inline=False)
         embed.set_footer(text=f'UID: {member.id}')
-        await ctx.send(embed=embed)
+        lookup_view = LookupMenu(ctx)
+        if num_strikes == 0:
+            lookup_view.children[2].disabled = True
+        sent_message = await ctx.send(
+            embed=embed,
+            view=lookup_view)
+        await lookup_view.wait()
+        await sent_message.edit(view=lookup_view)
+        if lookup_view.value is None:
+            log.info("View timed out")
+            return
+        elif lookup_view.value == 1:
+            log.info("Pressed Send Modmail")
+            message_content = await modmail_prompt()
+            if message_content:
+                modmail_cog = self.bot.get_cog('Modmail')
+                if modmail_cog is not None:
+                    await modmail_cog.modmail(context=ctx, recipient_id=[member], content=message_content)
+            return
+        elif lookup_view.value == 2:
+            log.info("Pressed Strike User")
+            strike_view = discord.ui.View()
+            strike_view.add_item(StrikeSeverity())
+            strike_view.add_item(Cancel())
+            strikeseverity_sent_message = await ctx.send(embed=gen_embed(title='Strike Severity',
+                                                          content='Please choose your strike severity from the dropdown below.'), view=strike_view)
+            await strike_view.wait()
+            await strikeseverity_sent_message.edit(view=strike_view)
+            if strike_view.children[1].value:
+                log.info("Cancelled Strike Operation")
+                return
+            elif strike_view.children[0].values:
+                strike_url = await strike_url_prompt()
+                if strike_url:
+                    strike_message_content = await strike_prompt()
+                    if strike_message_content:
+                        view = ConfirmStrike(ctx)
+                        sent_message = await ctx.send(embed=gen_embed(title='Does the reason message look correct?',
+                                                                      content=f"{strike_message_content}"),
+                                                      view=view)
+                        # Wait for the View to stop listening for input...
+                        await view.wait()
+                        await sent_message.edit(view=view)
+                        if view.value is None:
+                            log.info("View timed out")
+                            return
+                        elif view.value:
+                            admin_cog = self.bot.get_cog('Administration')
+                            if admin_cog is not None:
+                                await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[active_member],
+                                             message_link=strike_url, reason=strike_message_content)
+            return
+        elif lookup_view.value == 3:
+            deletestrike_view = discord.ui.View()
+            options = []
+
+            deletestrike_query = {'server_id': ctx.guild.id, 'user_id': member.id}
+            deletestrike_results = db.warns.find(deletestrike_query).sort('time', pymongo.DESCENDING)
+            strikes = await deletestrike_results.to_list(length=100)
+            log.info(strikes)
+
+            for document in strikes:
+                documentid = str(document['_id'])
+                stime = document['time']
+                options.append(discord.SelectOption(label=stime.ctime(), value=documentid, description=f'Strike ID: {documentid}'))
+            log.info(options)
+
+            deletestrike_view.add_item(StrikeSelect(options))
+            deletestrike_view.add_item(Cancel())
+            await sent_message.edit(view=deletestrike_view)
+            await deletestrike_view.wait()
+            await sent_message.edit(view=deletestrike_view)
+            if deletestrike_view.children[1].value:
+                log.info("Cancelled Delete Strike Operation.")
+            elif deletestrike_view.children[0].values:
+                admin_cog = self.bot.get_cog('Administration')
+                if admin_cog is not None:
+                    for strike in deletestrike_view.children[0].values:
+                        await admin_cog.removestrike(context=ctx,strikeid=str(strike))
+
 
     @commands.command(name='removestrike',
                       description='Remove a strike from the database.',
@@ -1353,7 +1678,7 @@ class Administration(commands.Cog):
                         logChannel = message.guild.get_channel(msglog)
                         content = discord.Embed(colour=0x1abc9c)
                         content.set_author(name=f"{message.author.name}#{message.author.discriminator}",
-                                           icon_url=message.author.avatar_url)
+                                           icon_url=message.author.display_avatar.url)
                         content.set_footer(text=f"UID: {message.author.id} | {time.ctime()}")
                         content.title = f"Message deleted in #{message.channel.name}"
                         content.description = f"**Message Content:** {cleanMessage}"
@@ -1361,7 +1686,7 @@ class Administration(commands.Cog):
                             content.add_field(name="Attachment:", value="\u200b")
                             content.set_image(url=message.attachments[0].proxy_url)
                         await logChannel.send(embed=content)
-        except:
+        except Exception as e:
             pass
 
     @commands.Cog.listener()
@@ -1378,7 +1703,7 @@ class Administration(commands.Cog):
                             logChannel = message.guild.get_channel(msglog)
                             content = discord.Embed(colour=0x1abc9c)
                             content.set_author(name=f"{message.author.name}#{message.author.discriminator}",
-                                               icon_url=message.author.avatar_url)
+                                               icon_url=message.author.display_avatar.url)
                             content.set_footer(text=f"UID: {message.author.id} | {time.ctime()}")
                             content.title = f"Message deleted in #{message.channel.name}"
                             content.description = f"**Message Content:** {cleanMessage}"
@@ -1386,12 +1711,15 @@ class Administration(commands.Cog):
                                 content.add_field(name="Attachment:", value="\u200b")
                                 content.set_image(url=message.attachments[0].proxy_url)
                             await logChannel.send(embed=content)
-        except:
+        except Exception as e:
             pass
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
-        document = await db.servers.find_one({"server_id": before.guild.id})
+        try:
+            document = await db.servers.find_one({"server_id": before.guild.id})
+        except AttributeError: #prevent error when editing ephemerals
+            return
         try:
             if document['log_channel']:
                 msglog = int(document['log_channel'])
@@ -1400,24 +1728,24 @@ class Administration(commands.Cog):
                         logChannel = before.guild.get_channel(msglog)
                         content = discord.Embed(colour=0x1abc9c)
                         content.set_author(name=f"{before.author.name}#{before.author.discriminator}",
-                                           icon_url=before.author.avatar_url)
+                                           icon_url=before.author.display_avatar.url)
                         content.set_footer(text=f"UID: {before.author.id} | {time.ctime()}")
                         content.title = f"Message edited in #{before.channel.name}"
                         content.description = f"**Before:** {before.clean_content}\n**After:** {after.clean_content}"
                         await logChannel.send(embed=content)
-        except:
+        except Exception as e:
             pass
 
 
 # This method will spit out the list of valid strikes. we can cross reference the entire list of strikes to determine which ones are expired on the lookup command.
 # We can also check the length of the list when giving out strikes to determine if an automatic ban is required.
 # Currently, there are 5 scenarios:
-#   1. No strikes active (none in past 2 months OR one in past 4 months but none in the 2 months immediately prior to that strike)
+#   1. No strikes active (none in past 2 months)
 #   2. One strike active (past 2 months)
-#   3. One strike active due to the presence of two strikes within two months (First strike expired, second is still active)
+#   3. Two strikes active (past 2-4 months, timer reset due to accumulation of second strike)
 #   4. Two strikes active (past 2 months)
 #   5. Three strikes active (proceed to ban the user)
-async def check_strike(ctx, member, time=datetime.datetime.utcnow(), valid_strikes=[]):
+async def check_strike(ctx, member, time=datetime.datetime.now(datetime.timezone.utc), valid_strikes=[]):
     log.info(time)  # this is here for debugging race condition atm
 
     # Create the search query
@@ -1443,32 +1771,6 @@ async def check_strike(ctx, member, time=datetime.datetime.utcnow(), valid_strik
         # If the second strike is found, we will step in one final time to check for the third and final strike. 
         newtime = document['time']
         return await check_strike(ctx, member, time=newtime, valid_strikes=valid_strikes)
-
-        # If we didn't find any strikes in the past 2 months, we still need to check for the third case.
-    # A recent strike might still be decaying due to the reset decay timer so let's check the past 4 months.
-    elif len(valid_strikes) == 0:
-        log.info('no valid strikes in past 2 months')
-        # Create new search query
-        expire_date = time + relativedelta(months=-4)
-        query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
-        results = await db.warns.count_documents(query)
-
-        if results > 0:
-            # We found a strike! let's check to see if there's another strike within 2 months of this one.
-            expire_date = time + relativedelta(months=-2)
-            query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
-            results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1)
-            resultsnum = await db.warns.count_documents(query)
-            if resultsnum > 0:
-                sdocument = await results.to_list(length=None)
-                sdocument = sdocument.pop()
-                sresults = await db.warns.count_documents(query)
-
-                if sresults > 0:
-                    # We found a second strike. That means this second strike is expired, but the first strike is active.
-                    # Remember, the first strike in this case is the most recent, while second is older. It's flipped from terminology.
-                    valid_strikes.append(sdocument)
-        return valid_strikes
 
     else:
         # This means we didn't get a hit, so let's step out and spit out our list.

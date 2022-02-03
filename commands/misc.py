@@ -27,15 +27,15 @@ class Miscellaneous(commands.Cog):
                 return False
         return commands.check(predicate)
 
-    async def generate_invite_link(self, permissions=discord.Permissions(340126934), guild=None):
+    async def generate_invite_link(self, permissions=discord.Permissions(1632444476630)):
         app_info = await self.bot.application_info()
-        return discord.utils.oauth_url(app_info.id, permissions=permissions, guild=guild)
+        return discord.utils.oauth_url(app_info.id, permissions=permissions, scopes=['bot', 'applications.commands'])
 
     @commands.command(name = "stats",
                 description = "Gives statistics about the bot.")
     async def stats(self, ctx):
         content = discord.Embed(colour = 0x1abc9c)
-        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.avatar_url)
+        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.display_avatar.url)
         content.set_footer(text = "Fueee~")
         content.add_field(name = "Author", value = "Neon#5555")
         content.add_field(name = "BotID", value = self.bot.user.id)
@@ -60,7 +60,7 @@ class Miscellaneous(commands.Cog):
     async def joinserver(self, ctx):
         url = await self.generate_invite_link()
         content = discord.Embed(colour = 0x1abc9c)
-        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.avatar_url)
+        content.set_author(name = f"{NAME} v{BOTVERSION}", icon_url = self.bot.user.display_avatar.url)
         content.set_footer(text = "Fueee~")
         content.add_field(name = "Invite Link:", value = url)
         await ctx.send(embed = content)
@@ -68,7 +68,12 @@ class Miscellaneous(commands.Cog):
     @commands.command(name = 'support',
                       description = "Support the bot by donating for server costs!")
     async def support(self, ctx):
-        await ctx.send(embed = gen_embed(title = 'Support Kanon Bot', content = 'Kanon costs money to run. I pay for her server costs out of pocket, so any donation helps!\nSupport: https://ko-fi.com/neonlights'))
+        await ctx.send(embed = gen_embed(title = 'Support Kanon Bot', content = 'Kanon costs money to run. I pay for her server costs out of pocket, so any donation helps!\nSupport: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights'))
+
+    @commands.command(name = 'shoutout',
+                      description = "Shoutout all the patrons who support Kanon Bot!")
+    async def shoutout(self, ctx):
+        await ctx.send(embed=gen_embed(title='Thank you Kanon Supporters!', content= '**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, Hypnotic Rhythm#1260, wachie#0320, Ashlyne#8080'))
 
     @commands.command(name = 'deleteguild',
                 description = 'Makes the bot leave the server specified and purges all information from database.')
@@ -117,8 +122,7 @@ class Miscellaneous(commands.Cog):
     @is_owner()
     async def reload(self, ctx, cog_name: str):
         cog = f"commands.{cog_name.lower()}"
-        self.bot.unload_extension(cog)
-        self.bot.load_extension(cog)
+        self.bot.reload_extension(cog)
         await ctx.send(f"Successfully reloaded the {cog} cog")
 
     @commands.command(name = 'exec',
@@ -158,11 +162,12 @@ class Miscellaneous(commands.Cog):
             log.info(f'Checking document for {guild.name}')
             if document['announcements']:
                 log.info(f'Announcements enabled for {guild.name}, sending...')
+                sent=False
                 if document['announcement_channel']:
                     try:
                         channel = self.bot.get_channel(document['announcement_channel'])
                         if channel.permissions_for(guild.me).send_messages:
-                            await channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                            await channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                             log.info('Sent in announcement channel')
                             continue
                         else:
@@ -171,14 +176,14 @@ class Miscellaneous(commands.Cog):
                         pass
                 try:
                     if guild.public_updates_channel and guild.public_updates_channel.permissions_for(guild.me).send_messages:
-                        await guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                        await guild.public_updates_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                         log.info('Sent in public update channel')
                         continue
                 except Exception as e:
                     pass
                 try:
                     if guild.system_channel and guild.system_channel.permissions_for(guild.me).send_messages:
-                        await guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                        await guild.system_channel.send(embed = gen_embed(title = 'Global Announcement', content = f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                         log.info('Sent in system channel')
                         continue
                 except Exception as e:
@@ -186,16 +191,17 @@ class Miscellaneous(commands.Cog):
                 try:
                     general = discord.utils.find(lambda x: x.name == 'general', guild.text_channels)
                     if general and general.permissions_for(guild.me).send_messages:
-                        await general.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                        await general.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                         log.info('Sent in general channel')
+                        sent=true
                         continue
                 except Exception as e:
                     pass
                 finally:
                     for channel in guild.text_channels:
                         try:
-                            if channel.permissions_for(guild.me).send_messages:
-                                await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using %serverconfig.\n\n{message}'))
+                            if channel.permissions_for(guild.me).send_messages and not sent:
+                                await channel.send(embed=gen_embed(title='Global Announcement', content=f'Admins of the server can always toggle announcements from the bot creator on/off by using `%serverconfig announcements disable`.\n\n{message}'))
                                 log.info('Sent in first available channel')
                                 break
                         except Exception as e:
