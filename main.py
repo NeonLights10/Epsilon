@@ -174,22 +174,11 @@ async def _check_document(guild, id):
         blacklist = document['blacklist']
         for channel_id in blacklist:
             await db.msgid.delete_many({"channel_id": channel_id})
-        # Update this list as new fields are inserted
+        # Changeable to update old documents whenever a new feature/config is added
         await db.servers.update_many(
             {"server_id": id},
             [{'$set': {
                 "name": guild.name,
-                "welcome_message": f'Welcome to {guild.name}!'
-                #obsolete updates
-                #"log_joinleaves": {'$cond': [{'$not': ["$log_joinleaves"]}, False, "$log_joinleaves"]},
-                #"blacklist": {'$cond': [{'$not': ["$blacklist"]}, [], "$blacklist"]},
-                #"whitelist": {'$cond': [{'$not': ["$whitelist"]}, [], "$whitelist"]},
-                #"log_kbm": {'$cond': [{'$not': ["$log_kbm"]}, False, "$log_kbm"]},
-                #"log_strikes": {'$cond': [{'$not': ["$log_strikes"]}, False, "$log_strikes"]},
-                #"chat": {'$cond': [{'$not': ["$chat"]}, False, "$chat"]},
-                #"announcement_channel": {'$cond': [{'$not': ["$announcement_channel"]}, None, "$announcement_channel"]},
-                #"verify": {'$cond': [{'$not': ["$verify"]}, [], "$verify"]},
-                #"announcements": {'$cond': [{'$not': ["$announcements"]}, True, "$announcements"]}```
             }}]
         )
 
@@ -263,8 +252,6 @@ async def twtfix(message):
             except Exception:
                 return None
     return None
-
-
 
 # This is a super jenk way of handling the prefix without using the async db connection but it works
 prefix_list = {}

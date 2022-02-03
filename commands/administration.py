@@ -1740,9 +1740,9 @@ class Administration(commands.Cog):
 # This method will spit out the list of valid strikes. we can cross reference the entire list of strikes to determine which ones are expired on the lookup command.
 # We can also check the length of the list when giving out strikes to determine if an automatic ban is required.
 # Currently, there are 5 scenarios:
-#   1. No strikes active (none in past 2 months OR one in past 4 months but none in the 2 months immediately prior to that strike)
+#   1. No strikes active (none in past 2 months)
 #   2. One strike active (past 2 months)
-#   3. One strike active due to the presence of two strikes within two months (First strike expired, second is still active)
+#   3. Two strikes active (past 2-4 months, timer reset due to accumulation of second strike)
 #   4. Two strikes active (past 2 months)
 #   5. Three strikes active (proceed to ban the user)
 async def check_strike(ctx, member, time=datetime.datetime.now(datetime.timezone.utc), valid_strikes=[]):
@@ -1771,32 +1771,6 @@ async def check_strike(ctx, member, time=datetime.datetime.now(datetime.timezone
         # If the second strike is found, we will step in one final time to check for the third and final strike. 
         newtime = document['time']
         return await check_strike(ctx, member, time=newtime, valid_strikes=valid_strikes)
-
-        # If we didn't find any strikes in the past 2 months, we still need to check for the third case.
-    # A recent strike might still be decaying due to the reset decay timer so let's check the past 4 months.
-    elif len(valid_strikes) == 0:
-        log.info('no valid strikes in past 2 months')
-        # Create new search query
-        expire_date = time + relativedelta(months=-4)
-        query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
-        results = await db.warns.count_documents(query)
-
-        if results > 0:
-            # We found a strike! let's check to see if there's another strike within 2 months of this one.
-            expire_date = time + relativedelta(months=-2)
-            query = {'server_id': ctx.guild.id, 'user_id': member.id, 'time': {'$gte': expire_date, '$lt': time}}
-            results = db.warns.find(query).sort('time', pymongo.DESCENDING).limit(1)
-            resultsnum = await db.warns.count_documents(query)
-            if resultsnum > 0:
-                sdocument = await results.to_list(length=None)
-                sdocument = sdocument.pop()
-                sresults = await db.warns.count_documents(query)
-
-                if sresults > 0:
-                    # We found a second strike. That means this second strike is expired, but the first strike is active.
-                    # Remember, the first strike in this case is the most recent, while second is older. It's flipped from terminology.
-                    valid_strikes.append(sdocument)
-        return valid_strikes
 
     else:
         # This means we didn't get a hit, so let's step out and spit out our list.
