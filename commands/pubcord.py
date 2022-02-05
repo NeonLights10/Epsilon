@@ -24,45 +24,41 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content=("Lunar New Year Bundles\n"
-                     "※ 4 Bundles Available - One for each attribute!\n"
-                     "<:StarGem:432995521892843520> x1200, 3*+ Ticket x1, Miracle Crystal x10, Mandarin Oranges x10 (each recovers 10 flames),"
-                     " x1000 Small Shards, x500 Medium Shards, x50 Large Shards"
-                     )
+            content=("※ EN Bandori is quiet, for once.\n")
         )
         embed.set_image(
-            url='https://cdn.discordapp.com/attachments/913958768105103390/936463698464215090/FKJ3XNcUUAAD-Nl.png')
+            url='https://cdn.discordapp.com/attachments/913958768105103390/939409403059269723/FKw7KGXVcAQnZ-U.png')
         embed.add_field(name=f'Current Event',
-                        value=("Smile Connection!\n"
-                               "<t:1643418000> to <t:1643957940>\n\n"
-                               "**Event Type**: Mission Live\n"
-                               "**Attribute**: Pure <:attrPure:432978922892820495>\n"
-                               "**Characters**: Kokoro, Kaoru, Hagumi, Kanon, Misaki\n\n"
+                        value=("From the Past\n"
+                               "<t:1644109200> to <t:1644821940>\n\n"
+                               "**Event Type**: Live Goals\n"
+                               "**Attribute**: Happy <:attrHappy:432978959957753905>\n"
+                               "**Characters**: LAYER, LOCK, MASKING, CHU2, PAREO\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
                         value=("> 9M DL Celebration Login Campaign - <:StarGem:432995521892843520> x50 each day\n"
                                "> <t:1643616000> to <t:1644220740>\n"
                                "\n"
-                               "> HHW Band Story 3 Release Special Present - <:StarGem:432995521892843520> x1000\n"
-                               "> <t:1643418000> to <t:1644109140>\n"
-                               "\n"
                                "> Bang Dream! Girls Band Party!☆PICO FEVER! Release Celebration Gift\n"
-                               "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>"),
+                               "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>"
+                               "\n"
+                               "> Valentine's Day 2022 Special Present - <:StarGem:432995521892843520> x250 + Live Boost x1\n"
+                               "> <t:1644825600> to <t:1644998340>\n"
+                               ),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Eternal ∞ Smiles Happiness Kingdom Gacha\n"
-                               "> <t:1643418000> to <t:1644109140>\n"
-                               "\n"
-                               "> Heartful Colorful Chocolate Gacha [LIMITED]\n"
-                               "> Special Set 10 Play Gacha (x5 Boost Drink)\n"
-                               "> <t:1643504400> to <t:1644109140>\n"
+                        value=("> Keep out! Rushing Mad Dog Gacha\n"
+                               "> <t:1644109200> to <t:1644973140>\n"
                                "\n"
                                "> Band Story 3 HHW 4* Member Guaranteed Gacha\n"
                                "> <t:1643590800> to <t:1646182740>\n"
                                "\n"
                                "> Special Set 5 Play Gacha\n"
-                               "> <t:1643590800> to <t:1644109140>\n"
+                               "> <t:1644282000> to <t:1644973140>\n"
+                               "\n"
+                               "> Happy Type Gacha\n"
+                               "> <t:1644195600> to <t:1644821940>\n"
                                "\n"
                                "> 9M DL Celebration 4* Guaranteed Gacha\n"
                                "> <t:1643616000> to <t:1644220740>\n"
