@@ -86,7 +86,7 @@ class PersistentEvent(discord.ui.View):
                      "※ Use VPNs such as Proton VPN and connect that to JP.\n\n"
                      "If none of these workarounds end up working for you, please be patient as the issue gets fixed.")
         )
-        embed.set_footer(text='Updated 1/12/22')
+        embed.set_footer(text='Updated 2/5/22')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
