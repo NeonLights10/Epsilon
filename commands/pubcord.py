@@ -83,7 +83,8 @@ class PersistentEvent(discord.ui.View):
                      "※ If you are crashing before downloading the update, download the update on Mobile Data instead of WiFi.  (Please only do this if your data plan is forgiving/unlimited as the update is very large.)\n"
                      "※ If the update is already downloaded, log into the game with Mobile Data. Once you're on the main menu, you are free to switch back to WiFi.\n"
                      "※ Obtain a VM that runs Android 7, which runs perfectly on the update. Please note that the gameplay experience will not be the best in this situation.\n"
-                     "※ Use VPNs such as Proton VPN and connect that to JP.\n\n"
+                     "※ Use VPNs such as Proton VPN and connect that to JP.\n"
+                     "※ In settings, select `Biometrics and Security > Google Play system update`. Restart the phone. You may need to reinstall the game (MAKE SURE YOU HAVE A TRANSFER CODE).\n\n"
                      "If none of these workarounds end up working for you, please be patient as the issue gets fixed.")
         )
         embed.set_footer(text='Updated 2/5/22')
