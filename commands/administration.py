@@ -41,6 +41,7 @@ class StrikeSeverity(discord.ui.Select):
             discord.SelectOption(label='Strike Level 2', value = 2, description='This strike will also mute the user', emoji='2️⃣'),
             discord.SelectOption(label='Strike Level 3', value = 3, description='This strike will also ban the user', emoji='3️⃣')
         ]
+        modal = StrikeModal(title="Temporary Title")
         super().__init__(placeholder="Select the strike severity", min_values=1, max_values=1, options=options)
 
     async def interaction_check(self, interaction):
@@ -49,9 +50,10 @@ class StrikeSeverity(discord.ui.Select):
         return True
 
     async def callback(self, interaction):
-        await interaction.response.send_message(f'You selected strike level {self.values[0]}', ephemeral=True)
         for item in self.view.children:
             item.disabled = True
+        modal.title = f"Strike User - Level {self.values[0]}"
+        await interaction.response.send_modal(modal)
         self.view.stop()
 
 class StrikeSelect(discord.ui.Select):
@@ -153,6 +155,27 @@ class Confirm(discord.ui.View):
             item.disabled = True
         self.value = False
         self.stop()
+
+class StrikeModal(discord.ui.Modal):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        submitted = False
+        self.add_item(
+            InputText(
+                label="Message Link",
+                placeholder="https://example.com"
+            )
+        )
+        self.add_item(
+            InputText(
+                label="Strike Message",
+                placeholder="Write your strike message here",
+                style=discord.InputTextStyle.long
+            )
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.submitted = True
 
 # Define a simple View that gives us a confirmation menu
 class ConfirmStrike(discord.ui.View):
@@ -1064,7 +1087,7 @@ class Administration(commands.Cog):
             else:
                 return False
 
-        async def timeouttime(attempts = 1):
+        async def mutetime(attempts = 1):
             def check(m):
                 return m.author == ctx.author and m.channel == ctx.channel
 
@@ -1083,29 +1106,6 @@ class Administration(commands.Cog):
                 raise discord.ext.commands.BadArgument()
             else:
                 await ctx.send(embed=gen_embed(title='Timeout Duration',
-                                               content="Sorry, I didn't catch that or it was an invalid format."))
-                attempts += 1
-                return await mutetime(attempts)
-
-        async def mutetime(attempts = 1):
-            def check(m):
-                return m.author == ctx.author and m.channel == ctx.channel
-
-            await ctx.send(embed=gen_embed(title='Mute Duration',
-                                           content='How long do you want to mute the user? Accepted format: ##[smhdw] (these correspond to seconds, minutes, hours, days, weeks)\n Example: 3d 6h -> 3 days, 6 hours'))
-            try:
-                mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
-            except asyncio.TimeoutError:
-                await ctx.send(embed=gen_embed(title='Mute cancelled',
-                                               content='Strike has still been applied.'))
-                return
-            if re.match(r'(\d+)([smhdw]?)', mmsg.clean_content, flags=re.I):
-                return mmsg.clean_content
-            elif attempts > 3:
-                # exit out so we don't crash in a recursive loop due to user incompetency
-                raise discord.ext.commands.BadArgument()
-            else:
-                await ctx.send(embed=gen_embed(title='Mute Duration',
                                                content="Sorry, I didn't catch that or it was an invalid format."))
                 attempts += 1
                 return await mutetime(attempts)
@@ -1581,25 +1581,13 @@ class Administration(commands.Cog):
                 log.info("Cancelled Strike Operation")
                 return
             elif strike_view.children[0].values:
-                strike_url = await strike_url_prompt()
-                if strike_url:
-                    strike_message_content = await strike_prompt()
-                    if strike_message_content:
-                        view = ConfirmStrike(ctx)
-                        sent_message = await ctx.send(embed=gen_embed(title='Does the reason message look correct?',
-                                                                      content=f"{strike_message_content}"),
-                                                      view=view)
-                        # Wait for the View to stop listening for input...
-                        await view.wait()
-                        await sent_message.edit(view=view)
-                        if view.value is None:
-                            log.info("View timed out")
-                            return
-                        elif view.value:
-                            admin_cog = self.bot.get_cog('Administration')
-                            if admin_cog is not None:
-                                await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[active_member],
-                                             message_link=strike_url, reason=strike_message_content)
+                if strike_view.children[0].modal.submitted:
+                    strike_url = strike_view.children[0].modal.children[0].value
+                    strike_message_content = strike_view.children[0].modal.children[1].value
+                    admin_cog = self.bot.get_cog('Administration')
+                    if admin_cog is not None:
+                        await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[active_member],
+                                     message_link=strike_url, reason=strike_message_content)
             return
         elif lookup_view.value == 3:
             deletestrike_view = discord.ui.View()

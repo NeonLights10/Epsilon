@@ -1,5 +1,5 @@
 pip
-py-cord
+py-cord==2.0.0b4
 colorlog
 motor
 pymongo
