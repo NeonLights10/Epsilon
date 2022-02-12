@@ -36,13 +36,15 @@ class Cancel(discord.ui.Button):
         self.view.stop()
 
 class StrikeSeverity(discord.ui.Select):
-    def __init__(self):
+    def __init__(self, bot, ctx, member):
         options = [
             discord.SelectOption(label='Strike Level 1', value = 1, description='This is a warning strike', emoji='1️⃣'),
             discord.SelectOption(label='Strike Level 2', value = 2, description='This strike will also mute the user', emoji='2️⃣'),
             discord.SelectOption(label='Strike Level 3', value = 3, description='This strike will also ban the user', emoji='3️⃣')
         ]
-        self.modal = StrikeModal(title="Temporary Title")
+        self.bot = bot
+        self.ctx = ctx
+        self.member = member
         super().__init__(placeholder="Select the strike severity", min_values=1, max_values=1, options=options)
 
     async def interaction_check(self, interaction):
@@ -53,9 +55,8 @@ class StrikeSeverity(discord.ui.Select):
     async def callback(self, interaction):
         for item in self.view.children:
             item.disabled = True
-        self.modal.title = f"Strike User - Level {self.values[0]}"
+        modal = StrikeModal(title=f"Strike User - Level {self.values[0]}", bot=self.bot, ctx=self.ctx, member=self.member, severity=self.values[0])
         await interaction.response.send_modal(self.modal)
-        self.view.stop()
 
 class StrikeSelect(discord.ui.Select):
     def __init__(self, user_options):
@@ -160,7 +161,10 @@ class Confirm(discord.ui.View):
 class StrikeModal(discord.ui.Modal):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.submitted = False
+        self.bot = bot
+        self.ctx = ctx,
+        self.member = member
+        self.severity = severity
         self.add_item(
             InputText(
                 label="Message Link",
@@ -177,7 +181,15 @@ class StrikeModal(discord.ui.Modal):
         )
 
     async def callback(self, interaction: discord.Interaction):
-        self.submitted = True
+        log.info('Submitted Modal')
+        strike_url = self.children[0].value
+        log.info(strike_url)
+        strike_message_content = self.children[1].value
+        log.info(strike_message_content)
+        admin_cog = self.bot.get_cog('Administration')
+        if admin_cog is not None:
+            await admin_cog.strike(context=self.ctx, severity=self.severity, members=[self.member],
+                                   message_link=strike_url, reason=strike_message_content)
 
 # Define a simple View that gives us a confirmation menu
 class ConfirmStrike(discord.ui.View):
@@ -1582,16 +1594,6 @@ class Administration(commands.Cog):
             if strike_view.children[1].value:
                 log.info("Cancelled Strike Operation")
                 return
-            elif strike_view.children[0].values:
-                if strike_view.children[0].modal.submitted:
-                    strike_url = strike_view.children[0].modal.children[0].value
-                    log.info(strike_url)
-                    strike_message_content = strike_view.children[0].modal.children[1].value
-                    log.info(strike_message_content)
-                    admin_cog = self.bot.get_cog('Administration')
-                    if admin_cog is not None:
-                        await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[active_member],
-                                     message_link=strike_url, reason=strike_message_content)
             return
         elif lookup_view.value == 3:
             deletestrike_view = discord.ui.View()
