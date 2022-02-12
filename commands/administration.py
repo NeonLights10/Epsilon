@@ -162,7 +162,7 @@ class StrikeModal(discord.ui.Modal):
     def __init__(self, title, bot, ctx, member, severity):
         super().__init__(title)
         self.bot = bot
-        self.ctx = ctx,
+        self.ctx = ctx
         self.member = member
         self.severity = severity
         self.add_item(
