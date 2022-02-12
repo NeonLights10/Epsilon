@@ -53,8 +53,8 @@ class StrikeSeverity(discord.ui.Select):
     async def callback(self, interaction):
         for item in self.view.children:
             item.disabled = True
-        modal.title = f"Strike User - Level {self.values[0]}"
-        await interaction.response.send_modal(modal)
+        self.modal.title = f"Strike User - Level {self.values[0]}"
+        await interaction.response.send_modal(self.modal)
         self.view.stop()
 
 class StrikeSelect(discord.ui.Select):
