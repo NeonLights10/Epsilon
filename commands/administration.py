@@ -190,6 +190,7 @@ class StrikeModal(discord.ui.Modal):
         if admin_cog is not None:
             await admin_cog.strike(context=self.ctx, severity=self.severity, members=[self.member],
                                    message_link=strike_url, reason=strike_message_content)
+        await interaction.response.send_message("Strike completed.", ephemeral=True)
 
 # Define a simple View that gives us a confirmation menu
 class ConfirmStrike(discord.ui.View):
