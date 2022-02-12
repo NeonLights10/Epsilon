@@ -159,8 +159,8 @@ class Confirm(discord.ui.View):
         self.stop()
 
 class StrikeModal(discord.ui.Modal):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, title, bot, ctx, member, severity):
+        super().__init__(title)
         self.bot = bot
         self.ctx = ctx,
         self.member = member
