@@ -1585,7 +1585,7 @@ class Administration(commands.Cog):
         elif lookup_view.value == 2:
             log.info("Pressed Strike User")
             strike_view = discord.ui.View()
-            strike_view.add_item(StrikeSeverity())
+            strike_view.add_item(StrikeSeverity(bot=self.bot, ctx=ctx, member=member))
             strike_view.add_item(Cancel())
             strikeseverity_sent_message = await ctx.send(embed=gen_embed(title='Strike Severity',
                                                           content='Please choose your strike severity from the dropdown below.'), view=strike_view)
