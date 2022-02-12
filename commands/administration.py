@@ -57,6 +57,7 @@ class StrikeSeverity(discord.ui.Select):
             item.disabled = True
         modal = StrikeModal(title=f"Strike User - Level {self.values[0]}", bot=self.bot, ctx=self.ctx, member=self.member, severity=self.values[0])
         await interaction.response.send_modal(modal)
+        self.view.stop()
 
 class StrikeSelect(discord.ui.Select):
     def __init__(self, user_options):
