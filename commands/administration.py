@@ -160,7 +160,7 @@ class Confirm(discord.ui.View):
 class StrikeModal(discord.ui.Modal):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        submitted = False
+        self.submitted = False
         self.add_item(
             InputText(
                 label="Message Link",
@@ -171,7 +171,8 @@ class StrikeModal(discord.ui.Modal):
             InputText(
                 label="Strike Message",
                 placeholder="Write your strike message here",
-                style=discord.InputTextStyle.long
+                style=discord.InputTextStyle.long,
+                max_length=1024
             )
         )
 
@@ -1584,7 +1585,9 @@ class Administration(commands.Cog):
             elif strike_view.children[0].values:
                 if strike_view.children[0].modal.submitted:
                     strike_url = strike_view.children[0].modal.children[0].value
+                    log.info(strike_url)
                     strike_message_content = strike_view.children[0].modal.children[1].value
+                    log.info(strike_message_content)
                     admin_cog = self.bot.get_cog('Administration')
                     if admin_cog is not None:
                         await admin_cog.strike(context=ctx, severity=strike_view.children[0].values[0], members=[active_member],
