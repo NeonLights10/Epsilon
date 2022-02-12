@@ -42,7 +42,7 @@ class StrikeSeverity(discord.ui.Select):
             discord.SelectOption(label='Strike Level 2', value = 2, description='This strike will also mute the user', emoji='2️⃣'),
             discord.SelectOption(label='Strike Level 3', value = 3, description='This strike will also ban the user', emoji='3️⃣')
         ]
-        modal = StrikeModal(title="Temporary Title")
+        self.modal = StrikeModal(title="Temporary Title")
         super().__init__(placeholder="Select the strike severity", min_values=1, max_values=1, options=options)
 
     async def interaction_check(self, interaction):
