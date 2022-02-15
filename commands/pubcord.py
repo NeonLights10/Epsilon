@@ -27,45 +27,37 @@ class PersistentEvent(discord.ui.View):
             content=("※ EN Bandori is quiet, for once.\n")
         )
         embed.set_image(
-            url='https://cdn.discordapp.com/attachments/913958768105103390/939409403059269723/FKw7KGXVcAQnZ-U.png')
+            url='https://files.s-neon.xyz/share/FLmZyDrVgAAjtcX.png')
         embed.add_field(name=f'Current Event',
-                        value=("From the Past\n"
-                               "<t:1644109200> to <t:1644821940>\n\n"
-                               "**Event Type**: Live Goals\n"
-                               "**Attribute**: Happy <:attrHappy:432978959957753905>\n"
-                               "**Characters**: LAYER, LOCK, MASKING, CHU2, PAREO\n\n"
+                        value=("Dreamy Colors♪ Pastel Fan Road\n"
+                               "<t:1644973200> to <t:1645513140>\n\n"
+                               "**Event Type**: VS Live\n"
+                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
+                               "**Characters**: Hina, Maya, Eve, CHU2, PAREO\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("> 9M DL Celebration Login Campaign - <:StarGem:432995521892843520> x50 each day\n"
-                               "> <t:1643616000> to <t:1644220740>\n"
-                               "\n"
-                               "> Bang Dream! Girls Band Party!☆PICO FEVER! Release Celebration Gift\n"
+                        value=("> Bang Dream! Girls Band Party!☆PICO FEVER! Release Celebration Gift\n"
                                "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>"
-                               "\n"
-                               "> Valentine's Day 2022 Special Present - <:StarGem:432995521892843520> x250 + Live Boost x1\n"
-                               "> <t:1644825600> to <t:1644998340>\n"
                                ),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Keep out! Rushing Mad Dog Gacha\n"
-                               "> <t:1644109200> to <t:1644973140>\n"
+                        value=("> Unexpected! Lovely~♡ Furinkazan Gacha\n"
+                               "> <t:1644973200> to <t:1645664340>\n"
                                "\n"
                                "> Band Story 3 HHW 4* Member Guaranteed Gacha\n"
                                "> <t:1643590800> to <t:1646182740>\n"
                                "\n"
-                               "> Special Set 5 Play Gacha\n"
-                               "> <t:1644282000> to <t:1644973140>\n"
+                               "> Elegant Escort Express Gacha [LIMITED]\n"
+                               "> Elegant Escort Express Special Set 10 Play Gacha [LIMITED]"
+                               "> <t:1645146000> to <t:1645664340>\n"
                                "\n"
-                               "> Happy Type Gacha\n"
-                               "> <t:1644195600> to <t:1644821940>\n"
-                               "\n"
-                               "> 9M DL Celebration 4* Guaranteed Gacha\n"
-                               "> <t:1643616000> to <t:1644220740>\n"
+                               "> Cool Type Gacha\n"
+                               "> <t:1645059600> to <t:1645513140>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 1/20/2022')
+        embed.set_footer(text='Last Updated 2/15/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
