@@ -1123,7 +1123,7 @@ class Administration(commands.Cog):
                                                content='No messages will be deleted. Strike has still been applied and I will proceed to ban the user.'))
                 return 0
             if re.match(r'^[0-7]{1}$', bmsg.clean_content, flags=re.I):
-                return mmsg.clean_content
+                return bmsg.clean_content
             elif attempts > 3:
                 # exit out so we don't crash in a recursive loop due to user incompetency
                 raise discord.ext.commands.BadArgument()
