@@ -70,14 +70,13 @@ class PersistentEvent(discord.ui.View):
     async def gamecrash(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='I have an android and my game keeps crashing! What do I do?',
-            content=("There's been progress made regarding a fix: The bug is relating to the in-game ad system that's exclusive to EN. As such, it's taking more time than anticipated to fix, but now the devs know where to lead their focus toward."
+            content=("Good news! **Version 4.10.3** will be available to download on <t:1645430400>. This update should fix the crashing issue for Android users. If you are still having issues, you can try the workarounds below.\n\n"
                      "The community has come up with a few workarounds for Android users while the issue is being worked on. Please note that these workarounds will not work 100% of the time, and the game can still crash at any moment.\n\n"
                      "※ If you are crashing before downloading the update, download the update on Mobile Data instead of WiFi.  (Please only do this if your data plan is forgiving/unlimited as the update is very large.)\n"
                      "※ If the update is already downloaded, log into the game with Mobile Data. Once you're on the main menu, you are free to switch back to WiFi.\n"
                      "※ Obtain a VM that runs Android 7, which runs perfectly on the update. Please note that the gameplay experience will not be the best in this situation.\n"
                      "※ Use VPNs such as Proton VPN and connect that to JP.\n"
-                     "※ In settings, select `Biometrics and Security > Google Play system update`. Restart the phone. You may need to reinstall the game (MAKE SURE YOU HAVE A TRANSFER CODE).\n\n"
-                     "If none of these workarounds end up working for you, please be patient as the issue gets fixed.")
+                     "※ In settings, select `Biometrics and Security > Google Play system update`. Restart the phone. You may need to reinstall the game (MAKE SURE YOU HAVE A TRANSFER CODE).")
         )
         embed.set_footer(text='Updated 2/5/22')
         self.count += 1
