@@ -83,6 +83,24 @@ class PersistentEvent(discord.ui.View):
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+    @discord.ui.button(
+        label="Android User Survey",
+        style=discord.ButtonStyle.primary,
+        custom_id="persistent_view:usersurvey",
+    )
+    async def gamecrash(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = gen_embed(
+            title='Do you have an android? Please answer this quick survey!',
+            content=(
+                "We are collecting info about app usage/crashes for android users. Please answer this survey even if you are not crashing (we need to get an accurate sample of the android community).\n"
+                "This should take roughly 5 minutes in total to complete.\n\n"
+                "https://forms.gle/nEB5cdhDZnQQSZmNA")
+        )
+        embed.set_footer(text='This is an unofficial survey and is not endorsed by Bushiroad.')
+        self.count += 1
+        log.info(f'Quick Link Interaction {self.count}')
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
