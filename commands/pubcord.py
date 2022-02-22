@@ -88,7 +88,7 @@ class PersistentEvent(discord.ui.View):
         style=discord.ButtonStyle.primary,
         custom_id="persistent_view:usersurvey",
     )
-    async def gamecrash(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def usersurvey(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Do you have an android? Please answer this quick survey!',
             content=(
