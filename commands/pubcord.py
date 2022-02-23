@@ -27,37 +27,39 @@ class PersistentEvent(discord.ui.View):
             content=("※ EN Bandori is quiet, for once.\n")
         )
         embed.set_image(
-            url='https://files.s-neon.xyz/share/FLmZyDrVgAAjtcX.png')
+            url='https://files.s-neon.xyz/share/FMMSMn4VgAAM7Gw.png')
         embed.add_field(name=f'Current Event',
-                        value=("Dreamy Colors♪ Pastel Fan Road\n"
-                               "<t:1644973200> to <t:1645513140>\n\n"
-                               "**Event Type**: VS Live\n"
-                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
-                               "**Characters**: Hina, Maya, Eve, CHU2, PAREO\n\n"
+                        value=("Buddy x Buddy\n"
+                               "<t:1645664400> to <t:1646204340>\n\n"
+                               "**Event Type**: Mission Live\n"
+                               "**Attribute**: Powerful <:attrPowerful:432978890064134145> \n"
+                               "**Characters**: Tae, Himari, Tsugumi, Hagumi, Michelle\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
                         value=("> Bang Dream! Girls Band Party!☆PICO FEVER! Release Celebration Gift\n"
-                               "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>"
+                               "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>\n"
+                               "\n"
+                               "> 300 Songs Released Login Campaign - x300 <:StarGem:432995521892843520>\n"
+                               "> <t:1646121600> to <t:1646985540>\n"
+                               "\n"
+                               "> BanG Dream! Day Special Present! - x500 <:StarGem:432995521892843520>\n"
+                               "> <t:1646035200> to <t:1646207940>"
                                ),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Unexpected! Lovely~♡ Furinkazan Gacha\n"
-                               "> <t:1644973200> to <t:1645664340>\n"
+                        value=("> MASCOT☆CHANGE Gacha\n"
+                               "> <t:1645664400> to <t:1646355540>\n"
                                "\n"
                                "> Band Story 3 HHW 4* Member Guaranteed Gacha\n"
                                "> <t:1643590800> to <t:1646182740>\n"
                                "\n"
-                               "> Elegant Escort Express Gacha [LIMITED]\n"
-                               "> Elegant Escort Express Special Set 10 Play Gacha [LIMITED]"
-                               "> <t:1645146000> to <t:1645664340>\n"
-                               "\n"
-                               "> Cool Type Gacha\n"
-                               "> <t:1645059600> to <t:1645513140>\n"
+                               "> Powerful Type Gacha\n"
+                               "> <t:1645750800> to <t:1646204340>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 2/15/2022')
+        embed.set_footer(text='Last Updated 2/23/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -70,14 +72,18 @@ class PersistentEvent(discord.ui.View):
     async def gamecrash(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='I have an android and my game keeps crashing! What do I do?',
-            content=("Good news! **Version 4.10.3** will be available to download on <t:1645430400>. This update should fix the crashing issue for Android users. If you are still having issues, you can try the workarounds below.\n\n"
-                     "The community has come up with a few workarounds for Android users while the issue is being worked on. Please note that these workarounds will not work 100% of the time, and the game can still crash at any moment.\n\n"
-                     "※ If you are crashing before downloading the update, download the update on Mobile Data instead of WiFi.  (Please only do this if your data plan is forgiving/unlimited as the update is very large.)\n"
-                     "※ If the update is already downloaded, log into the game with Mobile Data. Once you're on the main menu, you are free to switch back to WiFi.\n"
-                     "※ Obtain a VM that runs Android 7, which runs perfectly on the update. Please note that the gameplay experience will not be the best in this situation.\n"
-                     "※ Use VPNs such as Proton VPN and connect that to JP.\n"
-                     "※ In settings, select `Biometrics and Security > Google Play system update`. Restart the phone. You may need to reinstall the game (MAKE SURE YOU HAVE A TRANSFER CODE).")
-        )
+            content=("Good news! **Version 4.10.3** will be available to download on <t:1645430400>. This update should fix the crashing issue for Android users. If you are still having issues, you can try the workaround below.\n\n"
+                     "1. Clear the cache in Android settings and restart the phone; this got me to the home page.\n"
+                     "2. Clear the cache in the game.\n"
+                     "3. Delete your Google ad ID (if you don't have one, make a new one and then delete it).\n"
+                     "4. Restart the phone."
+                     # "The community has come up with a few workarounds for Android users while the issue is being worked on. Please note that these workarounds will not work 100% of the time, and the game can still crash at any moment.\n\n"
+                     # "※ If you are crashing before downloading the update, download the update on Mobile Data instead of WiFi.  (Please only do this if your data plan is forgiving/unlimited as the update is very large.)\n"
+                     # "※ If the update is already downloaded, log into the game with Mobile Data. Once you're on the main menu, you are free to switch back to WiFi.\n"
+                     # "※ Obtain a VM that runs Android 7, which runs perfectly on the update. Please note that the gameplay experience will not be the best in this situation.\n"
+                     # "※ Use VPNs such as Proton VPN and connect that to JP.\n"
+                     # "※ In settings, select `Biometrics and Security > Google Play system update`. Restart the phone. You may need to reinstall the game (MAKE SURE YOU HAVE A TRANSFER CODE).")
+                     ))
         embed.set_footer(text='Updated 2/5/22')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
