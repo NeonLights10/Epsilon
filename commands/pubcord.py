@@ -84,7 +84,7 @@ class PersistentEvent(discord.ui.View):
                      # "※ Use VPNs such as Proton VPN and connect that to JP.\n"
                      # "※ In settings, select `Biometrics and Security > Google Play system update`. Restart the phone. You may need to reinstall the game (MAKE SURE YOU HAVE A TRANSFER CODE).")
                      ))
-        embed.set_footer(text='Updated 2/5/22')
+        embed.set_footer(text='Updated 2/23/22')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
