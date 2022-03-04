@@ -24,16 +24,15 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content=("※ EN Bandori is quiet, for once.\n")
-        )
+            content=('※ Active changes to the event schedule are in effect. Check "Upcoming Schedule and Changes" for more info.'))
         embed.set_image(
-            url='https://files.s-neon.xyz/share/FMMSMn4VgAAM7Gw.png')
+            url='https://files.s-neon.xyz/share/FM6BtDqUcAMC0u2.png')
         embed.add_field(name=f'Current Event',
-                        value=("Buddy x Buddy\n"
-                               "<t:1645664400> to <t:1646204340>\n\n"
-                               "**Event Type**: Mission Live\n"
-                               "**Attribute**: Powerful <:attrPowerful:432978890064134145> \n"
-                               "**Characters**: Tae, Himari, Tsugumi, Hagumi, Michelle\n\n"
+                        value=("A Stroll Colored By Sakura\n"
+                               "<t:1646355600> to <t:1646895540>\n\n"
+                               "**Event Type**: VS Live\n"
+                               "**Attribute**: Happy <:attrHappy:432978959957753905>\n"
+                               "**Characters**: Hina, Chisato, Maya, Aya, Eve\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
@@ -43,23 +42,21 @@ class PersistentEvent(discord.ui.View):
                                "> 300 Songs Released Login Campaign - x300 <:StarGem:432995521892843520>\n"
                                "> <t:1646121600> to <t:1646985540>\n"
                                "\n"
-                               "> BanG Dream! Day Special Present! - x500 <:StarGem:432995521892843520>\n"
-                               "> <t:1646035200> to <t:1646207940>"
+                               "> Poppin'Party Band Story 3 Countdown Login Campaign - x50 <:StarGem:432995521892843520> each day\n"
+                               "> <t:1646812800> to <t:1647071940>"
                                ),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> MASCOT☆CHANGE Gacha\n"
-                               "> <t:1645664400> to <t:1646355540>\n"
+                        value=("> Cosmic Sea Cruise Gacha [LIMITED]\n"
+                               "> 1 Time Special! Cosmic Sea Cruise Gacha [LIMITED]\n"
+                               "> <t:1646355600> to <t:1647046740>\n"
                                "\n"
-                               "> Band Story 3 HHW 4* Member Guaranteed Gacha\n"
-                               "> <t:1643590800> to <t:1646182740>\n"
-                               "\n"
-                               "> Powerful Type Gacha\n"
-                               "> <t:1645750800> to <t:1646204340>\n"
+                               "> Event Bonus Members & Types Gacha\n"
+                               "> <t:1646528400> to <t:1647046740>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 2/23/2022')
+        embed.set_footer(text='Last Updated 3/3/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -77,12 +74,6 @@ class PersistentEvent(discord.ui.View):
                      "2. Clear the cache in the game.\n"
                      "3. Delete your Google ad ID (if you don't have one, make a new one and then delete it).\n"
                      "4. Restart the phone."
-                     # "The community has come up with a few workarounds for Android users while the issue is being worked on. Please note that these workarounds will not work 100% of the time, and the game can still crash at any moment.\n\n"
-                     # "※ If you are crashing before downloading the update, download the update on Mobile Data instead of WiFi.  (Please only do this if your data plan is forgiving/unlimited as the update is very large.)\n"
-                     # "※ If the update is already downloaded, log into the game with Mobile Data. Once you're on the main menu, you are free to switch back to WiFi.\n"
-                     # "※ Obtain a VM that runs Android 7, which runs perfectly on the update. Please note that the gameplay experience will not be the best in this situation.\n"
-                     # "※ Use VPNs such as Proton VPN and connect that to JP.\n"
-                     # "※ In settings, select `Biometrics and Security > Google Play system update`. Restart the phone. You may need to reinstall the game (MAKE SURE YOU HAVE A TRANSFER CODE).")
                      ))
         embed.set_footer(text='Updated 2/23/22')
         self.count += 1
@@ -90,19 +81,42 @@ class PersistentEvent(discord.ui.View):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @discord.ui.button(
-        label="Android User Survey",
+        label="Upcoming Schedule and Changes",
         style=discord.ButtonStyle.primary,
-        custom_id="persistent_view:usersurvey",
+        custom_id="persistent_view:schedule",
     )
-    async def usersurvey(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def schedule(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
-            title='Do you have an android? Please answer this quick survey!',
+            title='Notice - Upcoming Schedule, v5.0.0 Delays, & Dreamfest/Birthday Gacha Info',
             content=(
-                "We are collecting info about app usage/crashes for android users. Please answer this survey even if you are not crashing (we need to get an accurate sample of the android community).\n"
-                "This should take roughly 5 minutes in total to complete.\n\n"
-                "https://forms.gle/nEB5cdhDZnQQSZmNA")
+                "WDue to the previous optimization work for Android issues, the next major update (v5.0) will unfortunately be pushed back to a later date on the accelerated schedule.\n"
+                "As such, certain events & features that relied on the version update will be rescheduled.\n\n"
+                "The event schedule has been adjusted accordingly, and upcoming birthday gachas will also be delayed separately to after the 5.0 update.")
         )
-        embed.set_footer(text='This is an unofficial survey and is not endorsed by Bushiroad.')
+        embed.add_field(name=f'Upcoming Schedule - Dates are in UTC',
+                        value=("> A Stroll Colored by Sakura: March 4 - March 10\n"
+                               "> Live Beyond: March 12 - March 18\n"
+                               "> Embracing Your Lost and Confused Self: March 20 - March 28\n"
+                               "> Analysis of Harmony and Change: March 30 - April 5\n"
+                               "> Little Rose Harmony: April 7 - April 13\n"
+                               "> Backstage Pass 4: April 15\n"
+                               "※ Event title translations are subject to change."),
+                        inline=False)
+        embed.add_field(name=f'What will happen to Dream Festivals?',
+                        value="Dream Festivals are currently set to be connected to their corresponding Event. With this in mind, expect a Dream Festival on March 20, and April 15.",
+                        inline=False)
+        embed.add_field(name=f'What happens to Birthday Gachas?',
+                        value=("Birthday Gachas will be moved to take place after the 5.0 update gets released. These will **NOT** be pushed back an entire year.\n"
+                              "The exact date as to when these Birthday Gachas will take place is currently unknown, outside of 'after the 5.0 update'.\n\n"
+                              "The following Birthday Gachas are affected:\n"
+                              "> Hina Hikawa Birthday Gacha\n"
+                              "> Sayo Hikawa Birthday Gacha\n"
+                              "> Rimi Ushigome Birthday Gacha\n"
+                              "> PAREO Birthday Gacha\n"
+                              "> Chisato Shirasagi Birthday Gacha\n"
+                              "> Ran Mitake Birthday Gacha"),
+                        inline=False)
+        embed.set_footer(text='Last Updated 3/3/2022.')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
