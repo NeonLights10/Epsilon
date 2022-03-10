@@ -235,6 +235,13 @@ class Pubcord(commands.Cog):
                         roles = member.roles
                         roles.remove(pubcord_booster_role)
                         await member.edit(roles=roles, reason="No longer boosting main OR emote server")
+            else:
+                if member not in pubcord.premium_subscribers:
+                    log.info('not boosting either server, removing')
+                    roles = member.roles
+                    roles.remove(pubcord_booster_role)
+                    await member.edit(roles=roles, reason="No longer boosting main OR emote server")
+
         log.info('parity check complete')
 
     @check_boosters.before_loop
