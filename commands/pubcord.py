@@ -69,19 +69,35 @@ class PersistentEvent(discord.ui.View):
     async def gamecrash(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='I have an android and my game keeps crashing! What do I do?',
-            content=("Good news! **Version 4.10.3** will be available to download on <t:1645430400>. This update should fix the crashing issue for Android users. If you are still having issues, you can try the workaround below.\n\n"
-                     "1. Clear the cache in Android settings and restart the phone; this got me to the home page.\n"
-                     "2. Clear the cache in the game.\n"
-                     "3. Delete your Google ad ID (if you don't have one, make a new one and then delete it).\n"
-                     "4. Restart the phone."
+            content=("Good news! The **version 4.10.3** update should fix the crashing issue for Android users. If you are still having issues, you can try the workarounds below.\n\n"
+                     "※ Clear the cache in Android settings and restart the phone; then clear cache in game and restart.\n"
+                     "※ Delete your Google ad ID (if you don't have one, make a new one and then delete it).\n"
+                     "※ Use a VPN to connect from Japan/Singapore using mobile data."
                      ))
-        embed.set_footer(text='Updated 2/23/22')
+        embed.set_footer(text='Updated 3/10/22')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @discord.ui.button(
-        label="Upcoming Schedule and Changes",
+        label="I can't purchase stars!",
+        style=discord.ButtonStyle.primary,
+        custom_id="persistent_view:androidpurchase",
+    )
+    async def androidpurchase(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = gen_embed(
+            title='I have an android and am trying to buy stars but cannot! What do I do?',
+            content=(
+                "The dev team is aware of this issue and is currently working to resolve it.\n\n"
+                "https://twitter.com/bangdreamgbp_EN/status/1500709014656585729"
+                ))
+        embed.set_footer(text='Updated 3/10/22')
+        self.count += 1
+        log.info(f'Quick Link Interaction {self.count}')
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @discord.ui.button(
+        label="Upcoming Schedule & DF Changes",
         style=discord.ButtonStyle.primary,
         custom_id="persistent_view:schedule",
     )
