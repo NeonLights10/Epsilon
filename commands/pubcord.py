@@ -24,39 +24,42 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Current Status of EN Bandori',
-            content=('※ Active changes to the event schedule are in effect. Check "Upcoming Schedule and Changes" for more info.'))
+            content=('※ Active changes to the event schedule are in effect. Check "Upcoming Schedule and DF Changes" for more info.'))
         embed.set_image(
-            url='https://files.s-neon.xyz/share/FM6BtDqUcAMC0u2.png')
+            url='https://files.s-neon.xyz/share/FNlNu6SaMAIh3JE.png')
         embed.add_field(name=f'Current Event',
-                        value=("A Stroll Colored By Sakura\n"
-                               "<t:1646355600> to <t:1646895540>\n\n"
-                               "**Event Type**: VS Live\n"
-                               "**Attribute**: Happy <:attrHappy:432978959957753905>\n"
-                               "**Characters**: Hina, Chisato, Maya, Aya, Eve\n\n"
+                        value=("Live Beyond!!\n"
+                               "<t:1647046800> to <t:1647586740>\n\n"
+                               "**Event Type**: Mission Live\n"
+                               "**Attribute**: Powerful <:attrPowerful:432978890064134145> \n"
+                               "**Characters**: Kasumi, Tae, Arisa, Rimi, Saaya\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
                         value=("> Bang Dream! Girls Band Party!☆PICO FEVER! Release Celebration Gift\n"
                                "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>\n"
                                "\n"
-                               "> 300 Songs Released Login Campaign - x300 <:StarGem:432995521892843520>\n"
-                               "> <t:1646121600> to <t:1646985540>\n"
+                               "> Poppin'Party Band Story 3 Release Special Present  - x1000 <:StarGem:432995521892843520>\n"
+                               "> <t:1647046800> to <t:1647910740>\n"
                                "\n"
-                               "> Poppin'Party Band Story 3 Countdown Login Campaign - x50 <:StarGem:432995521892843520> each day\n"
-                               "> <t:1646812800> to <t:1647071940>"
+                               "> White Day 2022 Special Present  - x300 <:StarGem:432995521892843520> + x1 Boost Drink\n"
+                               "> <t:1647244800> to <t:1647417540>\n"
                                ),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Cosmic Sea Cruise Gacha [LIMITED]\n"
-                               "> 1 Time Special! Cosmic Sea Cruise Gacha [LIMITED]\n"
-                               "> <t:1646355600> to <t:1647046740>\n"
+                        value=("> Forever Connecting Moments Gacha\n"
+                               "> 1 Time Special! Cosmic Sea Cruise Gacha\n"
+                               "> <t:1647046800> to <t:1647737940>\n"
+                               "\n"
+                               "> Band Story 3 Poppin'Party ★4 Member Guaranteed Gacha\n"
+                               "> <t:1647046800> to <t:1649638740>\n"
                                "\n"
                                "> Event Bonus Members & Types Gacha\n"
-                               "> <t:1646528400> to <t:1647046740>\n"
+                               "> <t:1647219600> to <t:1647737940>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 3/3/2022')
+        embed.set_footer(text='Last Updated 3/11/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -74,23 +77,6 @@ class PersistentEvent(discord.ui.View):
                      "※ Delete your Google ad ID (if you don't have one, make a new one and then delete it).\n"
                      "※ Use a VPN to connect from Japan/Singapore using mobile data."
                      ))
-        embed.set_footer(text='Updated 3/10/22')
-        self.count += 1
-        log.info(f'Quick Link Interaction {self.count}')
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-    @discord.ui.button(
-        label="I can't purchase stars!",
-        style=discord.ButtonStyle.primary,
-        custom_id="persistent_view:androidpurchase",
-    )
-    async def androidpurchase(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = gen_embed(
-            title='I have an android and am trying to buy stars but cannot! What do I do?',
-            content=(
-                "The dev team is aware of this issue and is currently working to resolve it.\n\n"
-                "https://twitter.com/bangdreamgbp_EN/status/1500709014656585729"
-                ))
         embed.set_footer(text='Updated 3/10/22')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
