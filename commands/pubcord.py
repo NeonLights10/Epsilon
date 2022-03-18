@@ -17,22 +17,22 @@ class PersistentEvent(discord.ui.View):
         self.count = 0
 
     @discord.ui.button(
-        label="What's the current event?",
+        label="Current Event/Campaigns/Gacha",
         style=discord.ButtonStyle.green,
         custom_id="persistent_view:currentevent",
     )
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
-            title='Current Status of EN Bandori',
+            title='What is going on in EN Bandori?',
             content=('※ Active changes to the event schedule are in effect. Check "Upcoming Schedule and DF Changes" for more info.'))
         embed.set_image(
-            url='https://files.s-neon.xyz/share/FNlNu6SaMAIh3JE.png')
+            url='https://files.s-neon.xyz/share/banner_event149.png')
         embed.add_field(name=f'Current Event',
-                        value=("Live Beyond!!\n"
-                               "<t:1647046800> to <t:1647586740>\n\n"
-                               "**Event Type**: Mission Live\n"
-                               "**Attribute**: Powerful <:attrPowerful:432978890064134145> \n"
-                               "**Characters**: Kasumi, Tae, Arisa, Rimi, Saaya\n\n"
+                        value=("Embracing Your Lost and Confused Self\n"
+                               "<t:1647738000> to <t:1648450799>\n\n"
+                               "**Event Type**: VS Live\n"
+                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
+                               "**Characters**: Yukina, Sayo, Lisa, Ako, Rinko\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
@@ -42,24 +42,26 @@ class PersistentEvent(discord.ui.View):
                                "> Poppin'Party Band Story 3 Release Special Present  - x1000 <:StarGem:432995521892843520>\n"
                                "> <t:1647046800> to <t:1647910740>\n"
                                "\n"
-                               "> White Day 2022 Special Present  - x300 <:StarGem:432995521892843520> + x1 Boost Drink\n"
-                               "> <t:1647244800> to <t:1647417540>\n"
-                               ),
+                               "> 10M DL Celebration Login Campaign - 50 <:StarGem:432995521892843520> per day for 10 days\n"
+                               "> <t:1647763200> to <t:1649491199>\n"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Forever Connecting Moments Gacha\n"
-                               "> 1 Time Special! Cosmic Sea Cruise Gacha\n"
-                               "> <t:1647046800> to <t:1647737940>\n"
+                        value=("> 10M DL Celebration Dream Festival Gacha\n"
+                               "> Dream Festival Special Set 10 Play Gacha\n"
+                               "> <t:1647738000> to <t:1648083599>\n"
                                "\n"
                                "> Band Story 3 Poppin'Party ★4 Member Guaranteed Gacha\n"
                                "> <t:1647046800> to <t:1649638740>\n"
                                "\n"
+                               "> Hesitation & Alternatives Gacha\n"
+                               "> <t:1648083600> to <t:1648601999>\n"
+                               "\n"
                                "> Event Bonus Members & Types Gacha\n"
-                               "> <t:1647219600> to <t:1647737940>\n"
+                               "> <t:1648083600> to <t:1648601999>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
-        embed.set_footer(text='Last Updated 3/11/2022')
+        embed.set_footer(text='Last Updated 3/18/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
