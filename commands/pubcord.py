@@ -17,7 +17,7 @@ class PersistentEvent(discord.ui.View):
         self.count = 0
 
     @discord.ui.button(
-        label="Current Event/Campaigns/Gacha",
+        label="New Event/Campaigns/Gacha/Songs",
         style=discord.ButtonStyle.green,
         custom_id="persistent_view:currentevent",
     )
@@ -60,6 +60,15 @@ class PersistentEvent(discord.ui.View):
                                "> <t:1648083600> to <t:1648601999>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
+                        inline=False)
+        embed.add_field(name=f'New Songs',
+                        value=("<:MorfonicaLogo:682986271462654054> V.I.P - 3/19 (out now!)\n"
+                               "<:AfterglowLogo:432981108338982922> How-To: World Domination - 3/20\n"
+                               "<:RoseliaLogo:432981139788005377> Tori no Uta - 3/21\n"
+                               "<:RASLogo:721150392271896616> CORE PRIDE - 3/22\n"
+                               "<:HHWLogo:432981119437242388> Happy Girl - 3/23\n"
+                               "<:PopipaLogo:432981132414287872> Haru~spring~ - 3/24\n"
+                               "<:PasupareLogo:432981125455937536> Lum's Love Song - 3/25"),
                         inline=False)
         embed.set_footer(text='Last Updated 3/18/2022')
         self.count += 1
