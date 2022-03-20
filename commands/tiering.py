@@ -319,35 +319,35 @@ class GiftboxMenu(discord.ui.View):
             self.boxsize = 30
             self.cansize = 3
             self.probability = self.base_probabilities[0]
-            self.base_probability = self.base_probabilities[0]
+            self.base_probability = self.base_probabilities[1]
         elif self.boxnum == 2:
             self.remaining = 50
             self.can_remaining = 5
             self.boxsize = 50
             self.cansize = 5
             self.probability = self.base_probabilities[1]
-            self.base_probability = self.base_probabilities[1]
+            self.base_probability = self.base_probabilities[2]
         elif self.boxnum == 3:
             self.remaining = 70
             self.can_remaining = 10
             self.boxsize = 70
             self.cansize = 10
             self.probability = self.base_probabilities[2]
-            self.base_probability = self.base_probabilities[2]
+            self.base_probability = self.base_probabilities[3]
         elif self.boxnum == 4:
             self.remaining = 120
             self.can_remaining = 10
             self.boxsize = 120
             self.cansize = 10
             self.probability = self.base_probabilities[3]
-            self.base_probability = self.base_probabilities[3]
+            self.base_probability = self.base_probabilities[4]
         elif self.boxnum == 5:
             self.remaining = 170
             self.can_remaining = 10
             self.boxsize = 170
             self.cansize = 10
             self.probability = self.base_probabilities[4]
-            self.base_probability = self.base_probabilities[4]
+            self.base_probability = self.base_probabilities[5]
         elif self.boxnum > 5:
             self.remaining = 180
             self.can_remaining = 10
