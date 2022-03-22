@@ -1647,10 +1647,16 @@ class Administration(commands.Cog):
                       description='Enables slowmode for the channel you are in. Time is in seconds.',
                       help='Usage\n\n%slowmode [time]')
     @commands.check_any(commands.has_guild_permissions(manage_channels=True), has_modrole())
-    async def slowmode(self, ctx, time: int):
-        await ctx.channel.edit(slowmode_delay=0)
-        await ctx.send(embed=gen_embed(title='slowmode',
-                                       content=f'Slowmode has been enabled in {ctx.channel.name}\n({time} seconds)'))
+    async def slowmode(self, ctx, time: Optional[int]):
+        if time:
+            await ctx.channel.edit(slowmode_delay=time)
+            await ctx.send(embed=gen_embed(title='slowmode',
+                                           content=f'Slowmode has been enabled in {ctx.channel.name}\n({time} seconds)'))
+        else:
+            await ctx.channel.edit(slowmode_delay=0)
+            await ctx.send(embed=gen_embed(title='slowmode',
+                                           content=f'Slowmode has been disabled in {ctx.channel.name}.'))
+
 
     @commands.command(name='shutdown',
                       description='Shuts down the bot. Only owner can use this command.')
