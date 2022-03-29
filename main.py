@@ -148,7 +148,7 @@ log.info('Twitter API Initialized.\n')
 ##########
 
 
-async def _initialize_document(guild, id):
+async def initialize_document(guild, id):
     post = {'server_id': id,
             'name': guild.name,
             'modrole': None,
@@ -176,7 +176,7 @@ async def _initialize_document(guild, id):
     await db.servers.insert_one(post)
 
 
-async def _check_document(guild, id):
+async def check_document(guild, id):
     log.info("Checking db document for {}".format(guild.name))
     if await db.servers.find_one({"server_id": id}) is None:
         log.info("Did not find one, creating document...")
@@ -239,7 +239,7 @@ bot.remove_command('help')
 @bot.event
 async def on_ready():
     for guild in bot.guilds:
-        await _check_document(guild, guild.id)
+        await check_document(guild, guild.id)
 
     log.info("\n### PRE-STARTUP CHECKS PASSED ###\n")
 

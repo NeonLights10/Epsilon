@@ -1,10 +1,10 @@
 import discord
 from discord.ext import commands
 
-from __main__ import log, db
+from __main__ import log, db, check_document, initialize_document
 
 async def on_guild_join(guild):
-    await _check_document(guild, guild.id)
+    await check_document(guild, guild.id)
 
     status = discord.Game(f'{default_prefix}help | {len(bot.guilds)} servers')
     await bot.change_presence(activity=status)
