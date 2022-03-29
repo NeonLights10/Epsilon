@@ -61,6 +61,8 @@ class CommandErrorHandler(commands.Cog):
         error: commands.CommandError
             The Exception raised.
         """
+        ignored=[]
+
         if hasattr(ctx.command, 'on_error'):
             return
 

@@ -259,7 +259,7 @@ async def on_ready():
         log.info(f" - {ser}")
     print(flush=True)
 
-    await bot.tree.sync(guild=discord.Object(id=281815539267928064))
+    await bot.tree.sync(guild=discord.Object(id=911509078038151168))
 
 
 @bot.event
