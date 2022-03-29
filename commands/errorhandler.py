@@ -3,18 +3,57 @@ import traceback
 import sys
 
 from humanfriendly import format_timespan
+from discord import app_commands
 from discord.ext import commands
 from formatting.embed import gen_embed
 from __main__ import log
+
+
+class CheckOwner(commands.CheckFailure):
+    def __init__(self):
+        super().__init__('This command can only be used by the owner.')
+
 
 class CommandErrorHandler(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        bot.tree.error(self.tree_error_handler)
+
+    async def tree_error_handler(self,
+                                 interaction: discord.Interaction,
+                                 command,
+                                 error):
+        """Handles errors for all application commands."""
+
+        # Unpack CommandInvokeErrors first
+        if isinstance(error, app_commands.CommandInvokeError):
+            error = error.original
+
+        needs_syncing = (
+            app_commands.CommandSignatureMismatch,
+            app_commands.CommandNotFound
+        )
+
+        if isinstance(error, needs_syncing):
+            await interaction.response.send_message(
+                "Sorry, but this command seems to be unavailable! "
+                "Please try again later...", ephemeral=True)
+            await tree.sync(guild=discord.Object(id=281815539267928064))
+
+        else:
+            log.error(f"Ignoring unhandled exception in application command {command!r}")
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await interaction.response.send_message(
+                "An error occured during command execution. "
+                "Please try again later...", ephemeral=True)
+
+        return
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """The event triggered when an error is raised while invoking a command.
+
         Parameters
         ------------
         ctx: commands.Context
@@ -30,64 +69,127 @@ class CommandErrorHandler(commands.Cog):
             if cog._get_overridden_method(cog.cog_command_error) is not None:
                 return
 
-        ignored = (commands.CommandNotFound, )
-        error = getattr(error, 'original', error)
-
         if isinstance(error, ignored):
             return
 
         if isinstance(error, commands.DisabledCommand):
-            await ctx.send(f'{ctx.command} has been disabled.')
+            await ctx.send(f'{ctx.command.name} has been disabled.')
+            return
 
-        elif isinstance(error, commands.MissingRequiredArgument):
-            log.warning("Missing Required Argument - Traceback below:")
-            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-            params = ' '.join([x for x in ctx.command.clean_params])
-            await ctx.send(embed = gen_embed(title = "Invalid parameter(s) entered", content = f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
+        if isinstance(error, CheckOwner):
+            await ctx.send(f'{ctx.command.name} can only be used by the owner of this bot.')
+            return
+
+        elif isinstance(error, commands.GuildNotFound):
+            log.warning("Guild Not Found - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.send(
+                embed=gen_embed(title=f"Guild {str(error.argument)} not found",
+                                content="Doublecheck the spelling or id of this guild!"))
+            return
 
         elif isinstance(error, commands.RoleNotFound):
             log.warning("Role Not Found - Traceback below:")
-            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-            await ctx.send(embed = gen_embed(title = "Role not found", content = "Doublecheck the spelling or id of this role!"))
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.send(
+                embed=gen_embed(title=f"Role {str(error.argument)} not found",
+                                content="Doublecheck the spelling or id of this role!"))
+            return
 
+        elif isinstance(error, commands.MessageNotFound):
+            log.warning("Message Not Found - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.send(
+                embed=gen_embed(title=f"Message {str(error.argument)} not found",
+                                content="Doublecheck the id of this message!"))
+            return
+
+        elif isinstance(error, commands.UserNotFound):
+            log.warning("User Not Found - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.send(
+                embed=gen_embed(title=f"User {str(error.argument)} not found",
+                                content="Doublecheck the spelling or id of this user!"))
+            return
+
+        elif isinstance(error, commands.MemberNotFound):
+            log.warning("Member Not Found - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.send(
+                embed=gen_embed(title=f"Member {str(error.argument)} not found",
+                                content="Doublecheck the spelling or id of this member!"))
+            return
+
+        elif isinstance(error, discord.ExtensionNotFound):
+            log.warning("Cog Not Found - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.send(
+                embed=gen_embed(title=f"Cog {error.name} not found", content="Doublecheck the spelling of this cog!"))
+            return
+
+        elif isinstance(error, discord.ExtensionAlreadyLoaded):
+            await ctx.send(
+                embed=gen_embed(title=f"Cog {error.name} already loaded!",
+                                content="Cannot load a cog that is already loaded."))
+            return
+
+        elif isinstance(error, commands.MissingPermissions):
+            await ctx.respond(
+                embed=gen_embed(title=f"{ctx.command.name}", content="You do not have permission to run this command."))
+            return
+
+        # catchall for any BadArgument errors that are not listed above
         elif isinstance(error, commands.BadArgument):
             log.warning("Bad Argument - Traceback below:")
-            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
             if hasattr(error, 'message'):
-                await ctx.send(embed = gen_embed(title = "Invalid parameter entered", content = f"Error: {error.message} \nAre you sure you entered the right parameter?"))
+                await ctx.send(embed=gen_embed(title="Invalid parameter entered",
+                                               content=f"Error: {error.message} \nAre you sure you entered the right "
+                                                       f"parameter?"))
             else:
                 await ctx.send(embed=gen_embed(title="Invalid parameter entered",
                                                content=f"Are you sure you entered the right parameter?"))
+            return
 
         elif isinstance(error, commands.CommandOnCooldown):
             log.warning("Command on Cooldown - Traceback below:")
-            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-            await ctx.send(embed = gen_embed(title = "Command on Cooldown", content = f"You are trying to change the name too many times. Discord's global rate limit per channel is twice per 10 minutes.\nPlease try again in {format_timespan(ctx.command.get_cooldown_retry_after(ctx))}."))
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.send(
+                embed=gen_embed(title="Command on Cooldown",
+                                content=f"You are trying to change the name too many times. Discord's global rate "
+                                        f"limit per channel is twice per 10 minutes.\nPlease try again in "
+                                        f"{format_timespan(ctx.command.get_cooldown_retry_after(ctx))}."))
+            return
 
         elif isinstance(error, discord.Forbidden):
             log.error("Permission Error: Bot does not have sufficient permissions. - Traceback below:")
-            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-            await ctx.send(embed = gen_embed(title = 'Bot Permission Error', content = "It seems like I don't have the permissions to do that. Check your server settings."))
-        
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.send(
+                embed=gen_embed(title='Bot Permission Error',
+                                content="It seems like I don't have the permissions to do that. Check your server "
+                                        "settings."))
+            return
+
         elif isinstance(error, commands.CheckAnyFailure):
             log.warning("Permission Error: Insufficient Permissions")
-            traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-            await ctx.send(embed = gen_embed(title = 'Permissions Error', content = 'You must have server permissions or moderator role to run this command.'))
-
-        elif isinstance(error, commands.CheckFailure):
-                    log.warning("Error: Disabled Command")
-                    traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-                    await ctx.send(embed = gen_embed(title = 'Disabled Command', content = 'Sorry, this command has been disabled on this server.'))
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.send(
+                embed=gen_embed(title='Permissions Error',
+                                content='You must have server permissions or moderator role to run this command.'))
+            return
 
         elif isinstance(error, discord.HTTPException):
-                    log.error(f"Error: {error.status} | {error.text}")
-                    traceback.print_exception(type(error), error, error.__traceback__, limit = 0)
-                    await ctx.send(embed = gen_embed(title = f'{error.status}', content = f'{error.text}'))
+            log.error(f"Error: {error.status} | {error.text}")
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.respond(embed=gen_embed(title=f'{error.status}', content=f'{error.text}'))
+            return
 
         else:
             log.critical(f'Ignoring exception in command {ctx.command}:')
-            traceback.print_exception(type(error), error, error.__traceback__, file = sys.stderr)
-            await ctx.send(embed=gen_embed(title='Error', content=f'{traceback.format_exc(error)}'))
+            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+            # await ctx.respond(embed=gen_embed(title='Error', content=f'{traceback.format_exc(error)}'))
+            return
 
-def setup(bot):
-    bot.add_cog(CommandErrorHandler(bot))
+
+async def setup(bot):
+    await bot.add_cog(CommandErrorHandler(bot))
