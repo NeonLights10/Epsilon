@@ -45,8 +45,8 @@ class Help(commands.Cog):
                         if y.hidden == False:
                             commands.append(y.name)
                     commands = ('\n'.join(map(str, sorted(commands))))
-                    help.add_field(name=x, value=commands, inline=True)
-            await interaction.response.send_message(embed=help)
+                    help_message.add_field(name=x, value=commands, inline=True)
+            await interaction.response.send_message(embed=help_message)
         else:
             for command in command:
                 found = False
@@ -89,8 +89,8 @@ class Help(commands.Cog):
                     help.set_thumbnail(url=bot_icon_url)
                     await interaction.response.send_message(embed=help)
                 else:
-                    help.set_thumbnail(url=bot_icon_url)
-                    await interaction.response.send_message(embed=help)
+                    help_message.set_thumbnail(url=bot_icon_url)
+                    await interaction.response.send_message(embed=help_message)
                     if shelp:
                         shelp.set_thumbnail(url=bot_icon_url)
                         await interaction.response.send_message(embed=shelp)
