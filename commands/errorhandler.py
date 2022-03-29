@@ -39,7 +39,7 @@ class CommandErrorHandler(commands.Cog):
             await interaction.response.send_message(
                 "Sorry, but this command seems to be unavailable! "
                 "Please try again later...", ephemeral=True)
-            await tree.sync(guild=discord.Object(id=281815539267928064))
+            await tree.sync(guild=discord.Object(id=911509078038151168))
 
         else:
             log.error(f"Ignoring unhandled exception in application command {command!r}")

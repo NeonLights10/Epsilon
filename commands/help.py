@@ -15,7 +15,7 @@ class Help(commands.Cog):
     @app_commands.command(name='help',
                           description='Shows all available commands and help context.')
     @app_commands.describe(command='Enter a command for more details on usage')
-    @app_commands.guilds(281815539267928064)
+    @app_commands.guilds(911509078038151168)
     async def help(self,
                    interaction: discord.Interaction,
                    command: str = None):
@@ -121,5 +121,5 @@ async def setup(bot):
 
 
 async def teardown(bot):
-    bot.tree.remove('help', guild=discord.Object(id=281815539267928064))
-    await bot.tree.sync(guild=discord.Object(id=281815539267928064))
+    bot.tree.remove('help', guild=discord.Object(id=911509078038151168))
+    await bot.tree.sync(guild=discord.Object(id=911509078038151168))

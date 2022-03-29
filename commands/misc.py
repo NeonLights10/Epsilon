@@ -34,7 +34,7 @@ class Miscellaneous(commands.Cog):
 
     @app_commands.command(name='stats',
                           description='Provides statistics about the bot.')
-    @app_commands.guilds(281815539267928064)
+    @app_commands.guilds(911509078038151168)
     async def stats(self,
                     interaction: discord.Interaction):
         content = discord.Embed(colour=0x1abc9c)
@@ -65,5 +65,5 @@ async def setup(bot):
 
 
 async def teardown(bot):
-    bot.tree.remove('stats', guild=discord.Object(id=281815539267928064))
-    await bot.tree.sync(guild=discord.Object(id=281815539267928064))
+    bot.tree.remove('stats', guild=discord.Object(id=911509078038151168))
+    await bot.tree.sync(guild=discord.Object(id=911509078038151168))
