@@ -227,14 +227,14 @@ class Administration(commands.Cog):
                       description='---',
                       help='For internal AI use only')
     @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
-    async def speak(self, ctx, channel: discord.TextChannel, message: Optional[discord.Message], *, msg_content: str):
-        if message:
+    async def speak(self, ctx, dest: Union[discord.TextChannel,discord.Message], *, msg_content: str):
+        if is_attribute(dest, discord.Message):
             if ctx.message.attachments:
                 for attachment in ctx.message.attachments:
                     attachment_file = await attachment.to_file()
                     await channel.send(file=attachment_file)
             await message.reply(content=f'{msg_content}')
-        else:
+        elif is_attribute(dest, discord.TextChannel):
             if ctx.message.attachments:
                 for attachment in ctx.message.attachments:
                     attachment_file = await attachment.to_file()
