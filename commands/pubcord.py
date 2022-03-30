@@ -26,51 +26,37 @@ class PersistentEvent(discord.ui.View):
             title='What is going on in EN Bandori?',
             content=('※ Active changes to the event schedule are in effect. Check "Upcoming Schedule and DF Changes" for more info.'))
         embed.set_image(
-            url='https://files.s-neon.xyz/share/banner_event149.png')
+            url='https://files.s-neon.xyz/share/FOmgOpXVgAMA1xm.png')
         embed.add_field(name=f'Current Event',
-                        value=("Embracing Your Lost and Confused Self\n"
-                               "<t:1647738000> to <t:1648450799>\n\n"
-                               "**Event Type**: VS Live\n"
-                               "**Attribute**: Cool <:attrCool:432978841162612756>\n"
-                               "**Characters**: Yukina, Sayo, Lisa, Ako, Rinko\n\n"
+                        value=("Analysis of Harmony and Change\n"
+                               "<t:1648602000> to <t:1649141940>\n\n"
+                               "**Event Type**: Live Goals\n"
+                               "**Attribute**: Pure <:attrPure:432978922892820495>\n"
+                               "**Characters**: Mashiro, Touko, Nanami, Tsukushi, Rui\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("> Bang Dream! Girls Band Party!☆PICO FEVER! Release Celebration Gift\n"
-                               "> Starting <t:1641456000>, weekly on Thursdays until <t:1648108800>\n"
-                               "\n"
-                               "> Poppin'Party Band Story 3 Release Special Present  - x1000 <:StarGem:432995521892843520>\n"
-                               "> <t:1647046800> to <t:1647910740>\n"
-                               "\n"
-                               "> 10M DL Celebration Login Campaign - 50 <:StarGem:432995521892843520> per day for 10 days\n"
+                        value=("> 10M DL Celebration Login Campaign - 50 <:StarGem:432995521892843520> per day for 10 days\n"
                                "> <t:1647763200> to <t:1649491199>\n"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> 10M DL Celebration Dream Festival Gacha\n"
-                               "> Dream Festival Special Set 10 Play Gacha\n"
-                               "> <t:1647738000> to <t:1648083599>\n"
+                        value=("> Library Lit in Tranquility Gacha\n"
+                               "> 1 Time Special! Library Lit in Tranqulity Gacha\n"
+                               "> <t:1648602000> to <t:1649293140>\n"
                                "\n"
                                "> Band Story 3 Poppin'Party ★4 Member Guaranteed Gacha\n"
                                "> <t:1647046800> to <t:1649638740>\n"
                                "\n"
-                               "> Hesitation & Alternatives Gacha\n"
-                               "> <t:1648083600> to <t:1648601999>\n"
-                               "\n"
                                "> Event Bonus Members & Types Gacha\n"
-                               "> <t:1648083600> to <t:1648601999>\n"
+                               "> <t:1648774800> to <t:1649293140>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
         embed.add_field(name=f'New Songs',
-                        value=("<:MorfonicaLogo:682986271462654054> V.I.P - 3/19 (out now!)\n"
-                               "<:AfterglowLogo:432981108338982922> How-To: World Domination - 3/20\n"
-                               "<:RoseliaLogo:432981139788005377> Tori no Uta - 3/21\n"
-                               "<:RASLogo:721150392271896616> CORE PRIDE - 3/22\n"
-                               "<:HHWLogo:432981119437242388> Happy Girl - 3/23\n"
-                               "<:PopipaLogo:432981132414287872> Haru~spring~ - 3/24\n"
-                               "<:PasupareLogo:432981125455937536> Lum's Love Song - 3/25"),
+                        value=("<:MorfonicaLogo:682986271462654054> Sonorous - Release during event\n"
+                               "7 | 13 | 18 | 25"),
                         inline=False)
-        embed.set_footer(text='Last Updated 3/18/2022')
+        embed.set_footer(text='Last Updated 3/29/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
