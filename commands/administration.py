@@ -233,7 +233,7 @@ class Administration(commands.Cog):
                 for attachment in ctx.message.attachments:
                     attachment_file = await attachment.to_file()
                     await channel.send(file=attachment_file)
-            await message.reply(content=f'{msg_content}')
+            await dest.reply(content=f'{msg_content}')
         elif isinstance(dest, discord.TextChannel):
             if ctx.message.attachments:
                 for attachment in ctx.message.attachments:
