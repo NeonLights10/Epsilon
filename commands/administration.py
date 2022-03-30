@@ -223,6 +223,13 @@ class Administration(commands.Cog):
 
         return commands.check(predicate)
 
+    @commands.command(name='speak',
+                      description='---',
+                      help='For internal AI use only')
+    @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
+    async def speak(self, ctx, channel: discord.TextChannel, *, msg_content: str):
+        await channel.send(content=f'{msg_content}')
+
     @commands.command(name='setprefix',
                       description='Sets the command prefix that the bot will use for this server.',
                       help='Usage:\n\n%setprefix !')
