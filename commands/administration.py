@@ -228,13 +228,13 @@ class Administration(commands.Cog):
                       help='For internal AI use only')
     @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
     async def speak(self, ctx, dest: Union[discord.TextChannel,discord.Message], *, msg_content: str):
-        if is_attribute(dest, discord.Message):
+        if isinstance(dest, discord.Message):
             if ctx.message.attachments:
                 for attachment in ctx.message.attachments:
                     attachment_file = await attachment.to_file()
                     await channel.send(file=attachment_file)
             await message.reply(content=f'{msg_content}')
-        elif is_attribute(dest, discord.TextChannel):
+        elif isinstance(dest, discord.TextChannel):
             if ctx.message.attachments:
                 for attachment in ctx.message.attachments:
                     attachment_file = await attachment.to_file()
