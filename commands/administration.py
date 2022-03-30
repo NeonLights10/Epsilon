@@ -227,8 +227,19 @@ class Administration(commands.Cog):
                       description='---',
                       help='For internal AI use only')
     @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
-    async def speak(self, ctx, channel: discord.TextChannel, *, msg_content: str):
-        await channel.send(content=f'{msg_content}')
+    async def speak(self, ctx, channel: discord.TextChannel, message: Optional[discord.Message], *, msg_content: str):
+        if message:
+            if ctx.message.attachments:
+                for attachment in ctx.message.attachments:
+                    attachment_file = await attachment.to_file()
+                    await channel.send(file=attachment_file)
+            await message.reply(content=f'{msg_content}')
+        else:
+            if ctx.message.attachments:
+                for attachment in ctx.message.attachments:
+                    attachment_file = await attachment.to_file()
+                    await channel.send(file=attachment_file)
+            await channel.send(content=f'{msg_content}')
 
     @commands.command(name='setprefix',
                       description='Sets the command prefix that the bot will use for this server.',
