@@ -232,14 +232,14 @@ class Administration(commands.Cog):
             if ctx.message.attachments:
                 for attachment in ctx.message.attachments:
                     attachment_file = await attachment.to_file()
-                    await channel.send(file=attachment_file)
+                    await dest.send(file=attachment_file)
             await dest.reply(content=f'{msg_content}')
         elif isinstance(dest, discord.TextChannel):
             if ctx.message.attachments:
                 for attachment in ctx.message.attachments:
                     attachment_file = await attachment.to_file()
-                    await channel.send(file=attachment_file)
-            await channel.send(content=f'{msg_content}')
+                    await dest.send(file=attachment_file)
+            await dest.send(content=f'{msg_content}')
 
     @commands.command(name='setprefix',
                       description='Sets the command prefix that the bot will use for this server.',
