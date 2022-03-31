@@ -89,8 +89,8 @@ class Help(commands.Cog):
                     help.set_thumbnail(url=bot_icon_url)
                     await interaction.response.send_message(embed=help)
                 else:
-                    help_message.set_thumbnail(url=bot_icon_url)
-                    await interaction.response.send_message(embed=help_message)
+                    help_.set_thumbnail(url=bot_icon_url)
+                    await interaction.response.send_message(embed=help)
                     if shelp:
                         shelp.set_thumbnail(url=bot_icon_url)
                         await interaction.response.send_message(embed=shelp)
@@ -121,5 +121,4 @@ async def setup(bot):
 
 
 async def teardown(bot):
-    bot.tree.remove('help', guild=discord.Object(id=911509078038151168))
     await bot.tree.sync(guild=discord.Object(id=911509078038151168))
