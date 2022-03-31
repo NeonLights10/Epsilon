@@ -60,6 +60,25 @@ class Miscellaneous(commands.Cog):
         content.add_field(name="Uptime", value=f"{day:.0f} days\n{hour:.0f} hours\n{minutes:.0f} minutes")
         await interaction.response.send_message(embed=content)
 
+    @app_commands.command(name='invite',
+                          description='Create a link to invite the bot to your server.')
+    @app_commands.guilds(911509078038151168)
+    async def invite(self,
+                     interaction: discord.Interaction):
+        url = await self.generate_invite_link()
+        content = discord.Embed(colour=0x1abc9c)
+        content.set_author(name=f"{NAME} v{BOTVERSION}", icon_url=self.bot.user.display_avatar.url)
+        content.set_footer(text="Fueee~")
+        content.add_field(name="Invite Link:", value=url)
+        await interaction.response.send_message(embed=content)
+
+    @commands.command(name='support',
+                      description='Support the bot by donating for server costs!')
+    async def support(self,
+                      interaction: discord.Interaction):
+        await ctx.send(embed=gen_embed(title='Support Kanon Bot',
+                                       content='Kanon costs money to run. I pay for her server costs out of pocket, so any donation helps!\nSupport: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights'))
+
 
 async def setup(bot):
     await bot.add_cog(Miscellaneous(bot))
