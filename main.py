@@ -180,7 +180,7 @@ async def check_document(guild, id):
     log.info("Checking db document for {}".format(guild.name))
     if await db.servers.find_one({"server_id": id}) is None:
         log.info("Did not find one, creating document...")
-        await _initialize_document(guild, id)
+        await initialize_document(guild, id)
     else:
         document = await db.servers.find_one({"server_id": id})
         blacklist = document['blacklist']
@@ -230,6 +230,7 @@ class EpsilonBot(commands.Bot):
         await bot.load_extension("commands.help")
         await bot.load_extension("commands.errorhandler")
         await bot.load_extension("commands.listeners")
+        await bot.load_extension("commands.misc")
 
 
 bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True)

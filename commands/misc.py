@@ -12,6 +12,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from __main__ import log, db
+from formatting.constants import NAME, VERSION as BOTVERSION
 from commands.errorhandler import CheckOwner
 
 
@@ -43,14 +44,14 @@ class Miscellaneous(commands.Cog):
         content.add_field(name="Author", value="Neon#5555")
         content.add_field(name="BotID", value=self.bot.user.id)
         content.add_field(name="Messages",
-                          value=f"{main.message_count} ({(main.message_count / ((time.time() - uptime) / 60)):.2f}/min)")
-        content.add_field(name="Commands Processed", value=f"{main.command_count}")
+                          value=f"{self.bot.message_count} ({(self.bot.message_count / ((time.time() - self.bot.uptime) / 60)):.2f}/min)")
+        content.add_field(name="Commands Processed", value=f"{self.bot.command_count}")
         process = psutil.Process(os.getpid())
         mem = process.memory_full_info()
         mem = mem.uss / 1000000
         content.add_field(name="Memory Usage", value=f'{mem:.2f} MB')
         content.add_field(name="Servers", value=f"I am running on {str(len(self.bot.guilds))} servers")
-        ctime = float(time.time() - uptime)
+        ctime = float(time.time() - self.bot.uptime)
         day = ctime // (24 * 3600)
         ctime = ctime % (24 * 3600)
         hour = ctime // 3600
