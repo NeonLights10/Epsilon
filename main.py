@@ -408,9 +408,9 @@ async def on_message(message):
                             if whitelist and ctx.channel not in whitelist:
                                 return
                             log.info("Found a reply to me, generating response...")
-                            #msg = await get_msgid(ctx.message)
-                            #log.info(f"Message retrieved: {msg}\n")
-                            #await ctx.message.reply(content=msg)
+                            msg = await get_msgid(ctx.message)
+                            log.info(f"Message retrieved: {msg}\n")
+                            await ctx.message.reply(content=msg)
 
                     else:
                         if ctx.channel.id not in document['blacklist']:
@@ -425,9 +425,9 @@ async def on_message(message):
                     if whitelist and ctx.channel not in whitelist:
                         return
                     log.info("Found a reply to me, generating response...")
-                    #msg = await get_msgid(ctx.message)
-                    #log.info(f"Message retrieved: {msg}\n")
-                    #await ctx.message.reply(content=msg)
+                    msg = await get_msgid(ctx.message)
+                    log.info(f"Message retrieved: {msg}\n")
+                    await ctx.message.reply(content=msg)
             else:
                 if ctx.channel.id not in document['blacklist']:
                     post = {'server_id': ctx.guild.id,
