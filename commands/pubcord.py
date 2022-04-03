@@ -152,7 +152,7 @@ class PersistentPlace(discord.ui.View):
             title='Template',
             content=('UPDATE - the background is now WHITE. do not use light pink for the background.'))
         embed.set_image(
-            url='https://cdn.discordapp.com/attachments/959919689994240070/960008640490774578/unknown.png')
+            url='https://cdn.discordapp.com/attachments/959919689994240070/960017911374807050/paintdotnet_oseaK0CsJ1.png')
         embed.set_footer(text='r/place 2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
