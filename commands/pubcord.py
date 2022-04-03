@@ -167,7 +167,7 @@ class PersistentPlace(discord.ui.View):
         embed = gen_embed(
             title='Alliances',
             content=('Please help these fellow friends out in protecting their art on r/place:\n\n'
-                     'LoveLive (889,677)\nProject Sekai (1122,890)'))
+                     'LoveLive (889,677)\n\nProject Sekai (1122,890)\nTemplate: https://cdn.discordapp.com/attachments/959919689994240070/960015849127833660/unknown.png'))
         embed.set_footer(text='r/place 2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
