@@ -152,7 +152,7 @@ class PersistentPlace(discord.ui.View):
             title='Template',
             content=('See below!'))
         embed.set_image(
-            url='https://media.discordapp.net/attachments/959919689994240070/960005529554538496/kasumi.png')
+            url='https://cdn.discordapp.com/attachments/959919689994240070/960008640490774578/unknown.png')
         embed.set_footer(text='r/place 2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
@@ -323,11 +323,17 @@ class Pubcord(commands.Cog):
 
     @check_boosters.before_loop
     @start_currentevent.before_loop
+    @start_place.before_loop
     async def wait_ready(self):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
 
     @check_currentevent.before_loop
+    async def wait_ready_long(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
+
+    @check_place.before_loop
     async def wait_ready_long(self):
         await self.bot.wait_until_ready()
         await asyncio.sleep(10)
