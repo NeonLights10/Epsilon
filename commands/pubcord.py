@@ -218,7 +218,7 @@ class Pubcord(commands.Cog):
     async def check_place(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(913958768105103390)
+        channel = pubcord.get_channel(959919689994240070)
         if document['prev_message_place']:
             message_id = document['prev_message_place']
             prev_message = await channel.fetch_message(int(message_id))
