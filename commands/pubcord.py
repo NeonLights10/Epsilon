@@ -133,7 +133,8 @@ class PersistentPlace(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Location Coordinates?',
-            content=('1285,127'))
+            content=('1285,127\n'
+                     'https://www.reddit.com/r/place/?cx=1297&cy=138&px=29'))
         embed.set_image(
             url='https://media.discordapp.net/attachments/959919689994240070/959997442286301225/unknown.png')
         embed.set_footer(text='r/place 2022')
