@@ -133,8 +133,8 @@ class PersistentPlace(discord.ui.View):
     async def coordinates(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Location Coordinates?',
-            content=('1129,842\n'
-                     'https://www.reddit.com/r/place/?cx=1129&cy=842&px=29'))
+            content=('Top-left border starts at 324, 1040\nTop-right starts at 362, 1040\n'
+                     'https://www.reddit.com/r/place/?cx=324&cy=1040&px=29'))
         embed.set_image(
             url='https://cdn.discordapp.com/attachments/959919689994240070/960035082394009700/unknown.png')
         embed.set_footer(text='r/place 2022')
@@ -152,27 +152,11 @@ class PersistentPlace(discord.ui.View):
             title='Template',
             content=('Final plans.'))
         embed.set_image(
-            url='https://media.discordapp.net/attachments/959919689994240070/960062038149844992/unknown.png')
+            url='https://cdn.discordapp.com/attachments/959919689994240070/960271360427450438/paintdotnet_YAoEFbYFbB.png')
         embed.set_footer(text='r/place 2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
-
-    @discord.ui.button(
-        label="Alliances",
-        style=discord.ButtonStyle.green,
-        custom_id="persistent_view:placealliance",
-    )
-    async def alliances(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = gen_embed(
-            title='Alliances',
-            content=('Please help these fellow friends out in protecting their art on r/place:\n\n'
-                     'LoveLive (889,677)\n\nProject Sekai (1122,890)\nTemplate: https://cdn.discordapp.com/attachments/959919689994240070/960015849127833660/unknown.png'))
-        embed.set_footer(text='r/place 2022')
-        self.count += 1
-        log.info(f'Quick Link Interaction {self.count}')
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
 
 class Pubcord(commands.Cog):
     def __init__(self, bot):
