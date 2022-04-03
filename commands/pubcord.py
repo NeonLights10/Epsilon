@@ -232,7 +232,7 @@ class Pubcord(commands.Cog):
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message': new_message.id}})
 
-    @tasks.loop(seconds=10.0)
+    @tasks.loop(seconds=120.0)
     async def check_place(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
