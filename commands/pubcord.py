@@ -130,7 +130,7 @@ class PersistentPlace(discord.ui.View):
         style=discord.ButtonStyle.green,
         custom_id="persistent_view:placecoordinates",
     )
-    async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def coordinates(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Location Coordinates?',
             content=('1285,127\n'
@@ -147,7 +147,7 @@ class PersistentPlace(discord.ui.View):
         style=discord.ButtonStyle.green,
         custom_id="persistent_view:placetemplate",
     )
-    async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def template(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Template',
             content=('See below!'))
