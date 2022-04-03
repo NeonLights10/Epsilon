@@ -152,7 +152,7 @@ class PersistentPlace(discord.ui.View):
             title='Template',
             content=('Plans for expansion will continue after kasumi is established.'))
         embed.set_image(
-            url='https://media.discordapp.net/attachments/959919689994240070/960036187345661952/paintdotnet_rdCtVOBxw9.png')
+            url='https://cdn.discordapp.com/attachments/959919689994240070/960048589340561418/unknown.png')
         embed.set_footer(text='r/place 2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
