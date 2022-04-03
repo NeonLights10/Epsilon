@@ -158,6 +158,22 @@ class PersistentPlace(discord.ui.View):
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+    @discord.ui.button(
+        label="Alliances",
+        style=discord.ButtonStyle.green,
+        custom_id="persistent_view:placealliance",
+    )
+    async def template(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = gen_embed(
+            title='Alliances',
+            content=('Please help these fellow friends out in protecting their art on r/place:\n\n'
+                     'LoveLive (889,677)\nProject Sekai (1122,890)'))
+        embed.set_footer(text='r/place 2022')
+        self.count += 1
+        log.info(f'Quick Link Interaction {self.count}')
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
