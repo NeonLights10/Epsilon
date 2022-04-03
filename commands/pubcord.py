@@ -162,6 +162,7 @@ class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.view = None
+        self.view_place = None
         self.check_boosters.start()
         self.start_currentevent.start()
         self.check_currentevent.start()
@@ -215,7 +216,7 @@ class Pubcord(commands.Cog):
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message': new_message.id}})
 
-    @tasks.loop(seconds=5.0)
+    @tasks.loop(seconds=10.0)
     async def check_place(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
@@ -225,12 +226,12 @@ class Pubcord(commands.Cog):
             prev_message = await channel.fetch_message(int(message_id))
             if channel.last_message_id != prev_message.id:
                 log.info(f'prev_message_place: {prev_message.id}')
-                if self.view:
-                    self.view.stop()
+                if self.view_place:
+                    self.view_place.stop()
                 await prev_message.delete()
                 log.info('deleted')
-                self.view = PersistentEvent()
-                new_message = await channel.send("Get coordinates and template by clicking the buttons below!", view=self.view)
+                self.view_place = PersistentPlace()
+                new_message = await channel.send("Get coordinates and template by clicking the buttons below!", view=self.view_place)
                 log.info('posted')
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message_place': new_message.id}})
@@ -260,8 +261,8 @@ class Pubcord(commands.Cog):
             prev_message = await channel.fetch_message(int(message_id))
             await prev_message.delete()
             log.info('initial deleted')
-        self.view = PersistentEvent()
-        new_message = await channel.send("Get coordinates and template by clicking the buttons below!", view=self.view)
+        self.view_place = PersistentPlace()
+        new_message = await channel.send("Get coordinates and template by clicking the buttons below!", view=self.view_place)
         log.info('initial posted')
         await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message_place': new_message.id}})
 
