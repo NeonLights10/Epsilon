@@ -182,15 +182,15 @@ class Pubcord(commands.Cog):
         self.check_boosters.start()
         self.start_currentevent.start()
         self.check_currentevent.start()
-        self.start_place.start()
-        self.check_place.start()
+        #self.start_place.start()
+        #self.check_place.start()
 
     def cog_unload(self):
         self.check_boosters.cancel()
         self.start_currentevent.cancel()
         self.check_currentevent.cancel()
-        self.start_place.cancel()
-        self.check_place.cancel()
+        #self.start_place.cancel()
+        #self.check_place.cancel()
 
     def has_modrole():
         async def predicate(ctx):
@@ -232,7 +232,7 @@ class Pubcord(commands.Cog):
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message': new_message.id}})
 
-    @tasks.loop(seconds=120.0)
+    @tasks.loop(seconds=600.0)
     async def check_place(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
