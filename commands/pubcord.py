@@ -133,10 +133,10 @@ class PersistentPlace(discord.ui.View):
     async def coordinates(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Location Coordinates?',
-            content=('1285,127\n'
-                     'https://www.reddit.com/r/place/?cx=1297&cy=138&px=29'))
+            content=('1129,842\n'
+                     'https://www.reddit.com/r/place/?cx=1129&cy=842&px=29'))
         embed.set_image(
-            url='https://media.discordapp.net/attachments/959919689994240070/959997442286301225/unknown.png')
+            url='https://cdn.discordapp.com/attachments/959919689994240070/960035082394009700/unknown.png')
         embed.set_footer(text='r/place 2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
@@ -150,9 +150,9 @@ class PersistentPlace(discord.ui.View):
     async def template(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Template',
-            content=('UPDATE - the background is now WHITE. do not use light pink for the background.'))
+            content=('Plans for expansion will continue after kasumi is established.'))
         embed.set_image(
-            url='https://cdn.discordapp.com/attachments/959919689994240070/960017911374807050/paintdotnet_oseaK0CsJ1.png')
+            url='https://media.discordapp.net/attachments/959919689994240070/960036187345661952/paintdotnet_rdCtVOBxw9.png')
         embed.set_footer(text='r/place 2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
@@ -182,15 +182,15 @@ class Pubcord(commands.Cog):
         self.check_boosters.start()
         self.start_currentevent.start()
         self.check_currentevent.start()
-        #self.start_place.start()
-        #self.check_place.start()
+        self.start_place.start()
+        self.check_place.start()
 
     def cog_unload(self):
         self.check_boosters.cancel()
         self.start_currentevent.cancel()
         self.check_currentevent.cancel()
-        #self.start_place.cancel()
-        #self.check_place.cancel()
+        self.start_place.cancel()
+        self.check_place.cancel()
 
     def has_modrole():
         async def predicate(ctx):
