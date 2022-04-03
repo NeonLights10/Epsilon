@@ -163,7 +163,7 @@ class PersistentPlace(discord.ui.View):
         style=discord.ButtonStyle.green,
         custom_id="persistent_view:placealliance",
     )
-    async def template(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def alliances(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Alliances',
             content=('Please help these fellow friends out in protecting their art on r/place:\n\n'
