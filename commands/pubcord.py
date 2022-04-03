@@ -120,6 +120,43 @@ class PersistentEvent(discord.ui.View):
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+class PersistentPlace(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.count = 0
+
+    @discord.ui.button(
+        label="Coordinates",
+        style=discord.ButtonStyle.green,
+        custom_id="persistent_view:placecoordinates",
+    )
+    async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = gen_embed(
+            title='Location Coordinates?',
+            content=('1285,127'))
+        embed.set_image(
+            url='https://media.discordapp.net/attachments/959919689994240070/959997442286301225/unknown.png')
+        embed.set_footer(text='r/place 2022')
+        self.count += 1
+        log.info(f'Quick Link Interaction {self.count}')
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @discord.ui.button(
+        label="Template",
+        style=discord.ButtonStyle.green,
+        custom_id="persistent_view:placetemplate",
+    )
+    async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
+        embed = gen_embed(
+            title='Template',
+            content=('See below!'))
+        embed.set_image(
+            url='https://cdn.discordapp.com/attachments/959919689994240070/959997442504413264/paintdotnet_cVxl9WOVC5.png')
+        embed.set_footer(text='r/place 2022')
+        self.count += 1
+        log.info(f'Quick Link Interaction {self.count}')
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -127,11 +164,15 @@ class Pubcord(commands.Cog):
         self.check_boosters.start()
         self.start_currentevent.start()
         self.check_currentevent.start()
+        self.start_place.start()
+        self.check_place.start()
 
     def cog_unload(self):
         self.check_boosters.cancel()
         self.start_currentevent.cancel()
         self.check_currentevent.cancel()
+        self.start_place.cancel()
+        self.check_place.cancel()
 
     def has_modrole():
         async def predicate(ctx):
@@ -173,6 +214,26 @@ class Pubcord(commands.Cog):
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message': new_message.id}})
 
+    @tasks.loop(seconds=5.0)
+    async def check_place(self):
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390)
+        if document['prev_message_place']:
+            message_id = document['prev_message_place']
+            prev_message = await channel.fetch_message(int(message_id))
+            if channel.last_message_id != prev_message.id:
+                log.info(f'prev_message_place: {prev_message.id}')
+                if self.view:
+                    self.view.stop()
+                await prev_message.delete()
+                log.info('deleted')
+                self.view = PersistentEvent()
+                new_message = await channel.send("Get coordinates and template by clicking the buttons below!", view=self.view)
+                log.info('posted')
+                await db.servers.update_one({"server_id": 432379300684103699},
+                                            {"$set": {'prev_message_place': new_message.id}})
+
     @tasks.loop(seconds=1.0, count=1)
     async def start_currentevent(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
@@ -187,6 +248,21 @@ class Pubcord(commands.Cog):
         new_message = await channel.send("Access quick links by clicking the buttons below!", view=self.view)
         log.info('initial posted')
         await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message': new_message.id}})
+
+    @tasks.loop(seconds=1.0, count=1)
+    async def start_place(self):
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(959919689994240070)
+        if document['prev_message_place']:
+            message_id = document['prev_message_place']
+            prev_message = await channel.fetch_message(int(message_id))
+            await prev_message.delete()
+            log.info('initial deleted')
+        self.view = PersistentEvent()
+        new_message = await channel.send("Get coordinates and template by clicking the buttons below!", view=self.view)
+        log.info('initial posted')
+        await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message_place': new_message.id}})
 
     #@user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
     #@permissions.has_role("Moderator")
