@@ -150,7 +150,7 @@ class PersistentPlace(discord.ui.View):
     async def template(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='Template',
-            content=('See below!'))
+            content=('UPDATE - the background is now WHITE. do not use light pink for the background.'))
         embed.set_image(
             url='https://cdn.discordapp.com/attachments/959919689994240070/960008640490774578/unknown.png')
         embed.set_footer(text='r/place 2022')
