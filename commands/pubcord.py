@@ -135,8 +135,6 @@ class PersistentPlace(discord.ui.View):
             title='Location Coordinates?',
             content=('Top-left border starts at 324, 1040\nTop-right starts at 362, 1040\n'
                      'https://www.reddit.com/r/place/?cx=324&cy=1040&px=29'))
-        embed.set_image(
-            url='https://cdn.discordapp.com/attachments/959919689994240070/960035082394009700/unknown.png')
         embed.set_footer(text='r/place 2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
@@ -216,7 +214,7 @@ class Pubcord(commands.Cog):
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message': new_message.id}})
 
-    @tasks.loop(seconds=300.0)
+    @tasks.loop(seconds=600.0)
     async def check_place(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
