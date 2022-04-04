@@ -150,7 +150,7 @@ class PersistentPlace(discord.ui.View):
             title='Template',
             content=('Final plans.'))
         embed.set_image(
-            url='https://cdn.discordapp.com/attachments/959919689994240070/960307684526157874/paintdotnet_ttpqTmWcLO.png')
+            url='https://cdn.discordapp.com/attachments/959919689994240070/960362003413737552/unknown.png')
         embed.set_footer(text='r/place 2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
