@@ -26,37 +26,46 @@ class PersistentEvent(discord.ui.View):
             title='What is going on in EN Bandori?',
             content=('※ Active changes to the event schedule are in effect. Check "Upcoming Schedule and DF Changes" for more info.'))
         embed.set_image(
-            url='https://files.s-neon.xyz/share/FOmgOpXVgAMA1xm.png')
+            url='https://files.s-neon.xyz/share/rokkagaming.png')
         embed.add_field(name=f'Current Event',
-                        value=("Analysis of Harmony and Change\n"
-                               "<t:1648602000> to <t:1649141940>\n\n"
+                        value=("Little Rose Harmony\n"
+                               "<t:1649293200> to <t:1649833140>\n\n"
                                "**Event Type**: Live Goals\n"
-                               "**Attribute**: Pure <:attrPure:432978922892820495>\n"
-                               "**Characters**: Mashiro, Touko, Nanami, Tsukushi, Rui\n\n"
+                               "**Attribute**: Powerful <:attrPowerful:432978890064134145> \n"
+                               "**Characters**: Ako, Mashiro, Rui, Rokka, CHU2\n\n"
                                "※The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
                         value=("> 10M DL Celebration Login Campaign - 50 <:StarGem:432995521892843520> per day for 10 days\n"
-                               "> <t:1647763200> to <t:1649491199>\n"),
+                               "> <t:1647763200> to <t:1649491199>\n\n"
+                               "> 4th Anniversary Countdown Login Campaign - 50 <:StarGem:432995521892843520> per day\n"
+                               "> <t:1649404800> to <t:1650009540>"),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> Library Lit in Tranquility Gacha\n"
-                               "> 1 Time Special! Library Lit in Tranqulity Gacha\n"
-                               "> <t:1648602000> to <t:1649293140>\n"
+                        value=("> Set Sail! Brand New Marine Gacha\n"
+                               "> 1 Time Only! Set Sail! Brand New Marine Gacha\n"
+                               "> <t:1649293200> to <t:1649984340>\n"
+                               "\n"
+                               "> Girls Band Life! 3 Gacha [LIMITED]\n"
+                               "> Girls Band Life! 3 Special Set 10 Play Gacha [LIMITED]\n"
+                               "> <t:1649379600> to <t:1649984340>\n"
+                               "\n"
+                               "> 4th Anniversary! ★4 Miracle Ticket Set Gacha [MIRATIX]\n"
+                               "> <t:1649379600> to <t:1651885140>\n"
                                "\n"
                                "> Band Story 3 Poppin'Party ★4 Member Guaranteed Gacha\n"
                                "> <t:1647046800> to <t:1649638740>\n"
                                "\n"
                                "> Event Bonus Members & Types Gacha\n"
-                               "> <t:1648774800> to <t:1649293140>\n"
+                               "> <t:1649466000> to <t:1649984340>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
         embed.add_field(name=f'New Songs',
-                        value=("<:MorfonicaLogo:682986271462654054> Sonorous - Release during event\n"
-                               "7 | 13 | 18 | 25"),
+                        value=("<:RoseliaLogo:432981139788005377>  My Dearest - Release during event\n"
+                               "9 | 15 | 19 | 26"),
                         inline=False)
-        embed.set_footer(text='Last Updated 3/29/2022')
+        embed.set_footer(text='Last Updated 4/6/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -120,42 +129,6 @@ class PersistentEvent(discord.ui.View):
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-class PersistentPlace(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-        self.count = 0
-
-    @discord.ui.button(
-        label="Coordinates",
-        style=discord.ButtonStyle.green,
-        custom_id="persistent_view:placecoordinates",
-    )
-    async def coordinates(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = gen_embed(
-            title='Location Coordinates?',
-            content=('Top-left border starts at 324, 1040\nTop-right starts at 362, 1040\n'
-                     'https://www.reddit.com/r/place/?cx=324&cy=1040&px=29'))
-        embed.set_footer(text='r/place 2022')
-        self.count += 1
-        log.info(f'Quick Link Interaction {self.count}')
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-    @discord.ui.button(
-        label="Template",
-        style=discord.ButtonStyle.green,
-        custom_id="persistent_view:placetemplate",
-    )
-    async def template(self, button: discord.ui.Button, interaction: discord.Interaction):
-        embed = gen_embed(
-            title='Template',
-            content=('Final plans.'))
-        embed.set_image(
-            url='https://cdn.discordapp.com/attachments/959919689994240070/960362003413737552/unknown.png')
-        embed.set_footer(text='r/place 2022')
-        self.count += 1
-        log.info(f'Quick Link Interaction {self.count}')
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -164,15 +137,11 @@ class Pubcord(commands.Cog):
         self.check_boosters.start()
         self.start_currentevent.start()
         self.check_currentevent.start()
-        self.start_place.start()
-        self.check_place.start()
 
     def cog_unload(self):
         self.check_boosters.cancel()
         self.start_currentevent.cancel()
         self.check_currentevent.cancel()
-        self.start_place.cancel()
-        self.check_place.cancel()
 
     def has_modrole():
         async def predicate(ctx):
@@ -214,26 +183,6 @@ class Pubcord(commands.Cog):
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message': new_message.id}})
 
-    @tasks.loop(seconds=600.0)
-    async def check_place(self):
-        document = await db.servers.find_one({"server_id": 432379300684103699})
-        pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(959919689994240070)
-        if document['prev_message_place']:
-            message_id = document['prev_message_place']
-            prev_message = await channel.fetch_message(int(message_id))
-            if channel.last_message_id != prev_message.id:
-                log.info(f'prev_message_place: {prev_message.id}')
-                if self.view_place:
-                    self.view_place.stop()
-                await prev_message.delete()
-                log.info('deleted')
-                self.view_place = PersistentPlace()
-                new_message = await channel.send("Get coordinates and template by clicking the buttons below!", view=self.view_place)
-                log.info('posted')
-                await db.servers.update_one({"server_id": 432379300684103699},
-                                            {"$set": {'prev_message_place': new_message.id}})
-
     @tasks.loop(seconds=1.0, count=1)
     async def start_currentevent(self):
         document = await db.servers.find_one({"server_id": 432379300684103699})
@@ -248,21 +197,6 @@ class Pubcord(commands.Cog):
         new_message = await channel.send("Access quick links by clicking the buttons below!", view=self.view)
         log.info('initial posted')
         await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message': new_message.id}})
-
-    @tasks.loop(seconds=1.0, count=1)
-    async def start_place(self):
-        document = await db.servers.find_one({"server_id": 432379300684103699})
-        pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(959919689994240070)
-        if document['prev_message_place']:
-            message_id = document['prev_message_place']
-            prev_message = await channel.fetch_message(int(message_id))
-            await prev_message.delete()
-            log.info('initial deleted')
-        self.view_place = PersistentPlace()
-        new_message = await channel.send("Get coordinates and template by clicking the buttons below!", view=self.view_place)
-        log.info('initial posted')
-        await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message_place': new_message.id}})
 
     #@user_command(guild_ids=[432379300684103699], name='Verify User', default_permission=False)
     #@permissions.has_role("Moderator")
