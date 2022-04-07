@@ -255,17 +255,11 @@ class Pubcord(commands.Cog):
 
     @check_boosters.before_loop
     @start_currentevent.before_loop
-    @start_place.before_loop
     async def wait_ready(self):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
 
     @check_currentevent.before_loop
-    async def wait_ready_long(self):
-        await self.bot.wait_until_ready()
-        await asyncio.sleep(10)
-
-    @check_place.before_loop
     async def wait_ready_long(self):
         await self.bot.wait_until_ready()
         await asyncio.sleep(10)
