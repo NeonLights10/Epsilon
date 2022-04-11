@@ -193,6 +193,12 @@ class Administration(commands.Cog):
     def convert_emoji(argument):
         return zemoji.demojize(argument)
 
+    def is_pubcord():
+        async def predicate(ctx):
+            return ctx.guild.id == 432379300684103699
+
+        return commands.check(predicate)
+
     def has_modrole():
         async def predicate(ctx):
             document = await db.servers.find_one({"server_id": ctx.guild.id})
@@ -224,10 +230,11 @@ class Administration(commands.Cog):
         return commands.check(predicate)
 
     # April Fools 2022
-    '''@commands.command(name='speak',
+    @commands.command(name='speak',
                       description='---',
                       help='For internal AI use only')
     @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
+    @commands.check(is_pubcord())
     async def speak(self, ctx, dest: Union[discord.TextChannel,discord.Message], *, msg_content: str):
         if isinstance(dest, discord.Message):
             if ctx.message.attachments:
@@ -242,7 +249,7 @@ class Administration(commands.Cog):
                     attachment_file = await attachment.to_file()
                     await dest.send(file=attachment_file)
             if msg_content:
-                await dest.send(content=f'{msg_content}')'''
+                await dest.send(content=f'{msg_content}')
 
     @commands.command(name='setprefix',
                       description='Sets the command prefix that the bot will use for this server.',
