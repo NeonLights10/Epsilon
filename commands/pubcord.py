@@ -129,11 +129,33 @@ class PersistentEvent(discord.ui.View):
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+class AnniversaryRole(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.count = 0
+
+    @discord.ui.button(
+        label="Backstage Pass 4",
+        emoji=PartialEmoji.from_str(":apstar:"),
+        style=discord.ButtonStyle.primary,
+        custom_id="persistent_view:anniversaryrole",
+    )
+    async def anniversaryrole(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.defer()
+        role = interaction.guild.get_role(963122511317459064)
+        if interaction.user.get_role(963122511317459064):
+            await interaction.user.remove_roles(role, reason='Self-assign anniversary role')
+            await interaction.followup.send(content='Removed the role "Backstage Pass 4" from your user profile.',
+                                            ephemeral=True)
+        else:
+            await interaction.user.add_roles(role, reason='Self-assign anniversary role')
+            await interaction.followup.send(content='Added the role "Backstage Pass 4" to your user profile.', ephemeral=True)
+
 class Pubcord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.view = None
-        self.view_place = None
+        self.view_anni = None
         self.check_boosters.start()
         self.start_currentevent.start()
         self.check_currentevent.start()
@@ -264,10 +286,22 @@ class Pubcord(commands.Cog):
         await self.bot.wait_until_ready()
         await asyncio.sleep(10)
 
+    @commands.command(name='bs4selfassign',
+                      description='Internal only')
+    @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole())
+    @commands.check(in_pubcord())
+    async def bs4selfassign(self, ctx, channel: discord.TextChannel):
+        self.view_anni = AnniversaryRole()
+        await channel.send(embed=gen_embed(title='Backstage Pass 4 Role',
+                                           content='Click the button below to add the role. Click it again to remove it.'),
+                           view=self.view_anni)
+
+
     @commands.command(name='currentstatus',
                       description='Sends a embed with the latest status on EN Bandori.',
                       help='Usage\n\n%currentstatus')
-    @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole(), in_pubcord())
+    @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole())
+    @commands.check(in_pubcord())
     async def currentstatus(self, ctx, message_id: Optional[str]):
         embed = gen_embed(
             title='Purpose of #announcements-en',
