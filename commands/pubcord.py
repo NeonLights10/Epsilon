@@ -291,6 +291,7 @@ class Pubcord(commands.Cog):
     @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole())
     @commands.check(in_pubcord())
     async def bs4selfassign(self, ctx, channel: discord.TextChannel):
+        self.view_anni.stop()
         self.view_anni = AnniversaryRole()
         await channel.send(embed=gen_embed(title='Backstage Pass 4 Role',
                                            content='Click the button below to add the role. Click it again to remove it.'),
