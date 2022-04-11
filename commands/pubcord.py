@@ -136,7 +136,7 @@ class AnniversaryRole(discord.ui.View):
 
     @discord.ui.button(
         label="Backstage Pass 4",
-        emoji=discord.PartialEmoji.from_str(":apstar:"),
+        emoji=discord.PartialEmoji.from_str("<:apstar:963127616456499280>"),
         style=discord.ButtonStyle.primary,
         custom_id="persistent_view:anniversaryrole",
     )
