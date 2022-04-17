@@ -24,46 +24,64 @@ class PersistentEvent(discord.ui.View):
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
             title='What is going on in EN Bandori?',
-            content=('※ Active changes to the event schedule are in effect. Check "Upcoming Schedule and DF Changes" for more info.'))
+            content=('※ Congratulations ENdori on 4 years!'))
         embed.set_image(
-            url='https://files.s-neon.xyz/share/rokkagaming.png')
+            url='https://files.s-neon.xyz/share/sayaagaming.png')
         embed.add_field(name=f'Current Event',
-                        value=("Little Rose Harmony\n"
-                               "<t:1649293200> to <t:1649833140>\n\n"
+                        value=("Backstage Pass 4\n"
+                               "<t:1649984400> to <t:1650524340>\n\n"
                                "**Event Type**: Live Goals\n"
-                               "**Attribute**: Powerful <:attrPowerful:432978890064134145> \n"
-                               "**Characters**: Ako, Mashiro, Rui, Rokka, CHU2\n\n"
-                               "※The event period above is automatically converted to the timezone set on your system."),
+                               "**Attribute**: Pure <:attrPure:432978922892820495>\n"
+                               "**Characters**: Sayaa, Tomoe, Kanon, Maya, Ako, Tsukushi, MASKING (Drummers)\n\n"
+                               "※ The event period above is automatically converted to the timezone set on your system."),
                         inline=False)
         embed.add_field(name='Campaigns',
-                        value=("> 10M DL Celebration Login Campaign - 50 <:StarGem:432995521892843520> per day for 10 days\n"
-                               "> <t:1647763200> to <t:1649491199>\n\n"
-                               "> 4th Anniversary Countdown Login Campaign - 50 <:StarGem:432995521892843520> per day\n"
-                               "> <t:1649404800> to <t:1650009540>"),
+                        value=("> 4th Anniversary Present - x4000 <:StarGem:432995521892843520> & x100 Tone Crystal\n"
+                               "> <t:1649984400> to <t:1651737540>\n\n"
+                               "> 4th Anniversary Login Campaign - x200 <:StarGem:432995521892843520> per day\n"
+                               "> <t:1649984400> to <t:1651737540>"),
                         inline=False)
-        embed.add_field(name=f'Gacha',
-                        value=("> Set Sail! Brand New Marine Gacha\n"
-                               "> 1 Time Only! Set Sail! Brand New Marine Gacha\n"
-                               "> <t:1649293200> to <t:1649984340>\n"
-                               "\n"
-                               "> Girls Band Life! 3 Gacha [LIMITED]\n"
-                               "> Girls Band Life! 3 Special Set 10 Play Gacha [LIMITED]\n"
-                               "> <t:1649379600> to <t:1649984340>\n"
-                               "\n"
-                               "> 4th Anniversary! ★4 Miracle Ticket Set Gacha [MIRATIX]\n"
+        embed.add_field(name=f'Miracle Tickets',
+                        value=("> 4th Anniversary! ★4 Miracle Ticket Set Gacha\n"
+                               "> ※ Get ONE (1) ★4 Miracle Ticket, Paid <:StarGem:432995521892843520> x2500 \n"
                                "> <t:1649379600> to <t:1651885140>\n"
                                "\n"
-                               "> Band Story 3 Poppin'Party ★4 Member Guaranteed Gacha\n"
-                               "> <t:1647046800> to <t:1649638740>\n"
+                               "> 4th Anniversary! ★4 Miracle Ticket Set Gacha\n"
+                               "> ※ Get ONE (1) ★4 Miracle Ticket, Paid <:StarGem:432995521892843520> x2500 \n"
+                               "> <t:1649984400> to <t:1652576340>\n"
+                               "\n"),
+                        inline=False)
+        embed.add_field(name=f'Gacha',
+                        value=("> 4th Anniversary Dream Festival Gacha\n"
+                               "> 4th Anniversary Dream Festival Special Set 10 Play Gacha (Paid <:StarGem:432995521892843520> x2000) x4\n"
+                               "> <t:1649984400> to <t:1650329940>\n"
                                "\n"
-                               "> Event Bonus Members & Types Gacha\n"
-                               "> <t:1649466000> to <t:1649984340>\n"
+                               "> 4th Anniversary! Free 10 Play a Day Gacha [FREE]\n"
+                               "> ※ Play up to 7 times"
+                               "> <t:1650009600> to <t:1652601540>\n"
+                               "\n"
+                               "> 4th Anniversary ★4 Limited Member Guaranteed Gacha [LIMITED]\n"
+                               "> <t:1649984400> to <t:1652576340>\n"
+                               "\n"
+                               "> 4th Anniversary 1 ★4 Member Guaranteed! Gacha Vol. 1\n"
+                               "> 4th Anniversary 1 ★4 Member Guaranteed! Gacha Vol. 2\n"
+                               "> <t:1649984400> to <t:1652576340>\n"
+                               "\n"
+                               "> 4th Anniversary Step Up Gacha\n"
+                               "> Paid <:StarGem:432995521892843520> x250|700|1000|1750, get stickers!\n"
+                               "> <t:1649984400> to <t:1650873540\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
         embed.add_field(name=f'New Songs',
-                        value=("<:RoseliaLogo:432981139788005377>  My Dearest - Release during event\n"
-                               "9 | 15 | 19 | 26"),
+                        value=("<:PasupareLogo:432981125455937536> Into the Night\n"
+                               "9 | 14 | 19 | 26\n\n"
+                               "<:PopipaLogo:432981132414287872> Yesterday\n"
+                               "7 | 12 | 17 | 24\n\n"
+                               "<:AfterglowLogo:432981108338982922> Samurai Heart (Some Like It Hot!!)\n"
+                               "8 | 14 | 20 | 26\n\n"
+                               "<:HHWLogo:432981119437242388> SHINY DAYS\n"
+                               "7 | 12 | 17 | 23"),
                         inline=False)
         embed.set_footer(text='Last Updated 4/6/2022')
         self.count += 1
@@ -89,40 +107,56 @@ class PersistentEvent(discord.ui.View):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @discord.ui.button(
-        label="Upcoming Schedule & DF Changes",
+        label="Version 5.6.0 Changelog",
         style=discord.ButtonStyle.primary,
-        custom_id="persistent_view:schedule",
+        custom_id="persistent_view:changelog",
     )
-    async def schedule(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def changelog(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
-            title='Notice - Upcoming Schedule, v5.0.0 Delays, & Dreamfest/Birthday Gacha Info',
+            title='v5.6.0 Changelog',
             content=(
-                "WDue to the previous optimization work for Android issues, the next major update (v5.0) will unfortunately be pushed back to a later date on the accelerated schedule.\n"
-                "As such, certain events & features that relied on the version update will be rescheduled.\n\n"
-                "The event schedule has been adjusted accordingly, and upcoming birthday gachas will also be delayed separately to after the 5.0 update.")
+                "This update is a bulk update, containing everything from v5.0.0 to v5.6.0 in the Japanese Version.\n"
+                "Remember to update the app in your respective app store while the game is in maintenance!")
         )
-        embed.add_field(name=f'Upcoming Schedule - Dates are in UTC',
-                        value=("> A Stroll Colored by Sakura: March 4 - March 10\n"
-                               "> Live Beyond: March 12 - March 18\n"
-                               "> Embracing Your Lost and Confused Self: March 20 - March 28\n"
-                               "> Analysis of Harmony and Change: March 30 - April 5\n"
-                               "> Little Rose Harmony: April 7 - April 13\n"
-                               "> Backstage Pass 4: April 15\n"
-                               "※ Event title translations are subject to change."),
+        embed.add_field(name=f'SP Notes (Direction Flicks/Curve Notes)',
+                        value=("The following songs will be given new SP charts with these notes (UTC):\n"
+                               "> **Roki** - Apr. 15\n"
+                               "> **Fuwa-Fuwa Time** - Apr. 15\n"
+                               "> **Maware! Setsugetsuka** - Apr. 17\n"
+                               "> **Daylight** - Apr. 18\n"
+                               "> **EXPOSE - Burn Out!!!** - Apr. 19\n"
+                               "> **R** - Apr. 20\n"
+                               "> **Setsuna Trip** - Apr. 21\n"
+                               "※ SP Notes will launch with skins and the ability to change how high the effects are."),
                         inline=False)
-        embed.add_field(name=f'What will happen to Dream Festivals?',
-                        value="Dream Festivals are currently set to be connected to their corresponding Event. With this in mind, expect a Dream Festival on March 20, and April 15.",
+        embed.add_field(name=f'Beginner Panel Missions',
+                        value="Upon maintenance end, a set of 5 beginner missions will be available! All players will be able to clear them.",
                         inline=False)
-        embed.add_field(name=f'What happens to Birthday Gachas?',
-                        value=("Birthday Gachas will be moved to take place after the 5.0 update gets released. These will **NOT** be pushed back an entire year.\n"
-                              "The exact date as to when these Birthday Gachas will take place is currently unknown, outside of 'after the 5.0 update'.\n\n"
-                              "The following Birthday Gachas are affected:\n"
-                              "> Hina Hikawa Birthday Gacha\n"
-                              "> Sayo Hikawa Birthday Gacha\n"
-                              "> Rimi Ushigome Birthday Gacha\n"
-                              "> PAREO Birthday Gacha\n"
-                              "> Chisato Shirasagi Birthday Gacha\n"
-                              "> Ran Mitake Birthday Gacha"),
+        embed.add_field(name=f'Rank Updates',
+                        value=("※ Player Rank cap up to 400\n"
+                               "※ Band Rank cap up to 50\n"
+                               "※ Band Area Item level cap up to 7"),
+                        inline=False)
+        embed.add_field(name=f'New Character Titles',
+                        value=("Over 100 new titles will be added for reading a member's card stories and getting more cards of that member.\n"
+                               "**※ These missions are set to be added in May 21.**"),
+                        inline=False)
+        embed.add_field(name=f'Preparations',
+                        value=("※ Preparation for Birthday Gachas\n"
+                               "※ Preparation for Team Live Festival Event type\n"
+                               "※ Preparation for Medley Live Event type"),
+                        inline=False)
+        embed.add_field(name=f'Miscellaneous Changes',
+                        value=("※ Option to use 0 Live Boosts added\n"
+                               "※ Added retry option in Free Live\n"
+                               "※ Option to turn on/off all MVs\n"
+                               "※ Lightweight Mode updated to have adjustable brightness and background (Up to 30% brightness)\n"
+                               "※ Note Speed max up to 12.0\n"
+                               "※ Live Boosts will now be consumed at the end of a live\n"
+                               "※ ALL PERFECT animation/EX missions/sorting added\n"
+                               "※ FAST/SLOW timing option added\n"
+                               "※ Area Item confirmation when setting a main band\n"
+                               "※ Multi-Live Stamps are usable while loading into a live"),
                         inline=False)
         embed.set_footer(text='Last Updated 3/3/2022.')
         self.count += 1
