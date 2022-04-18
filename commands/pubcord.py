@@ -73,7 +73,7 @@ class PersistentEvent(discord.ui.View):
                                "\n"
                                "> 4th Anniversary Step Up Gacha\n"
                                "> Paid <:StarGem:432995521892843520> x250|700|1000|1750, get stickers!\n"
-                               "> <t:1649984400> to <t:1650873540\n"
+                               "> <t:1649984400> to <t:1650873540>\n"
                                "\n"
                                "This list is subject to change. More information coming soon."),
                         inline=False)
