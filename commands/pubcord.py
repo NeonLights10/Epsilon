@@ -49,12 +49,16 @@ class PersistentEvent(discord.ui.View):
                                "> 4th Anniversary! ★4 Miracle Ticket Set Gacha\n"
                                "> ※ Get ONE (1) ★4 Miracle Ticket, Paid <:StarGem:432995521892843520> x2500 \n"
                                "> <t:1649984400> to <t:1652576340>\n"
-                               "\n"),
+                               "\n"
+                               "> 4th Anniversary! Limited ★4 Miracle Ticket Set Gacha\n"
+                               "> ※ Get ONE (1) LIMITED ★4 Miracle Ticket, Paid <:StarGem:432995521892843520> x2500 \n"
+                               "> <t:1650416400> to <t:1653008340>\n"
+                               ),
                         inline=False)
         embed.add_field(name=f'Gacha',
-                        value=("> 4th Anniversary Dream Festival Gacha\n"
-                               "> 4th Anniversary Dream Festival Special Set 10 Play Gacha (Paid <:StarGem:432995521892843520> x2000) x4\n"
-                               "> <t:1649984400> to <t:1650329940>\n"
+                        value=("> Girls Band Life! 4 Gacha\n"
+                               "> Girls Band Life! PLUS Gacha\n"
+                               "> <t:1650330000> to <t:1650675540>\n"
                                "\n"
                                "> 4th Anniversary! Free 10 Play a Day Gacha [FREE]\n"
                                "> ※ Play up to 7 times"
@@ -81,9 +85,15 @@ class PersistentEvent(discord.ui.View):
                                "<:AfterglowLogo:432981108338982922> Samurai Heart (Some Like It Hot!!)\n"
                                "8 | 14 | 20 | 26\n\n"
                                "<:HHWLogo:432981119437242388> SHINY DAYS\n"
-                               "7 | 12 | 17 | 23"),
+                               "7 | 12 | 17 | 23\n\n"
+                               "<:MorfonicaLogo:682986271462654054> Agehachou\n"
+                               "7 | 13 | 18 | 25 | 23\n\n"
+                               "<:RASLogo:721150392271896616> DAYBREAK FRONTLINE\n"
+                               "7 | 13 | 19 | 26\n\n"
+                               "<:RoseliaLogo:432981139788005377> Sycnhrogazer\n"
+                               "9 | 15 | 20 | 26"),
                         inline=False)
-        embed.set_footer(text='Last Updated 4/6/2022')
+        embed.set_footer(text='Last Updated 4/18/2022')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -158,7 +168,7 @@ class PersistentEvent(discord.ui.View):
                                "※ Area Item confirmation when setting a main band\n"
                                "※ Multi-Live Stamps are usable while loading into a live"),
                         inline=False)
-        embed.set_footer(text='Last Updated 3/3/2022.')
+        embed.set_footer(text='Last Updated 4/18/2022.')
         self.count += 1
         log.info(f'Quick Link Interaction {self.count}')
         await interaction.response.send_message(embed=embed, ephemeral=True)
