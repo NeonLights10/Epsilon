@@ -15,6 +15,7 @@ import twitter
 
 import discord
 from discord.ext import commands
+from discord.ext import bridge
 from discord.utils import find, get
 
 import motor.motor_asyncio
@@ -218,23 +219,21 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 ##########
 
 
-class EpsilonBot(commands.Bot):
+class EpsilonBot(bridge.Bot):
 
-    def __init__(self, command_prefix, intents, case_insensitive):
-        super().__init__(command_prefix=command_prefix, intents=intents, case_insensitive=case_insensitive)
+    def __init__(self, command_prefix, intents, case_insensitive, debug_guilds):
+        super().__init__(command_prefix=command_prefix, intents=intents, case_insensitive=case_insensitive, debug_guilds=debug_guilds)
         self.command_count = 0
         self.message_count = 0
         self.uptime = time.time()
 
-    async def setup_hook(self):
-        await bot.load_extension("commands.help")
-        await bot.load_extension("commands.errorhandler")
-        await bot.load_extension("commands.listeners")
-        await bot.load_extension("commands.misc")
 
-
-bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
+bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True, debug_guilds=[911509078038151168])
 bot.remove_command('help')
+bot.load_extension("commands.help")
+bot.load_extension("commands.errorhandler")
+bot.load_extension("commands.listeners")
+bot.load_extension("commands.misc")
 
 
 @bot.event
@@ -259,8 +258,6 @@ async def on_ready():
         ser = (f'{s.name} (unavailable)' if s.unavailable else s.name)
         log.info(f" - {ser}")
     print(flush=True)
-
-    await bot.tree.sync(guild=discord.Object(id=911509078038151168))
 
 
 @bot.event

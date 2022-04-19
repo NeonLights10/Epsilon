@@ -1,7 +1,8 @@
 import discord
 
-from discord import app_commands
 from discord.ext import commands
+from discord.ext import bridge
+from discord.commands import Option
 
 from typing import List
 
@@ -12,13 +13,19 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name='help',
-                          description='Shows all available commands and help context.')
-    @app_commands.describe(command='Enter a command for more details on usage')
-    @app_commands.guilds(911509078038151168)
+    async def help_autocomplete(self,
+                                ctx: discord.ApplicationContext):
+        command_list = ['help', 'help2', 'help3']
+        return [command for command in command_list if command.startswith(ctx.value.lower())]
+
+    @bridge.bridge_command(name='help',
+                           description='Shows all available commands and help context.')
     async def help(self,
-                   interaction: discord.Interaction,
-                   command: str = None):
+                   ctx: bridge.BridgeContext,
+                   command: Option(str, "Enter a command for more details on usage",
+                                   default="",
+                                   required=False,
+                                   autocomplete=help_autocomplete)):
         bot_icon_url = self.bot.user.display_avatar.url
         if not command:
             help_message = discord.Embed(title='Available Commands',
@@ -42,32 +49,38 @@ class Help(commands.Cog):
                 if cog_commands and x not in ['Admin']:
                     commands = []
                     for y in cog_commands:
-                        if y.hidden == False:
-                            commands.append(y.name)
+                        if isinstance(y, bridge.BridgeExtCommand) or isinstance(y, discord.ext.commands.Command):
+                            server_prefix = (await db.servers.find_one({"server_id": ctx.interaction.guild.id}))['prefix'] or "%"
+                            commands.append(f"{server_prefix}{y.name} **|** /{y.name}")
+                        elif not isinstance(y, bridge.BridgeSlashCommand):
+                            commands.append(f"/{y.name}")
                     commands = ('\n'.join(map(str, sorted(commands))))
                     help_message.add_field(name=x, value=commands, inline=True)
-            await interaction.response.send_message(embed=help_message)
+            await ctx.respond(embed=help_message)
         else:
-            for command in command:
-                found = False
-                shelp = None
-                for x in self.bot.cogs:
-                    cog_commands = (self.bot.get_cog(x)).get_commands()
-                    for y in cog_commands:
+            command = command.lower()
+            found = False
+            shelp = None
+            help_detail_message = None
+
+            for x in self.bot.cogs:
+                cog_commands = (self.bot.get_cog(x)).get_commands()
+                for y in cog_commands:
+                    if not isinstance(y, discord.ApplicationCommand):
                         if command == y.name or command in y.aliases:
                             if y.aliases:
-                                help = discord.Embed(
+                                help_detail_message = discord.Embed(
                                     title=f"{y.name.capitalize()} ({(', '.join(map(str, sorted(y.aliases))))})",
                                     color=discord.Color.blue())
                             else:
-                                help = discord.Embed(title=y.name.capitalize(), color=discord.Color.blue())
-                            for c in self.bot.get_cog(y.cog_name).get_commands():
-                                if command == c.name or command in c.aliases:
-                                    help.add_field(name='Description', value=c.description, inline=False)
-                                    help.add_field(name='Inputs', value=f"%{c.name} {c.signature}",
-                                                   inline=False)
-                                    if c.help:
-                                        help.add_field(name='Examples / Further Help', value=c.help, inline=False)
+                                help_detail_message = discord.Embed(title=y.name.capitalize(), color=discord.Color.blue())
+                            help_detail_message.add_field(name='Description', value=y.description, inline=False)
+                            help_detail_message.add_field(name='Inputs', value=f"%{y.name} {y.signature}",
+                                                          inline=False)
+                            if y.help:
+                                help_detail_message.add_field(name='Examples / Further Help', value=y.help,
+                                                              inline=False)
+
                             if isinstance(y, discord.ext.commands.Group):
                                 shelp = discord.Embed(title="Subcommands", color=discord.Color.blue())
                                 for sc in y.walk_commands():
@@ -83,32 +96,36 @@ class Help(commands.Cog):
                                             shelp.add_field(name=f"{sc.name.capitalize()}",
                                                             value=value, inline=False)
                             found = True
-                if not found:
-                    """Reminds you if that cog doesn't exist."""
-                    help = discord.Embed(title=f'No command with name {command} found', color=discord.Color.red())
-                    help.set_thumbnail(url=bot_icon_url)
-                    await interaction.response.send_message(embed=help)
-                else:
-                    help_.set_thumbnail(url=bot_icon_url)
-                    await interaction.response.send_message(embed=help)
-                    if shelp:
-                        shelp.set_thumbnail(url=bot_icon_url)
-                        await interaction.response.send_message(embed=shelp)
+                    else:
+                        if command == y.name:
+                            help_detail_message = discord.Embed(title=y.name.capitalize(), color=discord.Color.blue())
+                            help_detail_message.add_field(name='Description', value=y.description, inline=False)
 
-    @help.autocomplete('command')
-    async def help_autocomplete(self,
-                                interaction: discord.Interaction,
-                                current: str,
-                                ) -> List[app_commands.Choice[str]]:
-        command_list = ['help', 'help2', 'help3']
-        return [
-            app_commands.Choice(name=command, value=command)
-            for command in command_list if current.lower() in command_list
-        ]
+                            if isinstance(y, discord.SlashCommand):
+                                options = ""
+                                for option in y.options:
+                                    if not option.name == 'optional':
+                                        options = options + f"{option.name}: {option.description}"
+                                    else:
+                                        options = 'No options available.'
+                                help_detail_message.add_field(name='Options', value=options,
+                                                              inline=False)
+                            found = True
+            if not found:
+                """Reminds you if that cog doesn't exist."""
+                help_message = discord.Embed(title=f'No command with name {command} found', color=discord.Color.red())
+                help_message.set_thumbnail(url=bot_icon_url)
+                await ctx.respond(embed=help_message)
+            else:
+                help_detail_message.set_thumbnail(url=bot_icon_url)
+                await ctx.respond(embed=help_detail_message)
+                if shelp:
+                    shelp.set_thumbnail(url=bot_icon_url)
+                    await ctx.respond(embed=shelp)
 
-    @commands.command(name='hello',
-                      description='hello world',
-                      help='hello world')
+    @discord.slash_command(name='hello',
+                           description='hello world',
+                           help='hello world')
     async def hello(self, ctx, optional: str = None):
         if optional:
             raise TypeError
@@ -116,9 +133,5 @@ class Help(commands.Cog):
             await ctx.send('hello world')
 
 
-async def setup(bot):
-    await bot.add_cog(Help(bot))
-
-
-async def teardown(bot):
-    await bot.tree.sync(guild=discord.Object(id=911509078038151168))
+def setup(bot):
+    bot.add_cog(Help(bot))

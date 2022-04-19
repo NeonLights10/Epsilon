@@ -8,23 +8,31 @@ import dateutil.parser
 from io import StringIO
 
 import discord
-from discord import app_commands
 from discord.ext import commands
+from discord.commands import Option, SlashCommandGroup
 
 from __main__ import log, db
+from formatting.embed import gen_embed
 from formatting.constants import NAME, VERSION as BOTVERSION
 from commands.errorhandler import CheckOwner
+
 
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     def is_owner():
-        async def predicate(interaction: discord.Interaction) -> bool:
-            if interaction.user.id == 133048058756726784:
-                return True
+        async def predicate(ctx) -> bool:
+            if isinstance(ctx, discord.ApplicationContext):
+                if ctx.interaction.user.id == 133048058756726784:
+                    return True
+                else:
+                    raise CheckOwner()
             else:
-                raise CheckOwner()
+                if ctx.author.id == 133048058756726784:
+                    return True
+                else:
+                    raise CheckOwner()
 
         return commands.check(predicate)
 
@@ -32,11 +40,10 @@ class Miscellaneous(commands.Cog):
         app_info = await self.bot.application_info()
         return discord.utils.oauth_url(app_info.id, permissions=permissions, scopes=['bot', 'applications.commands'])
 
-    @app_commands.command(name='stats',
-                          description='Provides statistics about the bot.')
-    @app_commands.guilds(911509078038151168)
+    @discord.slash_command(name='stats',
+                           description='Provides statistics about the bot.')
     async def stats(self,
-                    interaction: discord.Interaction):
+                    ctx: discord.ApplicationContext):
         content = discord.Embed(colour=0x1abc9c)
         content.set_author(name=f"{NAME} v{BOTVERSION}", icon_url=self.bot.user.display_avatar.url)
         content.set_footer(text="Fueee~")
@@ -57,62 +64,39 @@ class Miscellaneous(commands.Cog):
         ctime %= 3600
         minutes = ctime // 60
         content.add_field(name="Uptime", value=f"{day:.0f} days\n{hour:.0f} hours\n{minutes:.0f} minutes")
-        await interaction.response.send_message(embed=content)
+        await ctx.respond(embed=content)
 
-    @app_commands.command(name='invite',
-                          description='Create a link to invite the bot to your server.')
-    @app_commands.guilds(911509078038151168)
+    @discord.slash_command(name='invite',
+                           description='Create a link to invite the bot to your server.')
     async def invite(self,
-                     interaction: discord.Interaction):
+                     ctx: discord.ApplicationContext):
         url = await self.generate_invite_link()
         content = discord.Embed(colour=0x1abc9c)
         content.set_author(name=f"{NAME} v{BOTVERSION}", icon_url=self.bot.user.display_avatar.url)
         content.set_footer(text="Fueee~")
         content.add_field(name="Invite Link:", value=url)
-        await interaction.response.send_message(embed=content)
+        await ctx.respond(embed=content)
 
-    @app_commands.command(name='support',
-                          description='Support the bot by donating for server costs!')
-    @app_commands.guilds(911509078038151168)
+    @discord.slash_command(name='support',
+                           description='Support the bot by donating for server costs!')
     async def support(self,
-                      interaction: discord.Interaction):
-        await interaction.response.send_message(
-            embed=gen_embed(title='Support Kanon Bot',
-                            content='Kanon costs money to run. I pay for her server costs out of pocket, '
-                                    'so any donation helps!\nSupport: https://www.patreon.com/kanonbot or '
-                                    'https://ko-fi.com/neonlights'))
+                      ctx: discord.ApplicationContext):
+        await ctx.respond(embed=gen_embed(title='Support Kanon Bot',
+                                          content='Kanon costs money to run. I pay for her server costs out of pocket, '
+                                                  'so any donation helps!\nSupport: https://www.patreon.com/kanonbot '
+                                                  'or https://ko-fi.com/neonlights'))
 
     # TODO: make shoutout command pull from list of discord members with role
 
+    datadeletion = SlashCommandGroup('delete', 'Delete guild/user data')
 
-class DataDelete(app_commands.Group):
-    def __init__(self):
-        super().__init__(name='delete', description='Guild/User Data deletion')
-
-    def is_owner():
-        async def predicate(interaction: discord.Interaction) -> bool:
-            if interaction.user.id == 133048058756726784:
-                return True
-            else:
-                raise CheckOwner()
-
-        return app_commands.check(predicate)
-
-    class GuildTransformer(app_commands.Transformer):
-        @classmethod
-        async def transform(cls,
-                            interaction: discord.Interaction,
-                            value: str) -> discord.Guild:
-            return self.bot.get_guild(value)
-
-    @app_commands.command(name='guild',
-                         description='Delete all data for specified guild')
-    @app_commands.describe(guild='Guild ID of the guild you wish to delete data for')
-    @app_commands.guilds(911509078038151168)
+    @datadeletion.command(name='guild',
+                          description='Delete all data for specified guild')
     @is_owner()
     async def del_guild(self,
-                        interaction: discord.Interaction,
-                        guild: app_commands.Transform[discord.Guild, GuildTransformer]):
+                        ctx: discord.ApplicationContext,
+                        guild: Option(discord.Guild, 'Guild ID of the guild you wish to delete data for')):
+        await ctx.interaction.response.defer()
         await db.msgid.delete_many({'server_id': guild.id})
         await db.warns.delete_many({'server_id': guild.id})
         await db.rolereact.delete_many({'server_id': guild.id})
@@ -120,32 +104,25 @@ class DataDelete(app_commands.Group):
         await db.emoji.delete_many({'server_id': guild.id})
         await db.reminders.delete_many({'server_id': guild.id})
         await guild.leave()
-        await interaction.response.send_message(
+        await ctx.interaction.followup.send(
             embed=gen_embed(title='delete guild', content=f'Guild {guild.name} (ID: {server_id} data has been deleted.')
-            )
+        )
 
-    @app_commands.command(name='user',
-                         description='Delete all data for specified user')
-    @app_commands.describe(user='User you wish to delete data for')
-    @app_commands.guilds(911509078038151168)
+    @datadeletion.command(name='user',
+                          description='Delete all data for specified user')
     @is_owner()
     async def del_user(self,
-                       interaction: discord.Interaction,
-                       user: discord.User):
-        await db.msgid.delete_many({'author_id': guild.id})
-        await db.warns.delete_many({'user_id': guild.id})
-        await db.reminders.delete_many({'user_id': guild.id})
-        await interaction.response.send_message(
+                       ctx: discord.ApplicationContext,
+                       user: Option(discord.User, 'User you wish to delete data for')):
+        await ctx.interaction.response.defer()
+        await db.msgid.delete_many({'author_id': user.id})
+        await db.warns.delete_many({'user_id': user.id})
+        await db.reminders.delete_many({'user_id': user.id})
+        await ctx.interaction.followup.send(
             embed=gen_embed(title='delete user', content=f'User {user.name}#{user.discriminator} (ID: {user.id}) data '
                                                          f'has been deleted.')
-            )
+        )
 
 
-async def setup(bot):
-    bot.tree.add_command(DataDelete(), guild=discord.Object(id=911509078038151168))
-    await bot.add_cog(Miscellaneous(bot))
-
-
-async def teardown(bot):
-    bot.tree.remove_command('delete', guild=discord.Object(id=911509078038151168))
-    await bot.tree.sync(guild=discord.Object(id=911509078038151168))
+def setup(bot):
+    bot.add_cog(Miscellaneous(bot))

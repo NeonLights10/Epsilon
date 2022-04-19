@@ -1,5 +1,5 @@
 pip
-git+https://github.com/Rapptz/discord.py@master#egg=discord.py
+git+https://github.com/Pycord-Development/pycord@master#egg=py-cord
 colorlog~=6.6.0
 motor~=2.5.1
 pymongo~=3.12.3

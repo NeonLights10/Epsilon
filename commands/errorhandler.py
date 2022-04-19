@@ -3,7 +3,6 @@ import traceback
 import sys
 
 from humanfriendly import format_timespan
-from discord import app_commands
 from discord.ext import commands
 from formatting.embed import gen_embed
 from __main__ import log
@@ -18,40 +17,29 @@ class CommandErrorHandler(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        bot.tree.error(self.tree_error_handler)
 
-    async def tree_error_handler(self,
-                                 interaction: discord.Interaction,
-                                 command,
-                                 error):
+    @commands.Cog.listener()
+    async def on_application_command_error(self,
+                                           ctx: discord.ApplicationContext,
+                                           error):
         """Handles errors for all application commands."""
 
-        # Unpack CommandInvokeErrors first
-        if isinstance(error, app_commands.CommandInvokeError):
-            error = error.original
-
-        needs_syncing = (
-            app_commands.CommandSignatureMismatch,
-            app_commands.CommandNotFound
-        )
-
-        if isinstance(error, needs_syncing):
-            await interaction.response.send_message(
-                "Sorry, but this command seems to be unavailable! "
-                "Please try again later...", ephemeral=True)
-            await tree.sync(guild=discord.Object(id=911509078038151168))
+        if hasattr(ctx.command, 'on_error'):
+            return
 
         else:
-            log.error(f"Ignoring unhandled exception in application command {command!r}")
+            log.error(f"Ignoring unhandled exception in application command {ctx.command.name!r}")
             traceback.print_exception(type(error), error, error.__traceback__, limit=0)
-            await interaction.response.send_message(
+            await ctx.respond(
                 "An error occured during command execution. "
                 "Please try again later...", ephemeral=True)
 
         return
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self,
+                               ctx: discord.ext.commands.Context,
+                               error):
         """The event triggered when an error is raised while invoking a command.
 
         Parameters
@@ -61,8 +49,6 @@ class CommandErrorHandler(commands.Cog):
         error: commands.CommandError
             The Exception raised.
         """
-        ignored=[]
-
         if hasattr(ctx.command, 'on_error'):
             return
 
@@ -70,9 +56,6 @@ class CommandErrorHandler(commands.Cog):
         if cog:
             if cog._get_overridden_method(cog.cog_command_error) is not None:
                 return
-
-        if isinstance(error, ignored):
-            return
 
         if isinstance(error, commands.DisabledCommand):
             await ctx.send(f'{ctx.command.name} has been disabled.')
@@ -193,5 +176,5 @@ class CommandErrorHandler(commands.Cog):
             return
 
 
-async def setup(bot):
-    await bot.add_cog(CommandErrorHandler(bot))
+def setup(bot):
+    bot.add_cog(CommandErrorHandler(bot))
