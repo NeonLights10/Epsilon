@@ -15,7 +15,12 @@ class Help(commands.Cog):
 
     async def help_autocomplete(self,
                                 ctx: discord.ApplicationContext):
-        command_list = ['help', 'help2', 'help3']
+        command_list = []
+        for x in self.bot.cogs:
+            cog_commands = (self.bot.get_cog(x)).get_commands()
+            for c in cog_commands:
+                if not isinstance(c, bridge.BridgeExtCommand):
+                    command_list.append(c.name)
         return [command for command in command_list if command.startswith(ctx.value.lower())]
 
     @bridge.bridge_command(name='help',
@@ -38,9 +43,8 @@ class Help(commands.Cog):
                                                       'a DM (Neon#5555 or @neon10lights on twitter) or '
                                                       'join the server at https://discord.gg/AYTFJY8VhF.\n\n'
                                                       'View our privacy policy: '
-                                                      'https://s-neon.notion.site/Kanon-Bot-Public-Policy'
-                                                      '-340f17f60bb44571a12f153805380783\n'
-                                                      'To request data deletion, please fill out this form: '
+                                                      'https://s-neon.xyz/privacy-policy\n'
+                                                      'To request data deletion: '
                                                       'https://forms.gle/4LYZvADpoe12R6BZ8'))
             help_message.set_thumbnail(url=bot_icon_url)
             help_message.set_footer(text='Fueee~')
@@ -80,6 +84,8 @@ class Help(commands.Cog):
                             if y.help:
                                 help_detail_message.add_field(name='Examples / Further Help', value=y.help,
                                                               inline=False)
+
+                            # TODO: walk through slash command groups
 
                             if isinstance(y, discord.ext.commands.Group):
                                 shelp = discord.Embed(title="Subcommands", color=discord.Color.blue())
