@@ -2,10 +2,6 @@ import asyncio
 import psutil
 import time
 import os
-import csv
-import dateutil.parser
-
-from io import StringIO
 
 import discord
 from discord.ext import commands
