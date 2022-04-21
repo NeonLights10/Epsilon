@@ -10,10 +10,12 @@ from io import StringIO
 import discord
 from discord.ext import commands
 from discord.commands import Option, SlashCommandGroup
+from discord.enums import SlashCommandOptionType
+from discord.ui import InputText, Modal
 
 from __main__ import log, db
 from formatting.embed import gen_embed
-from formatting.constants import NAME, VERSION as BOTVERSION
+from formatting.constants import NAME, EXTENSIONS, VERSION as BOTVERSION
 from commands.errorhandler import CheckOwner
 
 
@@ -21,6 +23,7 @@ class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # noinspection PyMethodMayBeStatic
     def is_owner():
         async def predicate(ctx) -> bool:
             if isinstance(ctx, discord.ApplicationContext):
@@ -87,6 +90,168 @@ class Miscellaneous(commands.Cog):
                                                   'or https://ko-fi.com/neonlights'))
 
     # TODO: make shoutout command pull from list of discord members with role
+
+    async def unload_autocomplete(self,
+                                  ctx: discord.ApplicationContext):
+        cog_list = []
+        for x, y in self.bot.extensions.items():
+            cog_name = x.replace('commands.', '')
+            cog_list.append(cog_name)
+        return [cog for cog in cog_list if cog.startswith(ctx.value.lower())]
+
+    @discord.slash_command(name='unload',
+                           description='Unload a cog/extension.')
+    async def unload(self,
+                     ctx: discord.ApplicationContext,
+                     cog: Option(str, 'Name of cog/extension',
+                                 autocomplete=unload_autocomplete)):
+        await ctx.interaction.response.defer()
+        cog = cog.lower()
+        self.bot.unload_extension(f'commands.{cog}')
+        await self.bot.sync_commands(force=True, guild_ids=[911509078038151168])
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Unload', content=f'Extension {cog} has been unloaded.')
+        )
+
+    async def load_autocomplete(self,
+                                ctx: discord.ApplicationContext):
+        return [cog for cog in EXTENSIONS if cog.startswith(ctx.value.lower())]
+
+    @discord.slash_command(name='load',
+                           description='Load a cog/extension.')
+    async def load(self,
+                   ctx: discord.ApplicationContext,
+                   cog: Option(str, 'Name of cog/extension',
+                               autocomplete=load_autocomplete)):
+        await ctx.interaction.response.defer()
+        cog = cog.lower()
+        self.bot.load_extension(f'commands.{cog}')
+        await self.bot.sync_commands()
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Load', content=f'Extension {cog} has been loaded.')
+        )
+
+    @discord.slash_command(name='reload',
+                           description='Reload a cog/extension.')
+    async def reload(self,
+                     ctx: discord.ApplicationContext,
+                     cog: Option(str, 'Name of cog/extension',
+                                 autocomplete=unload_autocomplete)):
+        await ctx.interaction.response.defer()
+        cog = cog.lower()
+        self.bot.reload_extension(f'commands.{cog}')
+        await self.bot.sync_commands()
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Reload', content=f'Extension {cog} has been reloaded.')
+        )
+
+    @discord.slash_command(name='announce',
+                           description='Developer Only. Creates an announcement to send to all servers.')
+    @is_owner()
+    async def announce(self,
+                       ctx: discord.ApplicationContext,
+                       attachment: Option(SlashCommandOptionType.attachment,
+                                          'Image to attach to the message',
+                                          required=False)):
+
+        # check file type
+        valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif',
+                            'image/heif',
+                            'image/bmp', 'image/gif', 'image/vnd.mozilla.apng',
+                            'image/tiff']
+        if attachment:
+            if attachment.content_type not in valid_media_type:
+                raise discord.ext.commands.UserInputError('This is not a valid media type!')
+
+        class AnnouncementModal(Modal):
+            def __init__(self, bot, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self.bot = bot
+                self.add_item(
+                    InputText(
+                        label='Announcement Message',
+                        value='Type the announcement here',
+                        style=discord.InputTextStyle.long
+                    )
+                )
+
+            async def callback(self, interaction: discord.Interaction):
+                await interaction.response.defer()
+                embed = gen_embed(title='Global Announcement',
+                                  content=f'{self.children[0].value}')
+                if attachment:
+                    embed.set_image(url=attachment.url)
+
+                # await interaction.followup.send(embed=embed)
+
+                for guild in self.bot.guilds:
+                    document = await db.servers.find_one({'server_id': guild.id})
+                    log.info(f'Announcement Workflow - Checking document for {guild.name}')
+                    if document['announcements']:
+                        log.info(f'Announcement Workflow - Announcements enabled for {guild.name}, sending...')
+                        sent = False
+                        if document['announcement_channel']:
+                            try:
+                                channel = self.bot.get_channel(document['announcement_channel'])
+                                if channel.permissions_for(guild.me).send_messages:
+                                    await channel.send(embed=embed)
+                                    log.info(f'Announcement sent for {guild.name} in #{channel.name}')
+                                    sent = True
+                                    continue
+                                else:
+                                    raise Exception
+                            except Exception as e:
+                                pass
+                        try:
+                            if (guild.public_updates_channel
+                                    and guild.public_updates_channel.permissions_for(guild.me).send_messages
+                                    and not sent):
+                                await guild.public_updates_channel.send(embed=embed)
+                                log.info(
+                                    f'Announcement sent for {guild.name} in #{guild.public_updates_channel.name} (Public Update Channel)')
+                                sent = True
+                                continue
+                        except Exception as e:
+                            pass
+                        try:
+                            if (guild.system_channel
+                                    and guild.system_channel.permissions_for(guild.me).send_messages
+                                    and not sent):
+                                await guild.system_channel.send(embed=embed)
+                                log.info(
+                                    f'Announcement sent for {guild.name} in #{guild.system_channel.name} (System Channel)')
+                                sent = True
+                                continue
+                        except Exception as e:
+                            pass
+                        try:
+                            general = discord.utils.find(lambda x: x.name == 'general', guild.text_channels)
+                            if general and general.permissions_for(guild.me).send_messages and not sent:
+                                await general.send(embed=embed)
+                                log.info(f'Announcement sent for {guild.name} in #{general.name} (General Channel)')
+                                sent = True
+                                continue
+                        except Exception as e:
+                            pass
+                        finally:
+                            for channel in guild.text_channels:
+                                try:
+                                    if channel.permissions_for(guild.me).send_messages and not sent:
+                                        await channel.send(embed=embed)
+                                        log.info(
+                                            f'Announcement sent for {guild.name} in #{channel.name} (First available channel)')
+                                        break
+                                except Exception as e:
+                                    pass
+                            if not sent:
+                                log.info(f'Could not send announcement for {guild.name}. Skipping...')
+                await interaction.followup.send(embed=
+                                                gen_embed(title='Announce',
+                                                          content='Announcement sent out successfully.'),
+                                                ephemeral=True)
+
+        modal = AnnouncementModal(title='Prepare KanonBot Announcement', bot=self.bot)
+        await ctx.send_modal(modal)
 
     datadeletion = SlashCommandGroup('delete', 'Delete guild/user data')
 

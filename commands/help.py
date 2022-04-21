@@ -129,15 +129,6 @@ class Help(commands.Cog):
                     shelp.set_thumbnail(url=bot_icon_url)
                     await ctx.respond(embed=shelp)
 
-    @discord.slash_command(name='hello',
-                           description='hello world',
-                           help='hello world')
-    async def hello(self, ctx, optional: str = None):
-        if optional:
-            raise TypeError
-        else:
-            await ctx.send('hello world')
-
 
 def setup(bot):
     bot.add_cog(Help(bot))

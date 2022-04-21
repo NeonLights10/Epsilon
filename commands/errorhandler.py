@@ -24,7 +24,31 @@ class CommandErrorHandler(commands.Cog):
                                            error):
         """Handles errors for all application commands."""
 
+        # Unpack the error first
+        if isinstance(error, discord.ApplicationCommandInvokeError):
+            error = error.original
+
         if hasattr(ctx.command, 'on_error'):
+            return
+
+        if isinstance(error, CheckOwner):
+            await ctx.respond(f'{ctx.command.qualified_name} can only be used by the owner of this bot.')
+            return
+
+        if isinstance(error, commands.UserInputError):
+            await ctx.respond('That is not a valid attachment type!', ephemeral=True)
+            return
+
+        if isinstance(error, discord.ExtensionNotFound):
+            await ctx.interaction.followup.send(f'Extension {ctx.selected_options[0]["value"]} is not a valid option!')
+            return
+
+        if isinstance(error, discord.ExtensionNotLoaded):
+            if ctx.command.name == 'reload':
+                await ctx.interaction.followup.send('There was an error loading the cog. '
+                                                    'Rolling back to previous state.')
+            else:
+                await ctx.interaction.followup.send('There was an error loading the cog.')
             return
 
         else:
