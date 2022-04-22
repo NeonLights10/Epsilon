@@ -1,10 +1,10 @@
 # Epsilon
-![latest release](https://img.shields.io/badge/latest%20release-0.6.0-brightgreen.svg)
+![latest release](https://img.shields.io/badge/latest%20release-1.1.0-brightgreen.svg)
 
 Add me: https://discord.com/oauth2/authorize?client_id=322761091270705162&scope=bot&permissions=340126934
 
 Epsilon is a multipurpose discord bot written in Python using the discord.py library.
-Supports Python 3.5+
+Supports Python 3.10+
 
 ## Installation
 * Ensure you have all requirements by running `pip install -r requirements.txt`. See notice for extra steps.
