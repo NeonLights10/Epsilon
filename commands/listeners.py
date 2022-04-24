@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+from formatting.embed import gen_embed
 from __main__ import log, db, check_document, initialize_document
 
 async def on_guild_join(guild):
@@ -100,7 +101,7 @@ async def on_member_remove(member):
         await log_channel.send(embed=embed)
 
 
-async def setup(bot):
+def setup(bot):
     bot.add_listener(on_guild_join)
     bot.add_listener(on_member_join)
     bot.add_listener(on_member_remove)

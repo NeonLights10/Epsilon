@@ -2,29 +2,36 @@ import asyncio
 import psutil
 import time
 import os
-import csv
-import dateutil.parser
-
-from io import StringIO
 
 import discord
-from discord import app_commands
 from discord.ext import commands
+from discord.commands import Option, SlashCommandGroup
+from discord.enums import SlashCommandOptionType
+from discord.ui import InputText, Modal
 
 from __main__ import log, db
-from formatting.constants import NAME, VERSION as BOTVERSION
+from formatting.embed import gen_embed
+from formatting.constants import NAME, EXTENSIONS, VERSION as BOTVERSION
 from commands.errorhandler import CheckOwner
+
 
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # noinspection PyMethodMayBeStatic
     def is_owner():
-        async def predicate(interaction: discord.Interaction) -> bool:
-            if interaction.user.id == 133048058756726784:
-                return True
+        async def predicate(ctx) -> bool:
+            if isinstance(ctx, discord.ApplicationContext):
+                if ctx.interaction.user.id == 133048058756726784:
+                    return True
+                else:
+                    raise CheckOwner()
             else:
-                raise CheckOwner()
+                if ctx.author.id == 133048058756726784:
+                    return True
+                else:
+                    raise CheckOwner()
 
         return commands.check(predicate)
 
@@ -32,11 +39,10 @@ class Miscellaneous(commands.Cog):
         app_info = await self.bot.application_info()
         return discord.utils.oauth_url(app_info.id, permissions=permissions, scopes=['bot', 'applications.commands'])
 
-    @app_commands.command(name='stats',
-                          description='Provides statistics about the bot.')
-    @app_commands.guilds(911509078038151168)
+    @discord.slash_command(name='stats',
+                           description='Provides statistics about the bot.')
     async def stats(self,
-                    interaction: discord.Interaction):
+                    ctx: discord.ApplicationContext):
         content = discord.Embed(colour=0x1abc9c)
         content.set_author(name=f"{NAME} v{BOTVERSION}", icon_url=self.bot.user.display_avatar.url)
         content.set_footer(text="Fueee~")
@@ -57,62 +63,201 @@ class Miscellaneous(commands.Cog):
         ctime %= 3600
         minutes = ctime // 60
         content.add_field(name="Uptime", value=f"{day:.0f} days\n{hour:.0f} hours\n{minutes:.0f} minutes")
-        await interaction.response.send_message(embed=content)
+        await ctx.respond(embed=content)
 
-    @app_commands.command(name='invite',
-                          description='Create a link to invite the bot to your server.')
-    @app_commands.guilds(911509078038151168)
+    @discord.slash_command(name='invite',
+                           description='Create a link to invite the bot to your server.')
     async def invite(self,
-                     interaction: discord.Interaction):
+                     ctx: discord.ApplicationContext):
         url = await self.generate_invite_link()
         content = discord.Embed(colour=0x1abc9c)
         content.set_author(name=f"{NAME} v{BOTVERSION}", icon_url=self.bot.user.display_avatar.url)
         content.set_footer(text="Fueee~")
         content.add_field(name="Invite Link:", value=url)
-        await interaction.response.send_message(embed=content)
+        await ctx.respond(embed=content)
 
-    @app_commands.command(name='support',
-                          description='Support the bot by donating for server costs!')
-    @app_commands.guilds(911509078038151168)
+    @discord.slash_command(name='support',
+                           description='Support the bot by donating for server costs!')
     async def support(self,
-                      interaction: discord.Interaction):
-        await interaction.response.send_message(
-            embed=gen_embed(title='Support Kanon Bot',
-                            content='Kanon costs money to run. I pay for her server costs out of pocket, '
-                                    'so any donation helps!\nSupport: https://www.patreon.com/kanonbot or '
-                                    'https://ko-fi.com/neonlights'))
+                      ctx: discord.ApplicationContext):
+        await ctx.respond(embed=gen_embed(title='Support Kanon Bot',
+                                          content='Kanon costs money to run. I pay for her server costs out of pocket, '
+                                                  'so any donation helps!\nSupport: https://www.patreon.com/kanonbot '
+                                                  'or https://ko-fi.com/neonlights'))
 
     # TODO: make shoutout command pull from list of discord members with role
 
+    async def unload_autocomplete(self,
+                                  ctx: discord.ApplicationContext):
+        cog_list = []
+        for x, y in self.bot.extensions.items():
+            cog_name = x.replace('commands.', '')
+            cog_list.append(cog_name)
+        return [cog for cog in cog_list if cog.startswith(ctx.value.lower())]
 
-class DataDelete(app_commands.Group):
-    def __init__(self):
-        super().__init__(name='delete', description='Guild/User Data deletion')
+    @discord.slash_command(name='unload',
+                           description='Unload a cog/extension.')
+    async def unload(self,
+                     ctx: discord.ApplicationContext,
+                     cog: Option(str, 'Name of cog/extension',
+                                 autocomplete=unload_autocomplete)):
+        await ctx.interaction.response.defer()
+        cog = cog.lower()
+        self.bot.unload_extension(f'commands.{cog}')
+        await self.bot.sync_commands(force=True, guild_ids=[911509078038151168])
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Unload', content=f'Extension {cog} has been unloaded.')
+        )
 
-    def is_owner():
-        async def predicate(interaction: discord.Interaction) -> bool:
-            if interaction.user.id == 133048058756726784:
-                return True
-            else:
-                raise CheckOwner()
+    async def load_autocomplete(self,
+                                ctx: discord.ApplicationContext):
+        return [cog for cog in EXTENSIONS if cog.startswith(ctx.value.lower())]
 
-        return app_commands.check(predicate)
+    @discord.slash_command(name='load',
+                           description='Load a cog/extension.')
+    async def load(self,
+                   ctx: discord.ApplicationContext,
+                   cog: Option(str, 'Name of cog/extension',
+                               autocomplete=load_autocomplete)):
+        await ctx.interaction.response.defer()
+        cog = cog.lower()
+        self.bot.load_extension(f'commands.{cog}')
+        await self.bot.sync_commands()
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Load', content=f'Extension {cog} has been loaded.')
+        )
 
-    class GuildTransformer(app_commands.Transformer):
-        @classmethod
-        async def transform(cls,
-                            interaction: discord.Interaction,
-                            value: str) -> discord.Guild:
-            return self.bot.get_guild(value)
+    @discord.slash_command(name='reload',
+                           description='Reload a cog/extension.')
+    async def reload(self,
+                     ctx: discord.ApplicationContext,
+                     cog: Option(str, 'Name of cog/extension',
+                                 autocomplete=unload_autocomplete)):
+        await ctx.interaction.response.defer()
+        cog = cog.lower()
+        self.bot.reload_extension(f'commands.{cog}')
+        await self.bot.sync_commands()
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Reload', content=f'Extension {cog} has been reloaded.')
+        )
 
-    @app_commands.command(name='guild',
-                         description='Delete all data for specified guild')
-    @app_commands.describe(guild='Guild ID of the guild you wish to delete data for')
-    @app_commands.guilds(911509078038151168)
+    @discord.slash_command(name='announce',
+                           description='Developer Only. Creates an announcement to send to all servers.')
+    @is_owner()
+    async def announce(self,
+                       ctx: discord.ApplicationContext,
+                       attachment: Option(SlashCommandOptionType.attachment,
+                                          'Image to attach to the message',
+                                          required=False)):
+
+        # check file type
+        valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif',
+                            'image/heif',
+                            'image/bmp', 'image/gif', 'image/vnd.mozilla.apng',
+                            'image/tiff']
+        if attachment:
+            if attachment.content_type not in valid_media_type:
+                raise discord.ext.commands.UserInputError('This is not a valid media type!')
+
+        class AnnouncementModal(Modal):
+            def __init__(self, bot, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self.bot = bot
+                self.add_item(
+                    InputText(
+                        label='Announcement Message',
+                        value='Type the announcement here',
+                        style=discord.InputTextStyle.long
+                    )
+                )
+
+            async def callback(self, interaction: discord.Interaction):
+                await interaction.response.defer()
+                embed = gen_embed(title='Global Announcement',
+                                  content=f'{self.children[0].value}')
+                if attachment:
+                    embed.set_image(url=attachment.url)
+
+                # await interaction.followup.send(embed=embed)
+
+                for guild in self.bot.guilds:
+                    document = await db.servers.find_one({'server_id': guild.id})
+                    log.info(f'Announcement Workflow - Checking document for {guild.name}')
+                    if document['announcements']:
+                        log.info(f'Announcement Workflow - Announcements enabled for {guild.name}, sending...')
+                        sent = False
+                        if document['announcement_channel']:
+                            try:
+                                channel = self.bot.get_channel(document['announcement_channel'])
+                                if channel.permissions_for(guild.me).send_messages:
+                                    await channel.send(embed=embed)
+                                    log.info(f'Announcement sent for {guild.name} in #{channel.name}')
+                                    sent = True
+                                    continue
+                                else:
+                                    raise Exception
+                            except Exception as e:
+                                pass
+                        try:
+                            if (guild.public_updates_channel
+                                    and guild.public_updates_channel.permissions_for(guild.me).send_messages
+                                    and not sent):
+                                await guild.public_updates_channel.send(embed=embed)
+                                log.info(
+                                    f'Announcement sent for {guild.name} in #{guild.public_updates_channel.name} (Public Update Channel)')
+                                sent = True
+                                continue
+                        except Exception as e:
+                            pass
+                        try:
+                            if (guild.system_channel
+                                    and guild.system_channel.permissions_for(guild.me).send_messages
+                                    and not sent):
+                                await guild.system_channel.send(embed=embed)
+                                log.info(
+                                    f'Announcement sent for {guild.name} in #{guild.system_channel.name} (System Channel)')
+                                sent = True
+                                continue
+                        except Exception as e:
+                            pass
+                        try:
+                            general = discord.utils.find(lambda x: x.name == 'general', guild.text_channels)
+                            if general and general.permissions_for(guild.me).send_messages and not sent:
+                                await general.send(embed=embed)
+                                log.info(f'Announcement sent for {guild.name} in #{general.name} (General Channel)')
+                                sent = True
+                                continue
+                        except Exception as e:
+                            pass
+                        finally:
+                            for channel in guild.text_channels:
+                                try:
+                                    if channel.permissions_for(guild.me).send_messages and not sent:
+                                        await channel.send(embed=embed)
+                                        log.info(
+                                            f'Announcement sent for {guild.name} in #{channel.name} (First available channel)')
+                                        break
+                                except Exception as e:
+                                    pass
+                            if not sent:
+                                log.info(f'Could not send announcement for {guild.name}. Skipping...')
+                await interaction.followup.send(embed=
+                                                gen_embed(title='Announce',
+                                                          content='Announcement sent out successfully.'),
+                                                ephemeral=True)
+
+        modal = AnnouncementModal(title='Prepare KanonBot Announcement', bot=self.bot)
+        await ctx.send_modal(modal)
+
+    datadeletion = SlashCommandGroup('delete', 'Delete guild/user data')
+
+    @datadeletion.command(name='guild',
+                          description='Delete all data for specified guild')
     @is_owner()
     async def del_guild(self,
-                        interaction: discord.Interaction,
-                        guild: app_commands.Transform[discord.Guild, GuildTransformer]):
+                        ctx: discord.ApplicationContext,
+                        guild: Option(discord.Guild, 'Guild ID of the guild you wish to delete data for')):
+        await ctx.interaction.response.defer()
         await db.msgid.delete_many({'server_id': guild.id})
         await db.warns.delete_many({'server_id': guild.id})
         await db.rolereact.delete_many({'server_id': guild.id})
@@ -120,32 +265,25 @@ class DataDelete(app_commands.Group):
         await db.emoji.delete_many({'server_id': guild.id})
         await db.reminders.delete_many({'server_id': guild.id})
         await guild.leave()
-        await interaction.response.send_message(
+        await ctx.interaction.followup.send(
             embed=gen_embed(title='delete guild', content=f'Guild {guild.name} (ID: {server_id} data has been deleted.')
-            )
+        )
 
-    @app_commands.command(name='user',
-                         description='Delete all data for specified user')
-    @app_commands.describe(user='User you wish to delete data for')
-    @app_commands.guilds(911509078038151168)
+    @datadeletion.command(name='user',
+                          description='Delete all data for specified user')
     @is_owner()
     async def del_user(self,
-                       interaction: discord.Interaction,
-                       user: discord.User):
-        await db.msgid.delete_many({'author_id': guild.id})
-        await db.warns.delete_many({'user_id': guild.id})
-        await db.reminders.delete_many({'user_id': guild.id})
-        await interaction.response.send_message(
+                       ctx: discord.ApplicationContext,
+                       user: Option(discord.User, 'User you wish to delete data for')):
+        await ctx.interaction.response.defer()
+        await db.msgid.delete_many({'author_id': user.id})
+        await db.warns.delete_many({'user_id': user.id})
+        await db.reminders.delete_many({'user_id': user.id})
+        await ctx.interaction.followup.send(
             embed=gen_embed(title='delete user', content=f'User {user.name}#{user.discriminator} (ID: {user.id}) data '
                                                          f'has been deleted.')
-            )
+        )
 
 
-async def setup(bot):
-    bot.tree.add_command(DataDelete(), guild=discord.Object(id=911509078038151168))
-    await bot.add_cog(Miscellaneous(bot))
-
-
-async def teardown(bot):
-    bot.tree.remove_command('delete', guild=discord.Object(id=911509078038151168))
-    await bot.tree.sync(guild=discord.Object(id=911509078038151168))
+def setup(bot):
+    bot.add_cog(Miscellaneous(bot))
