@@ -179,21 +179,22 @@ class AnniversaryRole(discord.ui.View):
         self.count = 0
 
     @discord.ui.button(
-        label="Backstage Pass 4",
-        emoji=discord.PartialEmoji.from_str("<:apstar:963127616456499280>"),
+        label="Top 40k Role",
         style=discord.ButtonStyle.primary,
         custom_id="persistent_view:anniversaryrole",
     )
     async def anniversaryrole(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.response.defer()
-        role = interaction.guild.get_role(963122511317459064)
-        if interaction.user.get_role(963122511317459064):
-            await interaction.user.remove_roles(role, reason='Self-assign anniversary role')
-            await interaction.followup.send(content='Removed the role "Backstage Pass 4" from your user profile.',
+        role = interaction.guild.get_role(968008649026965514)
+        if interaction.user.get_role(968008649026965514):
+            await interaction.user.remove_roles(role, reason='Self-assign celebration role')
+            await interaction.followup.send(content='Removed the role "Top 40k" from your user profile.',
                                             ephemeral=True)
         else:
-            await interaction.user.add_roles(role, reason='Self-assign anniversary role')
-            await interaction.followup.send(content='Added the role "Backstage Pass 4" to your user profile.', ephemeral=True)
+            await interaction.user.add_roles(role, reason='Self-assign celebration role')
+            await interaction.followup.send(content='Added the role "Top 40k" to your user profile.', ephemeral=True)
+            self.count += 1
+            log.info(f'Total members added role: {self.count}')
 
 class Pubcord(commands.Cog):
     def __init__(self, bot):
@@ -330,15 +331,15 @@ class Pubcord(commands.Cog):
         await self.bot.wait_until_ready()
         await asyncio.sleep(10)
 
-    @commands.command(name='bs4selfassign',
+    @commands.command(name='selfassign',
                       description='Internal only')
     @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole())
     @commands.check(in_pubcord())
-    async def bs4selfassign(self, ctx, channel: discord.TextChannel):
+    async def selfassign(self, ctx, channel: discord.TextChannel):
         if self.view_anni:
             self.view_anni.stop()
         self.view_anni = AnniversaryRole()
-        await channel.send(embed=gen_embed(title='Backstage Pass 4 Role',
+        await channel.send(embed=gen_embed(title='Top 40k Role',
                                            content='Click the button below to add the role. Click it again to remove it.'),
                            view=self.view_anni)
 
