@@ -4,6 +4,7 @@ import time
 import validators
 import datetime
 import asyncio
+import emoji as zemoji
 
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
@@ -19,6 +20,7 @@ from bson.objectid import ObjectId
 
 from __main__ import log, db
 
+
 class Administration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -26,7 +28,8 @@ class Administration(commands.Cog):
     def convert_emoji(argument):
         return zemoji.demojize(argument)
 
-    def is_pubcord(self):
+    @staticmethod
+    def is_pubcord():
         async def predicate(ctx):
             if isinstance(ctx, discord.ApplicationContext):
                 return ctx.interaction.guild_id == 432379300684103699
@@ -35,7 +38,8 @@ class Administration(commands.Cog):
 
         return commands.check(predicate)
 
-    def has_modrole(self):
+    @staticmethod
+    def has_modrole():
         async def predicate(ctx):
             if isinstance(ctx, discord.ApplicationContext):
                 document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
@@ -54,6 +58,7 @@ class Administration(commands.Cog):
 
         return commands.check(predicate)
 
+    @staticmethod
     def is_owner():
         async def predicate(ctx) -> bool:
             if isinstance(ctx, discord.ApplicationContext):
@@ -69,10 +74,9 @@ class Administration(commands.Cog):
 
         return commands.check(predicate)
 
-
     @commands.command(name='speak',
                       description='For official Bandori discord internal use only')
-    @commands.check_any(command.has_guild_permissions(manage_roles=True), has_modrole())
+    @commands.check_any(commands.has_guild_permissions(manage_roles=True), has_modrole())
     @commands.check(is_pubcord())
     async def speak(self, ctx, dest: Union[discord.TextChannel, discord.Message], *, msg_content: str):
         if isinstance(dest, discord.Message):
@@ -90,35 +94,83 @@ class Administration(commands.Cog):
             if msg_content:
                 await dest.send(content=f'{msg_content}')
 
-
     @discord.slash_command(name='settings',
                            description='Configure settings for Kanon Bot')
     async def settings(self,
                        ctx: discord.ApplicationContext):
 
+        await ctx.interaction.response.defer()
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
 
-        class SettingsMenu(discord.ui.View):
-            def __init__(self, context, guild_document):
+        class Cancel(discord.ui.View):
+            def __init__(self, og_interaction, og_view, og_embed):
                 super().__init__()
-                self.context = context
-                self.guild_document = guild_document
+                self.og_interaction = og_interaction
+                self.og_view = og_view
+                self.og_embed = og_embed
+
+            @discord.ui.button(label='Cancel',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.og_interaction.edit_original_message(embed=self.og_embed,
+                                                                view=self.og_view)
+                await self.stop()
+                await interaction.message.delete()
+
+        class Confirm(discord.ui.View):
+            def __init__(self):
+                super().__init__()
                 self.value = None
 
+            # When the confirm button is pressed, set the inner value to `True` and
+            # stop the View from listening to more input.
+            # We also send the user an ephemeral message that we're confirming their choice.
+            @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
+            async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
+                # await interaction.response.send_message("Confirming", ephemeral=True)
+                for item in self.children:
+                    item.disabled = True
+                self.value = True
+                self.stop()
+
+            # This one is similar to the confirmation button except sets the inner value to `False`
+            @discord.ui.button(label="No", style=discord.ButtonStyle.red)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                log.info('Workflow cancelled')
+                await interaction.response.send_message("Operation cancelled.", ephemeral=True)
+                for item in self.children:
+                    item.disabled = True
+                self.value = False
+                self.stop()
+
+        class SettingsMenu(discord.ui.View):
+            def __init__(self, context, start_embed, bot):
+                super().__init__()
+                self.context = context
+                self.embed = start_embed
+                self.bot = bot
+                self.stopped = False
+
             async def interaction_check(self,
-                                        interaction: Interaction) -> bool:
+                                        interaction: discord.Interaction) -> bool:
                 return interaction.user == self.context.interaction.user
 
-            @discord.ui.button(label='Cancel', style=discord.ButtonStyle.danger)
+            @discord.ui.button(label='Cancel',
+                               style=discord.ButtonStyle.danger,
+                               row=1)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.send_message("Stopped configuring settings.", ephemeral=True)
-                for item in self.view.children:
+                for item in self.children:
                     item.disabled = True
-                self.view.stop()
+                self.stop()
+                self.stopped = True
 
             @discord.ui.select(placeholder='Choose a setting to configure',
                                min_values=1,
                                max_values=1,
+                               row=0,
                                options=[
                                    discord.SelectOption(
                                        label='Prefix',
@@ -164,75 +216,175 @@ class Administration(commands.Cog):
             async def settings_menu(self, select: discord.ui.Select, interaction: discord.Interaction):
                 match select.values[0]:
                     case 'Prefix':
-                        await prefix_menu(self.context, interaction)
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        prefix_embed = gen_embed(name='Prefix Settings',
+                                                 content=f"**Prefix:** {server_document['prefix'] or '%'}")
+                        prefix_view = PrefixMenu(self.context, self, interaction, self.embed, self.bot)
+                        await interaction.edit_original_message(embed=prefix_embed,
+                                                                view=prefix_view)
+                        timeout = await prefix_view.wait()
+                        if timeout:
+                            for item in prefix_view.children:
+                                item.disabled = True
+                            await interaction.edit_original_message(embed=prefix_embed,
+                                                                    view=prefix_view)
                     case 'Global Announcements':
-                        await announcement_menu(self.context, interaction)
+                        pass
                     case 'Modmail':
-                        await modmail_menu(self.context, interaction)
+                        pass
                     case 'Chat Feature':
-                        await chat_menu(self.context, interaction)
+                        pass
                     case 'Blacklist/Whitelist':
-                        await bw_list_menu(self.context, interaction)
+                        pass
                     case 'Fun Features':
-                        await fun_menu(self.context, interaction)
+                        pass
                     case 'Logging':
-                        await logging_menu(self.context, interaction)
+                        pass
                     case 'Auto Assign Role On Join':
-                        await autorole_menu(self.context, interaction)
+                        pass
                     case 'Moderator Role':
-                        await modrole_menu(self.context, interaction)
+                        pass
                     case 'Server Join Verification':
-                        await verification_menu(self.context, interaction)
+                        pass
 
-            async def prefix_menu(self,
-                                  context: discord.ApplicationContext,
-                                  interaction: discord.Interaction):
-                pass
+        class PrefixMenu(discord.ui.View):
+            def __init__(self, og_context, og_view: SettingsMenu, menu_interaction, main_embed, bot):
+                super().__init__()
+                self.context = og_context
+                self.view = og_view
+                self.interaction = menu_interaction
+                self.main_embed = main_embed
+                self.bot = bot
+                self.value = False
 
-            async def announcement_menu(self,
-                                        context: discord.ApplicationContext,
-                                        interaction: discord.Interaction):
-                pass
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
 
-            async def modmail_menu(self,
-                                        context: discord.ApplicationContext,
-                                        interaction: discord.Interaction):
-                pass
+            @discord.ui.button(label='Set Prefix',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def set_prefix(self, button: discord.ui.Button, interaction: discord.Interaction):
+                async def prefix_prompt(listen_channel):
+                    def check(m):
+                        return m.author == interaction.user and m.channel == listen_channel
 
-            async def chat_menu(self,
-                                        context: discord.ApplicationContext,
-                                        interaction: discord.Interaction):
-                pass
+                    try:
+                        sent_prompt = await listen_channel.send(embed=gen_embed(title='New prefix',
+                                                                                content='Please type the new prefix you'
+                                                                                        ' would like to use.'))
+                    except discord.Forbidden:
+                        # TODO: change exception type
+                        raise RuntimeError('Forbidden 403 - could not send direct message to user.')
 
-            async def bw_list_menu(self,
-                                        context: discord.ApplicationContext,
-                                        interaction: discord.Interaction):
-                pass
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+                    except asyncio.TimeoutError:
+                        await sent_prompt.delete()
+                        await interaction.followup.send(embed=gen_embed(title='Prefix configuration',
+                                                                        content=('Prefix configuration has'
+                                                                                 ' been cancelled.')),
+                                                        ephemeral=True)
+                        return None
+                    await sent_prompt.delete()
+                    return mmsg
 
-            async def fun_menu(self,
-                                        context: discord.ApplicationContext,
-                                        interaction: discord.Interaction):
-                pass
+                await interaction.response.defer()
+                new_prefix = await prefix_prompt(interaction.channel)
 
-            async def logging_menu(self,
-                                        context: discord.ApplicationContext,
-                                        interaction: discord.Interaction):
-                pass
+                if new_prefix:
+                    log.info('New prefix entered, confirm workflow')
+                    view = Confirm()
+                    new_prefix_content = new_prefix.clean_content
+                    await new_prefix.delete()
+                    sent_message = await interaction.followup.send(embed=gen_embed(title='Confirmation',
+                                                                                   content=('Please verify the contents'
+                                                                                            ' before confirming:\n'
+                                                                                            ' New Prefix: '
+                                                                                            f'{new_prefix_content}')),
+                                                                   view=view)
+                    timeout = await view.wait()
+                    if timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
 
-            async def autorole_menu(self,
-                                        context: discord.ApplicationContext,
-                                        interaction: discord.Interaction):
-                pass
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild.id},
+                                                    {"$set": {'prefix': new_prefix.clean_content}})
+                        interaction.message.embeds[0].description = f'**Prefix:** {new_prefix_content}'
+                        self.main_embed.set_field_at(0, name='Prefix', value=new_prefix_content, inline=False)
+                        await self.interaction.edit_original_message(embed=interaction.message.embeds[0])
 
-            async def modrole_menu(self,
-                                        context: discord.ApplicationContext,
-                                        interaction: discord.Interaction):
-                pass
+            @discord.ui.button(label='Cancel',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.interaction.edit_original_message(embed=self.main_embed,
+                                                             view=self.view)
 
-            async def verification_menu(self,
-                                        context: discord.ApplicationContext,
-                                        interaction: discord.Interaction):
-                pass
+        embed = gen_embed(name='Settings',
+                          content='You can configure the settings for Kanon Bot using the select dropdown below.')
 
-        # construct message embed here with settings listed and view added
+        embed.add_field(name='Prefix',
+                        value=f"{document['prefix'] or '%'}",
+                        inline=False)
 
+        announcement_channel = None
+        embed_text = ', no configured channel\n(Default public updates OR system channel)'
+        if document['announcement_channel']:
+            announcement_channel = ctx.guild.get_channel(int(document['announcement_channel']))
+            embed_text = f' | Configured channel: #{announcement_channel.mention}'
+        embed.add_field(name='Global Announcements',
+                        value=f"{'Enabled' if document['announcements'] else 'Disabled'}"
+                              f'{embed_text}',
+                        inline=False)
+
+        modmail_channel = None
+        if document['modmail_channel']:
+            modmail_channel = ctx.guild.get_channel(int(document['modmail_channel']))
+        embed.add_field(name='Modmail',
+                        value=f"{'Enabled' if document['modmail_channel'] else 'Disabled'}"
+                              f"{(' | Configured channel: ' + modmail_channel.mention) if modmail_channel else ''}",
+                        inline=False)
+
+        embed.add_field(name='Chat Feature',
+                        value=f"{'Enabled' if document['chat'] else 'Disabled'}")
+
+        embed_text = 'Disabled'
+        if document['blacklist']:
+            blacklist = document['blacklist']
+            embed_text = 'Blacklist enabled for the following channels: '
+            for channel in blacklist:
+                channel = ctx.guild.get_channel(channel)
+                embed_text = embed_text + f'{channel.mention} '
+        elif document['whitelist']:
+            whitelist = document['whitelist']
+            embed_text = 'Whitelist enabled for the following channels: '
+            for channel in whitelist:
+                channel = ctx.guild.get_channel(channel)
+                embed_text = embed_text + f'{channel.mention} '
+        embed.add_field(name='Blacklist/Whitelist',
+                        value=f'{embed_text}',
+                        inline=False)
+
+        embed.add_field(name='Fun Features',
+                        value=f"{'Enabled' if document['fun'] else 'Disabled'}")
+
+        main_menu_view = SettingsMenu(ctx, embed, self.bot)
+        sent_menu_message = await ctx.interaction.followup.send(embed=embed,
+                                            view=main_menu_view)
+        timeout = await main_menu_view.wait()
+        if timeout or main_menu_view.stopped:
+            for item in main_menu_view.children:
+                item.disabled = True
+            await sent_menu_message.edit(embed=embed,
+                                         view=main_menu_view)
+
+
+def setup(bot):
+    bot.add_cog(Administration(bot))

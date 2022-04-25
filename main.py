@@ -234,6 +234,7 @@ bot.load_extension("commands.help")
 bot.load_extension("commands.errorhandler")
 bot.load_extension("commands.listeners")
 bot.load_extension("commands.misc")
+bot.load_extension("commands.administration")
 
 
 @bot.event
