@@ -151,21 +151,20 @@ class Administration(commands.Cog):
                 self.context = context
                 self.embed = start_embed
                 self.bot = bot
-                self.stopped = False
+                self.currentmessage = None
 
             async def interaction_check(self,
                                         interaction: discord.Interaction) -> bool:
                 return interaction.user == self.context.interaction.user
 
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=1)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.send_message("Stopped configuring settings.", ephemeral=True)
-                for item in self.children:
-                    item.disabled = True
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
                 self.stop()
-                self.stopped = True
 
             @discord.ui.select(placeholder='Choose a setting to configure',
                                min_values=1,
@@ -218,19 +217,32 @@ class Administration(commands.Cog):
                     case 'Prefix':
                         await interaction.response.defer()
                         server_document = await db.servers.find_one({"server_id": interaction.guild_id})
-                        prefix_embed = gen_embed(name='Prefix Settings',
-                                                 content=f"**Prefix:** {server_document['prefix'] or '%'}")
-                        prefix_view = PrefixMenu(self.context, self, interaction, self.embed, self.bot)
-                        await interaction.edit_original_message(embed=prefix_embed,
-                                                                view=prefix_view)
-                        timeout = await prefix_view.wait()
-                        if timeout:
-                            for item in prefix_view.children:
-                                item.disabled = True
-                            await interaction.edit_original_message(embed=prefix_embed,
-                                                                    view=prefix_view)
+                        prefix_embed = gen_embed(title='Prefix Settings',
+                                                 content=f"**Prefix: {server_document['prefix'] or '%'}**")
+
+                        prefix_view = PrefixMenu(self.context, self.bot)
+                        self.currentmessage = await interaction.message.edit(embed=prefix_embed,
+                                                                              view=prefix_view)
+                        await prefix_view.wait()
+
+                        if prefix_view.value:
+                            self.embed.set_field_at(0, name='Prefix', value=prefix_view.value, inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Global Announcements':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        if server_document['announcements']:
+                            content = 'Enabled'
+                        if server_document['announcement_channel']:
+                            announcement_channel = ctx.guild.get_channel(int(document['announcement_channel']))
+                            content = content + f' in channel {announcement_channel.mention}'
+                        else:
+                            content = content + f', no channel set, using default settings.'
+                        announcement_embed = gen_embed(title='Global Announcement Settings',
+                                                       content=content)
+                        announcement_view = AnnouncementMenu(self.context, self.bot)
+
                     case 'Modmail':
                         pass
                     case 'Chat Feature':
@@ -248,19 +260,32 @@ class Administration(commands.Cog):
                     case 'Server Join Verification':
                         pass
 
+            @discord.ui.button(label='Cancel',
+                               style=discord.ButtonStyle.danger,
+                               row=1)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.send_message("Stopped configuring settings.", ephemeral=True)
+                await self.end_interaction(interaction)
+
         class PrefixMenu(discord.ui.View):
-            def __init__(self, og_context, og_view: SettingsMenu, menu_interaction, main_embed, bot):
+            def __init__(self, og_context, bot):
                 super().__init__()
                 self.context = og_context
-                self.view = og_view
-                self.interaction = menu_interaction
-                self.main_embed = main_embed
                 self.bot = bot
                 self.value = False
 
             async def interaction_check(self,
                                         interaction: discord.Interaction) -> bool:
                 return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
 
             @discord.ui.button(label='Set Prefix',
                                style=discord.ButtonStyle.primary,
@@ -301,8 +326,8 @@ class Administration(commands.Cog):
                     sent_message = await interaction.followup.send(embed=gen_embed(title='Confirmation',
                                                                                    content=('Please verify the contents'
                                                                                             ' before confirming:\n'
-                                                                                            ' New Prefix: '
-                                                                                            f'{new_prefix_content}')),
+                                                                                            ' **New Prefix: '
+                                                                                            f'{new_prefix_content}**')),
                                                                    view=view)
                     timeout = await view.wait()
                     if timeout:
@@ -315,17 +340,36 @@ class Administration(commands.Cog):
                         log.info('Workflow confirm')
                         await db.servers.update_one({"server_id": interaction.guild.id},
                                                     {"$set": {'prefix': new_prefix.clean_content}})
-                        interaction.message.embeds[0].description = f'**Prefix:** {new_prefix_content}'
-                        self.main_embed.set_field_at(0, name='Prefix', value=new_prefix_content, inline=False)
-                        await self.interaction.edit_original_message(embed=interaction.message.embeds[0])
+                        interaction.message.embeds[0].description = f'**Prefix: {new_prefix_content}**'
+                        self.value = new_prefix_content
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
 
             @discord.ui.button(label='Cancel',
                                style=discord.ButtonStyle.danger,
                                row=0)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.defer()
-                await self.interaction.edit_original_message(embed=self.main_embed,
-                                                             view=self.view)
+                await self.end_interaction(interaction)
+
+        class AnnouncementMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = False
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
 
         embed = gen_embed(name='Settings',
                           content='You can configure the settings for Kanon Bot using the select dropdown below.')
@@ -377,9 +421,9 @@ class Administration(commands.Cog):
 
         main_menu_view = SettingsMenu(ctx, embed, self.bot)
         sent_menu_message = await ctx.interaction.followup.send(embed=embed,
-                                            view=main_menu_view)
+                                                                view=main_menu_view)
         timeout = await main_menu_view.wait()
-        if timeout or main_menu_view.stopped:
+        if timeout:
             for item in main_menu_view.children:
                 item.disabled = True
             await sent_menu_message.edit(embed=embed,
