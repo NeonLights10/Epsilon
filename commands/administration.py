@@ -1,24 +1,13 @@
-import discord
-import re
-import time
-import validators
-import datetime
 import asyncio
-import emoji as zemoji
-
-from dateutil.relativedelta import relativedelta
-from datetime import timedelta
+from __main__ import log, db
 from typing import Union
 
+import discord
+import emoji as zemoji
 from discord.ext import commands
 
-from formatting.constants import UNITS
-from formatting.embed import gen_embed
 from commands.errorhandler import CheckOwner
-
-from bson.objectid import ObjectId
-
-from __main__ import log, db
+from formatting.embed import gen_embed
 
 
 class Administration(commands.Cog):
@@ -116,7 +105,7 @@ class Administration(commands.Cog):
                 await interaction.response.defer()
                 await self.og_interaction.edit_original_message(embed=self.og_embed,
                                                                 view=self.og_view)
-                await self.stop()
+                self.stop()
                 await interaction.message.delete()
 
         class Confirm(discord.ui.View):
@@ -222,7 +211,7 @@ class Administration(commands.Cog):
 
                         prefix_view = PrefixMenu(self.context, self.bot)
                         self.currentmessage = await interaction.message.edit(embed=prefix_embed,
-                                                                              view=prefix_view)
+                                                                             view=prefix_view)
                         await prefix_view.wait()
 
                         if prefix_view.value:
@@ -232,16 +221,29 @@ class Administration(commands.Cog):
                     case 'Global Announcements':
                         await interaction.response.defer()
                         server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        content = ''
                         if server_document['announcements']:
                             content = 'Enabled'
                         if server_document['announcement_channel']:
-                            announcement_channel = ctx.guild.get_channel(int(document['announcement_channel']))
-                            content = content + f' in channel {announcement_channel.mention}'
+                            announce_channel = ctx.guild.get_channel(int(server_document['announcement_channel']))
+                            content = content + f' in channel {announce_channel.mention}'
                         else:
                             content = content + f', no channel set, using default settings.'
                         announcement_embed = gen_embed(title='Global Announcement Settings',
                                                        content=content)
                         announcement_view = AnnouncementMenu(self.context, self.bot)
+                        self.currentmessage = await interaction.message.edit(embed=announcement_embed,
+                                                                             view=announcement_view)
+
+                        await announcement_view.wait()
+
+                        if announcement_view.value:
+                            self.embed.set_field_at(1,
+                                                    name='Global Announcements',
+                                                    value=announcement_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
 
                     case 'Modmail':
                         pass
@@ -287,6 +289,7 @@ class Administration(commands.Cog):
                 await interaction.message.edit(view=view)
                 self.stop()
 
+            # noinspection PyTypeChecker
             @discord.ui.button(label='Set Prefix',
                                style=discord.ButtonStyle.primary,
                                row=0)
@@ -296,9 +299,9 @@ class Administration(commands.Cog):
                         return m.author == interaction.user and m.channel == listen_channel
 
                     try:
-                        sent_prompt = await listen_channel.send(embed=gen_embed(title='New prefix',
-                                                                                content='Please type the new prefix you'
-                                                                                        ' would like to use.'))
+                        sent_prompt = await listen_channel.send(
+                            embed=gen_embed(title='New prefix',
+                                            content='Please type the new prefix you would like to use.'))
                     except discord.Forbidden:
                         # TODO: change exception type
                         raise RuntimeError('Forbidden 403 - could not send direct message to user.')
@@ -307,10 +310,10 @@ class Administration(commands.Cog):
                         mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
                     except asyncio.TimeoutError:
                         await sent_prompt.delete()
-                        await interaction.followup.send(embed=gen_embed(title='Prefix configuration',
-                                                                        content=('Prefix configuration has'
-                                                                                 ' been cancelled.')),
-                                                        ephemeral=True)
+                        await interaction.followup.send(
+                            embed=gen_embed(title='Prefix configuration',
+                                            content='Prefix configuration has been cancelled.'),
+                            ephemeral=True)
                         return None
                     await sent_prompt.delete()
                     return mmsg
@@ -323,14 +326,13 @@ class Administration(commands.Cog):
                     view = Confirm()
                     new_prefix_content = new_prefix.clean_content
                     await new_prefix.delete()
-                    sent_message = await interaction.followup.send(embed=gen_embed(title='Confirmation',
-                                                                                   content=('Please verify the contents'
-                                                                                            ' before confirming:\n'
-                                                                                            ' **New Prefix: '
-                                                                                            f'{new_prefix_content}**')),
-                                                                   view=view)
-                    timeout = await view.wait()
-                    if timeout:
+                    sent_message = await interaction.followup.send(
+                        embed=gen_embed(title='Confirmation',
+                                        content=('Please verify the contents before confirming:\n'
+                                                 f' **New Prefix: {new_prefix_content}**')),
+                        view=view)
+                    prefix_timeout = await view.wait()
+                    if prefix_timeout:
                         log.info('Confirmation view timed out')
                         await sent_message.delete()
                         return
@@ -356,7 +358,7 @@ class Administration(commands.Cog):
                 super().__init__()
                 self.context = og_context
                 self.bot = bot
-                self.value = False
+                self.value = ''
 
             async def interaction_check(self,
                                         interaction: discord.Interaction) -> bool:
@@ -371,6 +373,109 @@ class Administration(commands.Cog):
                 await interaction.message.edit(view=view)
                 self.stop()
 
+            @discord.ui.button(label='Enable/Disable',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def change_announce_state(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                if doc['announcements']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'announcements': False}})
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value = 'Disabled'
+                else:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'announcements': True}})
+                    interaction.message.embeds[0].description = 'Enabled'
+                    self.value = 'Enabled'
+
+                if doc['announcement_channel']:
+                    announce_channel = interaction.guild.get_channel(int(doc['announcement_channel']))
+                    interaction.message.embeds[0].description = \
+                        interaction.message.embeds[
+                            0].description + f', configured in channel {announce_channel.mention}'
+                    self.value = self.value + f' | Configured channel: #{announcement_channel.mention}'
+                else:
+                    interaction.message.embeds[0].description = \
+                        interaction.message.embeds[0].description + f', no channel set, using default settings.'
+                    self.value = self.value + ', no configured channel\n(Default public updates OR system channel)'
+
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            # noinspection PyTypeChecker
+            @discord.ui.button(label='Configure Channel',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def configure_announcement_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                async def announcement_prompt(listen_channel):
+                    def check(m):
+                        return m.author == interaction.user and m.channel == listen_channel
+
+                    try:
+                        sent_prompt = await listen_channel.send(
+                            embed=gen_embed(title='Configure announcement channel',
+                                            content='Please mention the channel you would like to use for modmail.'))
+                    except discord.Forbidden:
+                        # TODO: change exception type
+                        raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+                    except asyncio.TimeoutError:
+                        await sent_prompt.delete()
+                        await interaction.followup.send(
+                            embed=gen_embed(title='Announcement channel configuration',
+                                            content='Announcement channel configuration has been cancelled.'),
+                            ephemeral=True)
+                        return None
+                    await sent_prompt.delete()
+                    return mmsg
+
+                await interaction.response.defer()
+                new_announcement = await announcement_prompt(interaction.channel)
+
+                if new_announcement:
+                    log.info('New prefix entered, confirm workflow')
+                    view = Confirm()
+                    new_announcement_channel = new_announcement.channel_mentions[0]
+                    await new_announcement.delete()
+                    sent_message = await interaction.followup.send(embed=gen_embed(
+                        title='Confirmation',
+                        content=('Please verify the contents before confirming:\n'
+                                 f' **Selected Announcement Channel: {new_announcement_channel.mention}**')),
+                        view=view)
+                    announcement_timeout = await view.wait()
+                    if announcement_timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
+
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild.id},
+                                                    {"$set": {'announcement_channel': new_announcement_channel.id}})
+
+                        doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                        if doc['announcements']:
+                            interaction.message.embeds[0].description = ('Enabled, configured in channel '
+                                                                         f'{new_announcement_channel.mention}')
+                            self.value = f'Disabled | Configured channel: {new_announcement_channel.mention}'
+                        else:
+                            interaction.message.embeds[0].description = ('Disabled, configured in channel '
+                                                                         f'{new_announcement_channel.mention}')
+                            self.value = f'Enabled | Configured channel: {new_announcement_channel.mention}'
+
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            @discord.ui.button(label='Cancel',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
         embed = gen_embed(name='Settings',
                           content='You can configure the settings for Kanon Bot using the select dropdown below.')
 
@@ -382,7 +487,7 @@ class Administration(commands.Cog):
         embed_text = ', no configured channel\n(Default public updates OR system channel)'
         if document['announcement_channel']:
             announcement_channel = ctx.guild.get_channel(int(document['announcement_channel']))
-            embed_text = f' | Configured channel: #{announcement_channel.mention}'
+            embed_text = f' | Configured channel: {announcement_channel.mention}'
         embed.add_field(name='Global Announcements',
                         value=f"{'Enabled' if document['announcements'] else 'Disabled'}"
                               f'{embed_text}',
@@ -417,7 +522,24 @@ class Administration(commands.Cog):
                         inline=False)
 
         embed.add_field(name='Fun Features',
-                        value=f"{'Enabled' if document['fun'] else 'Disabled'}")
+                        value=f"{'Enabled' if document['fun'] else 'Disabled'}",
+                        inline=False)
+
+        embed.add_field(name='Logging',
+                        value=f"Not implemented yet",
+                        inline=False)
+
+        embed.add_field(name='Auto Assign Role On Join',
+                        value=f"Not implemented yet",
+                        inline=False)
+
+        embed.add_field(name='Moderator Role',
+                        value=f"Not implemented yet",
+                        inline=False)
+
+        embed.add_field(name='Server Join Verification',
+                        value=f"Not implemented yet",
+                        inline=False)
 
         main_menu_view = SettingsMenu(ctx, embed, self.bot)
         sent_menu_message = await ctx.interaction.followup.send(embed=embed,
