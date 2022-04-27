@@ -192,6 +192,8 @@ async def check_document(guild, id):
             {"server_id": id},
             [{'$set': {
                 "name": guild.name,
+                "modmail_button_channel": None,
+                "prev_message_modmail": {'$cond': [{'$not': ["$prev_message_modmail"]}, None, "$prev_message_modmail"]}
             }}]
         )
 

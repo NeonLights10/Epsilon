@@ -215,7 +215,10 @@ class Administration(commands.Cog):
                         await prefix_view.wait()
 
                         if prefix_view.value:
-                            self.embed.set_field_at(0, name='Prefix', value=prefix_view.value, inline=False)
+                            self.embed.set_field_at(0,
+                                                    name='Prefix',
+                                                    value=prefix_view.value,
+                                                    inline=False)
                         await self.currentmessage.edit(embed=self.embed,
                                                        view=self)
                     case 'Global Announcements':
@@ -246,7 +249,34 @@ class Administration(commands.Cog):
                                                        view=self)
 
                     case 'Modmail':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        modmail_view = ModmailMenu(self.context, self.bot)
+                        if server_document['modmail_channel']:
+                            m_modmail_channel = ctx.guild.get_channel(int(server_document['modmail_channel']))
+                            m_button_channel = ctx.guild.get_channel(int(server_document['modmail_button_channel']))
+                            content = f'Enabled \nDestination channel: {m_modmail_channel.mention}'
+                            content += f'\nButton channel: {m_button_channel.mention}'
+                        else:
+                            content = 'Disabled'
+                            modmail_view.children[1].disabled = True
+                            modmail_view.children[2].disabled = True
+                        modmail_embed = gen_embed(title='Modmail Settings',
+                                                  content=content)
+
+                        self.currentmessage = await interaction.message.edit(embed=modmail_embed,
+                                                                             view=modmail_view)
+
+                        await modmail_view.wait()
+
+                        if modmail_view.value:
+                            self.embed.set_field_at(2,
+                                                    name='Modmail',
+                                                    value=modmail_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
+
                     case 'Chat Feature':
                         pass
                     case 'Blacklist/Whitelist':
@@ -415,7 +445,8 @@ class Administration(commands.Cog):
                     try:
                         sent_prompt = await listen_channel.send(
                             embed=gen_embed(title='Configure announcement channel',
-                                            content='Please mention the channel you would like to use for modmail.'))
+                                            content=('Please mention the channel you'
+                                                     ' would like to use for announcements.')))
                     except discord.Forbidden:
                         # TODO: change exception type
                         raise RuntimeError('Forbidden 403 - could not send direct message to user.')
@@ -430,20 +461,21 @@ class Administration(commands.Cog):
                             ephemeral=True)
                         return None
                     await sent_prompt.delete()
+                    # TODO: check for channel_mentions
                     return mmsg
 
                 await interaction.response.defer()
                 new_announcement = await announcement_prompt(interaction.channel)
 
                 if new_announcement:
-                    log.info('New prefix entered, confirm workflow')
+                    log.info('New announcement entered, confirm workflow')
                     view = Confirm()
                     new_announcement_channel = new_announcement.channel_mentions[0]
                     await new_announcement.delete()
                     sent_message = await interaction.followup.send(embed=gen_embed(
                         title='Confirmation',
                         content=('Please verify the contents before confirming:\n'
-                                 f' **Selected Announcement Channel: {new_announcement_channel.mention}**')),
+                                 f'**Selected Announcement Channel: {new_announcement_channel.mention}**')),
                         view=view)
                     announcement_timeout = await view.wait()
                     if announcement_timeout:
@@ -476,6 +508,167 @@ class Administration(commands.Cog):
                 await interaction.response.defer()
                 await self.end_interaction(interaction)
 
+        class ModmailMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            async def modmail_channel_prompt(self, interaction, listen_channel, scenario):
+                def check(m):
+                    return m.author == interaction.user and m.channel == listen_channel
+
+                sent_prompt = None
+                match scenario:
+                    case 1:
+                        try:
+                            sent_prompt = await listen_channel.send(
+                                embed=gen_embed(title='Configure modmail destination channel',
+                                                content='Plase mention the channel you would like to use for modmail.')
+                            )
+                        except discord.Forbidden:
+                            # TODO: change exception type
+                            raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                    case 2:
+                        try:
+                            sent_prompt = await listen_channel.send(
+                                embed=gen_embed(title='Configure modmail button channel',
+                                                content='Plase mention the channel you would like to put the button.')
+                            )
+                        except discord.Forbidden:
+                            # TODO: change exception type
+                            raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+
+                try:
+                    mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+                except asyncio.TimeoutError:
+                    await sent_prompt.delete()
+                    await interaction.followup.send(
+                        embed=gen_embed(title='Modmail channel configuration',
+                                        content='Modmail channel configuration has been cancelled.'),
+                        ephemeral=True)
+                    return None
+                await sent_prompt.delete()
+                # TODO: check for channel_mentions
+                return mmsg
+
+            # noinspection PyTypeChecker
+            @discord.ui.button(label='Enable/Disable',
+                               style=discord.buttonstyle.primary,
+                               row=0)
+            async def change_modmail_state(self, button: discord.ui.Button, interaction: discord.Interaction):
+
+                await interaction.response.defer()
+                doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                if doc['modmail_channel']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'modmail_channel': None,
+                                                          'modmail_button_channel': None}})
+                    # TODO: delete the previous message button
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value = 'Disabled'
+                else:
+                    setup_phase1_success = False
+                    setup_phase2_success = False
+
+                    new_destination = await self.modmail_channel_prompt(interaction, interaction.channel, 1)
+                    if new_destination:
+                        log.info('New modmail dest entered, confirm workflow')
+                        view = Confirm()
+                        new_destination_channel = new_destination.channel_mentions[0]
+                        await new_destination.delete()
+                        sent_message = await interaction.followup.send(embed=gen_embed(
+                            title='Confirmation',
+                            content=('Pleae verify the contents before confirming:\n'
+                                     f'**Selected Modmail Destination: {new_destination_channel.mention}**')),
+                            view=view)
+                        destination_timeout = await view.wait()
+                        if destination_timeout:
+                            log.info('Confirmation view timed out')
+                            await sent_message.delete()
+                            return
+                        await sent_message.delete()
+
+                        if view.value:
+                            pass
+                            # TODO: process input
+                            setup_phase1_success = True
+                        else:
+                            return
+
+                    new_button = await self.modmail_channel_prompt(interaction, interaction.channel, 2)
+                    if new_button:
+                        log.info('New modmail button entered, confirm workflow')
+                        view = Confirm()
+                        new_button_channel = new_button.channel_mentions[0]
+                        await new_button.delete()
+                        sent_message = await interaction.followup.send(embed=gen_embed(
+                            title='Confirmation',
+                            content=('Pleae verify the contents before confirming:\n'
+                                     f'**Selected Button Channel: {new_button_channel.mention}**')),
+                            view=view)
+                        button_timeout = await view.wait()
+                        if button_timeout:
+                            log.info('Confirmation view timed out')
+                            await sent_message.delete()
+                            return
+                        await sent_message.delete()
+
+                        if view.value:
+                            pass
+                            # TODO: process input
+                            setup_phase2_success = True
+                        else:
+                            return
+
+                    if setup_phase1_success and setup_phase2_success:
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'modmail_channel': 1,
+                                                              'modmail_button_channel': 2}})
+                        interaction.message.embeds[0].description = 'Enabled'
+                        self.value = 'Enabled'
+                        self.children[1].disabled = False
+                        self.children[2].disabled = False
+
+                # TODO: edit text formatting
+
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            @discord.ui.button(label='Change Destination Channel',
+                               style=discord.buttonstyle.primary,
+                               row=0)
+            async def change_dest_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                pass
+
+            @discord.ui.button(label='Change Button Channel',
+                               style=discord.buttonstyle.primary,
+                               row=0)
+            async def change_button_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                pass
+
+            @discord.ui.button(label='Cancel',
+                               style=discord.ButtonStyle.danger,
+                               row=1)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+        ####################
+
         embed = gen_embed(name='Settings',
                           content='You can configure the settings for Kanon Bot using the select dropdown below.')
 
@@ -483,7 +676,6 @@ class Administration(commands.Cog):
                         value=f"{document['prefix'] or '%'}",
                         inline=False)
 
-        announcement_channel = None
         embed_text = ', no configured channel\n(Default public updates OR system channel)'
         if document['announcement_channel']:
             announcement_channel = ctx.guild.get_channel(int(document['announcement_channel']))
@@ -494,11 +686,14 @@ class Administration(commands.Cog):
                         inline=False)
 
         modmail_channel = None
+        button_channel = None
         if document['modmail_channel']:
             modmail_channel = ctx.guild.get_channel(int(document['modmail_channel']))
+            button_channel = ctx.guild.get_channel(int(document['modmail_button_channel']))
         embed.add_field(name='Modmail',
                         value=f"{'Enabled' if document['modmail_channel'] else 'Disabled'}"
-                              f"{(' | Configured channel: ' + modmail_channel.mention) if modmail_channel else ''}",
+                              f"\n{('Destination channel: ' + modmail_channel.mention) if modmail_channel else ''}"
+                              f"\n{('Button channel: ' + button_channel.mention) if button_channel else ''}",
                         inline=False)
 
         embed.add_field(name='Chat Feature',
@@ -525,16 +720,33 @@ class Administration(commands.Cog):
                         value=f"{'Enabled' if document['fun'] else 'Disabled'}",
                         inline=False)
 
+        embed_text = 'Configured channel: '
+        if document['log_channel']:
+            logging_channel = ctx.guild.get_channel(int(document['log_channel']))
+            embed_text += f'{logging_channel.mention}\n'
+        embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if document['log_joinleaves'] else 'Disabled'}"
+        embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if document['log_kbm'] else 'Disabled'}"
+        embed_text += '\nLog strikes: ' + f"{'Enabled' if document['log_strikes'] else 'Disabled'}"
         embed.add_field(name='Logging',
-                        value=f"Not implemented yet",
+                        value=f'{embed_text}',
                         inline=False)
 
+        if document['autorole']:
+            auto_role = ctx.guild.get_role(int(document['autorole']))
+            embed_text = f'Enabled for role {auto_role.mention}'
+        else:
+            embed_text = 'Disabled'
         embed.add_field(name='Auto Assign Role On Join',
-                        value=f"Not implemented yet",
+                        value=f'{embed_text}',
                         inline=False)
 
+        if document['modrole']:
+            mod_role = ctx.guild.get_role(int(document['modrole']))
+            embed_text = f'Enabled for role {mod_role.mention}'
+        else:
+            embed_text = 'Disabled'
         embed.add_field(name='Moderator Role',
-                        value=f"Not implemented yet",
+                        value=f'{embed_text}',
                         inline=False)
 
         embed.add_field(name='Server Join Verification',
