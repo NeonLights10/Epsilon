@@ -902,7 +902,10 @@ class Administration(commands.Cog):
         muted = ""
         mute_duration = datetime.datetime.now(datetime.timezone.utc) + convert_to_timedelta(mtime)
         for member in members:
-            await member.timeout(mute_duration, reason=reason[:512])
+            if reason:
+                await member.timeout(mute_duration, reason=reason[:512])
+            else:
+                await member.timeout(mute_duration)
 
             dm_channel = member.dm_channel
             if member.dm_channel is None:
