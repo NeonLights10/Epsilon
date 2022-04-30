@@ -568,7 +568,7 @@ class Administration(commands.Cog):
 
             # noinspection PyTypeChecker
             @discord.ui.button(label='Enable/Disable',
-                               style=discord.buttonstyle.primary,
+                               style=discord.ButtonStyle.primary,
                                row=0)
             async def change_modmail_state(self, button: discord.ui.Button, interaction: discord.Interaction):
 
@@ -649,13 +649,13 @@ class Administration(commands.Cog):
                 await interaction.message.edit(embed=interaction.message.embeds[0])
 
             @discord.ui.button(label='Change Destination Channel',
-                               style=discord.buttonstyle.primary,
+                               style=discord.ButtonStyle.primary,
                                row=0)
             async def change_dest_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 pass
 
             @discord.ui.button(label='Change Button Channel',
-                               style=discord.buttonstyle.primary,
+                               style=discord.ButtonStyle.primary,
                                row=0)
             async def change_button_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 pass
