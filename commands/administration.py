@@ -255,7 +255,7 @@ class Administration(commands.Cog):
                         if server_document['modmail_channel']:
                             m_modmail_channel = ctx.guild.get_channel(int(server_document['modmail_channel']))
                             m_button_channel = ctx.guild.get_channel(int(server_document['modmail_button_channel']))
-                            content = f'Enabled \nDestination channel: {m_modmail_channel.mention}'
+                            content = f'**Enabled** \nDestination channel: {m_modmail_channel.mention}'
                             content += f'\nButton channel: {m_button_channel.mention}'
                         else:
                             content = 'Disabled'
@@ -370,7 +370,7 @@ class Administration(commands.Cog):
 
                     if view.value:
                         log.info('Workflow confirm')
-                        await db.servers.update_one({"server_id": interaction.guild.id},
+                        await db.servers.update_one({"server_id": interaction.guild_id},
                                                     {"$set": {'prefix': new_prefix.clean_content}})
                         interaction.message.embeds[0].description = f'**Prefix: {new_prefix_content}**'
                         self.value = new_prefix_content
@@ -438,7 +438,7 @@ class Administration(commands.Cog):
                                style=discord.ButtonStyle.primary,
                                row=0)
             async def configure_announcement_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                async def announcement_prompt(listen_channel):
+                async def announcement_prompt(listen_channel, attempts=1, prev_message=None):
                     def check(m):
                         return m.author == interaction.user and m.channel == listen_channel
 
@@ -460,9 +460,19 @@ class Administration(commands.Cog):
                                             content='Announcement channel configuration has been cancelled.'),
                             ephemeral=True)
                         return None
+                    if prev_message:
+                        await prev_message.delete()
                     await sent_prompt.delete()
-                    # TODO: check for channel_mentions
-                    return mmsg
+                    if mmsg.channel_mentions:
+                        return mmsg
+                    else:
+                        sent_error = await interaction.followup.send(
+                            embed=gen_embed(title='Error',
+                                            content='No channel found. Please check that you mentioned the channel.')
+                        )
+                        await mmsg.delete()
+                        attempts += 1
+                        return await announcement_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
 
                 await interaction.response.defer()
                 new_announcement = await announcement_prompt(interaction.channel)
@@ -486,7 +496,7 @@ class Administration(commands.Cog):
 
                     if view.value:
                         log.info('Workflow confirm')
-                        await db.servers.update_one({"server_id": interaction.guild.id},
+                        await db.servers.update_one({"server_id": interaction.guild_id},
                                                     {"$set": {'announcement_channel': new_announcement_channel.id}})
 
                         doc = await db.servers.find_one({"server_id": interaction.guild_id})
@@ -528,7 +538,8 @@ class Administration(commands.Cog):
                 await interaction.message.edit(view=view)
                 self.stop()
 
-            async def modmail_channel_prompt(self, interaction, listen_channel, scenario):
+            async def modmail_channel_prompt(self, interaction, listen_channel, scenario, attempts=1,
+                                             prev_message=None):
                 def check(m):
                     return m.author == interaction.user and m.channel == listen_channel
 
@@ -562,28 +573,64 @@ class Administration(commands.Cog):
                                         content='Modmail channel configuration has been cancelled.'),
                         ephemeral=True)
                     return None
+                if prev_message:
+                    await prev_message.delete()
                 await sent_prompt.delete()
-                # TODO: check for channel_mentions
-                return mmsg
+                if mmsg.channel_mentions:
+                    return mmsg
+                else:
+                    sent_error = await interaction.followup.send(
+                        embed=gen_embed(title='Error',
+                                        content='No channel found. Please check that you mentioned the channel.')
+                    )
+                    await mmsg.delete()
+                    attempts += 1
+                    return await self.modmail_channel_prompt(interaction,
+                                                             listen_channel,
+                                                             scenario,
+                                                             attempts=attempts,
+                                                             prev_message=sent_error)
 
             # noinspection PyTypeChecker
             @discord.ui.button(label='Enable/Disable',
                                style=discord.ButtonStyle.primary,
                                row=0)
             async def change_modmail_state(self, button: discord.ui.Button, interaction: discord.Interaction):
-
                 await interaction.response.defer()
+
                 doc = await db.servers.find_one({"server_id": interaction.guild_id})
                 if doc['modmail_channel']:
+                    prev_button_channel = interaction.guild.get_channel(int(doc['modmail_button_channel']))
+                    if doc['prev_message_modmail']:
+                        try:
+                            prev_button = await prev_button_channel.fetch_message(int(doc['prev_message_modmail']))
+                            await prev_button.delete()
+                        except discord.NotFound:
+                            pass
+                        except discord.Forbidden:
+                            await interaction.followup.send(embed=gen_embed(
+                                title='Error while fetching previous button',
+                                content='I was unable to fetch the required message. Please check my permissions!'),
+                                ephemeral=True)
+                            return
+                        except discord.HTTPException as error:
+                            await interaction.followup.send(embed=gen_embed(
+                                title='Error while fetching previous button',
+                                content=(f'I was unable to fetch the required message. HTTP Error {error.status}'
+                                         "\nThis is likely an error on Discord's end. Please try again later.")),
+                                ephemeral=True)
+                            return
                     await db.servers.update_one({"server_id": interaction.guild_id},
                                                 {"$set": {'modmail_channel': None,
                                                           'modmail_button_channel': None}})
-                    # TODO: delete the previous message button
-                    interaction.message.embeds[0].description = 'Disabled'
+                    interaction.message.embeds[0].description = '**Disabled**'
                     self.value = 'Disabled'
+                    self.children[1].disabled = True
+                    self.children[2].disabled = True
                 else:
                     setup_phase1_success = False
                     setup_phase2_success = False
+                    log.info('Begin modmail configuration workflow')
 
                     new_destination = await self.modmail_channel_prompt(interaction, interaction.channel, 1)
                     if new_destination:
@@ -604,8 +651,7 @@ class Administration(commands.Cog):
                         await sent_message.delete()
 
                         if view.value:
-                            pass
-                            # TODO: process input
+                            log.info('Phase 1 workflow confirm')
                             setup_phase1_success = True
                         else:
                             return
@@ -629,36 +675,98 @@ class Administration(commands.Cog):
                         await sent_message.delete()
 
                         if view.value:
-                            pass
-                            # TODO: process input
+                            log.info('Phase 2 workflow confirm')
                             setup_phase2_success = True
                         else:
                             return
 
                     if setup_phase1_success and setup_phase2_success:
                         await db.servers.update_one({"server_id": interaction.guild_id},
-                                                    {"$set": {'modmail_channel': 1,
-                                                              'modmail_button_channel': 2}})
-                        interaction.message.embeds[0].description = 'Enabled'
+                                                    {"$set": {'modmail_channel': new_destination_channel.id,
+                                                              'modmail_button_channel': new_button_channel.id}})
+                        new_description = (f'**Enabled** \n Destination channel: {new_destination_channel.mention}'
+                                           f'\n Button channel: {new_button_channel.mention}')
+                        interaction.message.embeds[0].description = new_description
                         self.value = 'Enabled'
                         self.children[1].disabled = False
                         self.children[2].disabled = False
+                        # TODO: run modmail button initialization
 
-                # TODO: edit text formatting
+                await interaction.message.edit(embed=interaction.message.embeds[0], view=self)
 
-                await interaction.message.edit(embed=interaction.message.embeds[0])
-
+            # noinspection PyTypeChecker
             @discord.ui.button(label='Change Destination Channel',
                                style=discord.ButtonStyle.primary,
                                row=0)
             async def change_dest_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                pass
+                await interaction.response.defer()
 
+                new_destination = await self.modmail_channel_prompt(interaction, interaction.channel, 1)
+                if new_destination:
+                    log.info('New modmail dest entered, confirm workflow')
+                    view = Confirm()
+                    new_destination_channel = new_destination.channel_mentions[0]
+                    await new_destination.delete()
+                    sent_message = await interaction.followup.send(embed=gen_embed(
+                        title='Confirmation',
+                        content=('Pleae verify the contents before confirming:\n'
+                                 f'**Selected Modmail Destination: {new_destination_channel.mention}**')),
+                        view=view)
+                    destination_timeout = await view.wait()
+                    if destination_timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
+
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'modmail_channel': new_destination_channel.id}})
+                        doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                        modmail_button_channel = interaction.guild.get_channel(int(doc['modmail_button_channel']))
+                        interaction.message.embeds[0].description = ('**Enabled** \nDestination channel:'
+                                                                     f'{new_destination_channel.mention}'
+                                                                     f'\nButton channel:'
+                                                                     f'{modmail_button_channel.mention}')
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            # noinspection PyTypeChecker
             @discord.ui.button(label='Change Button Channel',
                                style=discord.ButtonStyle.primary,
                                row=0)
             async def change_button_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                pass
+                await interaction.response.defer()
+
+                new_button = await self.modmail_channel_prompt(interaction, interaction.channel, 2)
+                if new_button:
+                    log.info('New modmail button entered, confirm workflow')
+                    view = Confirm()
+                    new_button_channel = new_button.channel_mentions[0]
+                    await new_button.delete()
+                    sent_message = await interaction.followup.send(embed=gen_embed(
+                        title='Confirmation',
+                        content=('Please verify the contents before confirming:\n'
+                                 f'**Selected Modmail Button Channel: {new_button_channel.mention}**')),
+                        view=view)
+                    button_timeout = await view.wait()
+                    if button_timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
+
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'modmail_button_channel': new_button_channel.id}})
+                        doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                        m_modmail_channel = interaction.guild.get_channel(int(doc['modmail_channel']))
+                        interaction.message.embeds[0].description = ('**Enabled** \nDestination channel:'
+                                                                     f'{m_modmail_channel.mention}'
+                                                                     f'\nButton channel:'
+                                                                     f'{new_button_channel.mention}')
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
 
             @discord.ui.button(label='Cancel',
                                style=discord.ButtonStyle.danger,
