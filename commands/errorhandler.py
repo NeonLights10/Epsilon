@@ -53,7 +53,7 @@ class CommandErrorHandler(commands.Cog):
 
         else:
             log.error(f"Ignoring unhandled exception in application command {ctx.command.name!r}")
-            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            traceback.print_exception(type(error), error, error.__traceback__)
             await ctx.respond(
                 "An error occured during command execution. "
                 "Please try again later...", ephemeral=True)

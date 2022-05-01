@@ -4,8 +4,6 @@ from discord.ext import commands
 from discord.ext import bridge
 from discord.commands import Option
 
-from typing import List
-
 from __main__ import log, db
 
 
@@ -53,9 +51,12 @@ class Help(commands.Cog):
                 if cog_commands and x not in ['Admin']:
                     commands = []
                     for y in cog_commands:
-                        if isinstance(y, bridge.BridgeExtCommand) or isinstance(y, discord.ext.commands.Command):
-                            server_prefix = (await db.servers.find_one({"server_id": ctx.interaction.guild.id}))['prefix'] or "%"
+                        server_prefix = (await db.servers.find_one({"server_id": ctx.interaction.guild.id}))[
+                                            'prefix'] or "%"
+                        if isinstance(y, bridge.BridgeExtCommand):
                             commands.append(f"{server_prefix}{y.name} **|** /{y.name}")
+                        elif isinstance(y, discord.ext.commands.Command):
+                            commands.append(f"{server_prefix}{y.name}")
                         elif not isinstance(y, bridge.BridgeSlashCommand):
                             commands.append(f"/{y.name}")
                     commands = ('\n'.join(map(str, sorted(commands))))
