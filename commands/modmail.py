@@ -46,7 +46,7 @@ class Modmail(commands.Cog):
         def check(m):
             return m.author == ctx.interaction.user and m.channel == listen_channel
 
-        sent_message = await ctx.respond(embed=gen_embed(title='Modmail Message Contents',
+        sent_message = await listen_channel.send(embed=gen_embed(title='Modmail Message Contents',
                                                   content='Please type out your modmail below and send. You can send images by adding an attachement to the message you send.'))
 
         try:
