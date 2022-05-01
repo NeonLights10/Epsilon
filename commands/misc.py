@@ -1,4 +1,3 @@
-import asyncio
 import psutil
 import time
 import os
@@ -19,7 +18,7 @@ class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # noinspection PyMethodMayBeStatic
+    @staticmethod
     def is_owner():
         async def predicate(ctx) -> bool:
             if isinstance(ctx, discord.ApplicationContext):
@@ -266,7 +265,7 @@ class Miscellaneous(commands.Cog):
         await db.reminders.delete_many({'server_id': guild.id})
         await guild.leave()
         await ctx.interaction.followup.send(
-            embed=gen_embed(title='delete guild', content=f'Guild {guild.name} (ID: {server_id} data has been deleted.')
+            embed=gen_embed(title='delete guild', content=f'Guild {guild.name} (ID: {guild.id} data has been deleted.')
         )
 
     @datadeletion.command(name='user',
