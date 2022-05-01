@@ -40,19 +40,19 @@ class Modmail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def modmail_prompt(self, interaction: discord.Interaction):
-        listen_channel = interaction.channel
+    async def modmail_prompt(self, ctx: discord.ApplicationContext):
+        listen_channel = ctx.interaction.channel
 
         def check(m):
-            return m.author == interaction.user and m.channel == listen_channel
+            return m.author == ctx.interaction.user and m.channel == listen_channel
 
-       sent_message = await interaction.response.send_message(embed=gen_embed(title='Modmail Message Contents',
+        sent_message = await listen_channel.send(embed=gen_embed(title='Modmail Message Contents',
                                                   content='Please type out your modmail below and send. You can send images by adding an attachement to the message you send.'))
 
         try:
             mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
         except asyncio.TimeoutError:
-            await interaction.channel.send(embed=gen_embed(title='Modmail Cancelled',
+            await ctx.respond(embed=gen_embed(title='Modmail Cancelled',
                                                       content='The modmail has been cancelled.'))
             return None
         await sent_message.delete()
@@ -64,7 +64,7 @@ class Modmail(commands.Cog):
                       ctx: discord.ApplicationContext,
                       recipient: Option(discord.User, "User to send modmail to")):
         await ctx.interaction.response.defer()
-        modmail_content = await self.modmail_prompt(ctx.interaction)
+        modmail_content = await self.modmail_prompt(ctx)
 
         if modmail_content:
             log.info('Message detected from user')
