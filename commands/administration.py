@@ -278,7 +278,25 @@ class Administration(commands.Cog):
                                                        view=self)
 
                     case 'Chat Feature':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        chat_view = ChatMenu(self.context, self.bot)
+                        content = f"{'Enabled' if document['chat'] else 'Disabled'}"
+                        chat_embed = gen_embed(title='Chat Feature Settings',
+                                                  content=content)
+
+                        self.currentmessage = await interaction.message.edit(embed=chat_embed,
+                                                                             view=chat_view)
+
+                        await chat_view.wait()
+
+                        if chat_view.value:
+                            self.embed.set_field_at(3,
+                                                    name='Chat Feature',
+                                                    value=chat_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Blacklist/Whitelist':
                         pass
                     case 'Fun Features':
@@ -771,6 +789,52 @@ class Administration(commands.Cog):
             @discord.ui.button(label='Cancel',
                                style=discord.ButtonStyle.danger,
                                row=1)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+        class ChatMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Enable/Disable',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def change_chat_state(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                if doc['chat']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'chat': False}})
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value='Disabled'
+                else:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'chat': True}})
+                    interaction.message.embeds[0].description = 'Enabled'
+                    self.value = 'Enabled'
+
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            @discord.ui.button(label='Cancel',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.defer()
                 await self.end_interaction(interaction)
