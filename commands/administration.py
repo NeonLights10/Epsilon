@@ -281,9 +281,9 @@ class Administration(commands.Cog):
                         await interaction.response.defer()
                         server_document = await db.servers.find_one({"server_id": interaction.guild_id})
                         chat_view = ChatMenu(self.context, self.bot)
-                        content = f"{'Enabled' if document['chat'] else 'Disabled'}"
+                        content = f"{'Enabled' if server_document['chat'] else 'Disabled'}"
                         chat_embed = gen_embed(title='Chat Feature Settings',
-                                                  content=content)
+                                               content=content)
 
                         self.currentmessage = await interaction.message.edit(embed=chat_embed,
                                                                              view=chat_view)
@@ -298,9 +298,58 @@ class Administration(commands.Cog):
                         await self.currentmessage.edit(embed=self.embed,
                                                        view=self)
                     case 'Blacklist/Whitelist':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        bwlist_view = BWListMenu(self.context, self.bot)
+                        content = 'Disabled'
+                        if blacklist_channels := server_document['blacklist']:
+                            content = 'Blacklist enabled for the following channels:'
+                            for c in blacklist_channels:
+                                c = interaction.guild.get_channel(c)
+                                content += f'\n{c.mention}'
+                            content += '\n\nAdd/remove channels using `/blacklist add` or `/blacklist remove`'
+                        if whitelist_channels := server_document['whitelist']:
+                            content = 'Whitelist enabled for the following channels:'
+                            for c in whitelist_channels:
+                                c = interaction.guild.get_channel(c)
+                                content += f'\n{c.mention}'
+                            content += '\n\nAdd/remove channels using `/whitelist add` or `/whitelist remove`'
+                        bwlist_embed = gen_embed(title='Blacklist/Whitelist Settings',
+                                                 content=content)
+
+                        self.currentmessage = await interaction.message.edit(embed=bwlist_embed,
+                                                                             view=bwlist_view)
+
+                        await bwlist_view.wait()
+
+                        if bwlist_view.value:
+                            self.embed.set_field_at(4,
+                                                    name='Blacklist/Whitelist',
+                                                    value=bwlist_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
+
                     case 'Fun Features':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        fun_view = FunMenu(self.context, self.bot)
+                        content = f"{'Enabled' if server_document['fun'] else 'Disabled'}"
+                        fun_embed = gen_embed(title='Fun Features Settings',
+                                               content=content)
+
+                        self.currentmessage = await interaction.message.edit(embed=fun_embed,
+                                                                             view=fun_view)
+
+                        await fun_view.wait()
+
+                        if fun_view.value:
+                            self.embed.set_field_at(3,
+                                                    name='Fun Features',
+                                                    value=fun_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Logging':
                         pass
                     case 'Auto Assign Role On Join':
@@ -823,10 +872,157 @@ class Administration(commands.Cog):
                     await db.servers.update_one({"server_id": interaction.guild_id},
                                                 {"$set": {'chat': False}})
                     interaction.message.embeds[0].description = 'Disabled'
-                    self.value='Disabled'
+                    self.value = 'Disabled'
                 else:
                     await db.servers.update_one({"server_id": interaction.guild_id},
                                                 {"$set": {'chat': True}})
+                    interaction.message.embeds[0].description = 'Enabled'
+                    self.value = 'Enabled'
+
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            @discord.ui.button(label='Cancel',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+        class BWListMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Enable/Disable',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def change_list_state(self, button: discord.ui.Button, interaction: discord.Interaction):
+                class ListSelect(discord.ui.View):
+                    def __init__(self):
+                        super().__init__()
+                        self.value = None
+
+                    async def interaction_check(self,
+                                                s_interaction: discord.Interaction) -> bool:
+                        return s_interaction.user == interaction.user
+
+                    async def end_interaction(self,
+                                              s_interaction: discord.Interaction):
+                        view = discord.ui.View.from_message(s_interaction.message)
+                        for child in view.children:
+                            child.disabled = True
+
+                        await s_interaction.message.edit(view=view)
+                        self.stop()
+
+                    @discord.ui.select(placeholder="Choose the type of list filter for the chat feature...",
+                                       min_values=1,
+                                       max_values=1,
+                                       row=1,
+                                       options=[
+                                           discord.SelectOption(label="Blacklist",
+                                                                description="Choose channels to exclude from chat "
+                                                                            "feature",
+                                                                emoji="⬛"),
+                                           discord.SelectOption(label="Whitelist",
+                                                                description="Choose channels to include in chat "
+                                                                            "feature",
+                                                                emoji="⬜")
+                                       ])
+                    async def select_menu(self, select: discord.ui.Select, s_interaction: discord.Interaction):
+                        await s_interaction.response.defer()
+                        self.value = select.values[0]
+                        await self.end_interaction(s_interaction)
+
+                await interaction.response.defer()
+                doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                if doc['blacklist']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'blacklist': None}})
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value = 'Disabled'
+                    await interaction.message.edit(embed=interaction.message.embeds[0])
+                elif doc['whitelist']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'whitelist': None}})
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value = 'Disabled'
+                    await interaction.message.edit(embed=interaction.message.embeds[0])
+                else:
+                    select_view = ListSelect()
+                    await interaction.message.edit(view=select_view)
+                    await select_view.wait()
+
+                    if select_view.value == 'Blacklist':
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'blacklist': []}})
+                        interaction.message.embeds[0].description = 'Blacklist enabled. No active channels.'
+                        self.value = 'Blacklist enabled for the following channels: '
+                    if select_view.value == 'Whitelist':
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'whitelist': []}})
+                        interaction.message.embeds[0].description = 'Whitelist enabled. No active channels.'
+                        self.value = 'Whitelist enabled for the following channels: '
+
+                    await interaction.message.edit(embed=interaction.message.embeds[0],
+                                                   view=self)
+
+            @discord.ui.button(label='Cancel',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+        class FunMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Enable/Disable',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def change_fun_state(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                if doc['chat']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'fun': False}})
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value = 'Disabled'
+                else:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'fun': True}})
                     interaction.message.embeds[0].description = 'Enabled'
                     self.value = 'Enabled'
 
@@ -872,18 +1068,16 @@ class Administration(commands.Cog):
                         value=f"{'Enabled' if document['chat'] else 'Disabled'}")
 
         embed_text = 'Disabled'
-        if document['blacklist']:
-            blacklist = document['blacklist']
+        if blacklist := document['blacklist']:
             embed_text = 'Blacklist enabled for the following channels: '
             for channel in blacklist:
                 channel = ctx.guild.get_channel(channel)
-                embed_text = embed_text + f'{channel.mention} '
-        elif document['whitelist']:
-            whitelist = document['whitelist']
+                embed_text += f'{channel.mention} '
+        elif whitelist := document['whitelist']:
             embed_text = 'Whitelist enabled for the following channels: '
             for channel in whitelist:
                 channel = ctx.guild.get_channel(channel)
-                embed_text = embed_text + f'{channel.mention} '
+                embed_text += f'{channel.mention} '
         embed.add_field(name='Blacklist/Whitelist',
                         value=f'{embed_text}',
                         inline=False)

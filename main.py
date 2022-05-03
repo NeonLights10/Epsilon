@@ -168,8 +168,8 @@ async def initialize_document(guild, id):
             'chat': False,
             'delete_twitterfix': False,
             'prefix': None,
-            'blacklist': [],
-            'whitelist': [],
+            'blacklist': None,
+            'whitelist': None,
             'verify': [],
             'announcements': True
             }
@@ -184,9 +184,18 @@ async def check_document(guild, id):
         await initialize_document(guild, id)
     else:
         document = await db.servers.find_one({"server_id": id})
-        blacklist = document['blacklist']
-        for channel_id in blacklist:
-            await db.msgid.delete_many({"channel_id": channel_id})
+        # breaking change for blacklist/whitelist system
+        if blacklist := document['blacklist']:
+            for channel_id in blacklist:
+                await db.msgid.delete_many({"channel_id": channel_id})
+        if blacklist is not None:
+            if len(blacklist) == 0:
+                await db.servers.update_one({"server_id": id},
+                                            {"$set": {'blacklist': None}})
+        if whitelist := document['whitelist'] is not None:
+            if len(whitelist) == 0:
+                await db.servers.update_one({"server_id": id},
+                                            {"$set": {'whitelist': None}})
         # Changeable to update old documents whenever a new feature/config is added
         await db.servers.update_many(
             {"server_id": id},
