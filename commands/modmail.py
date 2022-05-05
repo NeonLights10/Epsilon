@@ -35,10 +35,64 @@ class Confirm(discord.ui.View):
         self.value = False
         self.stop()
 
+class PersistentEvent(discord.ui.View):
+    def __init__(self, guild, bot):
+        super().__init__(timeout=None)
+        self.guild = guild
+        self.bot = bot
+
+    @discord.ui.button(
+        label="Send a modmail!",
+        style=discord.ButtonStyle.primary,
+        custom_id="persistent_view:sendmodmail",
+    )
+    async def send_modmail(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("Currently just a placeholder button", ephemeral=True)
 
 class Modmail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.view = None
+        self.modmail_button.start()
+
+    @tasks.loop(seconds=10.0)
+    async def modmail_button(self):
+        async for document in db.servers.find({'modmail_button_channel': {'$exists': True}}):
+            if document['modmail_button_channel']:
+                server = self.bot.get_guild(document['server_id'])
+                channel = server.get_channel(document['modmail_button_channel'])
+                if document['prev_message_modmail']:
+                    button_message_id = document['prev_message_modmail']
+                    last_message_id = channel.last_message_id
+                    try:
+                        prev_button_message = await channel.fetch_message(int(button_message_id))
+                        if int(button_message_id) != last_message_id:
+                            await prev_button_message.delete()
+                            log.info('initial deleted')
+                            await self.init_modmail_button(server.id)
+                        else:
+                            self.view = PersistentEvent(guild=server.id, bot=self.bot)
+                            await prev_button_message.edit("Send a modmail to us by pressing the button below.", view=self.view)
+                    except discord.NotFound:
+                        await self.init_modmail_button(server.id)
+
+
+
+    async def init_modmail_button(self, server_id):
+        document = await db.servers.find_one({"server_id": server_id})
+        server = self.bot.get_guild(document['server_id'])
+        if document['modmail_button_channel']:
+            channel = server.get_channel(document['modmail_button_channel'])
+            self.view = PersistentEvent(guild=server_id, bot=self.bot)
+            new_message = await channel.send("Send a modmail to us by pressing the button below.", view=self.view)
+            log.info('initial posted')
+            await db.servers.update_one({"server_id": server_id},
+                                        {"$set": {'prev_message_modmail': new_message.id}})
+
+    @modmail_button.before_loop
+    async def wait_ready(self):
+        # log.info('wait till ready')
+        await self.bot.wait_until_ready()
 
     async def modmail_prompt(self, ctx: discord.ApplicationContext):
         listen_channel = ctx.interaction.channel
