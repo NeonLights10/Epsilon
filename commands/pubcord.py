@@ -20,6 +20,7 @@ class PersistentEvent(discord.ui.View):
         label="New Event/Campaigns/Gacha/Songs",
         style=discord.ButtonStyle.green,
         custom_id="persistent_view:currentevent",
+        disabled=True
     )
     async def currentevent(self, button: discord.ui.Button, interaction: discord.Interaction):
         embed = gen_embed(
