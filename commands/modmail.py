@@ -153,7 +153,8 @@ class Modmail(commands.Cog):
                             await prev_button_message.edit("Send a modmail to us by pressing the button below.", view=self.view)
                     except discord.NotFound:
                         await self.init_modmail_button(server.id)
-
+                else:
+                    await self.init_modmail_button(server.id)
 
 
     async def init_modmail_button(self, server_id):
