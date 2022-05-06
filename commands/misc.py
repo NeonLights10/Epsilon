@@ -96,6 +96,7 @@ class Miscellaneous(commands.Cog):
 
     @discord.slash_command(name='unload',
                            description='Unload a cog/extension.')
+    @is_owner()
     async def unload(self,
                      ctx: discord.ApplicationContext,
                      cog: Option(str, 'Name of cog/extension',
@@ -114,6 +115,7 @@ class Miscellaneous(commands.Cog):
 
     @discord.slash_command(name='load',
                            description='Load a cog/extension.')
+    @is_owner()
     async def load(self,
                    ctx: discord.ApplicationContext,
                    cog: Option(str, 'Name of cog/extension',
@@ -128,6 +130,7 @@ class Miscellaneous(commands.Cog):
 
     @discord.slash_command(name='reload',
                            description='Reload a cog/extension.')
+    @is_owner()
     async def reload(self,
                      ctx: discord.ApplicationContext,
                      cog: Option(str, 'Name of cog/extension',

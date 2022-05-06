@@ -4,7 +4,9 @@ from typing import Union
 
 import discord
 import emoji as zemoji
+from discord.commands.permissions import default_permissions
 from discord.ext import commands
+from discord.commands import Option, SlashCommandGroup
 
 from commands.errorhandler import CheckOwner
 from formatting.embed import gen_embed
@@ -85,28 +87,12 @@ class Administration(commands.Cog):
 
     @discord.slash_command(name='settings',
                            description='Configure settings for Kanon Bot')
+    @default_permissions(manage_guild=True)
     async def settings(self,
                        ctx: discord.ApplicationContext):
 
         await ctx.interaction.response.defer()
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-
-        class Cancel(discord.ui.View):
-            def __init__(self, og_interaction, og_view, og_embed):
-                super().__init__()
-                self.og_interaction = og_interaction
-                self.og_view = og_view
-                self.og_embed = og_embed
-
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=0)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await self.og_interaction.edit_original_message(embed=self.og_embed,
-                                                                view=self.og_view)
-                self.stop()
-                await interaction.message.delete()
 
         class Confirm(discord.ui.View):
             def __init__(self):
@@ -229,7 +215,7 @@ class Administration(commands.Cog):
                             content = 'Enabled'
                         if server_document['announcement_channel']:
                             announce_channel = ctx.guild.get_channel(int(server_document['announcement_channel']))
-                            content = content + f' in channel {announce_channel.mention}'
+                            content = content + f' | Configured channel: {announce_channel.mention}'
                         else:
                             content = content + f', no channel set, using default settings.'
                         announcement_embed = gen_embed(title='Global Announcement Settings',
@@ -263,7 +249,6 @@ class Administration(commands.Cog):
                             modmail_view.children[2].disabled = True
                         modmail_embed = gen_embed(title='Modmail Settings',
                                                   content=content)
-
                         self.currentmessage = await interaction.message.edit(embed=modmail_embed,
                                                                              view=modmail_view)
 
@@ -278,22 +263,199 @@ class Administration(commands.Cog):
                                                        view=self)
 
                     case 'Chat Feature':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        chat_view = ChatMenu(self.context, self.bot)
+                        content = f"{'Enabled' if server_document['chat'] else 'Disabled'}"
+                        chat_embed = gen_embed(title='Chat Feature Settings',
+                                               content=content)
+                        self.currentmessage = await interaction.message.edit(embed=chat_embed,
+                                                                             view=chat_view)
+
+                        await chat_view.wait()
+
+                        if chat_view.value:
+                            self.embed.set_field_at(3,
+                                                    name='Chat Feature',
+                                                    value=chat_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Blacklist/Whitelist':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        bwlist_view = BWListMenu(self.context, self.bot)
+                        content = 'Disabled'
+                        if blacklist_channels := server_document['blacklist']:
+                            content = 'Blacklist enabled for the following channels:'
+                            for c in blacklist_channels:
+                                c = interaction.guild.get_channel(c)
+                                content += f'\n{c.mention}'
+                            content += '\n\nAdd/remove channels using `/blacklist add` or `/blacklist remove`'
+                        if whitelist_channels := server_document['whitelist']:
+                            content = 'Whitelist enabled for the following channels:'
+                            for c in whitelist_channels:
+                                c = interaction.guild.get_channel(c)
+                                content += f'\n{c.mention}'
+                            content += '\n\nAdd/remove channels using `/whitelist add` or `/whitelist remove`'
+                        bwlist_embed = gen_embed(title='Blacklist/Whitelist Settings',
+                                                 content=content)
+                        self.currentmessage = await interaction.message.edit(embed=bwlist_embed,
+                                                                             view=bwlist_view)
+
+                        await bwlist_view.wait()
+
+                        if bwlist_view.value:
+                            self.embed.set_field_at(4,
+                                                    name='Blacklist/Whitelist',
+                                                    value=bwlist_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
+
                     case 'Fun Features':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        fun_view = FunMenu(self.context, self.bot)
+                        content = f"{'Enabled' if server_document['fun'] else 'Disabled'}"
+                        fun_embed = gen_embed(title='Fun Features Settings',
+                                              content=content)
+                        self.currentmessage = await interaction.message.edit(embed=fun_embed,
+                                                                             view=fun_view)
+
+                        await fun_view.wait()
+
+                        if fun_view.value:
+                            self.embed.set_field_at(3,
+                                                    name='Fun Features',
+                                                    value=fun_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Logging':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        defaults = {'log_messages': server_document['log_messages'],
+                                    'log_joinleaves': server_document['log_joinleaves'],
+                                    'log_kbm': server_document['log_kbm'],
+                                    'log_strikes': server_document['log_strikes']}
+                        if server_document['log_channel']:
+                            log_channel = ctx.guild.get_channel(int(server_document['log_channel']))
+                            log_view = LogMenu(self.context, self.bot, log_channel, defaults)
+                            if (defaults['log_messages']
+                                    or defaults['log_joinleaves']
+                                    or defaults['log_kbm']
+                                    or defaults['log_strikes']):
+                                content = f'Enabled | Configured channel: {log_channel.mention}'
+                            else:
+                                content = f'Disabled | Configured channel: {log_channel.mention}'
+                        else:
+                            log_view = LogMenu(self.context, self.bot, None, defaults)
+                            content = f'Disabled | Configured channel: None'
+                        log_embed = gen_embed(title='Logging Settings',
+                                              content=content)
+                        enabled_content = ''
+                        disabled_content = ''
+                        if (defaults['log_messages']
+                                and defaults['log_joinleaves']
+                                and defaults['log_kbm']
+                                and defaults['log_strikes']):
+                            disabled_content = 'None'
+                        if (not defaults['log_messages']
+                                and not defaults['log_joinleaves']
+                                and not defaults['log_kbm']
+                                and not defaults['log_strikes']):
+                            enabled_content = 'None'
+                        if defaults['log_messages']:
+                            enabled_content += '・ Log message edits and deletion\n'
+                        else:
+                            disabled_content += '・ Log message edits and deletion\n'
+                        if defaults['log_joinleaves']:
+                            enabled_content += '・ Log member joins & leaves\n'
+                        else:
+                            disabled_content += '・ Log member joins & leaves\n'
+                        if defaults['log_kbm']:
+                            enabled_content += '・ Log kicks, bans, and timeouts/mutes\n'
+                        else:
+                            disabled_content += '・ Log kicks, bans, and timeouts/mutes\n'
+                        if defaults['log_strikes']:
+                            enabled_content += '・ Log strikes - which moderator assigned strike, message contents, ' \
+                                               'etc.\n '
+                        else:
+                            disabled_content += '・ Log strikes - which moderator assigned strike, message contents, ' \
+                                                'etc.\n '
+
+                        log_embed.add_field(name='Enabled Options',
+                                            value=enabled_content,
+                                            inline=True)
+                        log_embed.add_field(name='Disabled Options',
+                                            value=disabled_content,
+                                            inline=True)
+                        self.currentmessage = await interaction.message.edit(embed=log_embed,
+                                                                             view=log_view)
+
+                        await log_view.wait()
+
+                        if log_view.value:
+                            self.embed.set_field_at(5,
+                                                    name='Logging',
+                                                    value=log_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Auto Assign Role On Join':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        autorole_view = AutoRoleMenu(self.context, self.bot)
+                        if server_document['autorole']:
+                            autorole = ctx.guild.get_role(int(server_document['autorole']))
+                            content = f'**Enabled** for role {autorole.mention}'
+                        else:
+                            content = 'Disabled'
+                            autorole_view.children[1].disabled = True
+                        autorole_embed = gen_embed(title='Auto Assign Role Settings',
+                                                   content=content)
+                        self.currentmessage = await interaction.message.edit(embed=autorole_embed,
+                                                                             view=autorole_view)
+
+                        await autorole_view.wait()
+
+                        if autorole_view.value:
+                            self.embed.set_field_at(6,
+                                                    name='Auto Assign Role On Join',
+                                                    value=autorole_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Moderator Role':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        modrole_view = ModRoleMenu(self.context, self.bot)
+                        if server_document['modrole']:
+                            modrole = ctx.guild.get_role(int(server_document['modrole']))
+                            content = f'**Enabled** for role {modrole.mention}'
+                        else:
+                            content = 'Disabled'
+                            modrole_view.children[1].disabled = True
+                        modrole_embed = gen_embed(title='Moderator Role Settings',
+                                                  content=content)
+                        self.currentmessage = await interaction.message.edit(embed=modrole_embed,
+                                                                             view=modrole_view)
+
+                        await modrole_view.wait()
+
+                        if modrole_view.value:
+                            self.embed.set_field_at(6,
+                                                    name='Auto Assign Role On Join',
+                                                    value=modrole_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Server Join Verification':
                         pass
 
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
                                row=1)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.send_message("Stopped configuring settings.", ephemeral=True)
@@ -319,6 +481,13 @@ class Administration(commands.Cog):
                 await interaction.message.edit(view=view)
                 self.stop()
 
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
             # noinspection PyTypeChecker
             @discord.ui.button(label='Set Prefix',
                                style=discord.ButtonStyle.primary,
@@ -333,8 +502,8 @@ class Administration(commands.Cog):
                             embed=gen_embed(title='New prefix',
                                             content='Please type the new prefix you would like to use.'))
                     except discord.Forbidden:
-                        # TODO: change exception type
-                        raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
 
                     try:
                         mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
@@ -376,13 +545,6 @@ class Administration(commands.Cog):
                         self.value = new_prefix_content
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=0)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await self.end_interaction(interaction)
-
         class AnnouncementMenu(discord.ui.View):
             def __init__(self, og_context, bot):
                 super().__init__()
@@ -402,6 +564,13 @@ class Administration(commands.Cog):
 
                 await interaction.message.edit(view=view)
                 self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.gray,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
 
             @discord.ui.button(label='Enable/Disable',
                                style=discord.ButtonStyle.primary,
@@ -435,7 +604,7 @@ class Administration(commands.Cog):
 
             # noinspection PyTypeChecker
             @discord.ui.button(label='Configure Channel',
-                               style=discord.ButtonStyle.primary,
+                               style=discord.ButtonStyle.gray,
                                row=0)
             async def configure_announcement_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 async def announcement_prompt(listen_channel, attempts=1, prev_message=None):
@@ -448,8 +617,8 @@ class Administration(commands.Cog):
                                             content=('Please mention the channel you'
                                                      ' would like to use for announcements.')))
                     except discord.Forbidden:
-                        # TODO: change exception type
-                        raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
 
                     try:
                         mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
@@ -478,7 +647,7 @@ class Administration(commands.Cog):
                 new_announcement = await announcement_prompt(interaction.channel)
 
                 if new_announcement:
-                    log.info('New announcement entered, confirm workflow')
+                    log.info('New announcement channel entered, confirm workflow')
                     view = Confirm()
                     new_announcement_channel = new_announcement.channel_mentions[0]
                     await new_announcement.delete()
@@ -510,13 +679,6 @@ class Administration(commands.Cog):
                             self.value = f'Enabled | Configured channel: {new_announcement_channel.mention}'
 
                         await interaction.message.edit(embed=interaction.message.embeds[0])
-
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=0)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await self.end_interaction(interaction)
 
         class ModmailMenu(discord.ui.View):
             def __init__(self, og_context, bot):
@@ -552,8 +714,8 @@ class Administration(commands.Cog):
                                                 content='Plase mention the channel you would like to use for modmail.')
                             )
                         except discord.Forbidden:
-                            # TODO: change exception type
-                            raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                            raise commands.BotMissingPermissions(['Send Messages'],
+                                                                 'Forbidden 403 - could not send message to user.')
                     case 2:
                         try:
                             sent_prompt = await listen_channel.send(
@@ -561,8 +723,8 @@ class Administration(commands.Cog):
                                                 content='Plase mention the channel you would like to put the button.')
                             )
                         except discord.Forbidden:
-                            # TODO: change exception type
-                            raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                            raise commands.BotMissingPermissions(['Send Messages'],
+                                                                 'Forbidden 403 - could not send message to user.')
 
                 try:
                     mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
@@ -590,6 +752,13 @@ class Administration(commands.Cog):
                                                              scenario,
                                                              attempts=attempts,
                                                              prev_message=sent_error)
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
 
             # noinspection PyTypeChecker
             @discord.ui.button(label='Enable/Disable',
@@ -695,10 +864,10 @@ class Administration(commands.Cog):
                 await interaction.message.edit(embed=interaction.message.embeds[0], view=self)
 
             # noinspection PyTypeChecker
-            @discord.ui.button(label='Change Destination Channel',
-                               style=discord.ButtonStyle.primary,
-                               row=0)
-            async def change_dest_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+            @discord.ui.button(label='Configure Destination Channel',
+                               style=discord.ButtonStyle.gray,
+                               row=1)
+            async def configure_dest_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.defer()
 
                 new_destination = await self.modmail_channel_prompt(interaction, interaction.channel, 1)
@@ -732,10 +901,11 @@ class Administration(commands.Cog):
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
             # noinspection PyTypeChecker
-            @discord.ui.button(label='Change Button Channel',
-                               style=discord.ButtonStyle.primary,
-                               row=0)
-            async def change_button_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+            @discord.ui.button(label='Configure Button Channel',
+                               style=discord.ButtonStyle.gray,
+                               row=1)
+            async def configure_button_modmail_channel(self, button: discord.ui.Button,
+                                                       interaction: discord.Interaction):
                 await interaction.response.defer()
 
                 new_button = await self.modmail_channel_prompt(interaction, interaction.channel, 2)
@@ -768,12 +938,607 @@ class Administration(commands.Cog):
                                                                      f'{new_button_channel.mention}')
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=1)
+        class ChatMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.defer()
                 await self.end_interaction(interaction)
+
+            @discord.ui.button(label='Enable/Disable',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def change_chat_state(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                if doc['chat']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'chat': False}})
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value = 'Disabled'
+                else:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'chat': True}})
+                    interaction.message.embeds[0].description = 'Enabled'
+                    self.value = 'Enabled'
+
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        class BWListMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+            @discord.ui.button(label='Enable/Disable',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def change_list_state(self, button: discord.ui.Button, interaction: discord.Interaction):
+                class ListSelect(discord.ui.View):
+                    def __init__(self):
+                        super().__init__()
+                        self.value = None
+
+                    async def interaction_check(self,
+                                                s_interaction: discord.Interaction) -> bool:
+                        return s_interaction.user == interaction.user
+
+                    async def end_interaction(self,
+                                              s_interaction: discord.Interaction):
+                        view = discord.ui.View.from_message(s_interaction.message)
+                        for child in view.children:
+                            child.disabled = True
+
+                        await s_interaction.message.edit(view=view)
+                        self.stop()
+
+                    @discord.ui.select(placeholder="Choose the type of list filter for the chat feature...",
+                                       min_values=1,
+                                       max_values=1,
+                                       row=1,
+                                       options=[
+                                           discord.SelectOption(label="Blacklist",
+                                                                description="Choose channels to exclude from chat "
+                                                                            "feature",
+                                                                emoji="⬛"),
+                                           discord.SelectOption(label="Whitelist",
+                                                                description="Choose channels to include in chat "
+                                                                            "feature",
+                                                                emoji="⬜")
+                                       ])
+                    async def select_menu(self, select: discord.ui.Select, s_interaction: discord.Interaction):
+                        await s_interaction.response.defer()
+                        self.value = select.values[0]
+                        await self.end_interaction(s_interaction)
+
+                await interaction.response.defer()
+                doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                if doc['blacklist']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'blacklist': None}})
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value = 'Disabled'
+                    await interaction.message.edit(embed=interaction.message.embeds[0])
+                elif doc['whitelist']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'whitelist': None}})
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value = 'Disabled'
+                    await interaction.message.edit(embed=interaction.message.embeds[0])
+                else:
+                    select_view = ListSelect()
+                    await interaction.message.edit(view=select_view)
+                    await select_view.wait()
+
+                    if select_view.value == 'Blacklist':
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'blacklist': []}})
+                        interaction.message.embeds[0].description = 'Blacklist enabled. No active channels.'
+                        self.value = 'Blacklist enabled for the following channels: '
+                    if select_view.value == 'Whitelist':
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'whitelist': []}})
+                        interaction.message.embeds[0].description = 'Whitelist enabled. No active channels.'
+                        self.value = 'Whitelist enabled for the following channels: '
+
+                    await interaction.message.edit(embed=interaction.message.embeds[0],
+                                                   view=self)
+
+        class FunMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+            @discord.ui.button(label='Enable/Disable',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def change_fun_state(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                if doc['chat']:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'fun': False}})
+                    interaction.message.embeds[0].description = 'Disabled'
+                    self.value = 'Disabled'
+                else:
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'fun': True}})
+                    interaction.message.embeds[0].description = 'Enabled'
+                    self.value = 'Enabled'
+
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        class LogSelect(discord.ui.Select):
+            def __init__(self, bot, defaults):
+                self.bot = bot
+                options = []
+                if defaults['log_messages']:
+                    options.append(
+                        discord.SelectOption(label='Messages',
+                                             description='Log message edits and deletion',
+                                             default=True))
+                else:
+                    options.append(
+                        discord.SelectOption(label='Messages',
+                                             description='Log message edits and deletion',
+                                             default=False))
+                if defaults['log_joinleaves']:
+                    options.append(
+                        discord.SelectOption(label='Joins/Leaves',
+                                             description='Log member joins & leaves',
+                                             default=True))
+                else:
+                    options.append(
+                        discord.SelectOption(label='Joins/Leaves',
+                                             description='Log member joins & leaves',
+                                             default=False))
+                if defaults['log_kbm']:
+                    options.append(
+                        discord.SelectOption(label='KBM',
+                                             description='Log kicks, bans, and timeouts/mutes',
+                                             default=True))
+                else:
+                    options.append(
+                        discord.SelectOption(label='KBM',
+                                             description='Log kicks, bans, and timeouts/mutes',
+                                             default=False))
+                if defaults['log_strikes']:
+                    options.append(
+                        discord.SelectOption(label='Strikes',
+                                             description='Log strikes',
+                                             default=True))
+                else:
+                    options.append(
+                        discord.SelectOption(label='Strikes',
+                                             description='Log strikes',
+                                             default=False))
+                super().__init__(custom_id='logselect',
+                                 placeholder='Pick the settings you wish to enable',
+                                 min_values=1,
+                                 max_values=4,
+                                 row=0,
+                                 options=options)
+
+            async def callback(self, interaction: discord.Interaction):
+                await interaction.response.defer()
+
+        class LogMenu(discord.ui.View):
+            def __init__(self, og_context, bot, config_channel, defaults):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.channel = config_channel
+                self.value = ''
+                self.select_values = None
+
+                self.add_item(LogSelect(self.bot, defaults))
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=1)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                for child in self.children:
+                    if child.custom_id == 'logselect':
+                        self.select_values = child.values
+                post = {'log_messages': False,
+                        'log_joinleaves': False,
+                        'log_kbm': False,
+                        'log_strikes': False}
+                for option in self.select_values:
+                    match option:
+                        case 'Messages':
+                            post['log_messages'] = True
+                        case 'Joins/Leaves':
+                            post['log_joinleaves'] = True
+                        case 'KBM':
+                            post['log_kbm'] = True
+                        case 'Strikes':
+                            post['log_strikes'] = True
+                await db.servers.update_one({"server_id": interaction.guild_id},
+                                            {"$set": post})
+                embed_text = 'Configured channel: '
+                if self.channel:
+                    embed_text += f'{self.channel.mention}\n'
+                else:
+                    embed_text += 'None\n'
+                embed_text += '\nLog messages: ' + f"{'Enabled' if post['log_messages'] else 'Disabled'}"
+                embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if post['log_joinleaves'] else 'Disabled'}"
+                embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if post['log_kbm'] else 'Disabled'}"
+                embed_text += '\nLog strikes: ' + f"{'Enabled' if post['log_strikes'] else 'Disabled'}"
+                self.value = embed_text
+                await self.end_interaction(interaction)
+
+            # noinspection PyTypeChecker
+            @discord.ui.button(label='Configure Channel',
+                               style=discord.ButtonStyle.gray,
+                               row=1)
+            async def configure_log_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                async def log_prompt(listen_channel, attempts=1, prev_message=None):
+                    def check(m):
+                        return m.author == interaction.user and m.channel == listen_channel
+
+                    try:
+                        sent_prompt = await listen_channel.send(
+                            embed=gen_embed(title='Configure log channel',
+                                            content=('Please mention the channel you'
+                                                     ' would like to use for logging.')))
+                    except discord.Forbidden:
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
+
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+                    except asyncio.TimeoutError:
+                        await sent_prompt.delete()
+                        await interaction.followup.send(
+                            embed=gen_embed(title='Log channel configuration',
+                                            content='Log channel configuration has been cancelled.'),
+                            ephemeral=True)
+                        return None
+                    if prev_message:
+                        await prev_message.delete()
+                    await sent_prompt.delete()
+                    if mmsg.channel_mentions:
+                        return mmsg
+                    else:
+                        sent_error = await interaction.followup.send(
+                            embed=gen_embed(title='Error',
+                                            content='No channel found. Please check that you mentioned the channel.')
+                        )
+                        await mmsg.delete()
+                        attempts += 1
+                        return await log_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
+
+                await interaction.response.defer()
+                new_log = await log_prompt(interaction.channel)
+
+                if new_log:
+                    log.info('New log channel entered, confirm workflow')
+                    view = Confirm()
+                    new_log_channel = new_log.channel_mentions[0]
+                    await new_log.delete()
+                    sent_message = await interaction.followup.send(embed=gen_embed(
+                        title='Confirmation',
+                        content=('Please verify the contents before confirming:\n'
+                                 f'**Selected Log Channel: {new_log_channel.mention}**')),
+                        view=view)
+                    log_timeout = await view.wait()
+                    if log_timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
+
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'announcement_channel': new_log_channel.id}})
+
+                        doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                        log_messages = doc['log_messages']
+                        log_joinleaves = doc['log_joinleaves']
+                        log_kbm = doc['log_kbm']
+                        log_strikes = doc['log_strikes']
+                        if not log_messages and not log_joinleaves and not log_kbm and not log_strikes:
+                            interaction.message.embeds[0].description = ('Disabled | Configured Channel: '
+                                                                         f'{new_log_channel.mention}')
+                            self.channel = new_log_channel
+                        else:
+                            interaction.message.embeds[0].description = ('Enabled | Configured Channel: '
+                                                                         f'{new_log_channel.mention}')
+                            self.channel = new_log_channel
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        class AutoRoleMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+            @discord.ui.button(label='Disable',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
+            async def disable_autorole(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await db.servers.update_one({"server_id": interaction.guild_id},
+                                            {"$set": {'autorole': None}})
+                interaction.message.embeds[0].description = 'Disabled'
+                self.value = 'Disabled'
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            # noinspection PyTypeChecker
+            @discord.ui.button(label='Configure Role',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def configure_autorole(self, button: discord.ui.Button, interaction: discord.Interaction):
+                async def autorole_prompt(listen_channel, attempts=1, prev_message=None):
+                    def check(m):
+                        return m.author == interaction.user and m.channel == listen_channel
+
+                    try:
+                        sent_prompt = await listen_channel.send(
+                            embed=gen_embed(title='Configure auto assign role',
+                                            content=('Please enter the role you would like to use.\n\n'
+                                                     'Accepted inputs: role mention, id, role name (case sensitive)')))
+                    except discord.Forbidden:
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
+
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+                    except asyncio.TimeoutError:
+                        await sent_prompt.delete()
+                        await interaction.followup.send(
+                            embed=gen_embed(title='Auto assign role configuration',
+                                            content='Auto assign role configuration has been cancelled.'),
+                            ephemeral=True)
+                        return None
+                    if prev_message:
+                        await prev_message.delete()
+                    await sent_prompt.delete()
+                    try:
+                        converter = commands.RoleConverter()
+                        msg_content = await converter.convert(self.context, mmsg.content)
+                        await mmsg.delete()
+                        return msg_content
+                    except commands.RoleNotFound:
+                        sent_error = await interaction.followup.send(
+                            embed=gen_embed(title='Error',
+                                            content='Role not found. Please check that you have the correct role.')
+                        )
+                        await mmsg.delete()
+                        attempts += 1
+                        return await autorole_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
+
+                await interaction.response.defer()
+                new_role = await autorole_prompt(interaction.channel)
+
+                if new_role:
+                    log.info('New auto role entered, confirm workflow')
+                    view = Confirm()
+                    sent_message = await interaction.followup.send(embed=gen_embed(
+                        title='Confirmation',
+                        content=('Please verify the contents before confirming:\n'
+                                 f'**Selected Role: {new_role.mention} (ID: {new_role.id})')),
+                        view=view)
+                    role_timeout = await view.wait()
+                    if role_timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
+
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'autorole': new_role.id}})
+                        interaction.message.embeds[0].description = f'Enabled for role {new_role.mention}'
+                        self.value = f'Enabled for role {new_role.mention}'
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        class ModRoleMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+            @discord.ui.button(label='Disable',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
+            async def disable_modrole(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await db.servers.update_one({"server_id": interaction.guild_id},
+                                            {"$set": {'modrole': None}})
+                interaction.message.embeds[0].description = 'Disabled'
+                self.value = 'Disabled'
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            # noinspection PyTypeChecker
+            @discord.ui.button(label='Configure Role',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def configure_modrole(self, button: discord.ui.Button, interaction: discord.Interaction):
+                async def modrole_prompt(listen_channel, attempts=1, prev_message=None):
+                    def check(m):
+                        return m.author == interaction.user and m.channel == listen_channel
+
+                    try:
+                        sent_prompt = await listen_channel.send(
+                            embed=gen_embed(title='Configure moderator role',
+                                            content=('Please enter the role you would like to use.\n\n'
+                                                     'Accepted inputs: role mention, id, role name (case sensitive)')))
+                    except discord.Forbidden:
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
+
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+                    except asyncio.TimeoutError:
+                        await sent_prompt.delete()
+                        await interaction.followup.send(
+                            embed=gen_embed(title='Moderator role configuration',
+                                            content='Moderator role configuration has been cancelled.'),
+                            ephemeral=True)
+                        return None
+                    if prev_message:
+                        await prev_message.delete()
+                    await sent_prompt.delete()
+                    try:
+                        converter = commands.RoleConverter()
+                        msg_content = await converter.convert(self.context, mmsg.content)
+                        await mmsg.delete()
+                        return msg_content
+                    except commands.RoleNotFound:
+                        sent_error = await interaction.followup.send(
+                            embed=gen_embed(title='Error',
+                                            content='Role not found. Please check that you have the correct role.')
+                        )
+                        await mmsg.delete()
+                        attempts += 1
+                        return await modrole_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
+
+                await interaction.response.defer()
+                new_role = await modrole_prompt(interaction.channel)
+
+                if new_role:
+                    log.info('New auto role entered, confirm workflow')
+                    view = Confirm()
+                    sent_message = await interaction.followup.send(embed=gen_embed(
+                        title='Confirmation',
+                        content=('Please verify the contents before confirming:\n'
+                                 f'**Selected Role: {new_role.mention} (ID: {new_role.id})')),
+                        view=view)
+                    role_timeout = await view.wait()
+                    if role_timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
+
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'modrole': new_role.id}})
+                        interaction.message.embeds[0].description = f'Enabled for role {new_role.mention}'
+                        self.value = f'Enabled for role {new_role.mention}'
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
 
         ####################
 
@@ -808,18 +1573,16 @@ class Administration(commands.Cog):
                         value=f"{'Enabled' if document['chat'] else 'Disabled'}")
 
         embed_text = 'Disabled'
-        if document['blacklist']:
-            blacklist = document['blacklist']
+        if blacklist := document['blacklist']:
             embed_text = 'Blacklist enabled for the following channels: '
             for channel in blacklist:
                 channel = ctx.guild.get_channel(channel)
-                embed_text = embed_text + f'{channel.mention} '
-        elif document['whitelist']:
-            whitelist = document['whitelist']
+                embed_text += f'{channel.mention} '
+        elif whitelist := document['whitelist']:
             embed_text = 'Whitelist enabled for the following channels: '
             for channel in whitelist:
                 channel = ctx.guild.get_channel(channel)
-                embed_text = embed_text + f'{channel.mention} '
+                embed_text += f'{channel.mention} '
         embed.add_field(name='Blacklist/Whitelist',
                         value=f'{embed_text}',
                         inline=False)
@@ -832,6 +1595,9 @@ class Administration(commands.Cog):
         if document['log_channel']:
             logging_channel = ctx.guild.get_channel(int(document['log_channel']))
             embed_text += f'{logging_channel.mention}\n'
+        else:
+            embed_text += 'None\n'
+        embed_text += '\nLog messages: ' + f"{'Enabled' if document['log_messages'] else 'Disabled'}"
         embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if document['log_joinleaves'] else 'Disabled'}"
         embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if document['log_kbm'] else 'Disabled'}"
         embed_text += '\nLog strikes: ' + f"{'Enabled' if document['log_strikes'] else 'Disabled'}"
@@ -863,13 +1629,24 @@ class Administration(commands.Cog):
 
         main_menu_view = SettingsMenu(ctx, embed, self.bot)
         sent_menu_message = await ctx.interaction.followup.send(embed=embed,
-                                                                view=main_menu_view)
+                                                                view=main_menu_view,
+                                                                ephemeral=True)
         timeout = await main_menu_view.wait()
         if timeout:
             for item in main_menu_view.children:
                 item.disabled = True
             await sent_menu_message.edit(embed=embed,
                                          view=main_menu_view)
+
+    blacklist = SlashCommandGroup('blacklist', 'Configure blacklist channels')
+
+    @blacklist.command(name='add',
+                       description='Configure settings for Kanon Bot')
+    @default_permissions(manage_guild=True)
+    async def blacklist_add(self,
+                            ctx: discord.ApplicationContext,
+                            ):
+        pass
 
 
 def setup(bot):

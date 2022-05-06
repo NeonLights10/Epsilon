@@ -4,10 +4,10 @@ aiodns
 brotlipy
 cchardet
 colorlog~=6.6.0
-motor~=2.5.1
-pymongo~=3.12.3
+motor==3.0.0
+pymongo==4.1.1
 psutil
-validators
+validators==0.19.0
 dnspython
 python-dateutil
 emoji
