@@ -1,8 +1,8 @@
 import discord
 
 from discord.ext import commands
+from discord.commands.options import Option
 from discord.ext import bridge
-from discord.commands import Option
 
 from __main__ import log, db
 
@@ -12,7 +12,7 @@ class Help(commands.Cog):
         self.bot = bot
 
     async def help_autocomplete(self,
-                                ctx: discord.ApplicationContext):
+                                ctx):
         command_list = []
         for x in self.bot.cogs:
             cog_commands = (self.bot.get_cog(x)).get_commands()
@@ -24,7 +24,7 @@ class Help(commands.Cog):
     @bridge.bridge_command(name='help',
                            description='Shows all available commands and help context.')
     async def help(self,
-                   ctx: bridge.BridgeContext,
+                   ctx,
                    command: Option(str, "Enter a command for more details on usage",
                                    default="",
                                    required=False,
@@ -106,15 +106,18 @@ class Help(commands.Cog):
                     else:
                         if command == y.name:
                             help_detail_message = discord.Embed(title=y.name.capitalize(), color=discord.Color.blue())
-                            help_detail_message.add_field(name='Description', value=y.description, inline=False)
+                            help_detail_message.add_field(name='Description', value=y.description or "No description provided", inline=False)
 
                             if isinstance(y, discord.SlashCommand):
                                 options = ""
-                                for option in y.options:
-                                    if not option.name == 'optional':
-                                        options = options + f"{option.name}: {option.description}"
-                                    else:
-                                        options = 'No options available.'
+                                if y.options:
+                                    for option in y.options:
+                                        if not option.name == 'optional':
+                                            options = options + f"{option.name}: {option.description}"
+                                        else:
+                                            options = options + f"(Optional) {option.name}: {option.description}"
+                                else:
+                                    options = "No options available."
                                 help_detail_message.add_field(name='Options', value=options,
                                                               inline=False)
                             found = True

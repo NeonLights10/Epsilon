@@ -4,7 +4,9 @@ from typing import Union
 
 import discord
 import emoji as zemoji
+from discord.commands.permissions import default_permissions
 from discord.ext import commands
+from discord.commands import Option, SlashCommandGroup
 
 from commands.errorhandler import CheckOwner
 from formatting.embed import gen_embed
@@ -85,28 +87,12 @@ class Administration(commands.Cog):
 
     @discord.slash_command(name='settings',
                            description='Configure settings for Kanon Bot')
+    @default_permissions(manage_guild=True)
     async def settings(self,
                        ctx: discord.ApplicationContext):
 
         await ctx.interaction.response.defer()
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-
-        class Cancel(discord.ui.View):
-            def __init__(self, og_interaction, og_view, og_embed):
-                super().__init__()
-                self.og_interaction = og_interaction
-                self.og_view = og_view
-                self.og_embed = og_embed
-
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=0)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await self.og_interaction.edit_original_message(embed=self.og_embed,
-                                                                view=self.og_view)
-                self.stop()
-                await interaction.message.delete()
 
         class Confirm(discord.ui.View):
             def __init__(self):
@@ -263,7 +249,6 @@ class Administration(commands.Cog):
                             modmail_view.children[2].disabled = True
                         modmail_embed = gen_embed(title='Modmail Settings',
                                                   content=content)
-
                         self.currentmessage = await interaction.message.edit(embed=modmail_embed,
                                                                              view=modmail_view)
 
@@ -284,7 +269,6 @@ class Administration(commands.Cog):
                         content = f"{'Enabled' if server_document['chat'] else 'Disabled'}"
                         chat_embed = gen_embed(title='Chat Feature Settings',
                                                content=content)
-
                         self.currentmessage = await interaction.message.edit(embed=chat_embed,
                                                                              view=chat_view)
 
@@ -316,7 +300,6 @@ class Administration(commands.Cog):
                             content += '\n\nAdd/remove channels using `/whitelist add` or `/whitelist remove`'
                         bwlist_embed = gen_embed(title='Blacklist/Whitelist Settings',
                                                  content=content)
-
                         self.currentmessage = await interaction.message.edit(embed=bwlist_embed,
                                                                              view=bwlist_view)
 
@@ -337,7 +320,6 @@ class Administration(commands.Cog):
                         content = f"{'Enabled' if server_document['fun'] else 'Disabled'}"
                         fun_embed = gen_embed(title='Fun Features Settings',
                                               content=content)
-
                         self.currentmessage = await interaction.message.edit(embed=fun_embed,
                                                                              view=fun_view)
 
@@ -421,11 +403,54 @@ class Administration(commands.Cog):
                                                     inline=False)
                         await self.currentmessage.edit(embed=self.embed,
                                                        view=self)
-
                     case 'Auto Assign Role On Join':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        autorole_view = AutoRoleMenu(self.context, self.bot)
+                        if server_document['autorole']:
+                            autorole = ctx.guild.get_role(int(server_document['autorole']))
+                            content = f'**Enabled** for role {autorole.mention}'
+                        else:
+                            content = 'Disabled'
+                            autorole_view.children[1].disabled = True
+                        autorole_embed = gen_embed(title='Auto Assign Role Settings',
+                                                   content=content)
+                        self.currentmessage = await interaction.message.edit(embed=autorole_embed,
+                                                                             view=autorole_view)
+
+                        await autorole_view.wait()
+
+                        if autorole_view.value:
+                            self.embed.set_field_at(6,
+                                                    name='Auto Assign Role On Join',
+                                                    value=autorole_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Moderator Role':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        modrole_view = ModRoleMenu(self.context, self.bot)
+                        if server_document['modrole']:
+                            modrole = ctx.guild.get_role(int(server_document['modrole']))
+                            content = f'**Enabled** for role {modrole.mention}'
+                        else:
+                            content = 'Disabled'
+                            modrole_view.children[1].disabled = True
+                        modrole_embed = gen_embed(title='Moderator Role Settings',
+                                                  content=content)
+                        self.currentmessage = await interaction.message.edit(embed=modrole_embed,
+                                                                             view=modrole_view)
+
+                        await modrole_view.wait()
+
+                        if modrole_view.value:
+                            self.embed.set_field_at(6,
+                                                    name='Auto Assign Role On Join',
+                                                    value=modrole_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
                     case 'Server Join Verification':
                         pass
 
@@ -477,8 +502,8 @@ class Administration(commands.Cog):
                             embed=gen_embed(title='New prefix',
                                             content='Please type the new prefix you would like to use.'))
                     except discord.Forbidden:
-                        # TODO: change exception type
-                        raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
 
                     try:
                         mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
@@ -592,8 +617,8 @@ class Administration(commands.Cog):
                                             content=('Please mention the channel you'
                                                      ' would like to use for announcements.')))
                     except discord.Forbidden:
-                        # TODO: change exception type
-                        raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
 
                     try:
                         mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
@@ -689,8 +714,8 @@ class Administration(commands.Cog):
                                                 content='Plase mention the channel you would like to use for modmail.')
                             )
                         except discord.Forbidden:
-                            # TODO: change exception type
-                            raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                            raise commands.BotMissingPermissions(['Send Messages'],
+                                                                 'Forbidden 403 - could not send message to user.')
                     case 2:
                         try:
                             sent_prompt = await listen_channel.send(
@@ -698,8 +723,8 @@ class Administration(commands.Cog):
                                                 content='Plase mention the channel you would like to put the button.')
                             )
                         except discord.Forbidden:
-                            # TODO: change exception type
-                            raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                            raise commands.BotMissingPermissions(['Send Messages'],
+                                                                 'Forbidden 403 - could not send message to user.')
 
                 try:
                     mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
@@ -1235,8 +1260,8 @@ class Administration(commands.Cog):
                                             content=('Please mention the channel you'
                                                      ' would like to use for logging.')))
                     except discord.Forbidden:
-                        # TODO: change exception type
-                        raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
 
                     try:
                         mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
@@ -1299,6 +1324,220 @@ class Administration(commands.Cog):
                             interaction.message.embeds[0].description = ('Enabled | Configured Channel: '
                                                                          f'{new_log_channel.mention}')
                             self.channel = new_log_channel
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        class AutoRoleMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+            @discord.ui.button(label='Disable',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
+            async def disable_autorole(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await db.servers.update_one({"server_id": interaction.guild_id},
+                                            {"$set": {'autorole': None}})
+                interaction.message.embeds[0].description = 'Disabled'
+                self.value = 'Disabled'
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            # noinspection PyTypeChecker
+            @discord.ui.button(label='Configure Role',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def configure_autorole(self, button: discord.ui.Button, interaction: discord.Interaction):
+                async def autorole_prompt(listen_channel, attempts=1, prev_message=None):
+                    def check(m):
+                        return m.author == interaction.user and m.channel == listen_channel
+
+                    try:
+                        sent_prompt = await listen_channel.send(
+                            embed=gen_embed(title='Configure auto assign role',
+                                            content=('Please enter the role you would like to use.\n\n'
+                                                     'Accepted inputs: role mention, id, role name (case sensitive)')))
+                    except discord.Forbidden:
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
+
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+                    except asyncio.TimeoutError:
+                        await sent_prompt.delete()
+                        await interaction.followup.send(
+                            embed=gen_embed(title='Auto assign role configuration',
+                                            content='Auto assign role configuration has been cancelled.'),
+                            ephemeral=True)
+                        return None
+                    if prev_message:
+                        await prev_message.delete()
+                    await sent_prompt.delete()
+                    try:
+                        converter = commands.RoleConverter()
+                        msg_content = await converter.convert(self.context, mmsg.content)
+                        await mmsg.delete()
+                        return msg_content
+                    except commands.RoleNotFound:
+                        sent_error = await interaction.followup.send(
+                            embed=gen_embed(title='Error',
+                                            content='Role not found. Please check that you have the correct role.')
+                        )
+                        await mmsg.delete()
+                        attempts += 1
+                        return await autorole_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
+
+                await interaction.response.defer()
+                new_role = await autorole_prompt(interaction.channel)
+
+                if new_role:
+                    log.info('New auto role entered, confirm workflow')
+                    view = Confirm()
+                    sent_message = await interaction.followup.send(embed=gen_embed(
+                        title='Confirmation',
+                        content=('Please verify the contents before confirming:\n'
+                                 f'**Selected Role: {new_role.mention} (ID: {new_role.id})')),
+                        view=view)
+                    role_timeout = await view.wait()
+                    if role_timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
+
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'autorole': new_role.id}})
+                        interaction.message.embeds[0].description = f'Enabled for role {new_role.mention}'
+                        self.value = f'Enabled for role {new_role.mention}'
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        class ModRoleMenu(discord.ui.View):
+            def __init__(self, og_context, bot):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.value = ''
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
+            @discord.ui.button(label='Disable',
+                               style=discord.ButtonStyle.danger,
+                               row=0)
+            async def disable_modrole(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await db.servers.update_one({"server_id": interaction.guild_id},
+                                            {"$set": {'modrole': None}})
+                interaction.message.embeds[0].description = 'Disabled'
+                self.value = 'Disabled'
+                await interaction.message.edit(embed=interaction.message.embeds[0])
+
+            # noinspection PyTypeChecker
+            @discord.ui.button(label='Configure Role',
+                               style=discord.ButtonStyle.primary,
+                               row=0)
+            async def configure_modrole(self, button: discord.ui.Button, interaction: discord.Interaction):
+                async def modrole_prompt(listen_channel, attempts=1, prev_message=None):
+                    def check(m):
+                        return m.author == interaction.user and m.channel == listen_channel
+
+                    try:
+                        sent_prompt = await listen_channel.send(
+                            embed=gen_embed(title='Configure moderator role',
+                                            content=('Please enter the role you would like to use.\n\n'
+                                                     'Accepted inputs: role mention, id, role name (case sensitive)')))
+                    except discord.Forbidden:
+                        raise commands.BotMissingPermissions(['Send Messages'],
+                                                             'Forbidden 403 - could not send message to user.')
+
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+                    except asyncio.TimeoutError:
+                        await sent_prompt.delete()
+                        await interaction.followup.send(
+                            embed=gen_embed(title='Moderator role configuration',
+                                            content='Moderator role configuration has been cancelled.'),
+                            ephemeral=True)
+                        return None
+                    if prev_message:
+                        await prev_message.delete()
+                    await sent_prompt.delete()
+                    try:
+                        converter = commands.RoleConverter()
+                        msg_content = await converter.convert(self.context, mmsg.content)
+                        await mmsg.delete()
+                        return msg_content
+                    except commands.RoleNotFound:
+                        sent_error = await interaction.followup.send(
+                            embed=gen_embed(title='Error',
+                                            content='Role not found. Please check that you have the correct role.')
+                        )
+                        await mmsg.delete()
+                        attempts += 1
+                        return await modrole_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
+
+                await interaction.response.defer()
+                new_role = await modrole_prompt(interaction.channel)
+
+                if new_role:
+                    log.info('New auto role entered, confirm workflow')
+                    view = Confirm()
+                    sent_message = await interaction.followup.send(embed=gen_embed(
+                        title='Confirmation',
+                        content=('Please verify the contents before confirming:\n'
+                                 f'**Selected Role: {new_role.mention} (ID: {new_role.id})')),
+                        view=view)
+                    role_timeout = await view.wait()
+                    if role_timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
+
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'modrole': new_role.id}})
+                        interaction.message.embeds[0].description = f'Enabled for role {new_role.mention}'
+                        self.value = f'Enabled for role {new_role.mention}'
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
         ####################
@@ -1398,6 +1637,16 @@ class Administration(commands.Cog):
                 item.disabled = True
             await sent_menu_message.edit(embed=embed,
                                          view=main_menu_view)
+
+    blacklist = SlashCommandGroup('blacklist', 'Configure blacklist channels')
+
+    @blacklist.command(name='add',
+                       description='Configure settings for Kanon Bot')
+    @default_permissions(manage_guild=True)
+    async def blacklist_add(self,
+                            ctx: discord.ApplicationContext,
+                            ):
+        pass
 
 
 def setup(bot):
