@@ -133,7 +133,7 @@ class Modmail(commands.Cog):
         self.view = None
         self.modmail_button.start()
 
-    @tasks.loop(seconds=10.0)
+    @tasks.loop(minutes=30)
     async def modmail_button(self):
         async for document in db.servers.find({'modmail_button_channel': {'$exists': True}}):
             if document['modmail_button_channel']:
