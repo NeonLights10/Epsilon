@@ -1641,12 +1641,124 @@ class Administration(commands.Cog):
     blacklist = SlashCommandGroup('blacklist', 'Configure blacklist channels')
 
     @blacklist.command(name='add',
-                       description='Configure settings for Kanon Bot')
+                       description='Add channel to the blacklist')
     @default_permissions(manage_guild=True)
     async def blacklist_add(self,
                             ctx: discord.ApplicationContext,
-                            ):
-        pass
+                            channel: Option(discord.TextChannel, 'Channel to add to the blacklist')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        document = await db.servers.find_one({"server_id": ctx.guild_id})
+        if blacklist := document['blacklist']:
+            if channel.id not in blacklist:
+                blacklist.append(channel.id)
+                await db.servers.update_one({"server_id": ctx.guild_id},
+                                            {"$set": {'blacklist': blacklist}})
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='blacklist add',
+                                                              content=f'Channel {channel.mention} has been added '
+                                                                      f'to the blacklist.'),
+                                                    ephemeral=True)
+            else:
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='blacklist add',
+                                                              content=f'Channel has already been added '
+                                                                      f'to the blacklist!'),
+                                                    ephemeral=True)
+        else:
+            await ctx.interaction.followup.send(embed=
+                                                gen_embed(title='blacklist add',
+                                                          content='Blacklist is not enabled!'),
+                                                ephemeral=True)
+
+    @blacklist.command(name='remove',
+                       description='Remove channel from the blacklist')
+    @default_permissions(manage_guild=True)
+    async def blacklist_remove(self,
+                               ctx: discord.ApplicationContext,
+                               channel: Option(discord.TextChannel, 'Channel to remove from the blacklist')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        document = await db.servers.find_one({"server_id": ctx.guild_id})
+        if blacklist := document['blacklist']:
+            if channel.id in blacklist:
+                blacklist.remove(channel.id)
+                await db.servers.update_one({"server_id": ctx.guild_id},
+                                            {"$set": {'blacklist': blacklist}})
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='blacklist remove',
+                                                              content=f'Channel {channel.mention} has been removed '
+                                                                      f'from the blacklist.'),
+                                                    ephemeral=True)
+            else:
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='blacklist remove',
+                                                              content=f'Channel is not in the blacklist!'),
+                                                    ephemeral=True)
+        else:
+            await ctx.interaction.followup.send(embed=
+                                                gen_embed(title='blacklist remove',
+                                                          content='Blacklist is not enabled!'),
+                                                ephemeral=True)
+
+    whitelist = SlashCommandGroup('whitelist', 'Configure whitelist channels')
+
+    @whitelist.command(name='add',
+                       description='Add channel to the whitelist')
+    @default_permissions(manage_guild=True)
+    async def whitelist_add(self,
+                            ctx: discord.ApplicationContext,
+                            channel: Option(discord.TextChannel, 'Channel to add to the whitelist')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        document = await db.servers.find_one({"server_id": ctx.guild_id})
+        if whitelist := document['whitelist']:
+            if channel.id not in whitelist:
+                whitelist.append(channel.id)
+                await db.servers.update_one({"server_id": ctx.guild_id},
+                                            {"$set": {'whitelist': whitelist}})
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='whitelist add',
+                                                              content=f'Channel {channel.mention} has been added '
+                                                                      f'to the whitelist.'),
+                                                    ephemeral=True)
+            else:
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='whitelist add',
+                                                              content=f'Channel has already been added '
+                                                                      f'to the whitelist!'),
+                                                    ephemeral=True)
+        else:
+            await ctx.interaction.followup.send(embed=
+                                                gen_embed(title='whitelist add',
+                                                          content='Whitelist is not enabled!'),
+                                                ephemeral=True)
+
+    @whitelist.command(name='remove',
+                       description='Remove channel from the whitelist')
+    @default_permissions(manage_guild=True)
+    async def whitelist_remove(self,
+                               ctx: discord.ApplicationContext,
+                               channel: Option(discord.TextChannel, 'Channel to remove from the whitelist')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        document = await db.servers.find_one({"server_id": ctx.guild_id})
+        if whitelist := document['whitelist']:
+            if channel.id in whitelist:
+                whitelist.remove(channel.id)
+                await db.servers.update_one({"server_id": ctx.guild_id},
+                                            {"$set": {'whitelist': whitelist}})
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='whitelist remove',
+                                                              content=f'Channel {channel.mention} has been removed '
+                                                                      f'from the whitelist.'),
+                                                    ephemeral=True)
+            else:
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='whitelist remove',
+                                                              content=f'Channel is not in the whitelist!'),
+                                                    ephemeral=True)
+        else:
+            await ctx.interaction.followup.send(embed=
+                                                gen_embed(title='whitelist remove',
+                                                          content='Whitelist is not enabled!'),
+                                                ephemeral=True)
 
 
 def setup(bot):

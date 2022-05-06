@@ -268,8 +268,9 @@ class Miscellaneous(commands.Cog):
         await db.reminders.delete_many({'server_id': guild.id})
         await guild.leave()
         await ctx.interaction.followup.send(
-            embed=gen_embed(title='delete guild', content=f'Guild {guild.name} (ID: {guild.id} data has been deleted.')
-        )
+            embed=gen_embed(title='delete guild',
+                            content=f'Guild {guild.name} (ID: {guild.id} data has been deleted.'),
+            ephemeral=True)
 
     @datadeletion.command(name='user',
                           description='Delete all data for specified user')
@@ -282,9 +283,10 @@ class Miscellaneous(commands.Cog):
         await db.warns.delete_many({'user_id': user.id})
         await db.reminders.delete_many({'user_id': user.id})
         await ctx.interaction.followup.send(
-            embed=gen_embed(title='delete user', content=f'User {user.name}#{user.discriminator} (ID: {user.id}) data '
-                                                         f'has been deleted.')
-        )
+            embed=gen_embed(title='delete user',
+                            content=f'User {user.name}#{user.discriminator} (ID: {user.id}) data '
+                                    f'has been deleted.'),
+            ephemeral=True)
 
 
 def setup(bot):

@@ -228,7 +228,6 @@ async def check_document(guild, id):
 
 async def get_prefix(bot, message):
     server_prefix = (await db.servers.find_one({"server_id": message.guild.id}))['prefix']
-    log.info(f'results: {server_prefix}')
     return server_prefix or default_prefix
 
 
@@ -290,7 +289,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    log.info('message recieved')
     bot.message_count += 1
     ctx = await bot.get_context(message)
 
