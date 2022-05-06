@@ -47,7 +47,85 @@ class PersistentEvent(discord.ui.View):
         custom_id="persistent_view:sendmodmail",
     )
     async def send_modmail(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Currently just a placeholder button", ephemeral=True)
+        async def modmail_prompt(listen_channel: discord.DMChannel):
+            def check(m):
+                return m.author == interaction.user and m.channel == listen_channel
+            try:
+                await listen_channel.send(embed=gen_embed(title='Modmail Message Contents',
+                                           content='Please type out your modmail below and send. You can send images by adding an attachement to the message you send.'))
+            except discord.Forbidden:
+                raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+            except asyncio.TimeoutError:
+                await listen_channel.send(embed=gen_embed(title='Modmail Cancelled',
+                                               content='The modmail has been cancelled.'))
+                return None
+            return mmsg
+
+        await interaction.response.defer()
+        log.info('Begin modmail interaction workflow')
+        dm_channel = interaction.user.dm_channel
+        if not dm_channel:
+            dm_channel = await interaction.user.create_dm()
+        modmail_content = await modmail_prompt(dm_channel)
+
+        if modmail_content:
+            log.info('Message detected from user')
+            view = Confirm()
+            sent_message = await dm_channel.send(embed=gen_embed(title='Are you sure you want to send this?',
+                                                              content='Please verify the contents before confirming.'),
+                                              view=view)
+            timeout = await view.wait()
+            if timeout:
+                log.info('Confirmation view timed out')
+                for item in view.children:
+                    item.disabled = True
+                    await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
+                                                            content='Please verify the contents before confirming.'),
+                                            view=view)
+                    return
+            await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
+                                                              content='Please verify the contents before confirming.'),
+                                              view=view)
+
+            if view.value:
+                log.info('Workflow confirm, compilation and send logic start')
+                document = await db.servers.find_one({"server_id": self.guild.id})
+                if document['modmail_channel']:
+                    embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                      icon_url=modmail_content.author.display_avatar.url,
+                                      title='New Modmail',
+                                      content=f'{modmail_content.clean_content}\n\nYou may reply to this modmail using the reply function.')
+                    embed.set_footer(text=f'{modmail_content.author.id}')
+                    channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], self.guild.channels)
+                    await embed_splitter(embed=embed, destination=channel, footer=str(modmail_content.author.id))
+                    if len(modmail_content.attachments) > 0:
+                        attachnum = 1
+                        valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif', 'image/heif',
+                                            'image/bmp', 'image/gif', 'image/vnd.mozilla.apng', 'image/tiff']
+                        for attachment in modmail_content.attachments:
+                            if attachment.content_type in valid_media_type:
+                                embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                                  icon_url=modmail_content.author.display_avatar.url, title='Attachment',
+                                                  content=f'Attachment #{attachnum}:')
+                                embed.set_image(url=attachment.url)
+                                embed.set_footer(text=f'{modmail_content.author.id}')
+                                await channel.send(embed=embed)
+                                attachnum += 1
+                            else:
+                                await dm_channel.send(content=f'Attachment #{attachnum} is not a supported media type.')
+                                await channel.send(embed=gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                                  icon_url=modmail_content.author.display_avatar.url, title='Attachment Failed',
+                                                  content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
+                                attachnum += 1
+                    await channel.send(content=f"{modmail_content.author.mention}")
+                    await dm_channel.send(embed=gen_embed(title='Modmail sent',
+                                                   content='The moderators will review your message and get back to you shortly.'))
+                else:
+                    log.warning("Error: Modmail is Disabled")
+                    await dm_channel.send(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
 
 class Modmail(commands.Cog):
     def __init__(self, bot):
@@ -71,7 +149,7 @@ class Modmail(commands.Cog):
                             log.info('initial deleted')
                             await self.init_modmail_button(server.id)
                         else:
-                            self.view = PersistentEvent(guild=server.id, bot=self.bot)
+                            self.view = PersistentEvent(guild=server, bot=self.bot)
                             await prev_button_message.edit("Send a modmail to us by pressing the button below.", view=self.view)
                     except discord.NotFound:
                         await self.init_modmail_button(server.id)
@@ -83,7 +161,7 @@ class Modmail(commands.Cog):
         server = self.bot.get_guild(document['server_id'])
         if document['modmail_button_channel']:
             channel = server.get_channel(document['modmail_button_channel'])
-            self.view = PersistentEvent(guild=server_id, bot=self.bot)
+            self.view = PersistentEvent(guild=server, bot=self.bot)
             new_message = await channel.send("Send a modmail to us by pressing the button below.", view=self.view)
             log.info('initial posted')
             await db.servers.update_one({"server_id": server_id},
