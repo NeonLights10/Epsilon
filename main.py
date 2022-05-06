@@ -155,14 +155,14 @@ async def initialize_document(guild, id):
             'modrole': None,
             'autorole': None,
             'log_channel': None,
+            'log_messages': False,
             'log_joinleaves': False,
             'log_kbm': False,
             'log_strikes': False,
-            'welcome_channel': None,
-            'welcome_message': f"Welcome to {guild.name}!",
-            'welcome_banner': None,
             'max_strike': 3,
             'modmail_channel': None,
+            'modmail_button_channel': None,
+            'prev_message_modmail': None,
             'announcement_channel': None,
             'fun': True,
             'chat': False,
@@ -189,11 +189,23 @@ async def check_document(guild, id):
             for channel_id in blacklist:
                 await db.msgid.delete_many({"channel_id": channel_id})
         if blacklist is not None:
-            if len(blacklist) == 0:
+            if isinstance(blacklist, list):
+                if len(blacklist) != 0:
+                    pass
+                else:
+                    await db.servers.update_one({"server_id": id},
+                                                {"$set": {'blacklist': None}})
+            else:
                 await db.servers.update_one({"server_id": id},
                                             {"$set": {'blacklist': None}})
         if whitelist := document['whitelist'] is not None:
-            if len(whitelist) == 0:
+            if isinstance(whitelist, list):
+                if len(whitelist) != 0:
+                    pass
+                else:
+                    await db.servers.update_one({"server_id": id},
+                                                {"$set": {'whitelist': None}})
+            else:
                 await db.servers.update_one({"server_id": id},
                                             {"$set": {'whitelist': None}})
         # Changeable to update old documents whenever a new feature/config is added
@@ -201,8 +213,12 @@ async def check_document(guild, id):
             {"server_id": id},
             [{'$set': {
                 "name": guild.name,
-                "modmail_button_channel": {'$cond': [{'$not': ["$modmail_button_channel"]}, None, "$modmail_button_channel"]},
-                "prev_message_modmail": {'$cond': [{'$not': ["$prev_message_modmail"]}, None, "$prev_message_modmail"]}
+                "log_messages": {
+                    '$cond': [{'$not': ["$log_messages"]}, None, "$log_messages"]},
+                "modmail_button_channel": {
+                    '$cond': [{'$not': ["$modmail_button_channel"]}, None, "$modmail_button_channel"]},
+                "prev_message_modmail": {
+                    '$cond': [{'$not': ["$prev_message_modmail"]}, None, "$prev_message_modmail"]}
             }}]
         )
 

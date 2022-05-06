@@ -229,7 +229,7 @@ class Administration(commands.Cog):
                             content = 'Enabled'
                         if server_document['announcement_channel']:
                             announce_channel = ctx.guild.get_channel(int(server_document['announcement_channel']))
-                            content = content + f' in channel {announce_channel.mention}'
+                            content = content + f' | Configured channel: {announce_channel.mention}'
                         else:
                             content = content + f', no channel set, using default settings.'
                         announcement_embed = gen_embed(title='Global Announcement Settings',
@@ -336,7 +336,7 @@ class Administration(commands.Cog):
                         fun_view = FunMenu(self.context, self.bot)
                         content = f"{'Enabled' if server_document['fun'] else 'Disabled'}"
                         fun_embed = gen_embed(title='Fun Features Settings',
-                                               content=content)
+                                              content=content)
 
                         self.currentmessage = await interaction.message.edit(embed=fun_embed,
                                                                              view=fun_view)
@@ -351,7 +351,77 @@ class Administration(commands.Cog):
                         await self.currentmessage.edit(embed=self.embed,
                                                        view=self)
                     case 'Logging':
-                        pass
+                        await interaction.response.defer()
+                        server_document = await db.servers.find_one({"server_id": interaction.guild_id})
+                        defaults = {'log_messages': server_document['log_messages'],
+                                    'log_joinleaves': server_document['log_joinleaves'],
+                                    'log_kbm': server_document['log_kbm'],
+                                    'log_strikes': server_document['log_strikes']}
+                        if server_document['log_channel']:
+                            log_channel = ctx.guild.get_channel(int(server_document['log_channel']))
+                            log_view = LogMenu(self.context, self.bot, log_channel, defaults)
+                            if (defaults['log_messages']
+                                    or defaults['log_joinleaves']
+                                    or defaults['log_kbm']
+                                    or defaults['log_strikes']):
+                                content = f'Enabled | Configured channel: {log_channel.mention}'
+                            else:
+                                content = f'Disabled | Configured channel: {log_channel.mention}'
+                        else:
+                            log_view = LogMenu(self.context, self.bot, None, defaults)
+                            content = f'Disabled | Configured channel: None'
+                        log_embed = gen_embed(title='Logging Settings',
+                                              content=content)
+                        enabled_content = ''
+                        disabled_content = ''
+                        if (defaults['log_messages']
+                                and defaults['log_joinleaves']
+                                and defaults['log_kbm']
+                                and defaults['log_strikes']):
+                            disabled_content = 'None'
+                        if (not defaults['log_messages']
+                                and not defaults['log_joinleaves']
+                                and not defaults['log_kbm']
+                                and not defaults['log_strikes']):
+                            enabled_content = 'None'
+                        if defaults['log_messages']:
+                            enabled_content += '・ Log message edits and deletion\n'
+                        else:
+                            disabled_content += '・ Log message edits and deletion\n'
+                        if defaults['log_joinleaves']:
+                            enabled_content += '・ Log member joins & leaves\n'
+                        else:
+                            disabled_content += '・ Log member joins & leaves\n'
+                        if defaults['log_kbm']:
+                            enabled_content += '・ Log kicks, bans, and timeouts/mutes\n'
+                        else:
+                            disabled_content += '・ Log kicks, bans, and timeouts/mutes\n'
+                        if defaults['log_strikes']:
+                            enabled_content += '・ Log strikes - which moderator assigned strike, message contents, ' \
+                                               'etc.\n '
+                        else:
+                            disabled_content += '・ Log strikes - which moderator assigned strike, message contents, ' \
+                                                'etc.\n '
+
+                        log_embed.add_field(name='Enabled Options',
+                                            value=enabled_content,
+                                            inline=True)
+                        log_embed.add_field(name='Disabled Options',
+                                            value=disabled_content,
+                                            inline=True)
+                        self.currentmessage = await interaction.message.edit(embed=log_embed,
+                                                                             view=log_view)
+
+                        await log_view.wait()
+
+                        if log_view.value:
+                            self.embed.set_field_at(5,
+                                                    name='Logging',
+                                                    value=log_view.value,
+                                                    inline=False)
+                        await self.currentmessage.edit(embed=self.embed,
+                                                       view=self)
+
                     case 'Auto Assign Role On Join':
                         pass
                     case 'Moderator Role':
@@ -359,8 +429,8 @@ class Administration(commands.Cog):
                     case 'Server Join Verification':
                         pass
 
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
                                row=1)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.send_message("Stopped configuring settings.", ephemeral=True)
@@ -385,6 +455,13 @@ class Administration(commands.Cog):
 
                 await interaction.message.edit(view=view)
                 self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
 
             # noinspection PyTypeChecker
             @discord.ui.button(label='Set Prefix',
@@ -443,13 +520,6 @@ class Administration(commands.Cog):
                         self.value = new_prefix_content
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=0)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await self.end_interaction(interaction)
-
         class AnnouncementMenu(discord.ui.View):
             def __init__(self, og_context, bot):
                 super().__init__()
@@ -469,6 +539,13 @@ class Administration(commands.Cog):
 
                 await interaction.message.edit(view=view)
                 self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.gray,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
 
             @discord.ui.button(label='Enable/Disable',
                                style=discord.ButtonStyle.primary,
@@ -502,7 +579,7 @@ class Administration(commands.Cog):
 
             # noinspection PyTypeChecker
             @discord.ui.button(label='Configure Channel',
-                               style=discord.ButtonStyle.primary,
+                               style=discord.ButtonStyle.gray,
                                row=0)
             async def configure_announcement_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 async def announcement_prompt(listen_channel, attempts=1, prev_message=None):
@@ -545,7 +622,7 @@ class Administration(commands.Cog):
                 new_announcement = await announcement_prompt(interaction.channel)
 
                 if new_announcement:
-                    log.info('New announcement entered, confirm workflow')
+                    log.info('New announcement channel entered, confirm workflow')
                     view = Confirm()
                     new_announcement_channel = new_announcement.channel_mentions[0]
                     await new_announcement.delete()
@@ -577,13 +654,6 @@ class Administration(commands.Cog):
                             self.value = f'Enabled | Configured channel: {new_announcement_channel.mention}'
 
                         await interaction.message.edit(embed=interaction.message.embeds[0])
-
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=0)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await self.end_interaction(interaction)
 
         class ModmailMenu(discord.ui.View):
             def __init__(self, og_context, bot):
@@ -657,6 +727,13 @@ class Administration(commands.Cog):
                                                              scenario,
                                                              attempts=attempts,
                                                              prev_message=sent_error)
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
 
             # noinspection PyTypeChecker
             @discord.ui.button(label='Enable/Disable',
@@ -762,10 +839,10 @@ class Administration(commands.Cog):
                 await interaction.message.edit(embed=interaction.message.embeds[0], view=self)
 
             # noinspection PyTypeChecker
-            @discord.ui.button(label='Change Destination Channel',
-                               style=discord.ButtonStyle.primary,
-                               row=0)
-            async def change_dest_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+            @discord.ui.button(label='Configure Destination Channel',
+                               style=discord.ButtonStyle.gray,
+                               row=1)
+            async def configure_dest_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.defer()
 
                 new_destination = await self.modmail_channel_prompt(interaction, interaction.channel, 1)
@@ -799,10 +876,11 @@ class Administration(commands.Cog):
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
             # noinspection PyTypeChecker
-            @discord.ui.button(label='Change Button Channel',
-                               style=discord.ButtonStyle.primary,
-                               row=0)
-            async def change_button_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+            @discord.ui.button(label='Configure Button Channel',
+                               style=discord.ButtonStyle.gray,
+                               row=1)
+            async def configure_button_modmail_channel(self, button: discord.ui.Button,
+                                                       interaction: discord.Interaction):
                 await interaction.response.defer()
 
                 new_button = await self.modmail_channel_prompt(interaction, interaction.channel, 2)
@@ -835,13 +913,6 @@ class Administration(commands.Cog):
                                                                      f'{new_button_channel.mention}')
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=1)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await self.end_interaction(interaction)
-
         class ChatMenu(discord.ui.View):
             def __init__(self, og_context, bot):
                 super().__init__()
@@ -862,6 +933,13 @@ class Administration(commands.Cog):
                 await interaction.message.edit(view=view)
                 self.stop()
 
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
             @discord.ui.button(label='Enable/Disable',
                                style=discord.ButtonStyle.primary,
                                row=0)
@@ -880,13 +958,6 @@ class Administration(commands.Cog):
                     self.value = 'Enabled'
 
                 await interaction.message.edit(embed=interaction.message.embeds[0])
-
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=0)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await self.end_interaction(interaction)
 
         class BWListMenu(discord.ui.View):
             def __init__(self, og_context, bot):
@@ -907,6 +978,13 @@ class Administration(commands.Cog):
 
                 await interaction.message.edit(view=view)
                 self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
 
             @discord.ui.button(label='Enable/Disable',
                                style=discord.ButtonStyle.primary,
@@ -982,13 +1060,6 @@ class Administration(commands.Cog):
                     await interaction.message.edit(embed=interaction.message.embeds[0],
                                                    view=self)
 
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=0)
-            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-                await self.end_interaction(interaction)
-
         class FunMenu(discord.ui.View):
             def __init__(self, og_context, bot):
                 super().__init__()
@@ -1009,6 +1080,13 @@ class Administration(commands.Cog):
                 await interaction.message.edit(view=view)
                 self.stop()
 
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=0)
+            async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                await self.end_interaction(interaction)
+
             @discord.ui.button(label='Enable/Disable',
                                style=discord.ButtonStyle.primary,
                                row=0)
@@ -1028,12 +1106,200 @@ class Administration(commands.Cog):
 
                 await interaction.message.edit(embed=interaction.message.embeds[0])
 
-            @discord.ui.button(label='Cancel',
-                               style=discord.ButtonStyle.danger,
-                               row=0)
+        class LogSelect(discord.ui.Select):
+            def __init__(self, bot, defaults):
+                self.bot = bot
+                options = []
+                if defaults['log_messages']:
+                    options.append(
+                        discord.SelectOption(label='Messages',
+                                             description='Log message edits and deletion',
+                                             default=True))
+                else:
+                    options.append(
+                        discord.SelectOption(label='Messages',
+                                             description='Log message edits and deletion',
+                                             default=False))
+                if defaults['log_joinleaves']:
+                    options.append(
+                        discord.SelectOption(label='Joins/Leaves',
+                                             description='Log member joins & leaves',
+                                             default=True))
+                else:
+                    options.append(
+                        discord.SelectOption(label='Joins/Leaves',
+                                             description='Log member joins & leaves',
+                                             default=False))
+                if defaults['log_kbm']:
+                    options.append(
+                        discord.SelectOption(label='KBM',
+                                             description='Log kicks, bans, and timeouts/mutes',
+                                             default=True))
+                else:
+                    options.append(
+                        discord.SelectOption(label='KBM',
+                                             description='Log kicks, bans, and timeouts/mutes',
+                                             default=False))
+                if defaults['log_strikes']:
+                    options.append(
+                        discord.SelectOption(label='Strikes',
+                                             description='Log strikes',
+                                             default=True))
+                else:
+                    options.append(
+                        discord.SelectOption(label='Strikes',
+                                             description='Log strikes',
+                                             default=False))
+                super().__init__(custom_id='logselect',
+                                 placeholder='Pick the settings you wish to enable',
+                                 min_values=1,
+                                 max_values=4,
+                                 row=0,
+                                 options=options)
+
+            async def callback(self, interaction: discord.Interaction):
+                await interaction.response.defer()
+
+        class LogMenu(discord.ui.View):
+            def __init__(self, og_context, bot, config_channel, defaults):
+                super().__init__()
+                self.context = og_context
+                self.bot = bot
+                self.channel = config_channel
+                self.value = ''
+                self.select_values = None
+
+                self.add_item(LogSelect(self.bot, defaults))
+
+            async def interaction_check(self,
+                                        interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context.interaction.user
+
+            async def end_interaction(self,
+                                      interaction: discord.Interaction):
+                view = discord.ui.View.from_message(interaction.message)
+                for child in view.children:
+                    child.disabled = True
+
+                await interaction.message.edit(view=view)
+                self.stop()
+
+            @discord.ui.button(label='Save & Exit',
+                               style=discord.ButtonStyle.green,
+                               row=1)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.defer()
+                for child in self.children:
+                    if child.custom_id == 'logselect':
+                        self.select_values = child.values
+                post = {'log_messages': False,
+                        'log_joinleaves': False,
+                        'log_kbm': False,
+                        'log_strikes': False}
+                for option in self.select_values:
+                    match option:
+                        case 'Messages':
+                            post['log_messages'] = True
+                        case 'Joins/Leaves':
+                            post['log_joinleaves'] = True
+                        case 'KBM':
+                            post['log_kbm'] = True
+                        case 'Strikes':
+                            post['log_strikes'] = True
+                await db.servers.update_one({"server_id": interaction.guild_id},
+                                            {"$set": post})
+                embed_text = 'Configured channel: '
+                if self.channel:
+                    embed_text += f'{self.channel.mention}\n'
+                else:
+                    embed_text += 'None\n'
+                embed_text += '\nLog messages: ' + f"{'Enabled' if post['log_messages'] else 'Disabled'}"
+                embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if post['log_joinleaves'] else 'Disabled'}"
+                embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if post['log_kbm'] else 'Disabled'}"
+                embed_text += '\nLog strikes: ' + f"{'Enabled' if post['log_strikes'] else 'Disabled'}"
+                self.value = embed_text
                 await self.end_interaction(interaction)
+
+            # noinspection PyTypeChecker
+            @discord.ui.button(label='Configure Channel',
+                               style=discord.ButtonStyle.gray,
+                               row=1)
+            async def configure_log_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                async def log_prompt(listen_channel, attempts=1, prev_message=None):
+                    def check(m):
+                        return m.author == interaction.user and m.channel == listen_channel
+
+                    try:
+                        sent_prompt = await listen_channel.send(
+                            embed=gen_embed(title='Configure log channel',
+                                            content=('Please mention the channel you'
+                                                     ' would like to use for logging.')))
+                    except discord.Forbidden:
+                        # TODO: change exception type
+                        raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+                    except asyncio.TimeoutError:
+                        await sent_prompt.delete()
+                        await interaction.followup.send(
+                            embed=gen_embed(title='Log channel configuration',
+                                            content='Log channel configuration has been cancelled.'),
+                            ephemeral=True)
+                        return None
+                    if prev_message:
+                        await prev_message.delete()
+                    await sent_prompt.delete()
+                    if mmsg.channel_mentions:
+                        return mmsg
+                    else:
+                        sent_error = await interaction.followup.send(
+                            embed=gen_embed(title='Error',
+                                            content='No channel found. Please check that you mentioned the channel.')
+                        )
+                        await mmsg.delete()
+                        attempts += 1
+                        return await log_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
+
+                await interaction.response.defer()
+                new_log = await log_prompt(interaction.channel)
+
+                if new_log:
+                    log.info('New log channel entered, confirm workflow')
+                    view = Confirm()
+                    new_log_channel = new_log.channel_mentions[0]
+                    await new_log.delete()
+                    sent_message = await interaction.followup.send(embed=gen_embed(
+                        title='Confirmation',
+                        content=('Please verify the contents before confirming:\n'
+                                 f'**Selected Log Channel: {new_log_channel.mention}**')),
+                        view=view)
+                    log_timeout = await view.wait()
+                    if log_timeout:
+                        log.info('Confirmation view timed out')
+                        await sent_message.delete()
+                        return
+                    await sent_message.delete()
+
+                    if view.value:
+                        log.info('Workflow confirm')
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": {'announcement_channel': new_log_channel.id}})
+
+                        doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                        log_messages = doc['log_messages']
+                        log_joinleaves = doc['log_joinleaves']
+                        log_kbm = doc['log_kbm']
+                        log_strikes = doc['log_strikes']
+                        if not log_messages and not log_joinleaves and not log_kbm and not log_strikes:
+                            interaction.message.embeds[0].description = ('Disabled | Configured Channel: '
+                                                                         f'{new_log_channel.mention}')
+                            self.channel = new_log_channel
+                        else:
+                            interaction.message.embeds[0].description = ('Enabled | Configured Channel: '
+                                                                         f'{new_log_channel.mention}')
+                            self.channel = new_log_channel
+                        await interaction.message.edit(embed=interaction.message.embeds[0])
 
         ####################
 
@@ -1090,6 +1356,9 @@ class Administration(commands.Cog):
         if document['log_channel']:
             logging_channel = ctx.guild.get_channel(int(document['log_channel']))
             embed_text += f'{logging_channel.mention}\n'
+        else:
+            embed_text += 'None\n'
+        embed_text += '\nLog messages: ' + f"{'Enabled' if document['log_messages'] else 'Disabled'}"
         embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if document['log_joinleaves'] else 'Disabled'}"
         embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if document['log_kbm'] else 'Disabled'}"
         embed_text += '\nLog strikes: ' + f"{'Enabled' if document['log_strikes'] else 'Disabled'}"
@@ -1121,7 +1390,8 @@ class Administration(commands.Cog):
 
         main_menu_view = SettingsMenu(ctx, embed, self.bot)
         sent_menu_message = await ctx.interaction.followup.send(embed=embed,
-                                                                view=main_menu_view)
+                                                                view=main_menu_view,
+                                                                ephemeral=True)
         timeout = await main_menu_view.wait()
         if timeout:
             for item in main_menu_view.children:
