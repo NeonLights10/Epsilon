@@ -1760,6 +1760,25 @@ class Administration(commands.Cog):
                                                           content='Whitelist is not enabled!'),
                                                 ephemeral=True)
 
+    @discord.slash_command(name='purgeid',
+                           description='Purge a single message by ID')
+    @default_permissions(manage_messages=True)
+    async def purgeid(self,
+                      ctx: discord.ApplicationContext,
+                      message: Option(discord.Message, 'Message to delete')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        try:
+            await message.delete()
+            await ctx.interaction.followup.send(embed=gen_embed(title='Purge by ID',
+                                                                content=f'Message {message.id} was deleted.'),
+                                                ephemeral=True)
+        except discord.Forbidden:
+            raise commands.BotMissingPermissions(['Manage Messages'])
+        except discord.NotFound:
+            await ctx.interaction.followup.send('Message not found. It may already have been deleted.',
+                                                ephemeral=True)
+            return
+
 
 def setup(bot):
     bot.add_cog(Administration(bot))

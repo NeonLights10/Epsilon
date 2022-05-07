@@ -159,7 +159,7 @@ class Miscellaneous(commands.Cog):
                             'image/tiff']
         if attachment:
             if attachment.content_type not in valid_media_type:
-                raise discord.ext.commands.UserInputError('This is not a valid media type!')
+                raise commands.UserInputError(message='This is not a valid media type!')
 
         class AnnouncementModal(Modal):
             def __init__(self, bot, *args, **kwargs) -> None:
