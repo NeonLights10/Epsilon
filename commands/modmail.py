@@ -35,16 +35,15 @@ class Confirm(discord.ui.View):
         self.value = False
         self.stop()
 
-class PersistentEvent(discord.ui.View):
+class ModmailButton(discord.ui.View):
     def __init__(self, guild, bot):
         super().__init__(timeout=None)
-        self.guild = guild
         self.bot = bot
 
     @discord.ui.button(
         label="Send a modmail!",
         style=discord.ButtonStyle.primary,
-        custom_id="persistent_view:sendmodmail",
+        custom_id="modmailbutton:sendmodmail",
     )
     async def send_modmail(self, button: discord.ui.Button, interaction: discord.Interaction):
         async def modmail_prompt(listen_channel: discord.DMChannel):
@@ -86,20 +85,18 @@ class PersistentEvent(discord.ui.View):
                                                             content='Please verify the contents before confirming.'),
                                             view=view)
                     return
-            await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
-                                                              content='Please verify the contents before confirming.'),
-                                              view=view)
+            await sent_message.delete()
 
             if view.value:
                 log.info('Workflow confirm, compilation and send logic start')
-                document = await db.servers.find_one({"server_id": self.guild.id})
+                document = await db.servers.find_one({"server_id": interaction.guild.id})
                 if document['modmail_channel']:
                     embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
                                       icon_url=modmail_content.author.display_avatar.url,
                                       title='New Modmail',
                                       content=f'{modmail_content.clean_content}\n\nYou may reply to this modmail using the reply function.')
                     embed.set_footer(text=f'{modmail_content.author.id}')
-                    channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], self.guild.channels)
+                    channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], interaction.guild.channels)
                     await embed_splitter(embed=embed, destination=channel, footer=str(modmail_content.author.id))
                     if len(modmail_content.attachments) > 0:
                         attachnum = 1
@@ -139,8 +136,7 @@ class Modmail(commands.Cog):
             if document['modmail_button_channel']:
                 server = self.bot.get_guild(document['server_id'])
                 channel = server.get_channel(document['modmail_button_channel'])
-                if document['prev_message_modmail']:
-                    button_message_id = document['prev_message_modmail']
+                if button_message_id := document['prev_message_modmail']:
                     last_message_id = channel.last_message_id
                     try:
                         prev_button_message = await channel.fetch_message(int(button_message_id))
@@ -149,7 +145,7 @@ class Modmail(commands.Cog):
                             log.info('initial deleted')
                             await self.init_modmail_button(server.id)
                         else:
-                            self.view = PersistentEvent(guild=server, bot=self.bot)
+                            self.view = ModmailButton(bot=self.bot)
                             await prev_button_message.edit("Send a modmail to us by pressing the button below.", view=self.view)
                     except discord.NotFound:
                         await self.init_modmail_button(server.id)
@@ -162,7 +158,7 @@ class Modmail(commands.Cog):
         server = self.bot.get_guild(document['server_id'])
         if document['modmail_button_channel']:
             channel = server.get_channel(document['modmail_button_channel'])
-            self.view = PersistentEvent(guild=server, bot=self.bot)
+            self.view = ModmailButton(bot=self.bot)
             new_message = await channel.send("Send a modmail to us by pressing the button below.", view=self.view)
             log.info('initial posted')
             await db.servers.update_one({"server_id": server_id},
