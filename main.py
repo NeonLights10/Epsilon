@@ -227,6 +227,8 @@ async def check_document(guild, id):
 
 
 async def get_prefix(bot, message):
+    if isinstance(message.channel, discord.DMChannel):
+        return default_prefix
     server_prefix = (await db.servers.find_one({"server_id": message.guild.id}))['prefix']
     return server_prefix or default_prefix
 
