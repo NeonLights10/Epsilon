@@ -1,6 +1,9 @@
 import asyncio
+import re
+import datetime
+from datetime import timedelta
 from __main__ import log, db
-from typing import Union
+from typing import Union, Optional, List, SupportsInt
 
 import discord
 import emoji as zemoji
@@ -10,6 +13,131 @@ from discord.commands import Option, SlashCommandGroup
 
 from commands.errorhandler import CheckOwner
 from formatting.embed import gen_embed
+from formatting.constants import COLORS
+
+TIME_RE_STRING = r"\s?".join(
+    [
+        r"((?P<weeks>\d+?)\s?(weeks?|w))?",
+        r"((?P<days>\d+?)\s?(days?|d))?",
+        r"((?P<hours>\d+?)\s?(hours?|hrs|hr?))?",
+        r"((?P<minutes>\d+?)\s?(minutes?|mins?|m(?!o)))?",  # prevent matching "months"
+        r"((?P<seconds>\d+?)\s?(seconds?|secs?|s))?",
+    ]
+)
+
+TIME_RE = re.compile(TIME_RE_STRING, re.I)
+
+
+def parse_timedelta(argument: str, *, maximum: Optional[timedelta] = None, minimum: Optional[timedelta] = None,
+                    allowed_units: Optional[List[str]] = None) -> Optional[timedelta]:
+    """
+    This converts a user provided string into a timedelta
+    The units should be in order from largest to smallest.
+    This works with or without whitespace.
+    Parameters
+    ----------
+    argument : str
+        The user provided input
+    maximum : Optional[timedelta]
+        If provided, any parsed value higher than this will raise an exception
+    minimum : Optional[timedelta]
+        If provided, any parsed value lower than this will raise an exception
+    allowed_units : Optional[List[str]]
+        If provided, you can constrain a user to expressing the amount of time
+        in specific units. The units you can chose to provide are the same as the
+        parser understands. (``weeks``, ``days``, ``hours``, ``minutes``, ``seconds``)
+    Returns
+    -------
+    Optional[timedelta]
+        If matched, the timedelta which was parsed. This can return `None`
+    Raises
+    ------
+    BadArgument
+        If the argument passed uses a unit not allowed, but understood
+        or if the value is out of bounds.
+    """
+    matches = TIME_RE.match(argument)
+    allowed_unit_list = allowed_units or ["weeks", "days", "hours", "minutes", "seconds"]
+    if matches:
+        params = {k: int(v) for k, v in matches.groupdict().items() if v is not None}
+        for k in params.keys():
+            if k not in allowed_unit_list:
+                raise discord.ext.commands.BadArgument(
+                    "`{unit}` is not a valid unit of time for this command".format(unit=k)
+                )
+        if params:
+            try:
+                delta = timedelta(**params)
+            except OverflowError:
+                raise discord.ext.commands.BadArgument(
+                    "The time set is way too high, consider setting something reasonable."
+                )
+            if maximum and maximum < delta:
+                raise discord.ext.commands.BadArgument(
+                    "This amount of time is too large for this command. (Maximum: {maximum})".format(
+                        maximum=humanize_timedelta(timedelta=maximum))
+                )
+            if minimum and delta < minimum:
+                raise discord.ext.commands.BadArgument(
+                    "This amount of time is too small for this command. (Minimum: {minimum})".format(
+                        minimum=humanize_timedelta(timedelta=minimum))
+                )
+            return delta
+    return None
+
+
+def humanize_timedelta(*, timedelta: Optional[datetime.timedelta] = None, seconds: Optional[SupportsInt] = None) -> str:
+    """
+    Get a locale aware human timedelta representation.
+    This works with either a timedelta object or a number of seconds.
+    Fractional values will be omitted, and values less than 1 second
+    an empty string.
+    Parameters
+    ----------
+    timedelta: Optional[datetime.timedelta]
+        A timedelta object
+    seconds: Optional[SupportsInt]
+        A number of seconds
+    Returns
+    -------
+    str
+        A locale aware representation of the timedelta or seconds.
+    Raises
+    ------
+    ValueError
+        The function was called with neither a number of seconds nor a timedelta object
+    """
+
+    try:
+        obj = seconds if seconds is not None else timedelta.total_seconds()
+    except AttributeError:
+        raise ValueError("You must provide either a timedelta or a number of seconds")
+
+    seconds = int(obj)
+    periods = [
+        ("year", "years", 60 * 60 * 24 * 365),
+        ("month", "months", 60 * 60 * 24 * 30),
+        ("day", "days", 60 * 60 * 24),
+        ("hour", "hours", 60 * 60),
+        ("minute", "minutes", 60),
+        ("second", "seconds", 1),
+    ]
+
+    strings = []
+    for period_name, plural_period_name, period_seconds in periods:
+        if seconds >= period_seconds:
+            period_value, seconds = divmod(seconds, period_seconds)
+            if period_value == 0:
+                continue
+            unit = plural_period_name if period_value > 1 else period_name
+            strings.append(f"{period_value} {unit}")
+
+    return ", ".join(strings)
+
+
+async def modmail_enabled(ctx):
+    document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
+    return document['modmail_channel']
 
 
 class Administration(commands.Cog):
@@ -1654,19 +1782,19 @@ class Administration(commands.Cog):
                 await db.servers.update_one({"server_id": ctx.guild_id},
                                             {"$set": {'blacklist': blacklist}})
                 await ctx.interaction.followup.send(embed=
-                                                    gen_embed(title='blacklist add',
+                                                    gen_embed(title='Add Channel to Blacklist',
                                                               content=f'Channel {channel.mention} has been added '
                                                                       f'to the blacklist.'),
                                                     ephemeral=True)
             else:
                 await ctx.interaction.followup.send(embed=
-                                                    gen_embed(title='blacklist add',
+                                                    gen_embed(title='Add Channel to Blacklist',
                                                               content=f'Channel has already been added '
                                                                       f'to the blacklist!'),
                                                     ephemeral=True)
         else:
             await ctx.interaction.followup.send(embed=
-                                                gen_embed(title='blacklist add',
+                                                gen_embed(title='Add Channel to Blacklist',
                                                           content='Blacklist is not enabled!'),
                                                 ephemeral=True)
 
@@ -1684,18 +1812,18 @@ class Administration(commands.Cog):
                 await db.servers.update_one({"server_id": ctx.guild_id},
                                             {"$set": {'blacklist': blacklist}})
                 await ctx.interaction.followup.send(embed=
-                                                    gen_embed(title='blacklist remove',
+                                                    gen_embed(title='Remove Channel from Blacklist',
                                                               content=f'Channel {channel.mention} has been removed '
                                                                       f'from the blacklist.'),
                                                     ephemeral=True)
             else:
                 await ctx.interaction.followup.send(embed=
-                                                    gen_embed(title='blacklist remove',
+                                                    gen_embed(title='Remove Channel from Blacklist',
                                                               content=f'Channel is not in the blacklist!'),
                                                     ephemeral=True)
         else:
             await ctx.interaction.followup.send(embed=
-                                                gen_embed(title='blacklist remove',
+                                                gen_embed(title='Remove Channel from Blacklist',
                                                           content='Blacklist is not enabled!'),
                                                 ephemeral=True)
 
@@ -1715,19 +1843,19 @@ class Administration(commands.Cog):
                 await db.servers.update_one({"server_id": ctx.guild_id},
                                             {"$set": {'whitelist': whitelist}})
                 await ctx.interaction.followup.send(embed=
-                                                    gen_embed(title='whitelist add',
+                                                    gen_embed(title='Add channel to Whitelist',
                                                               content=f'Channel {channel.mention} has been added '
                                                                       f'to the whitelist.'),
                                                     ephemeral=True)
             else:
                 await ctx.interaction.followup.send(embed=
-                                                    gen_embed(title='whitelist add',
+                                                    gen_embed(title='Add channel to Whitelist',
                                                               content=f'Channel has already been added '
                                                                       f'to the whitelist!'),
                                                     ephemeral=True)
         else:
             await ctx.interaction.followup.send(embed=
-                                                gen_embed(title='whitelist add',
+                                                gen_embed(title='Add channel to Whitelist',
                                                           content='Whitelist is not enabled!'),
                                                 ephemeral=True)
 
@@ -1745,18 +1873,18 @@ class Administration(commands.Cog):
                 await db.servers.update_one({"server_id": ctx.guild_id},
                                             {"$set": {'whitelist': whitelist}})
                 await ctx.interaction.followup.send(embed=
-                                                    gen_embed(title='whitelist remove',
+                                                    gen_embed(title='Remove Channel from Whitelist',
                                                               content=f'Channel {channel.mention} has been removed '
                                                                       f'from the whitelist.'),
                                                     ephemeral=True)
             else:
                 await ctx.interaction.followup.send(embed=
-                                                    gen_embed(title='whitelist remove',
+                                                    gen_embed(title='Remove Channel from Whitelist',
                                                               content=f'Channel is not in the whitelist!'),
                                                     ephemeral=True)
         else:
             await ctx.interaction.followup.send(embed=
-                                                gen_embed(title='whitelist remove',
+                                                gen_embed(title='Remove Channel from Whitelist',
                                                           content='Whitelist is not enabled!'),
                                                 ephemeral=True)
 
@@ -1778,6 +1906,302 @@ class Administration(commands.Cog):
             await ctx.interaction.followup.send('Message not found. It may already have been deleted.',
                                                 ephemeral=True)
             return
+
+    @discord.slash_command(name='purge',
+                           description='Delete messages from the channel. Various filters exist')
+    @default_permissions(manage_messages=True)
+    async def purge(self,
+                    ctx: discord.ApplicationContext,
+                    number: Option(int, 'Specify to choose # of messages to search through.',
+                                   required=False,
+                                   min_value=1,
+                                   max_value=1000),
+                    member: Option(discord.Member, 'Specify to only delete messages from this member',
+                                   required=False),
+                    time: Option(str, 'Specify to delete messages sent in the past duration',
+                                 required=False)):
+        async def delete_messages(limit=None, check=None, before=None, after=None):
+            if check:
+                deleted = await ctx.interaction.channel.purge(limit=limit, check=check, before=before, after=after)
+                await ctx.interaction.followup.send(
+                    embed=gen_embed(title='Purge Messages',
+                                    content=(f'The last {len(deleted)} messages by {member.name}#{member.discriminator}'
+                                             ' were deleted.')),
+                    ephemeral=True)
+            else:
+                deleted = await ctx.interaction.channel.purge(limit=limit, before=before, after=after)
+                await ctx.interaction.followup.send(
+                    embed=gen_embed(title='Purge Messages', content=f'The last {len(deleted)} messages were deleted.'),
+                    ephemeral=True)
+
+        await ctx.interaction.response.defer(ephemeral=True)
+
+        time_result = None
+        if time:
+            testing_text = ""
+            for chunk in time.split():
+                if chunk == "and":
+                    continue
+                if chunk.isdigit():
+                    testing_text += chunk
+                    continue
+                testing_text += chunk.rstrip(",")
+                parsed = parse_timedelta(testing_text, minimum=timedelta(seconds=1), maximum=timedelta(weeks=52))
+                if parsed != time_result:
+                    time_result = parsed
+                else:
+                    raise commands.UserInputError('Cannot parse the time entered.')
+
+        # The following combinations are possible:
+        # 1. Only number of messages provided
+        # 2. # of messages and user is provided
+        # 3. # of messages, user, and time is provided
+        # 4. # of messages and time is provided
+        # 5. User and time is provided
+        # 6. Only User is provided (INVALID)
+        # 7. Only Time is provided
+
+        if number:
+            if member:
+                def user_check(m):
+                    return m.author == member
+
+                if time:
+                    after_value = datetime.datetime.now(datetime.timezone.utc) - time_result
+                    await delete_messages(limit=number,
+                                          check=user_check,
+                                          before=ctx.interaction.message,
+                                          after=after_value)
+                    return
+                else:
+                    await delete_messages(limit=number,
+                                          check=user_check,
+                                          before=ctx.interaction.message)
+                    return
+            else:
+                if time:
+                    after_value = datetime.datetime.now(datetime.timezone.utc) - time_result
+                    await delete_messages(limit=number,
+                                          before=ctx.interaction.message,
+                                          after=after_value)
+                    return
+                else:
+                    await delete_messages(limit=number,
+                                          before=ctx.interaction.message)
+                    return
+
+        if member:
+            def user_check(m):
+                return m.author == member
+
+            if time:
+                after_value = datetime.datetime.now(datetime.timezone.utc) - time_result
+                await delete_messages(check=user_check,
+                                      before=ctx.interaction.message,
+                                      after=after_value)
+                return
+        else:
+            raise commands.UserInputError('lmao bad')
+
+        if time:
+            after_value = datetime.datetime.now(datetime.timezone.utc) - time_result
+            await delete_messages(before=ctx.interaction.message,
+                                  after=after_value)
+            return
+
+    rolecommand = SlashCommandGroup('role', 'Add/remove roles and users to roles')
+
+    async def role_color_autocomplete(self,
+                                      ctx):
+        return [color for color in COLORS if color.startswith(ctx.value.lower())]
+
+    @rolecommand.command(name='create',
+                         description='Create a new role')
+    @default_permissions(manage_roles=True)
+    async def createrole(self,
+                         ctx: discord.ApplicationContext,
+                         name: Option(str, 'Name of the role'),
+                         color: Option(str, 'Role color. Accepts hex color codes (#ffffff).',
+                                       required=False,
+                                       autocomplete=role_color_autocomplete)):
+        def hex_to_rgb(value):
+            value = value.strip()
+            regex = re.compile('^#[0-9a-fA-F]{6}$')
+            if regex.match(value):
+                value = value.lstrip('#')
+                lv = len(value)
+                return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+            else:
+                raise commands.UserInputError(message='This is not a valid hex code!')
+
+        await ctx.interaction.response.defer(ephemeral=True)
+        role_permissions = ctx.guild.default_role.permissions
+        if color:
+            if color in COLORS:
+                role_color = eval('discord.Colour.' + color + "()")
+            else:
+                role_color = hex_to_rgb(color)
+                for num in role_color:
+                    if num > 255 or num < 0:
+                        raise commands.BadArgument(message='This is not a valid color!')
+                role_color = discord.Colour.from_rgb(role_color[0], role_color[1], role_color[2])
+        else:
+            role_color = discord.Colour.random()
+
+        role = await ctx.guild.create_role(name=name, permissions=role_permissions, colour=role_color)
+        await ctx.interaction.followup.send(embed=gen_embed(title='Role Creation',
+                                                            content=f'Role {role.mention} has been created!'),
+                                            ephemeral=True)
+
+        # Technically optional so we can just ignore errors here
+        await role.edit(position=1)
+
+    @rolecommand.command(name='delete',
+                         description='Delete a role')
+    @default_permissions(manage_roles=True)
+    async def deleterole(self,
+                         ctx: discord.ApplicationContext,
+                         role: Option(discord.Role, 'Role to delete')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        role_name = role.name
+        await role.delete(reason=f'Deleted by {ctx.interaction.user.name}#{ctx.interaction.user.discriminator}')
+        await ctx.interaction.followup.send(embed=gen_embed(title='Role Deletion',
+                                                            content=f'Role {role_name} has been deleted.'),
+                                            ephemeral=True)
+
+    add_user_action = rolecommand.create_subgroup('add', 'Add user actions')
+    remove_user_action = rolecommand.create_subgroup('remove', 'Remove user actions')
+
+    @add_user_action.command(name='user',
+                             description='Add user to role')
+    @default_permissions(manage_roles=True)
+    async def adduser(self,
+                      ctx: discord.ApplicationContext,
+                      user: Option(discord.Member, 'User to add to role'),
+                      role: Option(discord.Role, 'Role to add user to')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        await user.add_roles(role)
+        await ctx.interaction.followup.send(embed=gen_embed(title='Add User to Role',
+                                                            content=(f'{user.mention} has been added'
+                                                                     f' to role {role.mention}')),
+                                            ephemeral=True)
+
+    @remove_user_action.command(name='user',
+                                description='Remove user from role')
+    @default_permissions(manage_roles=True)
+    async def removeuser(self,
+                         ctx: discord.ApplicationContext,
+                         user: Option(discord.Member, 'User to remove from role'),
+                         role: Option(discord.Role, 'Role to remove user from')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        await user.remove_roles(role)
+        await ctx.interaction.followup.send(embed=gen_embed(title='Remove User from Role',
+                                                            content=(f'{user.mention} has been removed'
+                                                                     f' from role {role.mention}')),
+                                            ephemeral=True)
+
+    timeout = SlashCommandGroup('timeout', 'Set/remove timeout on a user')
+
+    @timeout.command(name='set',
+                     description='Timeout a user')
+    @default_permissions(moderate_members=True)
+    async def set_timeout(self,
+                          ctx: discord.ApplicationContext,
+                          user: Option(discord.Member, 'User to timeout'),
+                          time: Option(str, 'Amount of time to timeout'),
+                          reason: Option(str, 'Reason for timeout',
+                                         required=False)):
+        await ctx.interaction.response.defer(ephemeral=True)
+
+        time_result = None
+        testing_text = ""
+        for chunk in time.split():
+            if chunk == "and":
+                continue
+            if chunk.isdigit():
+                testing_text += chunk
+                continue
+            testing_text += chunk.rstrip(",")
+            parsed = parse_timedelta(testing_text, minimum=timedelta(seconds=1), maximum=timedelta(days=28))
+            if parsed != time_result:
+                time_result = parsed
+            else:
+                raise commands.UserInputError('Cannot parse the time entered.')
+
+        if reason:
+            await user.timeout_for(time_result, reason=reason[:512])
+        else:
+            await user.timeout_for(time_result)
+
+        dm_channel = user.dm_channel
+        if user.dm_channel is None:
+            dm_channel = await user.create_dm()
+
+        dm_embed = None
+        if m := await modmail_enabled(ctx):
+            dm_embed = gen_embed(name=ctx.guild.name,
+                                 icon_url=ctx.guild.icon.url,
+                                 title=(f'You have been put in timeout. Your timeout will last for'
+                                        f' {humanize_timedelta(timedelta=time_result)}'),
+                                 content=(f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply'
+                                          ' function) to this message and send a modmail.'))
+        else:
+            dm_embed = gen_embed(name=ctx.guild.name,
+                                 icon_url=ctx.guild.icon.url,
+                                 title=(f'You have been put in timeout. Your timeout will last for'
+                                        f' {humanize_timedelta(timedelta=time_result)}'),
+                                 content=f'Reason: {reason}')
+        dm_embed.set_footer(text=ctx.interaction.guild_id)
+        try:
+            await dm_channel.send(embed=dm_embed)
+        except discord.Forbidden:
+            await ctx.interaction.followup.send(embed=gen_embed(title='Warning',
+                                                                content=('This user does not accept DMs. I could not'
+                                                                         ' send them the message, but I will proceed'
+                                                                         ' with putting the user in timeout.')),
+                                                ephemeral=True)
+
+        document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
+        if document['log_channel'] and document['log_kbm']:
+            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+            await log_channel.send(embed=gen_embed(title='Timeout User',
+                                                   content=(f'{user.mention} has been put in timeout for'
+                                                            f' {humanize_timedelta(timedelta=time_result)}.'
+                                                            f' \n\nReason: {reason}')))
+        await ctx.interaction.followup.send(embed=gen_embed(title='Timeout User',
+                                                            content=(f'{user.mention} has been put in timeout for'
+                                                                     f' {humanize_timedelta(timedelta=time_result)}.'
+                                                                     f' \n\nReason: {reason}')),
+                                            ephemeral=True)
+
+    @timeout.command(name='remove',
+                     description='Remove timeout from a user')
+    @default_permissions(moderate_members=True)
+    async def remove_timeout(self,
+                             ctx: discord.ApplicationContext,
+                             user: Option(discord.Member, 'User to remove timeout from')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        await user.remove_timeout(reason='Invoked by slash command')
+
+        document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
+        if document['log_channel'] and document['log_kbm']:
+            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+            await log_channel.send(embed=gen_embed(title='Remvoe Timeout from User',
+                                                   content=(f'{user.mention} has had their timeout removed by'
+                                                            f' {ctx.interaction.user.mention}.')))
+        await ctx.interaction.followup.send(embed=gen_embed(title='Remove Timeout from User',
+                                                            content=f'Removed timeout from {user.mention}.'),
+                                            ephemeral=True)
+
+    @discord.slash_command(name='kick',
+                           description='Kick a user and send a modmail (if enabled)')
+    @default_permissions(kick_members=True)
+    async def kick(self,
+                   ctx: discord.ApplicationContext,
+                   user: Option(discord.User, 'User to kick'),
+                   reason: Option(str, 'Reason for kick',
+                                  required=False)):
+        pass
 
 
 def setup(bot):

@@ -51,7 +51,7 @@ class CommandErrorHandler(commands.Cog):
             return
 
         if isinstance(error, commands.UserInputError):
-            await ctx.respond(error.message, ephemeral=True)
+            await ctx.respond(error, ephemeral=True)
             return
 
         if isinstance(error, discord.ExtensionNotFound):
