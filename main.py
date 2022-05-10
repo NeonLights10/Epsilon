@@ -402,6 +402,9 @@ async def on_message(message):
                                                     title='Attachment Failed',
                                                     content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                                 attachnum += 1
+                                    if len(ctx.stickers):
+                                        for sticker in ctx.stickers:
+                                            await dm_channel.send(stickers=[sticker])
                                     await ctx.send(embed=gen_embed(title='Modmail sent',
                                                                    content=f'Sent modmail to {user.name}#{user.discriminator}.'))
                         elif document['chat']:
@@ -485,6 +488,9 @@ async def on_message(message):
                                         title='Attachment Failed',
                                         content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                     attachnum += 1
+                        if len(ctx.stickers):
+                            for sticker in ctx.stickers:
+                                await channel.send(stickers=[sticker])
                         await channel.send(content=f"{ctx.author.mention}")
                         await ctx.send(embed=gen_embed(title='Modmail sent',
                                                        content='The moderators will review your message and get back to you shortly.'), )

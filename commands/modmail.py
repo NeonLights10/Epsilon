@@ -121,6 +121,9 @@ class PersistentEvent(discord.ui.View):
                                                   icon_url=modmail_content.author.display_avatar.url, title='Attachment Failed',
                                                   content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                 attachnum += 1
+                    if len(modmail_content.stickers):
+                        for sticker in modmail_content.stickers:
+                            await channel.send(stickers=[sticker])
                     await channel.send(content=f"{modmail_content.author.mention}")
                     await dm_channel.send(embed=gen_embed(title='Modmail sent',
                                                    content='The moderators will review your message and get back to you shortly.'))
@@ -213,6 +216,9 @@ class Modmail(commands.Cog):
                                     icon_url=ctx.author.display_avatar.url, title='Attachment Failed',
                                     content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                 attachnum += 1
+                    if len(ctx.stickers):
+                        for sticker in ctx.stickers:
+                            await channel.send(stickers=[sticker])
                     await channel.send(content=f"{ctx.author.mention}")
                     await ctx.send(embed=gen_embed(title='Modmail sent',
                                                    content='The moderators will review your message and get back to you shortly.'))
@@ -260,12 +266,15 @@ class Modmail(commands.Cog):
                             else:
                                 await ctx.send(content=f'Attachment #{attachnum} is not a supported media type ({attachment.content_type}).')
                                 attachnum += 1
-
+                    if len(ctx.stickers):
+                        for sticker in ctx.stickers:
+                            await dm_channel.send(stickers=[sticker])
                     await ctx.send(embed=gen_embed(title='Modmail sent',
                                                    content=f'Sent modmail to {rid.name}#{rid.discriminator}.'))
                 else:
                     log.warning("Error: Modmail is Disabled")
                     await ctx.send(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
+
 
 def setup(bot):
     bot.add_cog(Modmail(bot))
