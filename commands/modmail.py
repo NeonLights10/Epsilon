@@ -121,7 +121,7 @@ class PersistentEvent(discord.ui.View):
                                                   icon_url=modmail_content.author.display_avatar.url, title='Attachment Failed',
                                                   content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                 attachnum += 1
-                    if len(modmail_content.stickers):
+                    if len(modmail_content.stickers) > 0:
                         for sticker in modmail_content.stickers:
                             await channel.send(stickers=[sticker])
                     await channel.send(content=f"{modmail_content.author.mention}")
@@ -216,7 +216,7 @@ class Modmail(commands.Cog):
                                     icon_url=ctx.author.display_avatar.url, title='Attachment Failed',
                                     content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                 attachnum += 1
-                    if len(ctx.stickers):
+                    if len(ctx.stickers) > 0:
                         for sticker in ctx.stickers:
                             await channel.send(stickers=[sticker])
                     await channel.send(content=f"{ctx.author.mention}")
@@ -266,7 +266,7 @@ class Modmail(commands.Cog):
                             else:
                                 await ctx.send(content=f'Attachment #{attachnum} is not a supported media type ({attachment.content_type}).')
                                 attachnum += 1
-                    if len(ctx.stickers):
+                    if len(ctx.stickers) > 0:
                         for sticker in ctx.stickers:
                             await dm_channel.send(stickers=[sticker])
                     await ctx.send(embed=gen_embed(title='Modmail sent',

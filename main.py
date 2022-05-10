@@ -172,8 +172,9 @@ async def _check_document(guild, id):
     else:
         document = await db.servers.find_one({"server_id": id})
         blacklist = document['blacklist']
-        for channel_id in blacklist:
-            await db.msgid.delete_many({"channel_id": channel_id})
+        if blacklist:
+            for channel_id in blacklist:
+                await db.msgid.delete_many({"channel_id": channel_id})
         # Changeable to update old documents whenever a new feature/config is added
         await db.servers.update_many(
             {"server_id": id},
@@ -402,7 +403,7 @@ async def on_message(message):
                                                     title='Attachment Failed',
                                                     content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                                 attachnum += 1
-                                    if len(ctx.stickers):
+                                    if len(ctx.stickers) > 0:
                                         for sticker in ctx.stickers:
                                             await dm_channel.send(stickers=[sticker])
                                     await ctx.send(embed=gen_embed(title='Modmail sent',
@@ -488,7 +489,7 @@ async def on_message(message):
                                         title='Attachment Failed',
                                         content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                     attachnum += 1
-                        if len(ctx.stickers):
+                        if len(ctx.stickers) > 0:
                             for sticker in ctx.stickers:
                                 await channel.send(stickers=[sticker])
                         await channel.send(content=f"{ctx.author.mention}")
