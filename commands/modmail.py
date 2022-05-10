@@ -123,7 +123,13 @@ class PersistentEvent(discord.ui.View):
                                 attachnum += 1
                     if len(modmail_content.stickers) > 0:
                         for sticker in modmail_content.stickers:
-                            await channel.send(stickers=[sticker])
+                            embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                              icon_url=modmail_content.author.display_avatar.url,
+                                              title='Sticker',
+                                              content=f'Attached sticker:')
+                            embed.set_image(url=sticker.url)
+                            embed.set_footer(text=f'{modmail_content.author.id}')
+                            await channel.send(embed=embed)
                     await channel.send(content=f"{modmail_content.author.mention}")
                     await dm_channel.send(embed=gen_embed(title='Modmail sent',
                                                    content='The moderators will review your message and get back to you shortly.'))
@@ -218,7 +224,13 @@ class Modmail(commands.Cog):
                                 attachnum += 1
                     if len(ctx.stickers) > 0:
                         for sticker in ctx.stickers:
-                            await channel.send(stickers=[sticker])
+                            embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
+                                              icon_url=ctx.author.display_avatar.url,
+                                              title='Sticker',
+                                              content=f'Attached sticker:')
+                            embed.set_image(url=sticker.url)
+                            embed.set_footer(text=f'{ctx.interaction.guild.id}')
+                            await channel.send(embed=embed)
                     await channel.send(content=f"{ctx.author.mention}")
                     await ctx.send(embed=gen_embed(title='Modmail sent',
                                                    content='The moderators will review your message and get back to you shortly.'))
@@ -268,7 +280,13 @@ class Modmail(commands.Cog):
                                 attachnum += 1
                     if len(ctx.stickers) > 0:
                         for sticker in ctx.stickers:
-                            await dm_channel.send(stickers=[sticker])
+                            embed = gen_embed(name=f'{ctx.guild.name}',
+                                              icon_url=ctx.guild.icon.url,
+                                              title='Sticker',
+                                              content=f'Attached sticker:')
+                            embed.set_image(url=sticker.url)
+                            embed.set_footer(text=f'{ctx.guild.id}')
+                            await dm_channel.send(embed=embed)
                     await ctx.send(embed=gen_embed(title='Modmail sent',
                                                    content=f'Sent modmail to {rid.name}#{rid.discriminator}.'))
                 else:
