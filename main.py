@@ -403,8 +403,8 @@ async def on_message(message):
                                                     title='Attachment Failed',
                                                     content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                                 attachnum += 1
-                                    if len(ctx.stickers) > 0:
-                                        for sticker in ctx.stickers:
+                                    if len(ctx.message.stickers) > 0:
+                                        for sticker in ctx.message.stickers:
                                             embed = gen_embed(name=f'{ctx.guild.name}',
                                                               icon_url=ctx.guild.icon.url,
                                                               title='Sticker',
@@ -495,8 +495,8 @@ async def on_message(message):
                                         title='Attachment Failed',
                                         content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
                                     attachnum += 1
-                        if len(ctx.stickers) > 0:
-                            for sticker in ctx.stickers:
+                        if len(ctx.message.stickers) > 0:
+                            for sticker in ctx.message.stickers:
                                 embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
                                                   icon_url=ctx.author.display_avatar.url,
                                                   title='Sticker',
