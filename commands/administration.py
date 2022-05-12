@@ -1,5 +1,6 @@
 import asyncio
 import re
+import time
 import datetime
 from datetime import timedelta
 from __main__ import log, db
@@ -7,9 +8,11 @@ from typing import Union, Optional, List, SupportsInt
 
 import discord
 import emoji as zemoji
+import validators
 from discord.commands.permissions import default_permissions
 from discord.ext import commands
 from discord.commands import Option, SlashCommandGroup
+from discord.ui import InputText
 
 from commands.errorhandler import CheckOwner
 from formatting.embed import gen_embed
@@ -2145,13 +2148,15 @@ class Administration(commands.Cog):
                                         f' {humanize_timedelta(timedelta=time_result)}'),
                                  content=(f'Reason: {reason}\n\nIf you have any issues, you may reply (use the reply'
                                           ' function) to this message and send a modmail.'))
+            dm_embed.set_footer(text=ctx.interaction.guild_id)
         else:
             dm_embed = gen_embed(name=ctx.guild.name,
                                  icon_url=ctx.guild.icon.url,
                                  title=(f'You have been put in timeout. Your timeout will last for'
                                         f' {humanize_timedelta(timedelta=time_result)}'),
                                  content=f'Reason: {reason}')
-        dm_embed.set_footer(text=ctx.interaction.guild_id)
+            dm_embed.set_footer(text=time.ctime())
+
         try:
             await dm_channel.send(embed=dm_embed)
         except discord.Forbidden:
@@ -2186,7 +2191,7 @@ class Administration(commands.Cog):
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
         if document['log_channel'] and document['log_kbm']:
             log_channel = ctx.guild.get_channel(int(document['log_channel']))
-            await log_channel.send(embed=gen_embed(title='Remvoe Timeout from User',
+            await log_channel.send(embed=gen_embed(title='Remove Timeout from User',
                                                    content=(f'{user.mention} has had their timeout removed by'
                                                             f' {ctx.interaction.user.mention}.')))
         await ctx.interaction.followup.send(embed=gen_embed(title='Remove Timeout from User',
@@ -2201,7 +2206,365 @@ class Administration(commands.Cog):
                    user: Option(discord.User, 'User to kick'),
                    reason: Option(str, 'Reason for kick',
                                   required=False)):
-        pass
+        await ctx.interaction.response.defer(ephemeral=True)
+
+        dm_channel = user.dm_channel
+        if user.dm_channel is None:
+            dm_channel = await user.create_dm()
+
+        m = await modmail_enabled(ctx)
+        dm_embed = None
+        if m:
+            dm_embed = gen_embed(name=ctx.guild.name,
+                                 icon_url=ctx.guild.icon.url,
+                                 title='You have been kicked',
+                                 content=(f'Reason: {reason}\n\nIf you have any issues, you may reply '
+                                          ' (use the reply function) to this message and send a modmail.'))
+            dm_embed.set_footer(text=ctx.guild.id)
+        else:
+            dm_embed = gen_embed(name=ctx.guild.name,
+                                 icon_url=ctx.guild.icon.url,
+                                 title='You have been kicked',
+                                 content=f'Reason: {reason}')
+            dm_embed.set_footer(text=time.ctime())
+
+        try:
+            await dm_channel.send(embed=dm_embed)
+        except discord.Forbidden:
+            await ctx.interaction.followup.send(embed=gen_embed(title='Warning',
+                                                                content=('This user does not accept DMs. I could not'
+                                                                         ' send them the message, but I will proceed'
+                                                                         ' with kicking the user.')),
+                                                ephemeral=True)
+
+        if reason:
+            await ctx.guild.kick(user, reason=reason[:512])
+        else:
+            await ctx.guild.kick(user)
+
+        document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
+        if document['log_channel'] and document['log_kbm']:
+            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+            await log_channel.send(embed=
+                                   gen_embed(title='Kick User',
+                                             content=(f'{user.name}#{user.discriminator} has been kicked by'
+                                                      f'{ctx.interaction.user.name}#{ctx.interaction.user.discriminator}'
+                                                      f'\nReason: {reason if reason else "None"}')))
+
+        await ctx.interaction.followup.send(embed=gen_embed(title='Kick User',
+                                                            content=(f'{user.name}#{user.discriminator} has been kicked.'
+                                                                     f'\nReason: {reason if reason else "None"}')),
+                                            ephemeral=True)
+
+    @discord.slash_command(name='ban',
+                           description='Ban a user and send a modmail (if enabled)')
+    @default_permissions(ban_members=True)
+    async def ban(self,
+                  ctx: discord.ApplicationContext,
+                  user: Option(discord.User, 'User to ban'),
+                  days: Option(int, 'Number of days worth of messages to delete',
+                               min_value=0,
+                               max_value=7),
+                  reason: Option(str, 'Reason for ban',
+                                 required=False)):
+        await ctx.interaction.response.defer(ephemeral=True)
+
+        dm_channel = user.dm_channel
+        if user.dm_channel is None:
+            dm_channel = await user.create_dm()
+
+        m = await modmail_enabled(ctx)
+        dm_embed = None
+        if m:
+            dm_embed = gen_embed(name=ctx.guild.name,
+                                 icon_url=ctx.guild.icon.url,
+                                 title='You have been Banned',
+                                 content=(f'Reason: {reason}\n\nIf you have any issues, you may reply '
+                                          ' (use the reply function) to this message and send a modmail.'))
+            dm_embed.set_footer(text=ctx.guild.id)
+        else:
+            dm_embed = gen_embed(name=ctx.guild.name,
+                                 icon_url=ctx.guild.icon.url,
+                                 title='You have been banned',
+                                 content=f'Reason: {reason}')
+            dm_embed.set_footer(text=time.ctime())
+
+        try:
+            await dm_channel.send(embed=dm_embed)
+        except discord.Forbidden:
+            await ctx.interaction.followup.send(embed=gen_embed(title='Warning',
+                                                                content=('This user does not accept DMs. I could not'
+                                                                         ' send them the message, but I will proceed'
+                                                                         ' with banning the user.')),
+                                                ephemeral=True)
+
+        if reason:
+            await ctx.guild.ban(user, reason=reason[:512], delete_message_days=days)
+        else:
+            await ctx.guild.ban(user, delete_message_days=days)
+
+        document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
+        if document['log_channel'] and document['log_kbm']:
+            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+            await log_channel.send(embed=
+                                   gen_embed(title='Ban User',
+                                             content=(f'{user.name}#{user.discriminator} has been banned by'
+                                                      f'{ctx.interaction.user.name}#{ctx.interaction.user.discriminator}'
+                                                      f'\nReason: {reason if reason else "None"}')))
+
+        await ctx.interaction.followup.send(embed=gen_embed(title='Ban User',
+                                                            content=(
+                                                                f'{user.name}#{user.discriminator} has been banned.'
+                                                                f'\nReason: {reason if reason else "None"}')),
+                                            ephemeral=True)
+
+    @discord.slash_command(name='strike',
+                           description='Strike a user. After 3 strikes, the user is automatically banned.')
+    @default_permissions(ban_members=True)
+    async def strike(self,
+                     ctx: discord.ApplicationContext,
+                     user: Option(discord.Member, 'Member to strike')):
+        class Cancel(discord.ui.Button):
+            def __init__(self):
+                super().__init__(label="Cancel", style=discord.ButtonStyle.danger)
+                self.value = None
+
+            async def interaction_check(self, interaction):
+                if interaction.user != self.context.author:
+                    return False
+                return True
+
+            async def callback(self, interaction):
+                await interaction.response.send_message("Cancelled Operation.", ephemeral=True)
+                for item in self.view.children:
+                    item.disabled = True
+                self.value = True
+                self.view.stop()
+
+        class StrikeSeverity(discord.ui.Select):
+            def __init__(self):
+                options = [
+                    discord.SelectOption(label='Strike Level 1', value=1, description='This is a warning strike',
+                                         emoji='1️⃣'),
+                    discord.SelectOption(label='Strike Level 2', value=2,
+                                         description='This strike will also mute the user', emoji='2️⃣'),
+                    discord.SelectOption(label='Strike Level 3', value=3,
+                                         description='This strike will also ban the user', emoji='3️⃣')
+                ]
+                super().__init__(placeholder="Select the strike severity", min_values=1, max_values=1, options=options)
+
+            async def interaction_check(self, interaction):
+                if interaction.user != self.context.author:
+                    return False
+                return True
+
+            async def callback(self, interaction):
+                await interaction.response.send_message(f'You selected strike level {self.values[0]}', ephemeral=True)
+                for item in self.view.children:
+                    item.disabled = True
+                self.view.stop()
+
+        class StrikeMessageModal(discord.ui.Modal):
+            def __init__(self, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self.value = None
+                self.add_item(
+                    InputText(
+                        label='Strike Message',
+                        placeholder='Enter your strike message here.',
+                        max_length=1024))
+
+            async def callback(self, interaction: discord.Interaction):
+                self.value = self.children[0].value
+
+        class ModalPromptView(discord.ui.View):
+            def __init__(self):
+                super().__init__()
+                self.value = None
+
+            @discord.ui.button(label='Open Modal',
+                               style=discord.ButtonStyle.primary)
+            async def open_modal(self, button: discord.ui.Button, interaction: discord.Interaction):
+                modal = ModalPromptView()
+                await interaction.response.send_modal(modal)
+                await modal.wait()
+                self.value = modal.value
+                self.view.stop()
+
+        async def input_prompt(attempts=1, scenario: int = None):
+            def check(m):
+                return m.author == ctx.interaction.user and m.channel == ctx.interaction.channel
+
+            match scenario:
+                case 1:
+                    sent_message = await ctx.send(embed=
+                                                  gen_embed(title='Timeout Duration',
+                                                            content=('How long do you want to timeout the user?'
+                                                                     ' Accepted format: # [days/minutes/hrs/mins/etc.],'
+                                                                     ' these can be chained together, i.e.'
+                                                                     ' `3 days and 6 hours`.')))
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                    except asyncio.TimeoutError:
+                        await ctx.interaction.followup.send(embed=gen_embed(title='Timeout cancelled',
+                                                                            content='Strike has still been applied'),
+                                                            ephemeral=True)
+                    time_result = None
+                    testing_text = ""
+                    for chunk in mmsg.clean_content.split():
+                        if chunk == "and":
+                            continue
+                        if chunk.isdigit():
+                            testing_text += chunk
+                            continue
+                        testing_text += chunk.rstrip(",")
+                        parsed = parse_timedelta(testing_text, minimum=timedelta(seconds=1), maximum=timedelta(days=28))
+                        if parsed != time_result:
+                            time_result = parsed
+                            await mmsg.delete()
+                            return time_result
+                        elif attempts > 3:
+                            await mmsg.delete()
+                            raise discord.ext.commands.BadArgument()
+                        else:
+                            await ctx.interaction.followup.send(embed=gen_embed(title='Could not parse time',
+                                                                                content='Please try again.'),
+                                                                ephemeral=True)
+                            await mmsg.delete()
+                            attempts += 1
+                            return await input_prompt(attempts, scenario=1)
+
+                case 2:
+                    sent_message = await ctx.send(embed=
+                                                  gen_embed(title='Image Mute Duration',
+                                                            content=('How long do you want to mute the user?'
+                                                                     ' Accepted format: # [days/minutes/hrs/mins/etc.],'
+                                                                     ' these can be chained together, i.e.'
+                                                                     ' `3 days and 6 hours`.')))
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                    except asyncio.TimeoutError:
+                        await ctx.interaction.followup.send(embed=gen_embed(title='Image Mute cancelled',
+                                                                            content='Strike has still been applied'),
+                                                            ephemeral=True)
+
+                    time_result = None
+                    testing_text = ""
+                    for chunk in mmsg.clean_content.split():
+                        if chunk == "and":
+                            continue
+                        if chunk.isdigit():
+                            testing_text += chunk
+                            continue
+                        testing_text += chunk.rstrip(",")
+                        parsed = parse_timedelta(testing_text, minimum=timedelta(seconds=1), maximum=timedelta(days=28))
+                        if parsed != time_result:
+                            time_result = parsed
+                            await mmsg.delete()
+                            return time_result
+                        elif attempts > 3:
+                            await mmsg.delete()
+                            raise discord.ext.commands.BadArgument()
+                        else:
+                            await ctx.interaction.followup.send(embed=gen_embed(title='Could not parse time',
+                                                                                content='Please try again.'),
+                                                                ephemeral=True)
+                            await mmsg.delete()
+                            attempts += 1
+                            return await input_prompt(attempts, scenario=2)
+
+                case 3:
+                    sent_message = await ctx.send(embed=
+                                                  gen_embed(title='# of Days Worth of Messages to Delete',
+                                                            content=('How many days worth of messages do you want to'
+                                                                     ' delete?')))
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                    except asyncio.TimeoutError:
+                        await ctx.interaction.followup.send(embed=gen_embed(title='Ban cancelled',
+                                                                            content=('Strike has still been applied,'
+                                                                                     ' please ban manually.')),
+                                                            ephemeral=True)
+
+                    if re.match(r'^[0-7]{1}$', mmsg.clean_content, flags=re.I):
+                        await mmsg.delete()
+                        return mmsg.clean_content
+                    elif attempts > 3:
+                        await mmsg.delete()
+                        raise discord.ext.commands.BadArgument()
+                    else:
+                        await ctx.interaction.followup.send(embed=gen_embed(title='Could not parse # of days',
+                                                                            content='Please try again.'),
+                                                            ephemeral=True)
+                        await mmsg.delete()
+                        attempts += 1
+                        return await input_prompt(attempts, scenario=3)
+
+                case 4:
+                    sent_message = await ctx.send(embed=gen_embed(title='URL',
+                                                                  content=('Please provide the message link/image URL'
+                                                                           ' or attach an image for the strike below.')))
+                    try:
+                        mmsg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                    except asyncio.TimeoutError:
+                        await ctx.interaction.followup.send(embed=gen_embed(title='Strike cancelled',
+                                                                            content=('Timed out. Please run the command'
+                                                                                     ' again.')),
+                                                            ephemeral=True)
+
+                    if validators.url(mmsg.content):
+                        await mmsg.delete()
+                        return mmsg.clean_content
+                    elif len(mmsg.attachments) > 0:
+                        return mmsg.attachments[0].url
+                    elif attempts > 3:
+                        await mmsg.delete()
+                        raise discord.ext.commands.BadArgument()
+                    else:
+                        await ctx.interaction.followup.send(embed=gen_embed(title='Could not parse URL/Attachment',
+                                                                            content='Please try again.'),
+                                                            ephemeral=True)
+                        await mmsg.delete()
+                        attempts += 1
+                        return await input_prompt(attempts, scenario=4)
+
+        await ctx.interaction.response.defer(ephemeral=True)
+        strike_severity_view = discord.ui.View()
+        strike_severity_view.add_item(StrikeSeverity())
+        strike_severity_view.add_item(Cancel())
+        strike_severity_sent_message = await ctx.interaction.followup.send(embed=
+                                                                           gen_embed(title='Strike Severity',
+                                                                                     content='Please choose your strike'
+                                                                                             ' severity from the'
+                                                                                             ' dropdown below.'),
+                                                                           view=strike_severity_view)
+        await strike_severity_view.wait()
+        await strike_severity_sent_message.delete()
+        if strike_severity_view.children[1].value:
+            log.info('Cancelled strike operation')
+            await ctx.interaction.followup.send(content='Strike has been cancelled.',
+                                                ephemeral=True)
+        elif strike_severity_view.children[0].values:
+            strike_url = await input_prompt(scenario=4)
+            if strike_url:
+                strike_message_view = ModalPromptView()
+                sent_button_prompt = await ctx.interaction.followup.send(embed=
+                                                                         gen_embed(title='Strike Message Modal',
+                                                                                   content='Click the button below to'
+                                                                                           ' open a modal and enter'
+                                                                                           ' your strike message.'),
+                                                                         view=strike_message_view)
+                await strike_message_view.wait()
+                await sent_button_prompt.delete()
+                if strike_message_view.value is None:
+
+
+
+        # do the thing
+
+        # ask for severity
+        # then provide button for modal
+        # wait for input and boom - striked gottem
 
 
 def setup(bot):
