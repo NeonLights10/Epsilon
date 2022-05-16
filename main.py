@@ -250,7 +250,10 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 class EpsilonBot(bridge.Bot):
 
     def __init__(self, command_prefix, intents, case_insensitive, debug_guilds):
-        super().__init__(command_prefix=command_prefix, intents=intents, case_insensitive=case_insensitive,
+        super().__init__(max_messages=2000,
+                         command_prefix=command_prefix,
+                         intents=intents,
+                         case_insensitive=case_insensitive,
                          debug_guilds=debug_guilds)
         self.command_count = 0
         self.message_count = 0
@@ -358,6 +361,55 @@ async def on_message(message):
             elif ctx.prefix:
                 if ctx.command.name == 'modmail':
                     await bot.invoke(ctx)
+
+
+@bot.event
+async def on_guild_join(guild):
+    await check_document(guild, guild.id)
+
+    status = discord.Game(f'{default_prefix}help | {len(bot.guilds)} servers')
+    await bot.change_presence(activity=status)
+
+    general = find(lambda x: x.name == 'general', guild.text_channels)
+    if general and general.permissions_for(guild.me).send_messages:
+        embed = gen_embed(name=f'{guild.name}',
+                          icon_url=guild.icon.url,
+                          title='Thanks for inviting me!',
+                          content=('You can get started by typing %help to find the current command list.'
+                                   '\nChange the command prefix by typing %setprefix, and configure server settings '
+                                   'with %serverconfig and %channelconfig.\n\n'
+                                   'Source code: https://github.com/neon10lights/Epsilon\n'
+                                   'Support: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\n'
+                                   'If you have feedback or need help, please DM Neon#5555 or join the server at '
+                                   'https://discord.gg/AYTFJY8VhF'))
+        await general.send(embed=embed)
+        await general.send(embed=gen_embed(title='Thank you Kanon Supporters!',
+                                           content=('**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, '
+                                                    'Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, '
+                                                    'Hypnotic Rhythm#1260, wachie#0320, Ashlyne#8080, nehelenia#4489, '
+                                                    'careblaire#6969, Reileky#4161')))
+        return
+    else:
+        for channel in guild.text_channels:
+            if channel.permissions_for(guild.me).send_messages:
+                embed = gen_embed(name=f'{guild.name}',
+                                  icon_url=guild.icon.url,
+                                  title='Thanks for inviting me!',
+                                  content=('You can get started by typing %help to find the current command list.'
+                                           '\nChange the command prefix by typing %setprefix, and configure server '
+                                           'settings with %serverconfig and %channelconfig.\n\n'
+                                           'Source code: https://github.com/neon10lights/Epsilon\n'
+                                           'Support: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\n'
+                                           'If you have feedback or need help, please DM Neon#5555 or join the server '
+                                           'at https://discord.gg/AYTFJY8VhF'))
+                await channel.send(embed=embed)
+                await channel.send(embed=gen_embed(title='Thank you Kanon Supporters!',
+                                                   content=('**Thanks to:**\nReileky#4161, SinisterSmiley#0704, '
+                                                            'Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, '
+                                                            'shimmerleaf#2115, Hypnotic Rhythm#1260, wachie#0320, '
+                                                            'Ashlyne#8080, nehelenia#4489, careblaire#6969, '
+                                                            'Reileky#4161')))
+                return
 
 
 ##########

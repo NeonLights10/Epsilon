@@ -83,6 +83,11 @@ class Miscellaneous(commands.Cog):
                                           content='Kanon costs money to run. I pay for her server costs out of pocket, '
                                                   'so any donation helps!\nSupport: https://www.patreon.com/kanonbot '
                                                   'or https://ko-fi.com/neonlights'))
+        await ctx.send(embed=gen_embed(title='Thank you Kanon Supporters!',
+                                       content=('**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, '
+                                                'Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, '
+                                                'Hypnotic Rhythm#1260, wachie#0320, Ashlyne#8080, nehelenia#4489, '
+                                                'careblaire#6969, Reileky#4161')))
 
     # TODO: make shoutout command pull from list of discord members with role
 

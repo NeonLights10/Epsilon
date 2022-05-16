@@ -1,14 +1,14 @@
 import discord
 
-from formatting.constants import VERSION as BOTVERSION
-from formatting.constants import NAME
 from typing import List
-from __main__ import log
 
 
-def gen_embed(name=None, icon_url=None, title=None, content=None):
+def gen_embed(name=None, icon_url=None, title=None, content=None, colour=None):
     """Provides a basic template for embeds"""
-    e = discord.Embed(colour=0x1abc9c)
+    if colour:
+        e = discord.Embed(colour=colour)
+    else:
+        e = discord.Embed(colour=0x1abc9c)
     if name and icon_url:
         e.set_author(name=name, icon_url=icon_url)
     e.set_footer(text="Fueee~")
