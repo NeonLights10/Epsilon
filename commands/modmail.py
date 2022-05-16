@@ -18,7 +18,8 @@ class Confirm(discord.ui.View):
     # We also send the user an ephemeral message that we're confirming their choice.
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
     async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Confirming", ephemeral=True)
+        await interaction.response.defer()
+        # await interaction.response.send_message("Confirming", ephemeral=True)
         for item in self.children:
             item.disabled = True
         self.value = True
@@ -214,7 +215,8 @@ class Modmail(commands.Cog):
     async def modmail(self,
                       ctx: discord.ApplicationContext,
                       recipient: Option(discord.User, "User to send modmail to")):
-        await ctx.interaction.response.defer()
+        if not ctx.interaction.response.is_done():
+            await ctx.interaction.response.defer()
         modmail_content = await self.modmail_prompt(ctx)
 
         if modmail_content:
@@ -233,9 +235,7 @@ class Modmail(commands.Cog):
                                                             content='Please verify the contents before confirming.'),
                                             view=view)
                     return
-            await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
-                                                    content='Please verify the contents before confirming.'),
-                                    view=view)
+            await sent_message.delete()
 
             if view.value:
                 # if isinstance(ctx.channel, discord.TextChannel):
