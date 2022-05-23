@@ -66,6 +66,11 @@ class CommandErrorHandler(commands.Cog):
                 await ctx.interaction.followup.send('There was an error loading the cog.')
             return
 
+        if isinstance(error, discord.Forbidden):
+            await ctx.respond(('It seems I do not have the server permissions to post in the target channel.'
+                               '\nPlease check the permissions and try again.'))
+            return
+
         else:
             log.error(f"Ignoring unhandled exception in application command {ctx.command.name!r}")
             traceback.print_exception(type(error), error, error.__traceback__)

@@ -6,20 +6,15 @@ import logging
 import colorlog
 
 import re
-import random
 import json
 import time
-import datetime
 
 import twitter
 
 import discord
-from discord.ext import commands
 from discord.ext import bridge
-from discord.utils import find, get
 
 import motor.motor_asyncio
-from pymongo import MongoClient
 
 from formatting.constants import VERSION as BOTVERSION
 from formatting.constants import NAME
@@ -221,6 +216,8 @@ async def check_document(guild, id):
                     '$cond': [{'$not': ["$prev_message_modmail"]}, None, "$prev_message_modmail"]}
             }}]
         )
+        # BREAKING CHANGES BELOW - DO NOT ACTIVATE UNTIL ANNOUNCEMENT MADE AND SWITCHOVER DATE ESTABLISHED
+        # await db.rolereact.drop()
 
 
 ##########
@@ -268,6 +265,7 @@ bot.load_extension("commands.listeners")
 bot.load_extension("commands.misc")
 bot.load_extension("commands.modmail")
 bot.load_extension("commands.administration")
+bot.load_extension("commands.utility")
 
 
 @bot.event
@@ -361,55 +359,6 @@ async def on_message(message):
             elif ctx.prefix:
                 if ctx.command.name == 'modmail':
                     await bot.invoke(ctx)
-
-
-@bot.event
-async def on_guild_join(guild):
-    await check_document(guild, guild.id)
-
-    status = discord.Game(f'{default_prefix}help | {len(bot.guilds)} servers')
-    await bot.change_presence(activity=status)
-
-    general = find(lambda x: x.name == 'general', guild.text_channels)
-    if general and general.permissions_for(guild.me).send_messages:
-        embed = gen_embed(name=f'{guild.name}',
-                          icon_url=guild.icon.url,
-                          title='Thanks for inviting me!',
-                          content=('You can get started by typing %help to find the current command list.'
-                                   '\nChange the command prefix by typing %setprefix, and configure server settings '
-                                   'with %serverconfig and %channelconfig.\n\n'
-                                   'Source code: https://github.com/neon10lights/Epsilon\n'
-                                   'Support: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\n'
-                                   'If you have feedback or need help, please DM Neon#5555 or join the server at '
-                                   'https://discord.gg/AYTFJY8VhF'))
-        await general.send(embed=embed)
-        await general.send(embed=gen_embed(title='Thank you Kanon Supporters!',
-                                           content=('**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, '
-                                                    'Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, '
-                                                    'Hypnotic Rhythm#1260, wachie#0320, Ashlyne#8080, nehelenia#4489, '
-                                                    'careblaire#6969, Reileky#4161')))
-        return
-    else:
-        for channel in guild.text_channels:
-            if channel.permissions_for(guild.me).send_messages:
-                embed = gen_embed(name=f'{guild.name}',
-                                  icon_url=guild.icon.url,
-                                  title='Thanks for inviting me!',
-                                  content=('You can get started by typing %help to find the current command list.'
-                                           '\nChange the command prefix by typing %setprefix, and configure server '
-                                           'settings with %serverconfig and %channelconfig.\n\n'
-                                           'Source code: https://github.com/neon10lights/Epsilon\n'
-                                           'Support: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\n'
-                                           'If you have feedback or need help, please DM Neon#5555 or join the server '
-                                           'at https://discord.gg/AYTFJY8VhF'))
-                await channel.send(embed=embed)
-                await channel.send(embed=gen_embed(title='Thank you Kanon Supporters!',
-                                                   content=('**Thanks to:**\nReileky#4161, SinisterSmiley#0704, '
-                                                            'Makoto#7777, Vince.#6969, Elise ☆#0001, EN_Gaige#3910, '
-                                                            'shimmerleaf#2115, Hypnotic Rhythm#1260, wachie#0320, '
-                                                            'Ashlyne#8080, nehelenia#4489, careblaire#6969, '
-                                                            'Reileky#4161')))
-                return
 
 
 ##########
