@@ -6,20 +6,15 @@ import logging
 import colorlog
 
 import re
-import random
 import json
 import time
-import datetime
 
 import twitter
 
 import discord
-from discord.ext import commands
 from discord.ext import bridge
-from discord.utils import find, get
 
 import motor.motor_asyncio
-from pymongo import MongoClient
 
 from formatting.constants import VERSION as BOTVERSION
 from formatting.constants import NAME
@@ -221,14 +216,17 @@ async def check_document(guild, id):
                     '$cond': [{'$not': ["$prev_message_modmail"]}, None, "$prev_message_modmail"]}
             }}]
         )
+        # BREAKING CHANGES BELOW - DO NOT ACTIVATE UNTIL ANNOUNCEMENT MADE AND SWITCHOVER DATE ESTABLISHED
+        # await db.rolereact.drop()
 
 
 ##########
 
 
 async def get_prefix(bot, message):
+    if isinstance(message.channel, discord.DMChannel):
+        return default_prefix
     server_prefix = (await db.servers.find_one({"server_id": message.guild.id}))['prefix']
-    log.info(f'results: {server_prefix}')
     return server_prefix or default_prefix
 
 
@@ -249,7 +247,11 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 class EpsilonBot(bridge.Bot):
 
     def __init__(self, command_prefix, intents, case_insensitive, debug_guilds):
-        super().__init__(command_prefix=command_prefix, intents=intents, case_insensitive=case_insensitive, debug_guilds=debug_guilds)
+        super().__init__(max_messages=2000,
+                         command_prefix=command_prefix,
+                         intents=intents,
+                         case_insensitive=case_insensitive,
+                         debug_guilds=debug_guilds)
         self.command_count = 0
         self.message_count = 0
         self.uptime = time.time()
@@ -263,6 +265,8 @@ bot.load_extension("commands.listeners")
 bot.load_extension("commands.misc")
 bot.load_extension("commands.modmail")
 bot.load_extension("commands.administration")
+bot.load_extension("commands.utility")
+
 
 @bot.event
 async def on_ready():
@@ -290,7 +294,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    log.info('message recieved')
     bot.message_count += 1
     ctx = await bot.get_context(message)
 
@@ -445,7 +448,7 @@ async def modmail_response_guild(message, ctx, ref_message):
             dm_channel = await user.create_dm()
 
         await dm_channel.send(embed=embed)
-        await modmail_attachment(ctx, dm_channel)
+        await modmail_attachment(ctx, dm_channel, scenario=1)
 
         await ctx.send(embed=gen_embed(title='Modmail sent',
                                        content=f'Sent modmail to {user.name}#{user.discriminator}.'))
@@ -477,7 +480,7 @@ async def modmail_response_dm(message, ctx, ref_message):
             channel = discord.utils.find(lambda c: c.id == document['modmail_channel'], guild.channels)
 
             await channel.send(embed=embed)
-            await modmail_attachment(ctx, channel)
+            await modmail_attachment(ctx, channel, scenario=2)
             await channel.send(content=f"{ctx.author.mention}")
 
             await ctx.send(embed=gen_embed(title='Modmail sent',
@@ -485,7 +488,7 @@ async def modmail_response_dm(message, ctx, ref_message):
             return
 
 
-async def modmail_attachment(ctx, channel):
+async def modmail_attachment(ctx, channel, scenario: int = None):
     if len(ctx.message.attachments) > 0:
         attachnum = 1
         valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif',
@@ -495,22 +498,60 @@ async def modmail_attachment(ctx, channel):
 
         for attachment in ctx.message.attachments:
             if attachment.content_type in valid_media_type:
-                embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
-                                  title='Attachment',
-                                  content=f'Attachment #{attachnum}:')
-                embed.set_image(url=attachment.url)
-                embed.set_footer(text=f'{ctx.guild.id}')
+                match scenario:
+                    case 1:
+                        embed = gen_embed(name=f'{ctx.guild.name}', icon_url=ctx.guild.icon.url,
+                                          title='Attachment',
+                                          content=f'Attachment #{attachnum}:')
+                        embed.set_image(url=attachment.url)
+                        embed.set_footer(text=f'{ctx.guild.id}')
+                    case 2:
+                        embed = gen_embed(name=f'{ctx.author.name}', icon_url=ctx.author.display_avatar.url,
+                                          title='Attachment',
+                                          content=f'Attachment #{attachnum}:')
+                        embed.set_image(url=attachment.url)
+                        embed.set_footer(text=f'{ctx.author.id}')
                 await channel.send(embed=embed)
                 attachnum += 1
             else:
                 await ctx.send(
                     content=f'Attachment #{attachnum} is not a supported media type.')
-                await channel.send(embed=gen_embed(
-                    name=f'{ctx.guild.name}',
-                    icon_url=ctx.guild.icon.url,
-                    title='Attachment Failed',
-                    content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
+                match scenario:
+                    case 1:
+                        embed = gen_embed(name=f'{ctx.guild.name}',
+                                          icon_url=ctx.guild.icon.url,
+                                          title='Attachment Failed',
+                                          content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).')
+                    case 2:
+                        embed = gen_embed(name=f'{ctx.author.name}',
+                                          icon_url=ctx.author.display_avatar.url,
+                                          title='Attachment Failed',
+                                          content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).')
+                await channel.send(embed=embed)
                 attachnum += 1
+    if len(ctx.message.stickers) > 0:
+        for sticker in ctx.message.stickers:
+            match scenario:
+                case 1:
+                    embed = gen_embed(name=f'{ctx.interaction.guild.name}',
+                                      icon_url=ctx.interaction.guild.icon.url,
+                                      title='Sticker',
+                                      content=f'Attached sticker:')
+                    embed.set_image(url=sticker.url)
+                    embed.set_footer(text=f'{ctx.interaction.guild_id}')
+                case 2:
+                    embed = gen_embed(name=f'{ctx.author.name}#{ctx.author.discriminator}',
+                                      icon_url=ctx.author.display_avatar.url,
+                                      title='Sticker',
+                                      content=f'Attached sticker:')
+                    embed.set_image(url=sticker.url)
+                    embed.set_footer(text=f'{ctx.author.id}')
+            try:
+                await channel.send(embed=embed)
+            except discord.Forbidden:
+                await ctx.send(embed=gen_embed(title='Warning',
+                                               content='This user does not accept DMs. I could not send them the sticker.'))
+                return
 
 
 async def _emoji_log(message):

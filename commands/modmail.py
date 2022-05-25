@@ -1,6 +1,5 @@
 import discord
 import asyncio
-import time
 
 from discord.ext import commands, tasks
 from discord.commands import Option
@@ -19,7 +18,8 @@ class Confirm(discord.ui.View):
     # We also send the user an ephemeral message that we're confirming their choice.
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
     async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("Confirming", ephemeral=True)
+        await interaction.response.defer()
+        # await interaction.response.send_message("Confirming", ephemeral=True)
         for item in self.children:
             item.disabled = True
         self.value = True
@@ -124,6 +124,117 @@ class ModmailButton(discord.ui.View):
                     log.warning("Error: Modmail is Disabled")
                     await dm_channel.send(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
 
+class ModmailButton(discord.ui.View):
+    def __init__(self, bot):
+        super().__init__(timeout=None)
+        self.bot = bot
+
+    @discord.ui.button(
+        label="Send a modmail!",
+        style=discord.ButtonStyle.primary,
+        custom_id="modmailbutton:sendmodmail",
+    )
+    async def send_modmail(self, button: discord.ui.Button, interaction: discord.Interaction):
+        async def modmail_prompt(listen_channel: discord.DMChannel):
+            def check(m):
+                return m.author == interaction.user and m.channel == listen_channel
+
+            try:
+                await listen_channel.send(embed=gen_embed(title='Modmail Message Contents',
+                                                          content='Please type out your modmail below and send. You can send images by adding an attachement to the message you send.'))
+            except discord.Forbidden:
+                raise RuntimeError('Forbidden 403 - could not send direct message to user.')
+
+            try:
+                mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
+            except asyncio.TimeoutError:
+                await listen_channel.send(embed=gen_embed(title='Modmail Cancelled',
+                                                          content='The modmail has been cancelled.'))
+                return None
+            return mmsg
+
+        await interaction.response.defer()
+        log.info('Begin modmail interaction workflow')
+        dm_channel = interaction.user.dm_channel
+        if not dm_channel:
+            dm_channel = await interaction.user.create_dm()
+        modmail_content = await modmail_prompt(dm_channel)
+
+        if modmail_content:
+            log.info('Message detected from user')
+            view = Confirm()
+            sent_message = await dm_channel.send(embed=gen_embed(title='Are you sure you want to send this?',
+                                                                 content='Please verify the contents before confirming.'),
+                                                 view=view)
+            timeout = await view.wait()
+            if timeout:
+                log.info('Confirmation view timed out')
+                for item in view.children:
+                    item.disabled = True
+                    await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
+                                                            content='Please verify the contents before confirming.'),
+                                            view=view)
+                    return
+            await sent_message.delete()
+
+            if view.value:
+                log.info('Workflow confirm, compilation and send logic start')
+                document = await db.servers.find_one({"server_id": interaction.guild.id})
+                if document['modmail_channel']:
+                    embed = gen_embed(name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                      icon_url=modmail_content.author.display_avatar.url,
+                                      title='New Modmail',
+                                      content=f'{modmail_content.clean_content}\n\nYou may reply to this modmail using the reply function.')
+                    embed.set_footer(text=f'{modmail_content.author.id}')
+                    channel = discord.utils.find(lambda c: c.id == document['modmail_channel'],
+                                                 interaction.guild.channels)
+                    await embed_splitter(embed=embed, destination=channel, footer=str(modmail_content.author.id))
+                    if len(modmail_content.attachments) > 0:
+                        attachnum = 1
+                        valid_media_type = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/avif', 'image/heif',
+                                            'image/bmp', 'image/gif', 'image/vnd.mozilla.apng', 'image/tiff']
+                        for attachment in modmail_content.attachments:
+                            if attachment.content_type in valid_media_type:
+                                embed = gen_embed(
+                                    name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                    icon_url=modmail_content.author.display_avatar.url, title='Attachment',
+                                    content=f'Attachment #{attachnum}:')
+                                embed.set_image(url=attachment.url)
+                                embed.set_footer(text=f'{modmail_content.author.id}')
+                                await channel.send(embed=embed)
+                                attachnum += 1
+                            else:
+                                await dm_channel.send(content=f'Attachment #{attachnum} is not a supported media type.')
+                                await channel.send(embed=gen_embed(
+                                    name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                    icon_url=modmail_content.author.display_avatar.url, title='Attachment Failed',
+                                    content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).'))
+                                attachnum += 1
+                    if len(modmail_content.stickers) > 0:
+                        for sticker in modmail_content.stickers:
+                            embed = gen_embed(
+                                name=f'{modmail_content.author.name}#{modmail_content.author.discriminator}',
+                                icon_url=modmail_content.author.display_avatar.url,
+                                title='Sticker',
+                                content=f'Attached sticker:')
+                            embed.set_image(url=sticker.url)
+                            embed.set_footer(text=f'{modmail_content.author.id}')
+                            try:
+                                await channel.send(embed=embed)
+                            except discord.Forbidden:
+                                await dm_channel.send(embed=gen_embed(title='Warning',
+                                                                      content='I ran into a permission error while '
+                                                                              'sending the sticker.'))
+                                break
+                    await channel.send(content=f"{modmail_content.author.mention}")
+                    await dm_channel.send(embed=gen_embed(title='Modmail sent',
+                                                          content='The moderators will review your message and get back to you shortly.'))
+                else:
+                    log.warning("Error: Modmail is Disabled")
+                    await dm_channel.send(
+                        embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))
+
+
 class Modmail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -146,12 +257,12 @@ class Modmail(commands.Cog):
                             await self.init_modmail_button(server.id)
                         else:
                             self.view = ModmailButton(bot=self.bot)
-                            await prev_button_message.edit("Send a modmail to us by pressing the button below.", view=self.view)
+                            await prev_button_message.edit("Send a modmail to us by pressing the button below.",
+                                                           view=self.view)
                     except discord.NotFound:
                         await self.init_modmail_button(server.id)
                 else:
                     await self.init_modmail_button(server.id)
-
 
     async def init_modmail_button(self, server_id):
         document = await db.servers.find_one({"server_id": server_id})
@@ -176,13 +287,13 @@ class Modmail(commands.Cog):
             return m.author == ctx.interaction.user and m.channel == listen_channel
 
         sent_message = await listen_channel.send(embed=gen_embed(title='Modmail Message Contents',
-                                                  content='Please type out your modmail below and send. You can send images by adding an attachement to the message you send.'))
+                                                                 content='Please type out your modmail below and send. You can send images by adding an attachement to the message you send.'))
 
         try:
             mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
         except asyncio.TimeoutError:
             await ctx.respond(embed=gen_embed(title='Modmail Cancelled',
-                                                      content='The modmail has been cancelled.'))
+                                              content='The modmail has been cancelled.'))
             return None
         await sent_message.delete()
         return mmsg
@@ -192,7 +303,8 @@ class Modmail(commands.Cog):
     async def modmail(self,
                       ctx: discord.ApplicationContext,
                       recipient: Option(discord.User, "User to send modmail to")):
-        await ctx.interaction.response.defer()
+        if not ctx.interaction.response.is_done():
+            await ctx.interaction.response.defer()
         modmail_content = await self.modmail_prompt(ctx)
 
         if modmail_content:
@@ -211,9 +323,7 @@ class Modmail(commands.Cog):
                                                             content='Please verify the contents before confirming.'),
                                             view=view)
                     return
-            await sent_message.edit(embed=gen_embed(title='Are you sure you want to send this?',
-                                                    content='Please verify the contents before confirming.'),
-                                    view=view)
+            await sent_message.delete()
 
             if view.value:
                 # if isinstance(ctx.channel, discord.TextChannel):
@@ -241,10 +351,11 @@ class Modmail(commands.Cog):
                     document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
                 except AttributeError:
                     await ctx.respond(embed=gen_embed(title='Modmail error',
-                                                   content="It seems like you're trying to create and send a modmail to a specific user. Please send this from the server and not from DMs."))
+                                                      content="It seems like you're trying to create and send a modmail to a specific user. Please send this from the server and not from DMs."))
                     return
                 if document['modmail_channel']:
-                    embed = gen_embed(name=f'{ctx.interaction.guild.name}', icon_url=ctx.interaction.guild.icon.url, title='New Modmail',
+                    embed = gen_embed(name=f'{ctx.interaction.guild.name}', icon_url=ctx.interaction.guild.icon.url,
+                                      title='New Modmail',
                                       content=f'{modmail_content.clean_content}\n\nYou may reply to this modmail using the reply function.')
                     embed.set_footer(text=f'{ctx.interaction.guild.id}')
                     dm_channel = recipient.dm_channel
@@ -254,7 +365,7 @@ class Modmail(commands.Cog):
                         await embed_splitter(embed=embed, destination=dm_channel, footer=str(ctx.interaction.guild.id))
                     except discord.Forbidden:
                         await ctx.respond(embed=gen_embed(title='Warning',
-                                                       content='This user does not accept DMs. I could not send them the message.'))
+                                                          content='This user does not accept DMs. I could not send them the message.'))
                         return
                     if len(modmail_content.attachments) > 0:
                         attachnum = 1
@@ -262,25 +373,39 @@ class Modmail(commands.Cog):
                                             'image/bmp', 'image/gif', 'image/vnd.mozilla.apng', 'image/tiff']
                         for attachment in modmail_content.attachments:
                             if attachment.content_type in valid_media_type:
-                                embed = gen_embed(name=f'{ctx.interaction.guild.name}', icon_url=ctx.interaction.guild.icon.url,
+                                embed = gen_embed(name=f'{ctx.interaction.guild.name}',
+                                                  icon_url=ctx.interaction.guild.icon.url,
                                                   title='Attachment',
                                                   content=f'Attachment #{attachnum}:')
                                 embed.set_image(url=attachment.url)
-                                embed.set_footer(text=f'{ctx.interaction.guild.id}')
+                                embed.set_footer(text=f'{ctx.interaction.guild_id}')
                                 attachnum += 1
                                 try:
                                     await dm_channel.send(embed=embed)
                                 except discord.Forbidden:
                                     await ctx.send(embed=gen_embed(title='Warning',
-                                                                   content='This user does not accept DMs. I could not send them the message.'))
-                                    return
+                                                                   content='This user does not accept DMs. I could not send them the attachment.'))
+                                    break
                             else:
                                 await ctx.respond(
                                     content=f'Attachment #{attachnum} is not a supported media type ({attachment.content_type}).')
                                 attachnum += 1
-
+                    if len(modmail_content.stickers) > 0:
+                        for sticker in modmail_content.stickers:
+                            embed = gen_embed(name=f'{ctx.interaction.guild.name}',
+                                              icon_url=ctx.interaction.guild.icon.url,
+                                              title='Sticker',
+                                              content=f'Attached sticker:')
+                            embed.set_image(url=sticker.url)
+                            embed.set_footer(text=f'{ctx.interaction.guild_id}')
+                            try:
+                                await dm_channel.send(embed=embed)
+                            except discord.Forbidden:
+                                await ctx.send(embed=gen_embed(title='Warning',
+                                                               content='This user does not accept DMs. I could not send them the sticker.'))
+                                break
                     await ctx.respond(embed=gen_embed(title='Modmail sent',
-                                                   content=f'Sent modmail to {recipient.name}#{recipient.discriminator}.'))
+                                                      content=f'Sent modmail to {recipient.name}#{recipient.discriminator}.'))
                 else:
                     log.warning("Error: Modmail is Disabled")
                     await ctx.respond(embed=gen_embed(title='Disabled Command', content='Sorry, modmail is disabled.'))

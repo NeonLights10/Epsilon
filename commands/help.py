@@ -48,9 +48,22 @@ class Help(commands.Cog):
             help_message.set_footer(text='Fueee~')
             for x in self.bot.cogs:
                 cog_commands = (self.bot.get_cog(x)).get_commands()
-                if cog_commands and x not in ['Admin']:
+                if cog_commands and x not in ['Dev']:
                     commands = []
                     for y in cog_commands:
+                        if isinstance(y, discord.commands.SlashCommandGroup):
+                            for sc in y.subcommands:
+                                if isinstance(sc, discord.commands.SlashCommandGroup):
+                                    for ssc in sc.subcommands:
+                                        # log.info(f'sub-sub-command /{ssc.parent} {ssc.name} | {type(ssc)}')
+                                        if not isinstance(y, bridge.BridgeSlashCommand):
+                                            commands.append(f"/{sc.parent} {sc.name} {ssc.name}")
+                                    continue
+                                # log.info(f'sub-command /{sc.parent} {sc.name} | {type(sc)}')
+                                if not isinstance(y, bridge.BridgeSlashCommand):
+                                    commands.append(f"/{sc.parent} {sc.name}")
+                            continue
+                        # log.info(f'{y.name} | {type(y)}')
                         server_prefix = (await db.servers.find_one({"server_id": ctx.interaction.guild.id}))[
                                             'prefix'] or "%"
                         if isinstance(y, bridge.BridgeExtCommand):
@@ -86,8 +99,6 @@ class Help(commands.Cog):
                                 help_detail_message.add_field(name='Examples / Further Help', value=y.help,
                                                               inline=False)
 
-                            # TODO: walk through slash command groups
-
                             if isinstance(y, discord.ext.commands.Group):
                                 shelp = discord.Embed(title="Subcommands", color=discord.Color.blue())
                                 for sc in y.walk_commands():
@@ -104,18 +115,61 @@ class Help(commands.Cog):
                                                             value=value, inline=False)
                             found = True
                     else:
-                        if command == y.name:
+                        # log.info(f'{y.name} | {type(y)}')
+                        if isinstance(y, discord.commands.SlashCommandGroup):
+                            if command == y.name:
+                                help_detail_message = discord.Embed(title=y.name.capitalize(),
+                                                                    description=f'{y.description}',
+                                                                    color=discord.Color.blue())
+                                for sc in y.subcommands:
+                                    name = sc.name
+                                    if isinstance(sc, discord.commands.SlashCommandGroup):
+                                        for ssc in sc.subcommands:
+                                            value = f'{sc.description}\n> **Options**:\n'
+                                            options = ""
+                                            if ssc.options:
+                                                for option in ssc.options:
+                                                    if not option.name == 'optional':
+                                                        options = options + f"> {option.name}: {option.description}\n"
+                                                    else:
+                                                        continue
+                                            else:
+                                                options = "No options available."
+                                            value += options
+                                            help_detail_message.add_field(name=f"{sc.name} {ssc.name}".capitalize(),
+                                                                          value=value,
+                                                                          inline=False)
+                                    else:
+                                        value = f'{sc.description}\n> **Options**:\n'
+                                        options = ""
+                                        if sc.options:
+                                            for option in sc.options:
+                                                if not option.name == 'optional':
+                                                    options = options + f"> {option.name}: {option.description}\n"
+                                                else:
+                                                    continue
+                                        else:
+                                            options = "No options available."
+                                        value += options
+                                        help_detail_message.add_field(name=f"{name.capitalize()}",
+                                                                      value=value,
+                                                                      inline=False)
+                                found = True
+
+                        elif command == y.name:
                             help_detail_message = discord.Embed(title=y.name.capitalize(), color=discord.Color.blue())
-                            help_detail_message.add_field(name='Description', value=y.description or "No description provided", inline=False)
+                            help_detail_message.add_field(name='Description',
+                                                          value=y.description or "No description provided",
+                                                          inline=False)
 
                             if isinstance(y, discord.SlashCommand):
                                 options = ""
                                 if y.options:
                                     for option in y.options:
                                         if not option.name == 'optional':
-                                            options = options + f"{option.name}: {option.description}"
+                                            options = options + f"{option.name}: {option.description}\n"
                                         else:
-                                            options = options + f"(Optional) {option.name}: {option.description}"
+                                            continue
                                 else:
                                     options = "No options available."
                                 help_detail_message.add_field(name='Options', value=options,

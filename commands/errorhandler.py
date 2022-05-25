@@ -35,8 +35,23 @@ class CommandErrorHandler(commands.Cog):
             await ctx.respond(f'{ctx.command.qualified_name} can only be used by the owner of this bot.')
             return
 
+        if isinstance(error, commands.ChannelNotReadable):
+            await ctx.respond(f"I cannot access messages in {error.argument.mention}. "
+                              "Please check your server's permission settings and try again!", ephemeral=True)
+
+        if isinstance(error, commands.BotMissingPermissions):
+            message = f"I don't have the following permissions to run this command: \n"
+            for permission in error.missing_permissions:
+                message += f"{permission}\n"
+            message += "Please check your server's permission settings and try again!"
+            await ctx.respond(message, ephemeral=True)
+
+        if isinstance(error, commands.MessageNotFound):
+            await ctx.respond('Message not found. Check the ID or URL of the message.', ephemeral=True)
+            return
+
         if isinstance(error, commands.UserInputError):
-            await ctx.respond('That is not a valid attachment type!', ephemeral=True)
+            await ctx.respond(error, ephemeral=True)
             return
 
         if isinstance(error, discord.ExtensionNotFound):
@@ -49,6 +64,11 @@ class CommandErrorHandler(commands.Cog):
                                                     'Rolling back to previous state.')
             else:
                 await ctx.interaction.followup.send('There was an error loading the cog.')
+            return
+
+        if isinstance(error, discord.Forbidden):
+            await ctx.respond(('It seems I do not have the server permissions to post in the target channel.'
+                               '\nPlease check the permissions and try again.'))
             return
 
         else:

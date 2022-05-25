@@ -83,6 +83,11 @@ class Miscellaneous(commands.Cog):
                                           content='Kanon costs money to run. I pay for her server costs out of pocket, '
                                                   'so any donation helps!\nSupport: https://www.patreon.com/kanonbot '
                                                   'or https://ko-fi.com/neonlights'))
+        await ctx.send(embed=gen_embed(title='Thank you Kanon Supporters!',
+                                       content=('**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, '
+                                                'Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, '
+                                                'Hypnotic Rhythm#1260, wachie#0320, Ashlyne#8080, nehelenia#4489, '
+                                                'careblaire#6969, Reileky#4161')))
 
     # TODO: make shoutout command pull from list of discord members with role
 
@@ -159,7 +164,7 @@ class Miscellaneous(commands.Cog):
                             'image/tiff']
         if attachment:
             if attachment.content_type not in valid_media_type:
-                raise discord.ext.commands.UserInputError('This is not a valid media type!')
+                raise commands.UserInputError(message='This is not a valid media type!')
 
         class AnnouncementModal(Modal):
             def __init__(self, bot, *args, **kwargs) -> None:
@@ -268,8 +273,9 @@ class Miscellaneous(commands.Cog):
         await db.reminders.delete_many({'server_id': guild.id})
         await guild.leave()
         await ctx.interaction.followup.send(
-            embed=gen_embed(title='delete guild', content=f'Guild {guild.name} (ID: {guild.id} data has been deleted.')
-        )
+            embed=gen_embed(title='delete guild',
+                            content=f'Guild {guild.name} (ID: {guild.id} data has been deleted.'),
+            ephemeral=True)
 
     @datadeletion.command(name='user',
                           description='Delete all data for specified user')
@@ -282,9 +288,10 @@ class Miscellaneous(commands.Cog):
         await db.warns.delete_many({'user_id': user.id})
         await db.reminders.delete_many({'user_id': user.id})
         await ctx.interaction.followup.send(
-            embed=gen_embed(title='delete user', content=f'User {user.name}#{user.discriminator} (ID: {user.id}) data '
-                                                         f'has been deleted.')
-        )
+            embed=gen_embed(title='delete user',
+                            content=f'User {user.name}#{user.discriminator} (ID: {user.id}) data '
+                                    f'has been deleted.'),
+            ephemeral=True)
 
 
 def setup(bot):
