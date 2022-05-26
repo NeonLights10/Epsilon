@@ -20,9 +20,8 @@ async def on_guild_join(guild):
         embed = gen_embed(name=f'{guild.name}',
                           icon_url=guild.icon.url,
                           title='Thanks for inviting me!',
-                          content=('You can get started by typing %help to find the current command list.'
-                                   '\nChange the command prefix by typing %setprefix, and configure server settings '
-                                   'with %serverconfig and %channelconfig.\n\n'
+                          content=('You can get started by typing `/help` to find the current command list.'
+                                   '\nChange the command prefix and configure server settings using `/settings`!\n\n'
                                    'Source code: https://github.com/neon10lights/Epsilon\n'
                                    'Support: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\n'
                                    'If you have feedback or need help, please DM Neon#5555 or join the server at '
@@ -40,10 +39,9 @@ async def on_guild_join(guild):
                 embed = gen_embed(name=f'{guild.name}',
                                   icon_url=guild.icon.url,
                                   title='Thanks for inviting me!',
-                                  content=('You can get started by typing %help to find the current command list.'
-                                           '\nChange the command prefix by typing %setprefix, and configure server '
-                                           'settings with %serverconfig and %channelconfig.\n\n'
-                                           'Source code: https://github.com/neon10lights/Epsilon\n'
+                                  content=('You can get started by typing `/help` to find the current command list.'
+                                           '\nChange the command prefix and configure server settings using `/settings`'
+                                           '!\n\nSource code: https://github.com/neon10lights/Epsilon\n'
                                            'Support: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\n'
                                            'If you have feedback or need help, please DM Neon#5555 or join the server '
                                            'at https://discord.gg/AYTFJY8VhF'))
@@ -61,8 +59,8 @@ async def on_message_delete(message):
     document = await db.servers.find_one({"server_id": message.guild.id})
     try:
         if msglog := int(document['log_channel']):
-            if not message.author.id == self.bot.user.id and message.author.bot is False:
-                prefix = await get_prefix(self.bot, message)
+            if not message.author.id == bot.user.id and message.author.bot is False:
+                prefix = await get_prefix(bot, message)
                 if re.match(f'^{prefix}', message.content) is None:
                     log_channel = message.guild.get_channel(msglog)
                     sent_time = math.trunc(time.mktime(message.created_at.timetuple()))
@@ -91,8 +89,8 @@ async def on_bulk_message_delete(messages):
     try:
         if msglog := int(document['log_channel']):
             for message in messages:
-                if not message.author.id == self.bot.user.id and message.author.bot is False:
-                    prefix = await get_prefix(self.bot, message)
+                if not message.author.id == bot.user.id and message.author.bot is False:
+                    prefix = await get_prefix(bot, message)
                     if re.match(f'^{prefix}', message.content) is None:
                         log_channel = message.guild.get_channel(msglog)
                         sent_time = math.trunc(time.mktime(message.created_at.timetuple()))
@@ -123,7 +121,7 @@ async def on_raw_message_delete(payload):
         try:
             if msglog := int(document['log_channel']):
                 if not payload.cached_message:
-                    guild = self.bot.get_guild(payload.guild_id)
+                    guild = bot.get_guild(payload.guild_id)
                     log_channel = guild.get_channel(msglog)
                     content = gen_embed(title=f'Message deleted in #{guild.get_channel(payload.channel_id).name}',
                                         content=f'```ml\nMessage ID = {payload.message_id}```')

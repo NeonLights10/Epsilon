@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.commands.options import Option
 from discord.ext import bridge
 
-from __main__ import log, db
+from __main__ import db
 
 
 class Help(commands.Cog):
@@ -69,9 +69,15 @@ class Help(commands.Cog):
                         if isinstance(y, bridge.BridgeExtCommand):
                             commands.append(f"{server_prefix}{y.name} **|** /{y.name}")
                         elif isinstance(y, discord.ext.commands.Command):
-                            commands.append(f"{server_prefix}{y.name}")
+                            if y.name == 'room':
+                                commands.append(f"{server_prefix}{y.name} **|** /{y.name}")
+                            else:
+                                commands.append(f"{server_prefix}{y.name}")
+                        elif isinstance(y, discord.commands.UserCommand):
+                            commands.append(f"{y.name}")
                         elif not isinstance(y, bridge.BridgeSlashCommand):
-                            commands.append(f"/{y.name}")
+                            if y.name != 'room':
+                                commands.append(f"/{y.name}")
                     commands = ('\n'.join(map(str, sorted(commands))))
                     help_message.add_field(name=x, value=commands, inline=True)
             await ctx.respond(embed=help_message)

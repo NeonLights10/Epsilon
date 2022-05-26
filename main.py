@@ -1,10 +1,10 @@
-import asyncio
 import os
 import sys
 
 import logging
 import colorlog
 
+import asyncio
 import re
 import json
 import time
@@ -263,9 +263,11 @@ bot.load_extension("commands.help")
 bot.load_extension("commands.errorhandler")
 bot.load_extension("commands.listeners")
 bot.load_extension("commands.misc")
-bot.load_extension("commands.modmail")
-bot.load_extension("commands.administration")
 bot.load_extension("commands.utility")
+bot.load_extension("commands.administration")
+bot.load_extension("commands.tiering")
+bot.load_extension("commands.modmail")
+bot.load_extension("commands.t100chart")
 
 
 @bot.event
