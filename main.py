@@ -266,6 +266,7 @@ bot.load_extension("commands.misc")
 bot.load_extension("commands.modmail")
 bot.load_extension("commands.administration")
 bot.load_extension("commands.utility")
+bot.load_extension("commands.fun")
 
 
 @bot.event
