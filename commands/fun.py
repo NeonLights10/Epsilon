@@ -57,18 +57,6 @@ class Fun(commands.Cog):
         content = await self._get_gif("cuddle", msg)
         await ctx.respond(embed=content)
 
-    @discord.slash_command(name='poke',
-                           description=f'Poke someone! If no one is specified, {NAME} will poke you :P')
-    async def poke(self,
-                     ctx: discord.ApplicationContext,
-                     member: Option(discord.User, "User to poke", required=False)):
-        if member:
-            msg = f'{ctx.interaction.user.mention} poked {member.mention}!'
-        else:
-            msg = f'{NAME} pokes you :stuck_out_tongue_closed_eyes:'
-        content = await self._get_gif("poke", msg)
-        await ctx.respond(embed=content)
-
     @discord.slash_command(name='headpat',
                            description=f'Headpat someone! If no one is specified, {NAME} will give you a headpat <3')
     async def headpat(self,
