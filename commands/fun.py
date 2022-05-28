@@ -1,7 +1,6 @@
 import discord
 import aiohttp
 
-from formatting.embed import gen_embed
 from formatting.constants import NAME
 from discord.ext import commands
 from discord.commands import Option
@@ -48,8 +47,8 @@ class Fun(commands.Cog):
     @discord.slash_command(name='cuddle',
                            description=f'Cuddle someone! If no one is specified, {NAME} will cuddle you <3')
     async def cuddle(self,
-                  ctx: discord.ApplicationContext,
-                  member: Option(discord.User, "User to cuddle", required=False)):
+                     ctx: discord.ApplicationContext,
+                     member: Option(discord.User, "User to cuddle", required=False)):
         if member:
             msg = f'{ctx.interaction.user.mention} cuddles {member.mention}!'
         else:
@@ -60,8 +59,8 @@ class Fun(commands.Cog):
     @discord.slash_command(name='headpat',
                            description=f'Headpat someone! If no one is specified, {NAME} will give you a headpat <3')
     async def headpat(self,
-                   ctx: discord.ApplicationContext,
-                   member: Option(discord.User, "User to headpat", required=False)):
+                      ctx: discord.ApplicationContext,
+                      member: Option(discord.User, "User to headpat", required=False)):
         if member:
             msg = f'{ctx.interaction.user.mention} gave {member.mention} a headpat!'
         else:
