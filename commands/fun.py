@@ -36,7 +36,7 @@ class Fun(commands.Cog):
                            description=f'Hug someone! If no one is specified, {NAME} will hug you <3')
     async def hug(self,
                   ctx: discord.ApplicationContext,
-                  member: Option(discord.User, "User to hug", required=False)):
+                  member: Option(discord.User, "User to hug", name='user', required=False)):
         if member:
             msg = f'{ctx.interaction.user.mention} hugged {member.mention}!'
         else:
@@ -48,7 +48,7 @@ class Fun(commands.Cog):
                            description=f'Cuddle someone! If no one is specified, {NAME} will cuddle you <3')
     async def cuddle(self,
                      ctx: discord.ApplicationContext,
-                     member: Option(discord.User, "User to cuddle", required=False)):
+                     member: Option(discord.User, "User to cuddle", name='user', required=False)):
         if member:
             msg = f'{ctx.interaction.user.mention} cuddles {member.mention}!'
         else:
@@ -60,7 +60,7 @@ class Fun(commands.Cog):
                            description=f'Headpat someone! If no one is specified, {NAME} will give you a headpat <3')
     async def headpat(self,
                       ctx: discord.ApplicationContext,
-                      member: Option(discord.User, "User to headpat", required=False)):
+                      member: Option(discord.User, "User to headpat", name='user', required=False)):
         if member:
             msg = f'{ctx.interaction.user.mention} gave {member.mention} a headpat!'
         else:
