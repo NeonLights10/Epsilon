@@ -267,7 +267,8 @@ bot.load_extension("commands.utility")
 bot.load_extension("commands.administration")
 bot.load_extension("commands.tiering")
 bot.load_extension("commands.modmail")
-bot.load_extension("commands.t100chart")
+bot.load_extension("commands.reminder")
+# bot.load_extension("commands.t100chart")
 bot.load_extension("commands.fun")
 
 
