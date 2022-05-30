@@ -2,23 +2,22 @@ import asyncio
 import re
 import time
 import datetime
-
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
-from __main__ import log, db
 from typing import Union, Optional, List, SupportsInt
 
-import discord
-import pymongo
 import emoji as zemoji
 import validators
+import pymongo
 from bson.objectid import ObjectId
 
+import discord
 from discord.commands.permissions import default_permissions
 from discord.ext import commands, pages
 from discord.commands import Option, SlashCommandGroup
 from discord.ui import InputText
 
+from __main__ import log, db
 from commands.errorhandler import CheckOwner
 from formatting.embed import gen_embed
 from formatting.constants import COLORS
@@ -152,9 +151,6 @@ class Administration(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def convert_emoji(argument):
-        return zemoji.demojize(argument)
-
     @staticmethod
     def is_pubcord():
         async def predicate(ctx):
@@ -226,10 +222,6 @@ class Administration(commands.Cog):
     @default_permissions(manage_guild=True)
     async def settings(self,
                        ctx: discord.ApplicationContext):
-
-        await ctx.interaction.response.defer()
-        document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-
         class Confirm(discord.ui.View):
             def __init__(self):
                 super().__init__()
@@ -597,6 +589,8 @@ class Administration(commands.Cog):
                 await interaction.response.send_message("Stopped configuring settings.", ephemeral=True)
                 await self.end_interaction(interaction)
 
+        ##########
+
         class PrefixMenu(discord.ui.View):
             def __init__(self, og_context, bot):
                 super().__init__()
@@ -680,6 +674,8 @@ class Administration(commands.Cog):
                         interaction.message.embeds[0].description = f'**Prefix: {new_prefix_content}**'
                         self.value = new_prefix_content
                         await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        ##########
 
         class AnnouncementMenu(discord.ui.View):
             def __init__(self, og_context, bot):
@@ -815,6 +811,8 @@ class Administration(commands.Cog):
                             self.value = f'Enabled | Configured channel: {new_announcement_channel.mention}'
 
                         await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        ##########
 
         class ModmailMenu(discord.ui.View):
             def __init__(self, og_context, bot):
@@ -1074,6 +1072,8 @@ class Administration(commands.Cog):
                                                                      f'{new_button_channel.mention}')
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
+        ##########
+
         class ChatMenu(discord.ui.View):
             def __init__(self, og_context, bot):
                 super().__init__()
@@ -1119,6 +1119,8 @@ class Administration(commands.Cog):
                     self.value = 'Enabled'
 
                 await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        ##########
 
         class BWListMenu(discord.ui.View):
             def __init__(self, og_context, bot):
@@ -1221,6 +1223,8 @@ class Administration(commands.Cog):
                     await interaction.message.edit(embed=interaction.message.embeds[0],
                                                    view=self)
 
+        ##########
+
         class FunMenu(discord.ui.View):
             def __init__(self, og_context, bot):
                 super().__init__()
@@ -1266,6 +1270,8 @@ class Administration(commands.Cog):
                     self.value = 'Enabled'
 
                 await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        ##########
 
         class LogSelect(discord.ui.Select):
             def __init__(self, bot, defaults):
@@ -1462,6 +1468,8 @@ class Administration(commands.Cog):
                             self.channel = new_log_channel
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
+        ##########
+
         class AutoRoleMenu(discord.ui.View):
             def __init__(self, og_context, bot):
                 super().__init__()
@@ -1568,6 +1576,8 @@ class Administration(commands.Cog):
                         interaction.message.embeds[0].description = f'Enabled for role {new_role.mention}'
                         self.value = f'Enabled for role {new_role.mention}'
                         await interaction.message.edit(embed=interaction.message.embeds[0])
+
+        ##########
 
         class ModRoleMenu(discord.ui.View):
             def __init__(self, og_context, bot):
@@ -1677,6 +1687,9 @@ class Administration(commands.Cog):
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
         ####################
+
+        await ctx.interaction.response.defer()
+        document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
 
         embed = gen_embed(name='Settings',
                           content='You can configure the settings for Kanon Bot using the select dropdown below.')
@@ -2794,7 +2807,6 @@ class Administration(commands.Cog):
                                                                                   ', but I will proceed with striking'
                                                                                   ' the user.'),
                                                                 ephemeral=True)
-                        # TODO: CATCH EXCEPTION
                         await ctx.guild.ban(user,
                                             reason=(f'User has accumulated {max_strike} strikes and therefore is now'
                                                     ' banned from the server.'),

@@ -172,7 +172,7 @@ class Utility(commands.Cog):
 
         # If a timezone is specified let's convert time into that timezone.
         timezone = timezone.upper()
-        if re.search('(UTC)(\+-)(\d{2})(:\d{2})?', timezone):
+        if re.search(r'(UTC)(\+-)(\d{2})(:\d{2})?', timezone):
             if not find_key(TIMEZONE_DICT, timezone):
                 log.warning('Invalid Timezone')
                 await ctx.interaction.followup.send(embed=
@@ -262,7 +262,7 @@ class Utility(commands.Cog):
 
         # Now parse from timezone and separate into hours and minutes, and get a combined minute version for calc
         timezone_from = timezone_from.upper()
-        if re.search('(UTC)(\+-)(\d{1,2})(:\d{2})?', timezone_from):
+        if re.search(r'(UTC)(\+-)(\d{1,2})(:\d{2})?', timezone_from):
             if not find_key(TIMEZONE_DICT, timezone_from):
                 log.warning('Invalid Timezone')
                 await ctx.interaction.followup.send(embed=
@@ -312,7 +312,7 @@ class Utility(commands.Cog):
                 return
 
         timezone_to = timezone_to.upper()
-        if re.search('(UTC)(\+-)(\d{1,2})(:\d{2})?', timezone_to):
+        if re.search(r'(UTC)(\+-)(\d{1,2})(:\d{2})?', timezone_to):
             if not find_key(TIMEZONE_DICT, timezone_to):
                 log.warning('Invalid Timezone')
                 await ctx.interaction.followup.send(embed=

@@ -1,13 +1,13 @@
 import os
 import sys
 
-import logging
-import colorlog
-
 import asyncio
 import re
 import json
 import time
+
+import logging
+import colorlog
 
 import twitter
 
@@ -179,30 +179,6 @@ async def check_document(guild, id):
         await initialize_document(guild, id)
     else:
         document = await db.servers.find_one({"server_id": id})
-        # breaking change for blacklist/whitelist system
-        if blacklist := document['blacklist']:
-            for channel_id in blacklist:
-                await db.msgid.delete_many({"channel_id": channel_id})
-        if blacklist is not None:
-            if isinstance(blacklist, list):
-                if len(blacklist) != 0:
-                    pass
-                else:
-                    await db.servers.update_one({"server_id": id},
-                                                {"$set": {'blacklist': None}})
-            else:
-                await db.servers.update_one({"server_id": id},
-                                            {"$set": {'blacklist': None}})
-        if whitelist := document['whitelist'] is not None:
-            if isinstance(whitelist, list):
-                if len(whitelist) != 0:
-                    pass
-                else:
-                    await db.servers.update_one({"server_id": id},
-                                                {"$set": {'whitelist': None}})
-            else:
-                await db.servers.update_one({"server_id": id},
-                                            {"$set": {'whitelist': None}})
         # Changeable to update old documents whenever a new feature/config is added
         await db.servers.update_many(
             {"server_id": id},
@@ -217,7 +193,34 @@ async def check_document(guild, id):
             }}]
         )
         # BREAKING CHANGES BELOW - DO NOT ACTIVATE UNTIL ANNOUNCEMENT MADE AND SWITCHOVER DATE ESTABLISHED
+
+        #  breaking change for any role reaction
         # await db.rolereact.drop()
+
+        # breaking change for blacklist/whitelist system
+        # if blacklist := document['blacklist']:
+        #     for channel_id in blacklist:
+        #         await db.msgid.delete_many({"channel_id": channel_id})
+        # if blacklist is not None:
+        #     if isinstance(blacklist, list):
+        #         if len(blacklist) != 0:
+        #             pass
+        #         else:
+        #             await db.servers.update_one({"server_id": id},
+        #                                         {"$set": {'blacklist': None}})
+        #     else:
+        #         await db.servers.update_one({"server_id": id},
+        #                                     {"$set": {'blacklist': None}})
+        # if whitelist := document['whitelist'] is not None:
+        #     if isinstance(whitelist, list):
+        #         if len(whitelist) != 0:
+        #             pass
+        #         else:
+        #             await db.servers.update_one({"server_id": id},
+        #                                         {"$set": {'whitelist': None}})
+        #     else:
+        #         await db.servers.update_one({"server_id": id},
+        #                                     {"$set": {'whitelist': None}})
 
 
 ##########
@@ -387,7 +390,7 @@ async def get_msgid(message, attempts=1):
                     # is deleted, we can't access it.
                     msg = await channel.fetch_message(msgid['msg_id'])
 
-                    # Now let's double check that we aren't mentioning ourself or another bot, and that the messages
+                    # Now let's doublecheck that we aren't mentioning ourselves or another bot, and that the messages
                     # has no embeds or attachments.
                     filter = f"(?:{'|'.join(FILTER)})"
                     if (re.match('^%|^\^|^\$|^!|^\.|@|k!', msg.content) is None) and (
@@ -405,7 +408,7 @@ async def get_msgid(message, attempts=1):
                         return await get_msgid(message, attempts)
 
                 except discord.Forbidden:
-                    raise discord.exceptions.CommandError("I don't have permissions to read message history.")
+                    raise discord.ext.commands.CommandError("I don't have permissions to read message history.")
 
                 except discord.NotFound:
                     # This happens sometimes due to deleted message or other weird shenanigans, so do the same as above.
@@ -526,12 +529,14 @@ async def modmail_attachment(ctx, channel, scenario: int = None):
                         embed = gen_embed(name=f'{ctx.guild.name}',
                                           icon_url=ctx.guild.icon.url,
                                           title='Attachment Failed',
-                                          content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).')
+                                          content=f'The user attempted to send an attachement that is not a supported '
+                                                  f'media type ({attachment.content_type}).')
                     case 2:
                         embed = gen_embed(name=f'{ctx.author.name}',
                                           icon_url=ctx.author.display_avatar.url,
                                           title='Attachment Failed',
-                                          content=f'The user attempted to send an attachement that is not a supported media type ({attachment.content_type}).')
+                                          content=f'The user attempted to send an attachement that is not a supported '
+                                                  f'media type ({attachment.content_type}).')
                 await channel.send(embed=embed)
                 attachnum += 1
     if len(ctx.message.stickers) > 0:

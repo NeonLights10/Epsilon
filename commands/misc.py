@@ -89,8 +89,6 @@ class Miscellaneous(commands.Cog):
                                                 'Hypnotic Rhythm#1260, wachie#0320, Ashlyne#8080, nehelenia#4489, '
                                                 'careblaire#6969, Reileky#4161')))
 
-    # TODO: make shoutout command pull from list of discord members with role
-
     async def unload_autocomplete(self,
                                   ctx: discord.ApplicationContext):
         cog_list = []
