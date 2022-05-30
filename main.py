@@ -209,7 +209,7 @@ async def check_document(guild, id):
             [{'$set': {
                 "name": guild.name,
                 "log_messages": {
-                    '$cond': [{'$not': ["$log_messages"]}, None, "$log_messages"]},
+                    '$cond': [{'$not': ["$log_messages"]}, False, "$log_messages"]},
                 "modmail_button_channel": {
                     '$cond': [{'$not': ["$modmail_button_channel"]}, None, "$modmail_button_channel"]},
                 "prev_message_modmail": {
@@ -268,8 +268,9 @@ bot.load_extension("commands.administration")
 bot.load_extension("commands.tiering")
 bot.load_extension("commands.modmail")
 bot.load_extension("commands.reminder")
-# bot.load_extension("commands.t100chart")
+bot.load_extension("commands.t100chart")
 bot.load_extension("commands.fun")
+bot.load_extension("commands.pubcord")
 
 
 @bot.event

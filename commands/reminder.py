@@ -191,43 +191,43 @@ class Reminder(commands.Cog):
             reminders = db.reminders.find(query)
 
             async for reminder in reminders:
-                user = self.bot.get_user(reminder['user_id'])
+                user = await self.bot.get_or_fetch_user(reminder['user_id'])
                 if user is None:
                     to_remove.append(reminder)
+                else:
+                    delay = int(stime) - int(reminder['future_time'])
+                    embed = discord.Embed(
+                        title=f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
+                        colour=0x1abc9c
+                    )
+                    if delay > self.SEND_DELAY_SECONDS:
+                        embed.set_footer(
+                            text=(f"This was supposed to send {humanize_timedelta(seconds=delay)} ago."
+                                  " I might be having network or server issues, or perhaps I just started up."
+                                  " Sorry about that!"))
+                    embed_name = f"From {reminder['future_timestamp']} ago:"
+                    if reminder['repeat']:
+                        embed_name = f"Repeating reminder every {humanize_timedelta(seconds=reminder['repeat'])}:"
+                    reminder_text = reminder['reminder']
+                    if len(reminder_text) > 900:
+                        reminder_text = reminder_text[:897] + "..."
+                    embed.add_field(
+                        name=embed_name,
+                        value=reminder_text,
+                    )
 
-                delay = int(stime) - int(reminder['future_time'])
-                embed = discord.Embed(
-                    title=f":bell:{' (Delayed)' if delay > self.SEND_DELAY_SECONDS else ''} Reminder! :bell:",
-                    colour=0x1abc9c
-                )
-                if delay > self.SEND_DELAY_SECONDS:
-                    embed.set_footer(
-                        text=(f"This was supposed to send {humanize_timedelta(seconds=delay)} ago."
-                              " I might be having network or server issues, or perhaps I just started up."
-                              " Sorry about that!"))
-                embed_name = f"From {reminder['future_timestamp']} ago:"
-                if reminder['repeat']:
-                    embed_name = f"Repeating reminder every {humanize_timedelta(seconds=reminder['repeat'])}:"
-                reminder_text = reminder['reminder']
-                if len(reminder_text) > 900:
-                    reminder_text = reminder_text[:897] + "..."
-                embed.add_field(
-                    name=embed_name,
-                    value=reminder_text,
-                )
-
-                if reminder['location'] == 'channel':
-                    group_send.append(reminder)
-                elif reminder['location'] == 'dm':
-                    try:
-                        await user.send(embed=embed)
-                    except discord.Forbidden:
-                        # Can't send DMs to user, delete it
-                        log.error('Could not send reminder dm to user, deleting reminder')
-                        to_remove.append(reminder)
-                    except discord.HTTPException:
-                        # Something weird happened: retry next time
-                        pass
+                    if reminder['location'] == 'channel':
+                        group_send.append(reminder)
+                    elif reminder['location'] == 'dm':
+                        try:
+                            await user.send(embed=embed)
+                        except discord.Forbidden:
+                            # Can't send DMs to user, delete it
+                            log.error('Could not send reminder dm to user, deleting reminder')
+                            to_remove.append(reminder)
+                        except discord.HTTPException:
+                            # Something weird happened: retry next time
+                            pass
                 to_remove.append(reminder)
 
         if group_send:
@@ -247,7 +247,7 @@ class Reminder(commands.Cog):
                 while len(group_send_list) != 0:
                     base_reminder = group_send_list.pop(0)
                     user_mentions = []
-                    buser = self.bot.get_user(base_reminder['user_id'])
+                    buser = await self.bot.get_or_fetch_user(base_reminder['user_id'])
                     user_mentions.append(buser.mention)
                     for greminder in group_send_list[:]:
                         if group_reminder_exists(base_reminder, greminder):

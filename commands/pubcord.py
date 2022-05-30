@@ -1,0 +1,468 @@
+import time
+import asyncio
+import datetime
+
+from httpx import AsyncClient
+from httpx_caching import CachingClient
+
+import discord
+from discord.ext import commands, tasks
+from discord.commands import Option
+from discord.commands.permissions import default_permissions
+
+from formatting.embed import gen_embed
+from __main__ import log, db
+
+
+class AnnouncementButton(discord.ui.Button):
+    def __init__(self, label: str, style: discord.ButtonStyle, custom_id: str, content: discord.Embed):
+        super().__init__(
+            label=label,
+            style=style,
+            custom_id=custom_id)
+        self.count = 0
+        self.content = content
+
+    async def callback(self, interaction: discord.Interaction):
+        self.count += 1
+        log.info(f'Quicklink/Announcement Button {self.custom_id} interaction {self.count}')
+        await interaction.response.send_message(embed=self.content, ephemeral=True)
+
+
+class AnnouncementBulletin(discord.ui.View):
+    def __init__(self, content=None):
+        super().__init__(timeout=None)
+        self.count = {}
+        for announcement in content:
+            new_button = AnnouncementButton(announcement['label'],
+                                            announcement['style'],
+                                            announcement['custom_id'],
+                                            announcement['content'])
+            self.add_item(new_button)
+
+
+class SpecialRoleButton(discord.ui.Button):
+    def __init__(self, label: str, custom_id: str, role_id):
+        super().__init__(
+            label=label,
+            style=discord.ButtonStyle.primary,
+            custom_id=custom_id)
+        self.count = 0
+        self.role_id = role_id
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        role = interaction.guild.get_role(self.role_id)
+        if interaction.user.get_role(self.role_id):
+            await interaction.user.remove_roles(role, reason='Self-assign special role')
+            await interaction.followup.send(content=f'Removed the role "{role.name}" from your user profile.',
+                                            ephemeral=True)
+        else:
+            await interaction.user.add_roles(role, reason='Self-assign special role')
+            await interaction.followup.send(content=f'Added the role "{role.name}" to your user profile.',
+                                            ephemeral=True)
+            self.count += 1
+            log.info(f'Total members added special role in {interaction.guild.name}: {self.count}')
+
+
+class SpecialRole(discord.ui.View):
+    def __init__(self, label, guild_id, role):
+        super().__init__(timeout=None)
+        self.count = 0
+        new_button = SpecialRoleButton(label, f'{guild_id}:specialrole', role.id)
+        self.add_item(new_button)
+
+
+async def get_next_event():
+    current_time = time.time() * 1000
+
+    url = 'https://bestdori.com/api/events/all.5.json'
+    client = AsyncClient()
+    client = CachingClient(client)
+
+    r = await client.get(url)
+    api = r.json()
+    event_start_dates = {}
+    for event in api:
+        if api[event]['startAt'][1]:
+            event_start_dates[event] = api[event]['startAt'][1]
+    res_key, res_val = min(event_start_dates.items(), key=lambda x: abs(current_time - float(x[1])))
+    return res_key
+
+
+class Pubcord(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.views = {}
+        self.view_anni = None
+        self.check_boosters.start()
+        self.init_announcementbulletins.start()
+        self.check_announcementbulletins.start()
+        self.update_pubcord_quicklinks.start()
+
+    def cog_unload(self):
+        self.check_boosters.cancel()
+        self.init_announcementbulletins.cancel()
+        self.check_announcementbulletins.cancel()
+        self.update_pubcord_quicklinks.cancel()
+
+    @staticmethod
+    async def generate_current_event(force=False) -> discord.Embed | None:
+        current_time = time.time() * 1000
+        current_event_id = await get_next_event()
+
+        client = AsyncClient()
+        client = CachingClient(client)
+
+        events_url = f'https://bestdori.com/api/events/{current_event_id}.json'
+        r_event = await client.get(events_url)
+        event_data = r_event.json()
+
+        event_name = event_data['eventName'][1]
+        event_start = event_data['startAt'][1]
+        if current_time > float(event_start) and not force:
+            return
+        event_end = event_data['endAt'][1]
+        event_type = event_data['eventType']
+        match event_type:
+            case "mission_live":
+                event_type = "Mission Live"
+            case "versus":
+                event_type = "VS Live"
+            case "live_try":
+                event_type = "Live Goals"
+            case "challenge":
+                event_type = "Challenge Live"
+            case "festival":
+                event_type = "Team Live Festival"
+            case "medley":
+                event_type = "Medley Live"
+        event_attribute = event_data['attributes'][0]['attribute']
+        event_characters = []
+        for entry in event_data['characters']:
+            char_id = entry['characterId']
+            character_url = f'https://bestdori.com/api/characters/{char_id}.json'
+            r_char = await client.get(character_url)
+            char_data = r_char.json()
+            event_characters.append(char_data['firstName'][1])
+        event_gacha = []
+        event_songs = []
+
+        song_url = f'https://bestdori.com/api/songs/all.5.json'
+        r_song = await client.get(song_url)
+        song_data = r_song.json()
+        for key, song in song_data.items():
+            if song['publishedAt'][1]:
+                if float(event_start) <= float(song['publishedAt'][1]) < float(event_end):
+                    difficulty = []
+                    for diff, val in song['difficulty'].items():
+                        difficulty.append(str(val['playLevel']))
+
+                    band_id = song['bandId']
+                    band_url = f'https://bestdori.com/api/bands/main.1.json'
+                    r_band = await client.get(band_url)
+                    band_data = r_band.json()
+                    s = {
+                        'title': song['musicTitle'][1],
+                        'band': band_data[str(band_id)]['bandName'][1],
+                        'difficulty': difficulty
+                    }
+                    event_songs.append(s)
+
+        gacha_url = f'https://bestdori.com/api/gacha/all.5.json'
+        r_gacha = await client.get(gacha_url)
+        gacha_data = r_gacha.json()
+        for key, gacha in gacha_data.items():
+            if gacha['publishedAt'][1]:
+                if (float(event_start) <= float(gacha['publishedAt'][1]) < float(event_end)
+                        or float(event_start) <= float(gacha['closedAt'][1]) <= float(event_end)
+                        or float(gacha['closedAt'][1]) > float(event_end)):
+                    if float(gacha['closedAt'][1]) < 4102462800000:
+                        g = {
+                            'title': gacha['gachaName'][1],
+                            'type': gacha['type'],
+                            'start': int(gacha['publishedAt'][1]),
+                            'end': int(gacha['closedAt'][1])
+                        }
+                        event_gacha.append(g)
+
+        embed_post = gen_embed(
+            title='What is going on in EN Bandori?',
+            content='Find out the latest happenings for events, gacha, and songs!')
+
+        attribute_emoji = ''
+        match event_attribute:
+            case 'happy':
+                attribute_emoji = '<:attrHappy:432978959957753905>'
+            case 'pure':
+                attribute_emoji = '<:attrPure:432978922892820495>'
+            case 'cool':
+                attribute_emoji = '<:attrCool:432978841162612756>'
+            case 'powerful':
+                attribute_emoji = '<:attrPowerful:432978890064134145>'
+
+        embed_post.add_field(name='Current Event',
+                             value=(f"{event_name}\n"
+                                    f"<t:{int(int(event_start) / 1000)}> to <t:{int(int(event_end) / 1000)}>\n"
+                                    f"**Event Type**: {event_type}\n"
+                                    f"**Attribute**: {event_attribute.capitalize()} {attribute_emoji}\n"
+                                    f"**Characters**: {', '.join(event_characters)}\n"
+                                    "※ The event period above is automatically converted to the timezone set on your"
+                                    " system."),
+                             inline=False)
+
+        gacha_count = 1
+        gacha_formatted = ''
+        for entry in event_gacha:
+            if gacha_count >= 5:
+                embed_post.add_field(name='Gacha',
+                                     value=gacha_formatted,
+                                     inline=False)
+                gacha_formatted = ''
+                gacha_count = 1
+            gacha_title = entry['title']
+            gacha_type = entry['type'].capitalize()
+            gacha_start = int(entry['start'] / 1000)
+            gacha_end = int(entry['end'] / 1000)
+            gacha_formatted += f'> {gacha_title} ({gacha_type})\n> <t:{gacha_start}> to <t:{gacha_end}>\n\n'
+            gacha_count += 1
+
+        embed_post.add_field(name='Gacha',
+                             value=gacha_formatted,
+                             inline=False)
+
+        songs_formatted = ''
+        for entry in event_songs:
+            band_emoji = '?'
+            match entry['band']:
+                case "Poppin'Party":
+                    band_emoji = '<:PopipaLogo:432981132414287872>'
+                case "Afterglow":
+                    band_emoji = '<:AfterglowLogo:432981108338982922>'
+                case "Hello, Happy World!":
+                    band_emoji = '<:HHWLogo:432981119437242388>'
+                case "Pastel＊Palettes":
+                    band_emoji = '<:PasupareLogo:432981125455937536>'
+                case "Roselia":
+                    band_emoji = '<:RoseliaLogo:432981139788005377>'
+                case "RAISE A SUILEN":
+                    band_emoji = '<:RASLogo:721150392271896616>'
+                case "Morfonica":
+                    band_emoji = '<:MorfonicaLogo:682986271462654054>'
+            song_title = entry['title']
+            difficulty_string = " | ".join(entry['difficulty'])
+            songs_formatted += f'{band_emoji} {song_title}\n{difficulty_string}\n\n'
+
+        embed_post.add_field(name='New Songs',
+                             value=songs_formatted,
+                             inline=False)
+
+        current_t = datetime.datetime.now(datetime.timezone.utc)
+        embed_post.set_footer(text=f'Last Updated {current_t.strftime("%m/%d/%y")}')
+        return embed_post
+
+    @tasks.loop(seconds=1.0, count=1)
+    async def init_announcementbulletins(self):
+        # pubcord currently hardcoded, eventually expand feature (todo)
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390) # 913958768105103390
+        if document['prev_message']:
+            message_id = document['prev_message']
+            try:
+                prev_message = await channel.fetch_message(int(message_id))
+                await prev_message.delete()
+                log.info('previous announcement bulletin deleted')
+            except discord.NotFound:
+                pass
+
+        newcontent_embed = await self.generate_current_event(force=True)
+        newcontent_content = {
+            'label': 'New Event/Songs/Gacha Info',
+            'style': discord.ButtonStyle.green,
+            'custom_id': f'{pubcord.id}:newcontent',
+            'content': newcontent_embed
+        }
+        gamecrash_embed = gen_embed(
+            title='I have an android and my game keeps crashing! What do I do?',
+            content=("Good news! The **version 4.10.3** update should fix the crashing issue for Android users."
+                     " If you are still having issues, you can try the workarounds below.\n\n"
+                     "※ Clear the cache in Android settings and restart the phone; then clear cache in game and"
+                     " restart.\n"
+                     "※ Delete your Google ad ID (if you don't have one, make a new one and then delete it).\n"
+                     "※ Use a VPN to connect from Japan/Singapore using mobile data."
+                     ))
+        gamecrash_embed.set_footer(text='Updated 3/10/22')
+        gamecrash_content = {
+            'label': 'My game crashes!',
+            'style': discord.ButtonStyle.primary,
+            'custom_id': f'{pubcord.id}:gamecrash',
+            'content': gamecrash_embed
+        }
+
+        view_content = [newcontent_content, gamecrash_content]
+        self.views[str(pubcord.id)] = AnnouncementBulletin(view_content)
+        new_message = await channel.send("Access quick links by clicking the buttons below!",
+                                         view=self.views[str(pubcord.id)])
+        log.info('initial posted')
+        await db.servers.update_one({"server_id": 432379300684103699}, {"$set": {'prev_message': new_message.id}})
+
+    @tasks.loop(seconds=5.0)
+    async def check_announcementbulletins(self):
+        # pubcord currently hardcoded, eventually expand feature (todo)
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390)
+        if document['prev_message']:
+            message_id = document['prev_message']
+            try:
+                prev_message = await channel.fetch_message(int(message_id))
+                if channel.last_message.id != prev_message.id:
+                    log.info(f'prev_message: {prev_message.id}')
+                    await prev_message.delete()
+                    log.info(f'deleted previous announcement bulletin for {pubcord.name}')
+
+                    new_message = await channel.send("Access quick links by clicking the buttons below!",
+                                                     view=self.views[str(pubcord.id)])
+                    log.info('posted')
+                    await db.servers.update_one({"server_id": 432379300684103699},
+                                                {"$set": {'prev_message': new_message.id}})
+            except discord.NotFound:
+                pass
+            except discord.Forbidden:
+                log.error('Permission Error while attempting to delete stale announcement bulletin')
+
+    @tasks.loop(hours=24)
+    async def update_pubcord_quicklinks(self):
+        new_embed = await self.generate_current_event()
+        if new_embed:
+            view = self.views['432379300684103699']
+            old_embed = view.children[0].content
+            view.children[0].content = new_embed
+            if old_embed.image.url:
+                new_embed.set_image(url=old_embed.image.url)
+
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390)
+        if document['prev_message']:
+            message_id = document['prev_message']
+            try:
+                prev_message = await channel.fetch_message(int(message_id))
+                log.info(f'prev_message: {prev_message.id}')
+                await prev_message.delete()
+                log.info(f'deleted previous announcement bulletin for {pubcord.name}')
+            except discord.NotFound:
+                pass
+            except discord.Forbidden:
+                log.error('Permission Error while attempting to delete stale announcement bulletin')
+        new_message = await channel.send("Access quick links by clicking the buttons below!",
+                                         view=self.views[str(pubcord.id)])
+        log.info(f'posted announcement bulletin for {pubcord.name}')
+        await db.servers.update_one({"server_id": 432379300684103699},
+                                    {"$set": {'prev_message': new_message.id}})
+
+    @tasks.loop(seconds=120)
+    async def check_boosters(self):
+        log.info('Running Pubcord Booster Role Parity Check')
+        pubcord = self.bot.get_guild(432379300684103699)
+        emoteserver = self.bot.get_guild(815821301700493323)
+        pubcord_booster_role = pubcord.get_role(913239378598436966)
+        for member in pubcord.premium_subscribers:
+            if not member.get_role(913239378598436966):
+                log.info('Adding member to booster role - boosting main server')
+                roles = member.roles
+                roles.append(pubcord_booster_role)
+                await member.edit(roles=roles, reason="Boosting main server")
+
+        for member in emoteserver.premium_subscribers:
+            pubcord_member = pubcord.get_member(member.id)
+            if pubcord_member:
+                if not pubcord_member.get_role(913239378598436966):
+                    log.info('Adding member to booster role - boosting emote server')
+                    roles = pubcord_member.roles
+                    roles.append(pubcord_booster_role)
+                    await pubcord_member.edit(roles=roles, reason="Boosting emote server")
+
+        for member in pubcord_booster_role.members:
+            emoteserver_member = emoteserver.get_member(member.id)
+            if emoteserver_member:
+                if emoteserver_member not in emoteserver.premium_subscribers:
+                    if member not in pubcord.premium_subscribers:
+                        log.info('Not boosting either server, removing')
+                        roles = member.roles
+                        roles.remove(pubcord_booster_role)
+                        await member.edit(roles=roles, reason="No longer boosting main OR emote server")
+            else:
+                if member not in pubcord.premium_subscribers:
+                    log.info('Not boosting either server, removing')
+                    roles = member.roles
+                    roles.remove(pubcord_booster_role)
+                    await member.edit(roles=roles, reason="No longer boosting main OR emote server")
+
+        log.info('Parity Check Complete')
+
+    @check_boosters.before_loop
+    @init_announcementbulletins.before_loop
+    async def wait_ready(self):
+        # log.info('wait till ready')
+        await self.bot.wait_until_ready()
+
+    @update_pubcord_quicklinks.before_loop
+    @check_announcementbulletins.before_loop
+    async def wait_ready_long(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(10)
+
+    @discord.slash_command(name='spselfassign',
+                           description='Special Role Self-Assign',
+                           guild_ids=[432379300684103699])
+    @default_permissions(manage_roles=True)
+    async def spselfassign(self,
+                           ctx: discord.ApplicationContext,
+                           role: Option(discord.SlashCommandOptionType.role, 'Role to set for self-assign'),
+                           channel: Option(discord.SlashCommandOptionType.channel, 'Channel to post button in')):
+        if self.view_anni:
+            self.view_anni.stop()
+        self.view_anni = SpecialRole(role.name, ctx.interaction.guild_id, role)
+        await channel.send(embed=
+                           gen_embed(title=f'{role.id} Role',
+                                     content='Click the button below to add the role. Click it again to remove it.'),
+                           view=self.view_anni)
+
+    @discord.slash_command(name='embedimage',
+                           description='Set the embed image for the new content quicklink',
+                           guild_ids=[432379300684103699])
+    @default_permissions(manage_guild=True)
+    async def embedimage(self,
+                         ctx: discord.ApplicationContext,
+                         url: Option(str, 'URL of image')):
+        await ctx.interaction.response.defer(ephemeral=True)
+        view = self.views[str(ctx.guild_id)]
+        view.children[0].content.set_image(url=url)
+
+        document = await db.servers.find_one({"server_id": 432379300684103699})
+        pubcord = self.bot.get_guild(432379300684103699)
+        channel = pubcord.get_channel(913958768105103390)
+        if document['prev_message']:
+            message_id = document['prev_message']
+            try:
+                prev_message = await channel.fetch_message(int(message_id))
+                log.info(f'prev_message: {prev_message.id}')
+                await prev_message.delete()
+                log.info(f'deleted previous announcement bulletin for {pubcord.name}')
+            except discord.NotFound:
+                pass
+            except discord.Forbidden:
+                log.error('Permission Error while attempting to delete stale announcement bulletin')
+        new_message = await channel.send("Access quick links by clicking the buttons below!",
+                                         view=self.views[str(pubcord.id)])
+        log.info(f'posted announcement bulletin for {pubcord.name}')
+        await db.servers.update_one({"server_id": 432379300684103699},
+                                    {"$set": {'prev_message': new_message.id}})
+        await ctx.interaction.followup.send('New content embed has been updated with new image!',
+                                            ephemeral=True)
+
+
+def setup(bot):
+    bot.add_cog(Pubcord(bot))
