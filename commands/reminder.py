@@ -277,9 +277,12 @@ class Reminder(commands.Cog):
                         name=gembed_name,
                         value=greminder_text,
                     )
-                    channel = self.bot.get_channel(base_reminder['channel_id'])
-                    await channel.send(f"{''.join(user_mentions)}")
-                    await channel.send(embed=embed)
+                    try:
+                        channel = self.bot.get_channel(base_reminder['channel_id'])
+                        await channel.send(f"{''.join(user_mentions)}")
+                        await channel.send(embed=embed)
+                    except Exception as e:
+                        log.error('Error occurred while sending group reminder. Channel may not exist or is missing.')
 
             await send_group_reminders(group_send)
 
