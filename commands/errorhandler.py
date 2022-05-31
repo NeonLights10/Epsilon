@@ -31,34 +31,50 @@ class CommandErrorHandler(commands.Cog):
         if hasattr(ctx.command, 'on_error'):
             return
 
-        if isinstance(error, CheckOwner):
+        elif isinstance(error, CheckOwner):
             await ctx.respond(f'{ctx.command.qualified_name} can only be used by the owner of this bot.')
             return
 
-        if isinstance(error, commands.ChannelNotReadable):
+        elif isinstance(error, commands.ChannelNotReadable):
             await ctx.respond(f"I cannot access messages in {error.argument.mention}. "
                               "Please check your server's permission settings and try again!", ephemeral=True)
+            return
 
-        if isinstance(error, commands.BotMissingPermissions):
+        elif isinstance(error, commands.BotMissingPermissions):
             message = f"I don't have the following permissions to run this command: \n"
             for permission in error.missing_permissions:
                 message += f"{permission}\n"
             message += "Please check your server's permission settings and try again!"
             await ctx.respond(message, ephemeral=True)
+            return
 
-        if isinstance(error, commands.MessageNotFound):
+        elif isinstance(error, commands.MessageNotFound):
             await ctx.respond('Message not found. Check the ID or URL of the message.', ephemeral=True)
             return
 
-        if isinstance(error, commands.UserInputError):
+        elif isinstance(error, commands.BadArgument):
+            log.warning("Bad Argument - Traceback below:")
+            traceback.print_exception(type(error), error, error.__traceback__)
+            if hasattr(error, 'message'):
+                await ctx.respond(embed=gen_embed(title="Invalid parameter entered",
+                                                  content=f"Error: {error.message} \nAre you sure you entered the right"
+                                                          f" parameter?"),
+                                  ephemeral=True)
+            else:
+                await ctx.respond(embed=gen_embed(title="Invalid parameter entered",
+                                                  content=f"Are you sure you entered the right parameter?"),
+                                  ephemeral=True)
+            return
+
+        elif isinstance(error, commands.UserInputError):
             await ctx.respond(error, ephemeral=True)
             return
 
-        if isinstance(error, discord.ExtensionNotFound):
-            await ctx.interaction.followup.send(f'Extension {ctx.selected_options[0]["value"]} is not a valid option!')
+        elif isinstance(error, discord.ExtensionNotFound):
+            await ctx.respond(f'Extension {ctx.selected_options[0]["value"]} is not a valid option!')
             return
 
-        if isinstance(error, discord.ExtensionNotLoaded):
+        elif isinstance(error, discord.ExtensionNotLoaded):
             if ctx.command.name == 'reload':
                 await ctx.interaction.followup.send('There was an error loading the cog. '
                                                     'Rolling back to previous state.')
@@ -66,11 +82,24 @@ class CommandErrorHandler(commands.Cog):
                 await ctx.interaction.followup.send('There was an error loading the cog.')
             return
 
+        elif isinstance(error, discord.Forbidden):
+            await ctx.respond(('It seems I do not have the server permissions to post in the target channel.'
+                               '\nPlease check the permissions and try again.'))
+            return
+
+        elif isinstance(error, discord.HTTPException):
+            log.error(f"Error: {error.status} | {error.text}")
+            traceback.print_exception(type(error), error, error.__traceback__, limit=0)
+            await ctx.respond(embed=gen_embed(title=f'{error.status}', content=f'{error.text}'))
+            return
+
         else:
             log.error(f"Ignoring unhandled exception in application command {ctx.command.name!r}")
             traceback.print_exception(type(error), error, error.__traceback__)
+            exception = '\n'.join(traceback.format_exception(type(error), error, error.__traceback__))
             await ctx.respond(
-                "An error occured during command execution. "
+                "An error occured during command execution. Please send the following info to Neon#5555 immediately."
+                f"```py\n{exception}```"
                 "Please try again later...", ephemeral=True)
 
         return
@@ -158,7 +187,7 @@ class CommandErrorHandler(commands.Cog):
             return
 
         elif isinstance(error, commands.MissingPermissions):
-            await ctx.respond(
+            await ctx.send(
                 embed=gen_embed(title=f"{ctx.command.name}", content="You do not have permission to run this command."))
             return
 
@@ -205,7 +234,7 @@ class CommandErrorHandler(commands.Cog):
         elif isinstance(error, discord.HTTPException):
             log.error(f"Error: {error.status} | {error.text}")
             traceback.print_exception(type(error), error, error.__traceback__, limit=0)
-            await ctx.respond(embed=gen_embed(title=f'{error.status}', content=f'{error.text}'))
+            await ctx.send(embed=gen_embed(title=f'{error.status}', content=f'{error.text}'))
             return
 
         else:

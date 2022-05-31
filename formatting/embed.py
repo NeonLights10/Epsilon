@@ -1,14 +1,14 @@
 import discord
 
-from formatting.constants import VERSION as BOTVERSION
-from formatting.constants import NAME
 from typing import List
-from __main__ import log
 
 
-def gen_embed(name=None, icon_url=None, title=None, content=None):
+def gen_embed(name=None, icon_url=None, title=None, content=None, colour=None):
     """Provides a basic template for embeds"""
-    e = discord.Embed(colour=0x1abc9c)
+    if colour:
+        e = discord.Embed(colour=colour)
+    else:
+        e = discord.Embed(colour=0x1abc9c)
     if name and icon_url:
         e.set_author(name=name, icon_url=icon_url)
     e.set_footer(text="Fueee~")
@@ -19,6 +19,7 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 
 async def embed_splitter(embed: discord.Embed,
                          destination: discord.abc.Messageable = None,
+                         followup: discord.Webhook = None,
                          footer: str = None) -> List[discord.Embed]:
     """Take an embed and split it so that each embed has at most 20 fields and a length of 5900.
     Each field value will also be checked to have a length no greater than 1024.
@@ -41,7 +42,10 @@ async def embed_splitter(embed: discord.Embed,
             "fields" not in embed_dict or len(embed_dict["fields"]) < 21
     ):
         if destination:
-            await destination.send(embed=embed)
+            if followup:
+                await followup.send(embed=embed)
+            else:
+                await destination.send(embed=embed)
         return [embed]
 
     # Nah we really doing this
@@ -65,5 +69,8 @@ async def embed_splitter(embed: discord.Embed,
         for split_embed in split_embeds:
             if footer:
                 split_embed.set_footer(text=f'{footer}')
-            await destination.send(embed=split_embed)
+            if followup:
+                await followup.send(embed=embed)
+            else:
+                await destination.send(embed=split_embed)
     return split_embeds
