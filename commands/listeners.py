@@ -250,6 +250,11 @@ async def on_member_update(before, after):
             await log_channel.send(embed=content)
 
 
+async def on_application_command(context):
+    log.info(f'{context.interaction.user.name}#{context.interaction.user.discriminator} ({context.interaction.user.id})'
+             f' | {context.command.qualified_name} {context.selected_options}')
+
+
 def setup(bot):
     bot.add_listener(on_guild_join)
     bot.add_listener(on_member_join)
@@ -258,3 +263,4 @@ def setup(bot):
     bot.add_listener(on_message_delete)
     bot.add_listener(on_raw_message_delete)
     bot.add_listener(on_bulk_message_delete)
+    bot.add_listener(on_application_command)

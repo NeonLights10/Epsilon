@@ -796,14 +796,17 @@ class Reminder(commands.Cog):
     async def on_raw_reaction_add(self, payload):
         async def reminder_exists(new_reminder):
             async for document in db.reminders.find():
-                if (
-                        document['user_id'] == new_reminder['user_id']
-                        and document['reminder'] == new_reminder['reminder']
-                        and document['future_time'] == new_reminder['future_time']
-                        and document['future_timestamp'] == new_reminder['future_timestamp']
-                ):
-                    return True
-            return False
+                try:
+                    if (
+                            document['user_id'] == new_reminder['user_id']
+                            and document['reminder'] == new_reminder['reminder']
+                            and document['future_time'] == new_reminder['future_time']
+                            and document['future_timestamp'] == new_reminder['future_timestamp']
+                    ):
+                        return True
+                    return False
+                except KeyError:
+                    continue
 
         if not payload.guild_id:
             return

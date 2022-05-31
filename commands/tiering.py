@@ -16,6 +16,7 @@ from __main__ import log, db
 class Tiering(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.refill_running = {}
 
     @staticmethod
     def convert_room(argument):
@@ -883,10 +884,22 @@ class Tiering(commands.Cog):
                 await interaction.message.edit(embed=new_embed)
 
         await ctx.interaction.response.defer()
+
+        try:
+            refill_running = self.refill_running[str(ctx.interaction.channel.id)]
+        except KeyError:
+            self.refill_running[str(ctx.interaction.channel.id)] = False
+
+        if self.refill_running[str(ctx.interaction.channel.id)]:
+            embed = gen_embed(title='Refill Counter',
+                              content=f'A counter is already running in this channel!')
+            sent_message = await ctx.interaction.followup.send(embed=embed, ephemeral=True)
+            return
         refillcounter_view = RefillCounter(ctx, games)
         embed = gen_embed(title='Refill Counter',
                           content=f'{games} games left in the set')
         sent_message = await ctx.interaction.followup.send(embed=embed, view=refillcounter_view)
+        self.refill_running[str(ctx.interaction.channel.id)] = True
         while refillcounter_view.value is not True:
             if ctx.channel.last_message.id != sent_message.id:
                 await sent_message.delete()
@@ -894,6 +907,7 @@ class Tiering(commands.Cog):
                                   content=f'{refillcounter_view.counter} games left in the set')
                 sent_message = await ctx.channel.send(embed=embed, view=refillcounter_view)
             await asyncio.sleep(5)
+        self.refill_running[str(ctx.interaction.channel.id)] = False
 
     trackfiller = SlashCommandGroup('trackfiller', 'Filler tracking for tiering servers')
     trackfiller_permission = trackfiller.subgroup('permission', 'Set which roles can track fillers')

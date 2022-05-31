@@ -2129,14 +2129,14 @@ class Administration(commands.Cog):
     async def set_timeout(self,
                           ctx: discord.ApplicationContext,
                           user: Option(discord.Member, 'User to timeout'),
-                          time: Option(str, 'Amount of time to timeout'),
+                          length: Option(str, 'Amount of time to timeout'),
                           reason: Option(str, 'Reason for timeout',
                                          required=False)):
         await ctx.interaction.response.defer(ephemeral=True)
 
         time_result = None
         testing_text = ""
-        for chunk in time.split():
+        for chunk in length.split():
             if chunk == "and":
                 continue
             if chunk.isdigit():
@@ -2144,10 +2144,13 @@ class Administration(commands.Cog):
                 continue
             testing_text += chunk.rstrip(",")
             parsed = parse_timedelta(testing_text, minimum=timedelta(seconds=1), maximum=timedelta(days=28))
-            if parsed != time_result:
+            log.info(parsed)
+            if parsed is not None:
                 time_result = parsed
             else:
                 raise commands.UserInputError('Cannot parse the time entered.')
+        if time_result is None:
+            raise commands.UserInputError('Cannot parse the time entered.')
 
         if reason:
             await user.timeout_for(time_result, reason=reason[:512])
@@ -2434,11 +2437,14 @@ class Administration(commands.Cog):
                 await confirm_view.wait()
                 if confirm_view.value:
                     self.value = self.children[0].value
+                    og_msg = await interaction.original_message()
+                    await og_msg.delete()
                     self.stop()
-                    await interaction.message.delete()
                 else:
+                    og_msg = await interaction.original_message()
+                    await og_msg.delete()
                     self.stop()
-                    await interaction.message.delete()
+
 
         class ModalPromptView(discord.ui.View):
             def __init__(self, context, max_length):
@@ -3247,11 +3253,15 @@ class Administration(commands.Cog):
                                         min_value=0,
                                         max_value=21600)):
         await ctx.interaction.response.defer()
-        channel.edit(slowmode_delay=cooldown)
+        await channel.edit(slowmode_delay=cooldown)
+        if cooldown == 0:
+            await ctx.interaction.followup.send(embed=
+                                                gen_embed(title='Slowmode',
+                                                          content=f'Slowmode disabled for {channel.mention}'))
+            return
         await ctx.interaction.followup.send(embed=
                                             gen_embed(title='Slowmode',
-                                                      content=f'Slowmode enabled for {channel.mention} ({cooldown}s)'),
-                                            ephemeral=True)
+                                                      content=f'Slowmode enabled for {channel.mention} ({cooldown}s)'))
 
 
 # This method will spit out the list of valid strikes. we can cross reference the entire list of strikes to determine

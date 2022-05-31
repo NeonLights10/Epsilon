@@ -147,15 +147,17 @@ class Utility(commands.Cog):
                     channel: Option(discord.SlashCommandOptionType.channel, 'Channel to send roll in'),
                     number: Option(int, 'Number to force roll',
                                    min_value=1)):
-        await ctx.interaction.response.defer()
+        await ctx.interaction.response.defer(ephemeral=True)
         embed = gen_embed(name=f'{ctx.interaction.user.name}#{ctx.interaction.user.discriminator}',
                           icon_url=ctx.interaction.user.display_avatar.url,
                           title='Roll',
                           content=f'{ctx.interaction.user.mention} rolled a {str(number)}')
         await channel.send(embed=embed)
+        await ctx.interaction.followup.send(f'Sent roll in {channel.name}',
+                                            ephemeral=True)
 
     async def time_autocomplete(self, ctx):
-        return [timezone for timezone in TIMEZONE_DICT if timezone.startswith(ctx.value.lower())]
+        return [timezone for timezone in TIMEZONE_DICT if timezone.startswith(ctx.value.upper())]
 
     @discord.slash_command(name='time',
                            description='Print current date & time in UTC, or timezone if specified')
@@ -171,6 +173,9 @@ class Utility(commands.Cog):
         current_time = datetime.datetime.now(datetime.timezone.utc)
 
         # If a timezone is specified let's convert time into that timezone.
+        if not timezone:
+            timezone = 'UTC'
+
         timezone = timezone.upper()
         if re.search(r'(UTC)(\+-)(\d{2})(:\d{2})?', timezone):
             if not find_key(TIMEZONE_DICT, timezone):
@@ -180,50 +185,51 @@ class Utility(commands.Cog):
                                                               content='This is not a valid timezone.'),
                                                     ephemeral=True)
                 return
-            else:
-                try:
-                    timezone = TIMEZONE_DICT[timezone]
-                except KeyError:
-                    log.warning('KeyError: Invalid timezone')
-                    await ctx.interaction.followup.send(embed=
-                                                        gen_embed(title='Input Error',
-                                                                  content='This is not a valid timezone.'),
-                                                        ephemeral=True)
-                    return
-            # Take care of the pesky 30/45 minute intervals that some timezones have
-            if ":" in timezone:
-                timezone_parsed = timezone.split(":")
-                timezone_hour = timezone_parsed[0]
-                timezone_minute = timezone_parsed[1]
-                try:
-                    hour = int(timezone_hour[3:len(timezone_hour)])
-                    minute = int(timezone_minute)
-                except ValueError:
-                    log.warning("ValueError: Invalid Timezone")
-                    await ctx.interaction.followup.send(embed=
-                                                        gen_embed(title="Input Error",
-                                                                  content="This is not a valid timezone."),
-                                                        ephemeral=True)
-                    return
+        else:
+            try:
+                timezone = TIMEZONE_DICT[timezone]
+            except KeyError:
+                log.warning('KeyError: Invalid timezone')
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='Input Error',
+                                                              content='This is not a valid timezone.'),
+                                                    ephemeral=True)
+                return
 
-                current_time = current_time + timedelta(hours=hour, minutes=minute)
-            else:
-                try:
-                    hour = int(timezone[3:len(timezone)])
-                except ValueError:
-                    log.warning("ValueError: Invalid Timezone")
-                    await ctx.interaction.followup.send(embed=
-                                                        gen_embed(title="Input Error",
-                                                                  content="This is not a valid timezone."),
-                                                        ephemeral=True)
-                    return
+        # Take care of the pesky 30/45 minute intervals that some timezones have
+        if ":" in timezone:
+            timezone_parsed = timezone.split(":")
+            timezone_hour = timezone_parsed[0]
+            timezone_minute = timezone_parsed[1]
+            try:
+                hour = int(timezone_hour[3:len(timezone_hour)])
+                minute = int(timezone_minute)
+            except ValueError:
+                log.warning("ValueError: Invalid Timezone")
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title="Input Error",
+                                                              content="This is not a valid timezone."),
+                                                    ephemeral=True)
+                return
 
-                current_time = current_time + timedelta(hours=hour)
+            current_time = current_time + timedelta(hours=hour, minutes=minute)
+        else:
+            try:
+                hour = int(timezone[3:len(timezone)])
+            except ValueError:
+                log.warning("ValueError: Invalid Timezone")
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title="Input Error",
+                                                              content="This is not a valid timezone."),
+                                                    ephemeral=True)
+                return
 
-            current_time = current_time.strftime('%Y-%m-%d | %H:%M ' + timezone)
-            embed = gen_embed(title='time',
-                              content=f'The current time is: {current_time}')
-            await ctx.interaction.followup.send(embed=embed)
+            current_time = current_time + timedelta(hours=hour)
+
+        current_time = current_time.strftime('%Y-%m-%d | %H:%M ' + timezone)
+        embed = gen_embed(title='time',
+                          content=f'The current time is: {current_time}')
+        await ctx.interaction.followup.send(embed=embed)
 
     converttime = SlashCommandGroup('convert', 'Convert time between timezones')
 
@@ -243,11 +249,12 @@ class Utility(commands.Cog):
         try:
             hour = int(time_parsed[0])
             minute = int(time_parsed[1])
-        except ValueError:
+        except (ValueError, IndexError) as e:
             log.warning("ValueError: Invalid Time")
             await ctx.interaction.followup.send(embed=
                                                 gen_embed(title="Input Error",
-                                                          content="This is not a valid time."),
+                                                          content=("This is not a valid time."
+                                                                   "Accepted format: **##:##**")),
                                                 ephemeral=True)
             return
         if hour > 23 or hour < 0 or minute > 59 or minute < 0:
@@ -270,16 +277,16 @@ class Utility(commands.Cog):
                                                               content='This is not a valid timezone.'),
                                                     ephemeral=True)
                 return
-            else:
-                try:
-                    timezone_from = TIMEZONE_DICT[timezone_from]
-                except KeyError:
-                    log.warning('KeyError: Invalid timezone')
-                    await ctx.interaction.followup.send(embed=
-                                                        gen_embed(title='Input Error',
-                                                                  content='This is not a valid timezone.'),
-                                                        ephemeral=True)
-                    return
+        else:
+            try:
+                timezone_from = TIMEZONE_DICT[timezone_from]
+            except KeyError:
+                log.warning('KeyError: Invalid timezone')
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='Input Error',
+                                                              content='This is not a valid timezone.'),
+                                                    ephemeral=True)
+                return
         if ":" in timezone_from:
             timezone_from_parsed = timezone_from.split(":")
             try:
@@ -320,16 +327,16 @@ class Utility(commands.Cog):
                                                               content='This is not a valid timezone.'),
                                                     ephemeral=True)
                 return
-            else:
-                try:
-                    timezone_to = TIMEZONE_DICT[timezone_to]
-                except KeyError:
-                    log.warning('KeyError: Invalid timezone')
-                    await ctx.interaction.followup.send(embed=
-                                                        gen_embed(title='Input Error',
-                                                                  content='This is not a valid timezone.'),
-                                                        ephemeral=True)
-                    return
+        else:
+            try:
+                timezone_to = TIMEZONE_DICT[timezone_to]
+            except KeyError:
+                log.warning('KeyError: Invalid timezone')
+                await ctx.interaction.followup.send(embed=
+                                                    gen_embed(title='Input Error',
+                                                              content='This is not a valid timezone.'),
+                                                    ephemeral=True)
+                return
 
         timezone_from_combined = 0
         timezone_to_combined = 0
@@ -398,7 +405,7 @@ class Utility(commands.Cog):
         final_time = str(hour) + ":" + str(minute)
 
         embed = gen_embed(title='Convert Time',
-                          content=f'Converted **{time}** to **{timezone_to}** is **{final_time}**')
+                          content=f'Converted **{time} {timezone_from}** to **{timezone_to}** is **{final_time}**')
         await ctx.interaction.followup.send(embed=embed)
 
     selfroleassign = SlashCommandGroup('selfassign', 'Setup self-assign role commands')
