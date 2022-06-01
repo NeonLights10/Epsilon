@@ -80,7 +80,11 @@ class Help(commands.Cog):
                                 commands.append(f"/{y.name}")
                     commands = ('\n'.join(map(str, sorted(commands))))
                     help_message.add_field(name=x, value=commands, inline=True)
-            await ctx.respond(embed=help_message)
+            try:
+                if ctx.prefix:
+                    await ctx.respond(embed=help_message)
+            except AttributeError:
+                await ctx.respond(embed=help_message, ephemeral=True)
         else:
             command = command.lower()
             found = False
@@ -185,13 +189,25 @@ class Help(commands.Cog):
                 """Reminds you if that cog doesn't exist."""
                 help_message = discord.Embed(title=f'No command with name {command} found', color=discord.Color.red())
                 help_message.set_thumbnail(url=bot_icon_url)
-                await ctx.respond(embed=help_message)
+                try:
+                    if ctx.prefix:
+                        await ctx.respond(embed=help_message)
+                except AttributeError:
+                    await ctx.respond(embed=help_message, ephemeral=True)
             else:
                 help_detail_message.set_thumbnail(url=bot_icon_url)
-                await ctx.respond(embed=help_detail_message)
+                try:
+                    if ctx.prefix:
+                        await ctx.respond(embed=help_detail_message)
+                except AttributeError:
+                    await ctx.respond(embed=help_detail_message, ephemeral=True)
                 if shelp:
                     shelp.set_thumbnail(url=bot_icon_url)
-                    await ctx.respond(embed=shelp)
+                    try:
+                        if ctx.prefix:
+                            await ctx.respond(embed=shelp)
+                    except AttributeError:
+                        await ctx.respond(embed=shelp, ephemeral=True)
 
 
 def setup(bot):

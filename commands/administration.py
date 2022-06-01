@@ -20,7 +20,7 @@ from discord.ui import InputText
 from __main__ import log, db
 from commands.errorhandler import CheckOwner
 from formatting.embed import gen_embed
-from formatting.constants import COLORS
+from formatting.constants import COLORS, UNITS
 
 TIME_RE_STRING = r"\s?".join(
     [
@@ -2029,6 +2029,106 @@ class Administration(commands.Cog):
             await delete_messages(before=ctx.interaction.message,
                                   after=after_value)
             return
+
+    @commands.command(name='purge',
+                      description=('Deletes the previous # of messages from the channel. '
+                                   'Specifying a user will delete the messages for that user. '
+                                   'Specifying a time will delete messages from the past x amount of time. '
+                                   'You can also reply to a message to delete messages after the one replied to.'),
+                      help=('Usage\n\n%purge <user id/user mention/user name + discriminator (ex: name#0000)> '
+                            '<num> <time/message id>\n(Optionally, you can reply to a message with the command '
+                            'and it will delete ones after that message)'))
+    @commands.check_any(commands.has_guild_permissions(manage_messages=True), has_modrole())
+    async def msgpurge(self, ctx, members: commands.Greedy[discord.Member], num: Optional[int],
+                       time: Optional[Union[discord.Message, str]]):
+        def convert_to_timedelta(s):
+            return timedelta(**{UNITS.get(m.group('unit').lower(), 'seconds'): int(m.group('val')) for m in
+                                re.finditer(r'(?P<val>\d+)(?P<unit>[smhdw]?)', s, flags=re.I)})
+
+        async def delete_messages(limit=None, check=None, before=None, after=None):
+            if check:
+                deleted = await ctx.channel.purge(limit=limit, check=check, before=before, after=after)
+                sent = await ctx.send(embed=gen_embed(title='purge',
+                                                      content=f'The last {len(deleted)} messages by {member.name}#{member.discriminator} were deleted.'))
+                await ctx.message.delete()
+                await sent.delete(delay=5)
+            else:
+                deleted = await ctx.channel.purge(limit=limit, before=before, after=after)
+                sent = await ctx.send(
+                    embed=gen_embed(title='purge', content=f'The last {len(deleted)} messages were deleted.'))
+                await ctx.message.delete()
+                await sent.delete(delay=5)
+
+        time = time or ctx.message.reference
+
+        if members:
+            for member in members:
+                def user_check(m):
+                    return m.author == member
+
+                if num:
+                    if num < 0:
+                        log.warning("Error: Invalid input")
+                        await ctx.send(embed=gen_embed(title='Input Error',
+                                                       content='That is not a valid option for this parameter. Please pick a number > 0.'))
+
+                    else:
+                        if time:
+                            after_value = datetime.datetime.now(datetime.timezone.utc)
+                            if isinstance(time, str):
+                                after_value = after_value - convert_to_timedelta(time)
+                            elif isinstance(time, discord.MessageReference):
+                                after_value = await ctx.channel.fetch_message(time.message_id)
+
+                            await delete_messages(limit=num, check=user_check, after=after_value)
+                        else:
+                            await delete_messages(limit=num, check=user_check)
+                elif time:
+                    after_value = datetime.datetime.now(datetime.timezone.utc)
+                    if isinstance(time, str):
+                        after_value = after_value - convert_to_timedelta(time)
+                    elif isinstance(time, discord.MessageReference):
+                        after_value = await ctx.channel.fetch_message(time.message_id)
+
+                    await delete_messages(check=user_check, after=after_value)
+            return
+        elif num:
+            if num < 0:
+                log.warning("Error: Invalid input")
+                sent = await ctx.send(embed=gen_embed(title='Input Error',
+                                                      content='That is not a valid option for this parameter. Please pick a number > 0.'))
+                await ctx.message.delete()
+                await sent.delete(delay=5)
+            else:
+                if time:
+                    after_value = datetime.datetime.now(datetime.timezone.utc)
+                    if isinstance(time, str):
+                        after_value = after_value - convert_to_timedelta(time)
+                    elif isinstance(time, discord.MessageReference):
+                        after_value = await ctx.channel.fetch_message(time.message_id)
+
+                    await delete_messages(limit=num, after=after_value)
+                    return
+
+                else:
+                    await delete_messages(limit=num, before=ctx.message)
+                    return
+        elif time:
+            after_value = datetime.datetime.now(datetime.timezone.utc)
+            if isinstance(time, str):
+                after_value = after_value - convert_to_timedelta(time)
+            elif isinstance(time, discord.MessageReference):
+                after_value = await ctx.channel.fetch_message(time.message_id)
+
+            await delete_messages(before=ctx.message, after=after_value)
+            return
+        else:
+            log.warning("Missing Required Argument")
+            params = ' '.join([x for x in ctx.command.clean_params])
+            sent = await ctx.send(embed=gen_embed(title="Invalid parameter(s) entered",
+                                                  content=f"Parameter order: {params}\n\nDetailed parameter usage can be found by typing {ctx.prefix}help {ctx.command.name}```"))
+            await ctx.message.delete()
+            await sent.delete(delay=5)
 
     rolecommand = SlashCommandGroup('role', 'Add/remove roles and users to roles')
 

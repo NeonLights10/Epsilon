@@ -274,6 +274,7 @@ bot.load_extension("commands.reminder")
 # bot.load_extension("commands.t100chart")
 bot.load_extension("commands.fun")
 # bot.load_extension("commands.pubcord")
+bot.load_extension("commands.old")
 
 
 @bot.event

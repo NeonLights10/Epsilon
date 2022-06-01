@@ -179,7 +179,8 @@ class Miscellaneous(commands.Cog):
             async def callback(self, interaction: discord.Interaction):
                 await interaction.response.defer()
                 embed = gen_embed(title='Global Announcement',
-                                  content=f'{self.children[0].value}')
+                                  content=(f'Admins of the server can always toggle announcements from the bot creator'
+                                           f' on/off by using /settings.\n\n{self.children[0].value}'))
                 if attachment:
                     embed.set_image(url=attachment.url)
 
