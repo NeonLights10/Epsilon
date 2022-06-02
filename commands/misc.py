@@ -316,20 +316,20 @@ class Miscellaneous(commands.Cog):
                     if len(blacklist) != 0:
                         pass
                     else:
-                        await db.servers.update_one({"server_id": id},
+                        await db.servers.update_one({"server_id": guild.id},
                                                     {"$set": {'blacklist': None}})
                 else:
-                    await db.servers.update_one({"server_id": id},
+                    await db.servers.update_one({"server_id": guild.id},
                                                 {"$set": {'blacklist': None}})
             if whitelist := document['whitelist'] is not None:
                 if isinstance(whitelist, list):
                     if len(whitelist) != 0:
                         pass
                     else:
-                        await db.servers.update_one({"server_id": id},
+                        await db.servers.update_one({"server_id": guild.id},
                                                     {"$set": {'whitelist': None}})
                 else:
-                    await db.servers.update_one({"server_id": id},
+                    await db.servers.update_one({"server_id": guild.id},
                                                 {"$set": {'whitelist': None}})
             log.info(f'Updated document for {guild.name} ({guild.id})')
         await ctx.interaction.followup.send('Transition complete. Welcome to Kanon 2.0',
