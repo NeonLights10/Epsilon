@@ -2548,7 +2548,7 @@ class Administration(commands.Cog):
 
         class ModalPromptView(discord.ui.View):
             def __init__(self, context, max_length):
-                super().__init__()
+                super().__init__(timeout=600)
                 self.value = None
                 self.context = context
                 self.max_length = max_length
