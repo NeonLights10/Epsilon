@@ -231,7 +231,7 @@ class EpsilonBot(bridge.Bot):
         self.uptime = time.time()
 
 
-bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True, debug_guilds=[911509078038151168])
+bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
 bot.remove_command('help')
 bot.load_extension("commands.help")
 bot.load_extension("commands.errorhandler")

@@ -1,5 +1,5 @@
 MAIN_VERSION = '2.0.0'
-SUB_VERSION = '_pre-build-0.1a'
+SUB_VERSION = '_a2'
 VERSION = MAIN_VERSION + SUB_VERSION
 NAME = 'Kanon'
 

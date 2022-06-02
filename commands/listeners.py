@@ -158,7 +158,7 @@ async def on_message_edit(before, after):
                     content.set_footer(text=time.ctime())
                     await log_channel.send(embed=content)
     except Exception as e:
-        log.info('Error occurred while tracking message edits.')
+        log.info(f'Error occurred while tracking message edits: {e}')
         pass
 
 
