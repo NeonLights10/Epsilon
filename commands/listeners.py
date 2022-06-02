@@ -79,8 +79,10 @@ async def on_message_delete(message):
                         content.add_field(name="Attachment:", value="\u200b")
                         content.set_image(url=message.attachments[0].proxy_url)
                     await log_channel.send(embed=content)
+    except TypeError:
+        pass
     except Exception as e:
-        log.info('Error occurred while tracking message deletion.')
+        log.info(f'Error occurred while tracking message deletion: {e}')
         pass
 
 
@@ -110,8 +112,10 @@ async def on_bulk_message_delete(messages):
                             content.set_image(url=message.attachments[0].proxy_url)
                         await log_channel.send(embed=content)
                         await asyncio.sleep(1)
+    except TypeError:
+        pass
     except Exception as e:
-        log.info('Error occurred while tracking bulk message deletion.')
+        log.info(f'Error occurred while tracking bulk message deletion: {e}')
         pass
 
 
@@ -126,8 +130,10 @@ async def on_raw_message_delete(payload):
                     content = gen_embed(title=f'Message deleted in #{guild.get_channel(payload.channel_id).name}',
                                         content=f'```ml\nMessage ID = {payload.message_id}```')
                     await log_channel.send(embed=content)
+        except TypeError:
+            pass
         except Exception as e:
-            log.info('Error occurred while tracking raw message deletion.')
+            log.info(f'Error occurred while tracking raw message deletion: {e}')
             pass
 
 
@@ -157,6 +163,8 @@ async def on_message_edit(before, after):
                                       inline=False)
                     content.set_footer(text=time.ctime())
                     await log_channel.send(embed=content)
+    except TypeError:
+        pass
     except Exception as e:
         log.info(f'Error occurred while tracking message edits: {e}')
         pass

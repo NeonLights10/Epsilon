@@ -324,7 +324,13 @@ async def on_message(message):
                     await ctx.message.reply(content=msg)
                     return
 
-            if ctx.channel.id not in document['blacklist']:
+            if document['blacklist']:
+                if ctx.channel.id not in document['blacklist']:
+                    post = {'server_id': ctx.guild.id,
+                            'channel_id': ctx.channel.id,
+                            'msg_id': ctx.message.id}
+                    await db.msgid.insert_one(post)
+            else:
                 post = {'server_id': ctx.guild.id,
                         'channel_id': ctx.channel.id,
                         'msg_id': ctx.message.id}
