@@ -220,18 +220,17 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 
 class EpsilonBot(bridge.Bot):
 
-    def __init__(self, command_prefix, intents, case_insensitive, debug_guilds):
+    def __init__(self, command_prefix, intents, case_insensitive):
         super().__init__(max_messages=2000,
                          command_prefix=command_prefix,
                          intents=intents,
-                         case_insensitive=case_insensitive,
-                         debug_guilds=debug_guilds)
+                         case_insensitive=case_insensitive)
         self.command_count = 0
         self.message_count = 0
         self.uptime = time.time()
 
 
-bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True, debug_guilds=[911509078038151168])
+bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
 bot.remove_command('help')
 bot.load_extension("commands.help")
 bot.load_extension("commands.errorhandler")
@@ -240,11 +239,11 @@ bot.load_extension("commands.misc")
 bot.load_extension("commands.utility")
 bot.load_extension("commands.administration")
 bot.load_extension("commands.tiering")
-# bot.load_extension("commands.modmail")
+bot.load_extension("commands.modmail")
 bot.load_extension("commands.reminder")
-# bot.load_extension("commands.t100chart")
+bot.load_extension("commands.t100chart")
 bot.load_extension("commands.fun")
-# bot.load_extension("commands.pubcord")
+bot.load_extension("commands.pubcord")
 bot.load_extension("commands.old")
 
 
