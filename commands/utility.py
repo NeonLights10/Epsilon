@@ -675,7 +675,15 @@ class Utility(commands.Cog):
                             # Make message first
                             post_embed = gen_embed(title=modal_prompt.title_value,
                                                    content=modal_prompt.desc_value)
-                            post_message = await new_channel.send(embed=post_embed)
+                            try:
+                                post_message = await new_channel.send(embed=post_embed)
+                            except discord.Forbidden:
+                                await interaction.followup.send(embed=gen_embed(
+                                    title='Permission Error',
+                                    content=('I cannot post in the specified channel. '
+                                             'Please check your server permissions.')),
+                                                                ephemeral=True)
+                                return
                             post = {"server_id": interaction.guild_id,
                                     "msg_id": post_message.id,
                                     "channel_id": new_channel.id,
