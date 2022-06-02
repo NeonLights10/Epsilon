@@ -292,6 +292,49 @@ class Miscellaneous(commands.Cog):
                                     f'has been deleted.'),
             ephemeral=True)
 
+    @discord.slash_command(name='completetransition',
+                           description='2.0 database breaking changes, DEV ONLY')
+    @is_owner()
+    async def completetransition(self,
+                                 ctx: discord.ApplicationContext):
+        # BREAKING CHANGES BELOW - DO NOT ACTIVATE UNTIL READY
+        await ctx.interaction.response.defer(ephemeral=True)
+
+        #  breaking change for any role reaction
+        await db.rolereact.drop()
+        log.info('Dropped rolereact collection')
+
+        for guild in self.bot.guilds:
+            document = await db.servers.find_one({"server_id": guild.id})
+
+            # breaking change for blacklist/whitelist system
+            if blacklist := document['blacklist']:
+                for channel_id in blacklist:
+                    await db.msgid.delete_many({"channel_id": channel_id})
+            if blacklist is not None:
+                if isinstance(blacklist, list):
+                    if len(blacklist) != 0:
+                        pass
+                    else:
+                        await db.servers.update_one({"server_id": id},
+                                                    {"$set": {'blacklist': None}})
+                else:
+                    await db.servers.update_one({"server_id": id},
+                                                {"$set": {'blacklist': None}})
+            if whitelist := document['whitelist'] is not None:
+                if isinstance(whitelist, list):
+                    if len(whitelist) != 0:
+                        pass
+                    else:
+                        await db.servers.update_one({"server_id": id},
+                                                    {"$set": {'whitelist': None}})
+                else:
+                    await db.servers.update_one({"server_id": id},
+                                                {"$set": {'whitelist': None}})
+            log.info(f'Updated document for {guild.name} ({guild.id})')
+        await ctx.interaction.followup.send('Transition complete. Welcome to Kanon 2.0',
+                                            ephemeral=True)
+
 
 def setup(bot):
     bot.add_cog(Miscellaneous(bot))

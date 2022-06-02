@@ -192,35 +192,6 @@ async def check_document(guild, id):
                     '$cond': [{'$not': ["$prev_message_modmail"]}, None, "$prev_message_modmail"]}
             }}]
         )
-        # BREAKING CHANGES BELOW - DO NOT ACTIVATE UNTIL ANNOUNCEMENT MADE AND SWITCHOVER DATE ESTABLISHED
-
-        #  breaking change for any role reaction
-        # await db.rolereact.drop()
-
-        # breaking change for blacklist/whitelist system
-        # if blacklist := document['blacklist']:
-        #     for channel_id in blacklist:
-        #         await db.msgid.delete_many({"channel_id": channel_id})
-        # if blacklist is not None:
-        #     if isinstance(blacklist, list):
-        #         if len(blacklist) != 0:
-        #             pass
-        #         else:
-        #             await db.servers.update_one({"server_id": id},
-        #                                         {"$set": {'blacklist': None}})
-        #     else:
-        #         await db.servers.update_one({"server_id": id},
-        #                                     {"$set": {'blacklist': None}})
-        # if whitelist := document['whitelist'] is not None:
-        #     if isinstance(whitelist, list):
-        #         if len(whitelist) != 0:
-        #             pass
-        #         else:
-        #             await db.servers.update_one({"server_id": id},
-        #                                         {"$set": {'whitelist': None}})
-        #     else:
-        #         await db.servers.update_one({"server_id": id},
-        #                                     {"$set": {'whitelist': None}})
 
 
 ##########
@@ -271,9 +242,9 @@ bot.load_extension("commands.administration")
 bot.load_extension("commands.tiering")
 bot.load_extension("commands.modmail")
 bot.load_extension("commands.reminder")
-# bot.load_extension("commands.t100chart")
+bot.load_extension("commands.t100chart")
 bot.load_extension("commands.fun")
-# bot.load_extension("commands.pubcord")
+bot.load_extension("commands.pubcord")
 bot.load_extension("commands.old")
 
 
