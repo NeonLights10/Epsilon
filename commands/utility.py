@@ -45,7 +45,11 @@ class SelfRoleSelect(discord.ui.Select):
                 selected_role = discord.utils.get(interaction.guild.roles, id=int(option.value))
                 if selected_role in member_roles:
                     member_roles.remove(selected_role)
-        await member.edit(roles=member_roles)
+        try:
+            await member.edit(roles=member_roles)
+        except discord.Forbidden:
+            await interaction.followup.send('I do not have permission to do this! Check the server settings.',
+                                            ephemeral=True)
 
 
 class Utility(commands.Cog):
