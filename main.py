@@ -220,12 +220,11 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 
 class EpsilonBot(bridge.Bot):
 
-    def __init__(self, command_prefix, intents, case_insensitive, debug_guilds):
+    def __init__(self, command_prefix, intents, case_insensitive):
         super().__init__(max_messages=2000,
                          command_prefix=command_prefix,
                          intents=intents,
-                         case_insensitive=case_insensitive,
-                         debug_guilds=debug_guilds)
+                         case_insensitive=case_insensitive)
         self.command_count = 0
         self.message_count = 0
         self.uptime = time.time()
