@@ -2692,7 +2692,7 @@ class Administration(commands.Cog):
                     if re.match(r'^[0-7]{1}$', mmsg.clean_content, flags=re.I):
                         await mmsg.delete()
                         await sent_prompt.delete()
-                        return mmsg.clean_content
+                        return int(mmsg.clean_content)
                     elif attempts > 3:
                         await mmsg.delete()
                         await sent_prompt.delete()
@@ -2823,7 +2823,7 @@ class Administration(commands.Cog):
                         await db.warns.insert_one(post)
 
                     timeout_time = None
-                    ban_delete_days = None
+                    ban_delete_days = 0
 
                     match strike_severity_view.children[0].values[0]:
                         case '2':
@@ -2889,6 +2889,7 @@ class Administration(commands.Cog):
                     # Ban check should always come before timeout check
                     if len(results) >= document['max_strike']:
                         max_strike = document["max_strike"]
+                        ban_delete_days = await input_prompt(scenario=3)
                         if m:
                             dm_embed = gen_embed(name=ctx.guild.name,
                                                  icon_url=ctx.guild.icon.url,
