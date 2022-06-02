@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.commands.options import Option
 from discord.ext import bridge
 
-from __main__ import db
+from __main__ import db, log
 
 
 class Help(commands.Cog):
@@ -95,7 +95,7 @@ class Help(commands.Cog):
                 cog_commands = (self.bot.get_cog(x)).get_commands()
                 for y in cog_commands:
                     if not isinstance(y, discord.ApplicationCommand):
-                        if command == y.name or command in y.aliases:
+                        if command == y.name or command in y.aliases and y.name != 'old':
                             if y.aliases:
                                 help_detail_message = discord.Embed(
                                     title=f"{y.name.capitalize()} ({(', '.join(map(str, sorted(y.aliases))))})",
