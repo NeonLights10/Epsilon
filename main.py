@@ -256,7 +256,7 @@ async def on_ready():
 
     ####################
 
-    status = discord.Game(f'{default_prefix}help | {len(bot.guilds)} servers')
+    status = discord.Game(f'/help | {len(bot.guilds)} servers')
     await bot.change_presence(activity=status)
 
     log.info(f"Connected: {bot.user.id}/{bot.user.name}#{bot.user.discriminator}")

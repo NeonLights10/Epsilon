@@ -1004,6 +1004,7 @@ class Utility(commands.Cog):
                                 await self.paginator.update(pages=self.pages,
                                                             custom_buttons=self.paginator.custom_buttons,
                                                             custom_view=self.paginator.custom_view)
+                                self.paginator.current_page = current_page
                                 await self.paginator.goto_page(page_number=current_page)
 
             @discord.ui.button(label='Edit Role',
