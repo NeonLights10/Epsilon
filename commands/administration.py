@@ -1711,6 +1711,7 @@ class Administration(commands.Cog):
         button_channel = None
         if document['modmail_channel']:
             modmail_channel = ctx.guild.get_channel(int(document['modmail_channel']))
+        if document['modmail_button_channel']:
             button_channel = ctx.guild.get_channel(int(document['modmail_button_channel']))
         embed.add_field(name='Modmail',
                         value=f"{'Enabled' if document['modmail_channel'] else 'Disabled'}"
