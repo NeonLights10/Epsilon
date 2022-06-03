@@ -3000,7 +3000,7 @@ class Administration(commands.Cog):
                                 return
                         else:
                             log.info('Cancelled strike operation')
-                            await ctx.interaction.followup.send(content='Strike has been cancelled.',
+                            await ctx.interaction.followup.send(content='Image mute has not been applied.',
                                                                 ephemeral=True)
 
                     if timeout_time:
