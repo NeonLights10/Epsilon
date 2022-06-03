@@ -593,11 +593,50 @@ class Utility(commands.Cog):
 
                     if view.value:
                         log.info('Workflow confirm')
+                        new_doc = await db.rolereact.find_one({"server_id": interaction.guild_id,
+                                                               "msg_id": interaction.message.embeds[0].footer.text})
+
+                        post_embed = gen_embed(title=new_doc['category_name'],
+                                               content=new_doc['category_description'])
+                        try:
+                            post_message = await new_channel.send(embed=post_embed)
+                        except discord.Forbidden:
+                            await interaction.followup.send(embed=gen_embed(
+                                title='Permission Error',
+                                content=('I cannot post in the specified channel. '
+                                         'Please check your server permissions.')),
+                                ephemeral=True)
+                            return
+
                         await db.rolereact.update_one({"server_id": interaction.guild_id,
                                                        "msg_id": interaction.message.embeds[0].footer.text},
-                                                      {"$set": {'channel_id': new_channel.id}})
+                                                      {"$set": {'channel_id': new_channel.id,
+                                                                'msg_id': post_message.id}})
+
+                        selectrole_view = discord.ui.View(timeout=None)
+                        options = []
+                        if len(new_doc['roles']) > 0:
+                            for role_id, emoji_id in new_doc['roles'].items():
+                                r = discord.utils.get(interaction.guild.roles, id=int(role_id))
+                                if re.match(r'\d{17,18}', str(emoji_id)):
+                                    e = None
+                                    for _guild in self.bot.guilds:
+                                        e = discord.utils.get(interaction.guild.emojis, id=int(emoji_id))
+                                        if e:
+                                            break
+                                        else:
+                                            continue
+                                else:
+                                    e = emoji_id
+                                options.append(discord.SelectOption(label=r.name,
+                                                                    value=str(r.id),
+                                                                    emoji=e))
+
+                            selectrole_view.add_item(SelfRoleSelect(options))
+                            await post_message.edit(view=selectrole_view)
+
                         current_page = self.paginator.current_page
-                        self.pages[current_page].embeds[0].description = \
+                        self.pages[current_page].description = \
                             (f"{category_description}\n\n**Configured Channel:**"
                              f" {new_channel.mention}")
                         await self.paginator.update(pages=self.pages)
@@ -683,7 +722,7 @@ class Utility(commands.Cog):
                                     title='Permission Error',
                                     content=('I cannot post in the specified channel. '
                                              'Please check your server permissions.')),
-                                                                ephemeral=True)
+                                    ephemeral=True)
                                 return
                             post = {"server_id": interaction.guild_id,
                                     "msg_id": post_message.id,
