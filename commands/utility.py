@@ -609,7 +609,7 @@ class Utility(commands.Cog):
                             return
 
                         await db.rolereact.update_one({"server_id": interaction.guild_id,
-                                                       "msg_id": interaction.message.embeds[0].footer.text},
+                                                       "msg_id": int(interaction.message.embeds[0].footer.text)},
                                                       {"$set": {'channel_id': new_channel.id,
                                                                 'msg_id': post_message.id}})
 
@@ -639,7 +639,11 @@ class Utility(commands.Cog):
                         self.pages[current_page].description = \
                             (f"{category_description}\n\n**Configured Channel:**"
                              f" {new_channel.mention}")
-                        await self.paginator.update(pages=self.pages)
+                        await self.paginator.update(pages=self.pages,
+                                                    custom_buttons=self.paginator.custom_buttons,
+                                                    custom_view=self.paginator.custom_view)
+                        self.paginator.current_page = current_page
+                        await self.paginator.goto_page(current_page=current_page)
 
             @discord.ui.button(label='New Category',
                                style=discord.ButtonStyle.primary,
@@ -781,6 +785,7 @@ class Utility(commands.Cog):
                     await self.paginator.update(pages=self.pages,
                                                 custom_buttons=self.paginator.custom_buttons,
                                                 custom_view=self.paginator.custom_view)
+                    self.paginator.current_page = current_page
                     await self.paginator.goto_page(page_number=current_page)
 
             @discord.ui.button(label='Delete Category',
@@ -806,6 +811,7 @@ class Utility(commands.Cog):
                 await self.paginator.update(pages=self.pages,
                                             custom_buttons=self.paginator.custom_buttons,
                                             custom_view=current_view)
+                self.paginator.current_page = current_page - 1
                 await self.paginator.goto_page(page_number=current_page - 1)
 
             @discord.ui.button(label='Add Role',
