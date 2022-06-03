@@ -317,8 +317,8 @@ class Pubcord(commands.Cog):
             message_id = document['prev_message']
             try:
                 prev_message = await channel.fetch_message(int(message_id))
-                log.info(f'Channel last message id: {channel.last_message_id}')
-                log.info(f'Previous message id: {prev_message.id}')
+                # log.info(f'Channel last message id: {channel.last_message_id}')
+                # log.info(f'Previous message id: {prev_message.id}')
                 if channel.last_message_id != prev_message.id:
                     log.info(f'prev_message: {prev_message.id}')
                     await prev_message.delete()
