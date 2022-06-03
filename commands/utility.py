@@ -594,7 +594,7 @@ class Utility(commands.Cog):
                     if view.value:
                         log.info('Workflow confirm')
                         new_doc = await db.rolereact.find_one({"server_id": interaction.guild_id,
-                                                               "msg_id": interaction.message.embeds[0].footer.text})
+                                                               "msg_id": int(interaction.message.embeds[0].footer.text)})
 
                         post_embed = gen_embed(title=new_doc['category_name'],
                                                content=new_doc['category_description'])
