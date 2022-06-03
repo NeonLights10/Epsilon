@@ -600,6 +600,9 @@ class Utility(commands.Cog):
                                                content=new_doc['category_description'])
                         try:
                             post_message = await new_channel.send(embed=post_embed)
+                            old_channel = ctx.guild.get_channel(int(new_doc['channel_id']))
+                            old_message = await old_channel.fetch_message(int(interaction.message.embeds[0].footer.text))
+                            await old_message.delete()
                         except discord.Forbidden:
                             await interaction.followup.send(embed=gen_embed(
                                 title='Permission Error',
@@ -643,7 +646,7 @@ class Utility(commands.Cog):
                                                     custom_buttons=self.paginator.custom_buttons,
                                                     custom_view=self.paginator.custom_view)
                         self.paginator.current_page = current_page
-                        await self.paginator.goto_page(current_page=current_page)
+                        await self.paginator.goto_page(page_number=current_page)
 
             @discord.ui.button(label='New Category',
                                style=discord.ButtonStyle.primary,
