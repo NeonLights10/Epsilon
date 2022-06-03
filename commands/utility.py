@@ -85,24 +85,25 @@ class Utility(commands.Cog):
                 selectrole_view = discord.ui.View(timeout=None)
                 options = []
 
-                for role_id, emoji_id in category_document['roles'].items():
-                    r = discord.utils.get(guild.roles, id=int(role_id))
-                    if re.match(r'\d{17,18}', str(emoji_id)):
-                        e = None
-                        for _guild in self.bot.guilds:
-                            e = discord.utils.get(_guild.emojis, id=int(emoji_id))
-                            if e:
-                                break
-                            else:
-                                continue
-                    else:
-                        e = emoji_id
-                    options.append(discord.SelectOption(label=r.name,
-                                                        value=str(r.id),
-                                                        emoji=e))
+                if len(category_document['roles'] > 0):
+                    for role_id, emoji_id in category_document['roles'].items():
+                        r = discord.utils.get(guild.roles, id=int(role_id))
+                        if re.match(r'\d{17,18}', str(emoji_id)):
+                            e = None
+                            for _guild in self.bot.guilds:
+                                e = discord.utils.get(_guild.emojis, id=int(emoji_id))
+                                if e:
+                                    break
+                                else:
+                                    continue
+                        else:
+                            e = emoji_id
+                        options.append(discord.SelectOption(label=r.name,
+                                                            value=str(r.id),
+                                                            emoji=e))
 
-                selectrole_view.add_item(SelfRoleSelect(options))
-                await post_message.edit(view=selectrole_view)
+                    selectrole_view.add_item(SelfRoleSelect(options))
+                    await post_message.edit(view=selectrole_view)
 
     @initialize_selfassign.before_loop
     async def wait_ready(self):
