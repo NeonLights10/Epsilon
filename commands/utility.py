@@ -29,7 +29,7 @@ class SelfRoleSelect(discord.ui.Select):
     def __init__(self, role_options):
         super().__init__(placeholder="Select your roles here!",
                          min_values=0,
-                         max_values=len(role_options),
+                         max_values=len(role_options) if len(role_options) > 0 else 1,
                          options=role_options)
 
     async def callback(self, interaction: discord.Interaction):
@@ -951,6 +951,10 @@ class Utility(commands.Cog):
 
                                 # Add role to DB document
                                 cat_roles = doc['roles']
+                                if len(cat_roles) == 25:
+                                    interaction.followup.send('Cannot add any more roles to this category!',
+                                                              ephemeral=True)
+                                    return
                                 if isinstance(new_emoji, discord.Emoji):
                                     cat_roles[str(new_role.id)] = new_emoji.id
                                 else:
