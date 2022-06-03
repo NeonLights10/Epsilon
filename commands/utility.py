@@ -85,7 +85,7 @@ class Utility(commands.Cog):
                 selectrole_view = discord.ui.View(timeout=None)
                 options = []
 
-                if len(category_document['roles'] > 0):
+                if len(category_document['roles']) > 0:
                     for role_id, emoji_id in category_document['roles'].items():
                         r = discord.utils.get(guild.roles, id=int(role_id))
                         if re.match(r'\d{17,18}', str(emoji_id)):
