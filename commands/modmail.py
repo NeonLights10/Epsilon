@@ -156,7 +156,7 @@ class Modmail(commands.Cog):
     @tasks.loop(minutes=30)
     async def modmail_button(self):
         async for document in db.servers.find({'modmail_button_channel': {'$ne': None}}):
-            if document['modmail_button_channel']:
+            if document['modmail_button_channel'] and document['modmail_channel']:
                 server = self.bot.get_guild(document['server_id'])
                 channel = server.get_channel(document['modmail_button_channel'])
                 if button_message_id := document['prev_message_modmail']:
