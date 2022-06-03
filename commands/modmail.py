@@ -158,24 +158,25 @@ class Modmail(commands.Cog):
         async for document in db.servers.find({'modmail_button_channel': {'$ne': None}}):
             if document['modmail_button_channel'] and document['modmail_channel']:
                 server = self.bot.get_guild(document['server_id'])
-                log.info(server.id)
-                channel = server.get_channel(document['modmail_button_channel'])
-                if button_message_id := document['prev_message_modmail']:
-                    last_message_id = channel.last_message_id
-                    try:
-                        prev_button_message = await channel.fetch_message(int(button_message_id))
-                        if int(button_message_id) != last_message_id:
-                            await prev_button_message.delete()
-                            log.info('initial deleted')
+                if server:
+                    log.info(server.id)
+                    channel = server.get_channel(document['modmail_button_channel'])
+                    if button_message_id := document['prev_message_modmail']:
+                        last_message_id = channel.last_message_id
+                        try:
+                            prev_button_message = await channel.fetch_message(int(button_message_id))
+                            if int(button_message_id) != last_message_id:
+                                await prev_button_message.delete()
+                                log.info('initial deleted')
+                                await self.init_modmail_button(server.id)
+                            else:
+                                self.view = ModmailButton(bot=self.bot)
+                                await prev_button_message.edit("Send a modmail to us by pressing the button below.",
+                                                               view=self.view)
+                        except discord.NotFound:
                             await self.init_modmail_button(server.id)
-                        else:
-                            self.view = ModmailButton(bot=self.bot)
-                            await prev_button_message.edit("Send a modmail to us by pressing the button below.",
-                                                           view=self.view)
-                    except discord.NotFound:
+                    else:
                         await self.init_modmail_button(server.id)
-                else:
-                    await self.init_modmail_button(server.id)
 
     async def init_modmail_button(self, server_id):
         document = await db.servers.find_one({"server_id": server_id})
