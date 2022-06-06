@@ -250,7 +250,7 @@ class Collection(commands.Cog):
         for event in api:
             if api[event]['startAt'][1]:
                 if float(api[event]['startAt'][1]) < current_time < float(api[event]['endAt'][1]):
-                    end_time = (api[event]['endAt'][1] / 1000)
+                    end_time = int((int(api[event]['endAt'][1])) / 1000)
                     await db.servers.update_one({"server_id": 432379300684103699},
                                                 {"$set": {'end_of_event': end_time}})
                     log.info(f"Set end of event to {end_time}")
