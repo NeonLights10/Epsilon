@@ -2983,7 +2983,7 @@ class Administration(commands.Cog):
                                 await ctx.interaction.followup.send(embed=gen_embed(
                                     title='Image Mute User',
                                     content=(f'{user.name}#{user.discriminator} has been image muted for'
-                                             f' {humanize_timedelta(timedelta=timeout_time)}')),
+                                             f' {humanize_timedelta(timedelta=image_mute_time)}')),
                                     ephemeral=True)
                                 if document['log_channel'] and document['log_kbm']:
                                     log_channel = ctx.guild.get_channel(int(document['log_channel']))
@@ -2992,7 +2992,7 @@ class Administration(commands.Cog):
                                         content=(
                                             f'{user.name}#{user.discriminator} has been image muted by'
                                             f'{ctx.interaction.user.name}#{ctx.interaction.user.discriminator} for'
-                                            f' {humanize_timedelta(timedelta=timeout_time)}'
+                                            f' {humanize_timedelta(timedelta=image_mute_time)}'
                                             '\nReason: Moderator specified mute'))
                                     await log_channel.send(embed=embed)
                                 await asyncio.sleep(image_mute_seconds)  # TODO: store tasks in temporary db

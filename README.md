@@ -1,5 +1,5 @@
 # Epsilon
-![latest release](https://img.shields.io/badge/latest%20release-1.1.0-brightgreen.svg)
+![latest release](https://img.shields.io/badge/latest%20release-2.0.0-brightgreen.svg)
 
 Add me: https://discord.com/oauth2/authorize?client_id=322761091270705162&scope=bot&permissions=340126934
 
@@ -16,9 +16,10 @@ Neon#5555 on discord
 
 ## Features
 * Server specific modmail
-* Reaction based self role assignment
+* Self assign roles using select menus and an easy configuration menu in client
+* Tiering Guides and QoL improvements like a room name changer and refill timer
 * Strike/ban system with record lookup
-* Logging capabilities
+* Message edit/delete, member join/leave, and moderation action logging capabilities
 * Timezone conversion
 * Fun commands
 * And more coming soon...
