@@ -11,7 +11,7 @@ def gen_embed(name=None, icon_url=None, title=None, content=None, colour=None):
         e = discord.Embed(colour=0x1abc9c)
     if name and icon_url:
         e.set_author(name=name, icon_url=icon_url)
-    e.set_footer(text="Fueee~")
+    e.set_footer(text="ALICE IN DISSONANCE")
     e.title = title
     e.description = content
     return e

@@ -1,9 +1,13 @@
+import random
+
 import discord
 import re
 import math
 import time
 import asyncio
 import datetime
+
+from discord.ext import commands
 
 from formatting.embed import gen_embed
 from __main__ import check_document, default_prefix, bot, db, log, get_prefix
@@ -209,6 +213,50 @@ async def on_member_join(member):
                           inline=False)
         content.set_footer(text=time.ctime())
         await log_channel.send(embed=content)
+    if document['welcome_channel']:
+        welcome_channel = discord.utils.find(lambda c: c.id == int(document['welcome_channel']),
+                                             member.guild.text_channels)
+        welcomebanners = ["https://files.s-neon.xyz/share/welcomebanner-ps4.png",
+                          "https://files.s-neon.xyz/share/welcomebanner.png",
+                          "https://files.s-neon.xyz/share/welcomebanner-ritorin.png"]
+        if document['rules_channel']:
+            ruleschannel = int(document['rules_channel'])
+            # TODO: replace with a embed
+            content = discord.Embed(colour=0x1abc9c, title="Istariana vilseriol!",
+                                    description=f"Welcome {member.name} to the {member.guild.name} Discord server. Please read our <#{ruleschannel}>, thank you.")
+            content.set_author(name=f"{member.name}", icon_url=member.display_avatar.url)
+            content.set_footer(text="ALICE IN DISSONANCE | {}".format(time.ctime()))
+            content.set_thumbnail(url="https://files.s-neon.xyz/share/big-icon-512.png")
+            content.set_image(url=random.choice(welcomebanners))
+            await welcome_channel.send(embed=content)
+        else:
+            content = discord.Embed(colour=0x1abc9c, title="Istariana vilseriol!",
+                                    description=f"Welcome {member.name} to the {member.guild.name} Discord server.")
+            content.set_author(name=f"{member.name}", icon_url=member.display_avatar.url)
+            content.set_footer(text="ALICE IN DISSONANCE | {}".format(time.ctime()))
+            content.set_thumbnail(url="https://files.s-neon.xyz/share/big-icon-512.png")
+            content.set_image(url=random.choice(welcomebanners))
+            await welcome_channel.send(embed=content)
+
+
+async def on_member_update(before, after):
+    patreon = before.guild.get_role(201966886861275137)
+    guild = after.guild
+    if patreon:
+        if patreon not in after.roles:
+            # To prevent search through the entire audit log, limit to 1 minute in the past
+            async for entry in guild.audit_logs(action=discord.AuditLogAction.member_role_update,
+                                                user=bot.get_user(216303189073461248),
+                                                after=(datetime.datetime.now() - datetime.timedelta(minutes=1))):
+                if entry.target == before:
+                    try:
+                        await after.add_roles(patreon, reason="Auto-reassignment of patron role")
+
+                    except discord.Forbidden:
+                        raise commands.CommandError("I don't have permission to modify a user's roles.")
+
+                    except discord.HTTPException:
+                        raise commands.CommandError("Something happened while attempting to add role.")
 
 
 async def on_member_remove(member):
@@ -266,6 +314,7 @@ async def on_application_command(context):
 def setup(bot):
     bot.add_listener(on_guild_join)
     bot.add_listener(on_member_join)
+    bot.add_listener(on_member_update)
     bot.add_listener(on_member_remove)
     bot.add_listener(on_message_edit)
     bot.add_listener(on_message_delete)
