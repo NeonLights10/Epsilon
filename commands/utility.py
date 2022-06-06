@@ -1066,6 +1066,8 @@ class Utility(commands.Cog):
                                                                       name='Roles',
                                                                       value=r_content,
                                                                       inline=False)
+                                self.paginator.custom_view.children[6].disabled = False
+                                self.paginator.custom_view.children[7].disabled = False
                                 await self.paginator.update(pages=self.pages,
                                                             custom_buttons=self.paginator.custom_buttons,
                                                             custom_view=self.paginator.custom_view)
@@ -1421,6 +1423,9 @@ class Utility(commands.Cog):
                                                                   name='Roles',
                                                                   value=r_content,
                                                                   inline=False)
+                            if len(cat_roles) == 0:
+                                og_view.children[6].disabled = True
+                                og_view.children[7].disabled = True
                             await self.paginator.update(pages=self.pages,
                                                         custom_buttons=self.paginator.custom_buttons,
                                                         custom_view=og_view)
