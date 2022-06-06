@@ -1,5 +1,6 @@
 pip
-py-cord==2.0.0rc1
+# py-cord==2.0.0rc1
+git+https://github.com/Pycord-Development/pycord@master#egg=py-cord
 aiodns
 brotlipy
 cchardet
