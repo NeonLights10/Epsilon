@@ -2932,7 +2932,7 @@ class Administration(commands.Cog):
                         timeout_time = await input_prompt(scenario=1)
 
                     # Special pubcord check
-                    elif strike_severity_view.children[0].values[0] != 2 and ctx.guild.id == 432379300684103699:
+                    elif strike_severity_view.children[0].values[0] != '2' and ctx.guild.id == 432379300684103699:
                         view = Confirm()
                         sent_message = await ctx.interaction.followup.send(embed=gen_embed(
                             title='Image Mute User',
@@ -3209,7 +3209,8 @@ class Administration(commands.Cog):
                     reason = reason[0:truncate] + "..."
                 strike_embed = base_embed.copy()
                 strike_embed.add_field(name=f'Strike (EXPIRED)| {stime.ctime()}',
-                                       value=f'Strike UID: {document_id} | Moderator: {moderator}\nReason: {reason}',
+                                       value=(f'Strike UID: {document_id} | Moderator: {moderator}\nReason: {reason}'
+                                              f'\n[Go to message/evidence]({message_link})'),
                                        inline=False)
                 strike_embed.set_footer(text=f'UID: {user.id}')
                 strike_pages.append(strike_embed)
@@ -3234,7 +3235,8 @@ class Administration(commands.Cog):
                     reason = reason[0:truncate] + "..."
                 strike_embed = base_embed.copy()
                 strike_embed.add_field(name=f'Strike | {stime.ctime()}',
-                                       value=f'Strike UID: {document_id} | Moderator: {moderator}\nReason: {reason}',
+                                       value=(f'Strike UID: {document_id} | Moderator: {moderator}\nReason: {reason}'
+                                              f'\n[Go to message/evidence]({message_link})'),
                                        inline=False)
                 strike_embed.set_footer(text=f'UID: {user.id}')
                 strike_pages.append(strike_embed)
