@@ -6,7 +6,7 @@ import validators
 
 import discord
 from discord.ext import commands
-from discord.commands import Option, SlashCommandGroup, user_command
+from discord.commands import Option, OptionChoice, SlashCommandGroup, user_command
 from discord.commands.permissions import default_permissions
 
 from formatting.embed import gen_embed, embed_splitter
@@ -533,67 +533,124 @@ class Tiering(commands.Cog):
                            description='Helps you calculate the optimal pulls for getting small boost cans.')
     async def giftbox(self,
                       ctx: discord.ApplicationContext,
+                      event: Option(str, 'The current event type',
+                                    choices=[OptionChoice('VS Live', value='1'),
+                                             OptionChoice('Team Live Festival', value='2')]),
                       giftbox: Option(int, 'The number of the giftbox you are currently on',
                                       min_value=1,
                                       max_value=99999,
                                       default=1,
                                       required=False)):
         class GiftboxMenu(discord.ui.View):
-            def __init__(self, context, boxnum):
+            def __init__(self, context, boxnum, event_type):
                 super().__init__(timeout=900.0)
                 self.context = context
                 self.boxnum = boxnum
+                self.event_type = int(event_type)
                 self.value = None
                 self.boxsize = 0
                 self.cansize = 0
                 self.can_remaining = 0
                 self.remaining = 0
-                self.base_probabilities = [.1, .1, .1429, .0833, .0588, .0556]
+                self.vs_boxsizes = [30, 50, 70, 120, 170, 180]
+                self.tl_boxsizes = [40, 65, 90, 160, 220, 230]
+                self.vs_cansizes = [3, 5, 10, 10, 10, 10]
+                self.tl_cansizes = [3, 5, 5, 5, 5, 10]
+                self.vs_base_probabilities = [.1, .1, .1429, .0833, .0588, .0556]
+                self.tl_base_probabilities = [.075, .0769, .0555, .03125, .0227, .0435]
                 self.base_probability = 0
                 self.probability = 0
 
                 if self.boxnum == 1:
-                    self.remaining = 30
-                    self.can_remaining = 3
-                    self.boxsize = 30
-                    self.cansize = 3
-                    self.probability = self.base_probabilities[0]
-                    self.base_probability = self.base_probabilities[1]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[0]
+                        self.can_remaining = self.vs_cansizes[0]
+                        self.boxsize = self.vs_boxsizes[0]
+                        self.cansize = self.vs_cansizes[0]
+                        self.probability = self.vs_base_probabilities[0]
+                        self.base_probability = self.vs_base_probabilities[1]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[0]
+                        self.can_remaining = self.tl_cansizes[0]
+                        self.boxsize = self.tl_boxsizes[0]
+                        self.cansize = self.tl_cansizes[0]
+                        self.probability = self.tl_base_probabilities[0]
+                        self.base_probability = self.tl_base_probabilities[1]
                 elif self.boxnum == 2:
-                    self.remaining = 50
-                    self.can_remaining = 5
-                    self.boxsize = 50
-                    self.cansize = 5
-                    self.probability = self.base_probabilities[1]
-                    self.base_probability = self.base_probabilities[2]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[1]
+                        self.can_remaining = self.vs_cansizes[1]
+                        self.boxsize = self.vs_boxsizes[1]
+                        self.cansize = self.vs_cansizes[1]
+                        self.probability = self.vs_base_probabilities[1]
+                        self.base_probability = self.vs_base_probabilities[2]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[1]
+                        self.can_remaining = self.tl_cansizes[1]
+                        self.boxsize = self.tl_boxsizes[1]
+                        self.cansize = self.tl_cansizes[1]
+                        self.probability = self.tl_base_probabilities[1]
+                        self.base_probability = self.tl_base_probabilities[2]
                 elif self.boxnum == 3:
-                    self.remaining = 70
-                    self.can_remaining = 10
-                    self.boxsize = 70
-                    self.cansize = 10
-                    self.probability = self.base_probabilities[2]
-                    self.base_probability = self.base_probabilities[3]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[2]
+                        self.can_remaining = self.vs_cansizes[2]
+                        self.boxsize = self.vs_boxsizes[2]
+                        self.cansize = self.vs_cansizes[2]
+                        self.probability = self.vs_base_probabilities[2]
+                        self.base_probability = self.vs_base_probabilities[3]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[2]
+                        self.can_remaining = self.tl_cansizes[2]
+                        self.boxsize = self.tl_boxsizes[2]
+                        self.cansize = self.tl_cansizes[2]
+                        self.probability = self.tl_base_probabilities[2]
+                        self.base_probability = self.tl_base_probabilities[3]
                 elif self.boxnum == 4:
-                    self.remaining = 120
-                    self.can_remaining = 10
-                    self.boxsize = 120
-                    self.cansize = 10
-                    self.probability = self.base_probabilities[3]
-                    self.base_probability = self.base_probabilities[4]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[3]
+                        self.can_remaining = self.vs_cansizes[3]
+                        self.boxsize = self.vs_boxsizes[3]
+                        self.cansize = self.vs_cansizes[3]
+                        self.probability = self.vs_base_probabilities[3]
+                        self.base_probability = self.vs_base_probabilities[4]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[3]
+                        self.can_remaining = self.tl_cansizes[3]
+                        self.boxsize = self.tl_boxsizes[3]
+                        self.cansize = self.tl_cansizes[3]
+                        self.probability = self.tl_base_probabilities[3]
+                        self.base_probability = self.tl_base_probabilities[4]
                 elif self.boxnum == 5:
-                    self.remaining = 170
-                    self.can_remaining = 10
-                    self.boxsize = 170
-                    self.cansize = 10
-                    self.probability = self.base_probabilities[4]
-                    self.base_probability = self.base_probabilities[5]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[4]
+                        self.can_remaining = self.vs_cansizes[4]
+                        self.boxsize = self.vs_boxsizes[4]
+                        self.cansize = self.vs_cansizes[4]
+                        self.probability = self.vs_base_probabilities[4]
+                        self.base_probability = self.vs_base_probabilities[5]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[4]
+                        self.can_remaining = self.tl_cansizes[4]
+                        self.boxsize = self.tl_boxsizes[4]
+                        self.cansize = self.tl_cansizes[4]
+                        self.probability = self.tl_base_probabilities[4]
+                        self.base_probability = self.tl_base_probabilities[5]
                 elif self.boxnum > 5:
-                    self.remaining = 180
-                    self.can_remaining = 10
-                    self.boxsize = 180
-                    self.cansize = 10
-                    self.probability = self.base_probabilities[5]
-                    self.base_probability = self.base_probabilities[5]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[5]
+                        self.can_remaining = self.vs_cansizes[5]
+                        self.boxsize = self.vs_boxsizes[5]
+                        self.cansize = self.vs_cansizes[5]
+                        self.probability = self.vs_base_probabilities[5]
+                        self.base_probability = self.vs_base_probabilities[5]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[5]
+                        self.can_remaining = self.tl_cansizes[5]
+                        self.boxsize = self.tl_boxsizes[5]
+                        self.cansize = self.tl_cansizes[5]
+                        self.probability = self.tl_base_probabilities[5]
+                        self.base_probability = self.tl_base_probabilities[5]
 
             async def interaction_check(self, interaction):
                 if interaction.user != self.context.author:
@@ -689,47 +746,95 @@ class Tiering(commands.Cog):
             async def nextbox(self, button: discord.ui.Button, interaction: discord.Interaction):
                 self.boxnum += 1
                 if self.boxnum == 1:
-                    self.remaining = 30
-                    self.can_remaining = 3
-                    self.boxsize = 30
-                    self.cansize = 3
-                    self.probability = self.base_probabilities[0]
-                    self.base_probability = self.base_probabilities[1]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[0]
+                        self.can_remaining = self.vs_cansizes[0]
+                        self.boxsize = self.vs_boxsizes[0]
+                        self.cansize = self.vs_cansizes[0]
+                        self.probability = self.vs_base_probabilities[0]
+                        self.base_probability = self.vs_base_probabilities[1]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[0]
+                        self.can_remaining = self.tl_cansizes[0]
+                        self.boxsize = self.tl_boxsizes[0]
+                        self.cansize = self.tl_cansizes[0]
+                        self.probability = self.tl_base_probabilities[0]
+                        self.base_probability = self.tl_base_probabilities[1]
                 elif self.boxnum == 2:
-                    self.remaining = 50
-                    self.can_remaining = 5
-                    self.boxsize = 50
-                    self.cansize = 5
-                    self.probability = self.base_probabilities[1]
-                    self.base_probability = self.base_probabilities[2]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[1]
+                        self.can_remaining = self.vs_cansizes[1]
+                        self.boxsize = self.vs_boxsizes[1]
+                        self.cansize = self.vs_cansizes[1]
+                        self.probability = self.vs_base_probabilities[1]
+                        self.base_probability = self.vs_base_probabilities[2]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[1]
+                        self.can_remaining = self.tl_cansizes[1]
+                        self.boxsize = self.tl_boxsizes[1]
+                        self.cansize = self.tl_cansizes[1]
+                        self.probability = self.tl_base_probabilities[1]
+                        self.base_probability = self.tl_base_probabilities[2]
                 elif self.boxnum == 3:
-                    self.remaining = 70
-                    self.can_remaining = 10
-                    self.boxsize = 70
-                    self.cansize = 10
-                    self.probability = self.base_probabilities[2]
-                    self.base_probability = self.base_probabilities[3]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[2]
+                        self.can_remaining = self.vs_cansizes[2]
+                        self.boxsize = self.vs_boxsizes[2]
+                        self.cansize = self.vs_cansizes[2]
+                        self.probability = self.vs_base_probabilities[2]
+                        self.base_probability = self.vs_base_probabilities[3]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[2]
+                        self.can_remaining = self.tl_cansizes[2]
+                        self.boxsize = self.tl_boxsizes[2]
+                        self.cansize = self.tl_cansizes[2]
+                        self.probability = self.tl_base_probabilities[2]
+                        self.base_probability = self.tl_base_probabilities[3]
                 elif self.boxnum == 4:
-                    self.remaining = 120
-                    self.can_remaining = 10
-                    self.boxsize = 120
-                    self.cansize = 10
-                    self.probability = self.base_probabilities[3]
-                    self.base_probability = self.base_probabilities[4]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[3]
+                        self.can_remaining = self.vs_cansizes[3]
+                        self.boxsize = self.vs_boxsizes[3]
+                        self.cansize = self.vs_cansizes[3]
+                        self.probability = self.vs_base_probabilities[3]
+                        self.base_probability = self.vs_base_probabilities[4]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[3]
+                        self.can_remaining = self.tl_cansizes[3]
+                        self.boxsize = self.tl_boxsizes[3]
+                        self.cansize = self.tl_cansizes[3]
+                        self.probability = self.tl_base_probabilities[3]
+                        self.base_probability = self.tl_base_probabilities[4]
                 elif self.boxnum == 5:
-                    self.remaining = 170
-                    self.can_remaining = 10
-                    self.boxsize = 170
-                    self.cansize = 10
-                    self.probability = self.base_probabilities[4]
-                    self.base_probability = self.base_probabilities[5]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[4]
+                        self.can_remaining = self.vs_cansizes[4]
+                        self.boxsize = self.vs_boxsizes[4]
+                        self.cansize = self.vs_cansizes[4]
+                        self.probability = self.vs_base_probabilities[4]
+                        self.base_probability = self.vs_base_probabilities[5]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[4]
+                        self.can_remaining = self.tl_cansizes[4]
+                        self.boxsize = self.tl_boxsizes[4]
+                        self.cansize = self.tl_cansizes[4]
+                        self.probability = self.tl_base_probabilities[4]
+                        self.base_probability = self.tl_base_probabilities[5]
                 elif self.boxnum > 5:
-                    self.remaining = 180
-                    self.can_remaining = 10
-                    self.boxsize = 180
-                    self.cansize = 10
-                    self.probability = self.base_probabilities[5]
-                    self.base_probability = self.base_probabilities[5]
+                    if self.event_type == 1:
+                        self.remaining = self.vs_boxsizes[5]
+                        self.can_remaining = self.vs_cansizes[5]
+                        self.boxsize = self.vs_boxsizes[5]
+                        self.cansize = self.vs_cansizes[5]
+                        self.probability = self.vs_base_probabilities[5]
+                        self.base_probability = self.vs_base_probabilities[5]
+                    elif self.event_type == 2:
+                        self.remaining = self.tl_boxsizes[5]
+                        self.can_remaining = self.tl_cansizes[5]
+                        self.boxsize = self.tl_boxsizes[5]
+                        self.cansize = self.tl_cansizes[5]
+                        self.probability = self.tl_base_probabilities[5]
+                        self.base_probability = self.tl_base_probabilities[5]
                 self.value = 4
                 for item in self.children:
                     item.disabled = False
@@ -815,7 +920,7 @@ class Tiering(commands.Cog):
                 await interaction.edit_original_message(embed=g_embed, view=self)
 
         await ctx.interaction.response.defer()
-        giftbox_view = GiftboxMenu(ctx, giftbox)
+        giftbox_view = GiftboxMenu(ctx, giftbox, event)
         current_probability = giftbox_view.can_remaining / giftbox_view.remaining
         embed = gen_embed(title=f'Gift Box #{giftbox}',
                           content=(f"**{giftbox_view.remaining}/{giftbox_view.boxsize} remaining**\n"
