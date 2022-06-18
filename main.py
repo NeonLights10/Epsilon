@@ -444,8 +444,9 @@ async def modmail_response_guild(message, ctx, ref_message):
 async def modmail_response_dm(message, ctx, ref_message):
     valid_options = {'You have been given a strike', 'New Modmail', 'You have been banned',
                      'You have been kicked', 'Attachment'}
-    if ref_message.embeds[0].title in valid_options or re.match('You have been muted',
-                                                                ref_message.embeds[0].title):
+    if ref_message.embeds[0].title in valid_options \
+            or re.match('You have been muted', ref_message.embeds[0].title) \
+            or re.match('You have been put in timeout', ref_message.embeds[0].title):
         ref_embed = ref_message.embeds[0].footer
         guild_id = ref_embed.text
         try:
