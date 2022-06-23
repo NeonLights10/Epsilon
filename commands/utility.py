@@ -1522,20 +1522,23 @@ class Utility(commands.Cog):
                             if not r_role:
                                 del fixed_roles[role]
 
-                        for role in fixed_roles:
-                            r_e = fixed_roles[role]
-                            if re.match(r'\d{17,18}', str(r_e)):
-                                role_emoji = None
-                                for sguild in self.bot.guilds:
-                                    role_emoji = discord.utils.get(sguild.emojis, id=int(r_e))
-                                    if role_emoji:
-                                        break
-                                    else:
-                                        continue
+                        if len(fixed_roles) > 0:
+                            for role in fixed_roles:
+                                r_e = fixed_roles[role]
+                                if re.match(r'\d{17,18}', str(r_e)):
+                                    role_emoji = None
+                                    for sguild in self.bot.guilds:
+                                        role_emoji = discord.utils.get(sguild.emojis, id=int(r_e))
+                                        if role_emoji:
+                                            break
+                                        else:
+                                            continue
+                                else:
+                                    role_emoji = f':{r_e}:'
+                                r_role = ctx.guild.get_role(int(role))
+                                role_content += f'{str(role_emoji)} {r_role.name}\n'
                             else:
-                                role_emoji = f':{r_e}:'
-                            r_role = ctx.guild.get_role(int(role))
-                            role_content += f'{str(role_emoji)} {r_role.name}\n'
+                                role_content = 'No roles added yet! Press "Add Role" to add a role.'
                     else:
                         role_content = 'No roles added yet! Press "Add Role" to add a role.'
                 else:
