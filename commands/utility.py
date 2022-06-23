@@ -103,8 +103,8 @@ class Utility(commands.Cog):
                         options.append(discord.SelectOption(label=r.name,
                                                             value=str(r.id),
                                                             emoji=e))
-
-                    selectrole_view.add_item(SelfRoleSelect(options))
+                    if len(options) > 0:
+                        selectrole_view.add_item(SelfRoleSelect(options))
                     await post_message.edit(view=selectrole_view)
 
     @initialize_selfassign.before_loop
