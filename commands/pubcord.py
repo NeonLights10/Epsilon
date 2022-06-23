@@ -410,7 +410,6 @@ class Pubcord(commands.Cog):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
 
-    @update_pubcord_quicklinks.before_loop
     @check_announcementbulletins.before_loop
     async def wait_ready_long(self):
         await self.bot.wait_until_ready()
