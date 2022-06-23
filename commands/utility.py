@@ -1537,8 +1537,8 @@ class Utility(commands.Cog):
                                     role_emoji = f':{r_e}:'
                                 r_role = ctx.guild.get_role(int(role))
                                 role_content += f'{str(role_emoji)} {r_role.name}\n'
-                            else:
-                                role_content = 'No roles added yet! Press "Add Role" to add a role.'
+                        else:
+                            role_content = 'No roles added yet! Press "Add Role" to add a role.'
                     else:
                         role_content = 'No roles added yet! Press "Add Role" to add a role.'
                 else:
