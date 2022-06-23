@@ -416,6 +416,11 @@ class Pubcord(commands.Cog):
         await self.bot.wait_until_ready()
         await asyncio.sleep(10)
 
+    @update_pubcord_quicklinks.before_loop
+    async def wait_ready_long(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(20)
+
     @discord.slash_command(name='spselfassign',
                            description='Special Role Self-Assign',
                            guild_ids=[432379300684103699])
