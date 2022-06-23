@@ -1516,8 +1516,8 @@ class Utility(commands.Cog):
                 if roles:
                     if len(roles) > 0:
                         for role in roles:
-                            role = ctx.guild.get_role(int(role))
-                            if not role:
+                            r_role = ctx.guild.get_role(int(role))
+                            if not r_role:
                                 del roles[role]
                                 continue
 
@@ -1532,7 +1532,7 @@ class Utility(commands.Cog):
                                         continue
                             else:
                                 role_emoji = f':{r_e}:'
-                            role_content += f'{str(role_emoji)} {role.name}\n'
+                            role_content += f'{str(role_emoji)} {r_role.name}\n'
                     else:
                         role_content = 'No roles added yet! Press "Add Role" to add a role.'
                 else:

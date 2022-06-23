@@ -159,7 +159,7 @@ class Pubcord(commands.Cog):
                         difficulty.append(str(val['playLevel']))
 
                     band_id = song['bandId']
-                    band_url = f'https://bestdori.com/api/bands/main.1.json'
+                    band_url = f'https://bestdori.com/api/bands/all.1.json'
                     r_band = await client.get(band_url)
                     band_data = r_band.json()
                     s = {
@@ -249,6 +249,8 @@ class Pubcord(commands.Cog):
                     band_emoji = '<:RASLogo:721150392271896616>'
                 case "Morfonica":
                     band_emoji = '<:MorfonicaLogo:682986271462654054>'
+                case _:
+                    band_emoji = '<:StarGem:432995521892843520>'
             song_title = entry['title']
             difficulty_string = " | ".join(entry['difficulty'])
             songs_formatted += f'{band_emoji} {song_title}\n{difficulty_string}\n\n'
