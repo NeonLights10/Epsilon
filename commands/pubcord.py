@@ -346,25 +346,25 @@ class Pubcord(commands.Cog):
             if old_embed.image.url:
                 new_embed.set_image(url=old_embed.image.url)
 
-        document = await db.servers.find_one({"server_id": 432379300684103699})
-        pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(913958768105103390)
-        if document['prev_message']:
-            message_id = document['prev_message']
-            try:
-                prev_message = await channel.fetch_message(int(message_id))
-                log.info(f'prev_message: {prev_message.id}')
-                await prev_message.delete()
-                log.info(f'deleted previous announcement bulletin for {pubcord.name}')
-            except discord.NotFound:
-                pass
-            except discord.Forbidden:
-                log.error('Permission Error while attempting to delete stale announcement bulletin')
-        new_message = await channel.send("Access quick links by clicking the buttons below!",
-                                         view=self.views[str(pubcord.id)])
-        log.info(f'posted announcement bulletin for {pubcord.name}')
-        await db.servers.update_one({"server_id": 432379300684103699},
-                                    {"$set": {'prev_message': new_message.id}})
+            document = await db.servers.find_one({"server_id": 432379300684103699})
+            pubcord = self.bot.get_guild(432379300684103699)
+            channel = pubcord.get_channel(913958768105103390)
+            if document['prev_message']:
+                message_id = document['prev_message']
+                try:
+                    prev_message = await channel.fetch_message(int(message_id))
+                    log.info(f'prev_message: {prev_message.id}')
+                    await prev_message.delete()
+                    log.info(f'deleted previous announcement bulletin for {pubcord.name}')
+                except discord.NotFound:
+                    pass
+                except discord.Forbidden:
+                    log.error('Permission Error while attempting to delete stale announcement bulletin')
+            new_message = await channel.send("Access quick links by clicking the buttons below!",
+                                             view=self.views[str(pubcord.id)])
+            log.info(f'posted announcement bulletin for {pubcord.name}')
+            await db.servers.update_one({"server_id": 432379300684103699},
+                                        {"$set": {'prev_message': new_message.id}})
 
     @tasks.loop(seconds=120)
     async def check_boosters(self):
