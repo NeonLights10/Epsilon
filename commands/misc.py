@@ -128,7 +128,6 @@ class Miscellaneous(commands.Cog):
         await ctx.interaction.response.defer()
         cog = cog.lower()
         self.bot.load_extension(f'commands.{cog}')
-        await self.bot.sync_commands()
         await ctx.interaction.followup.send(
             embed=gen_embed(title='Load', content=f'Extension {cog} has been loaded.')
         )
@@ -143,7 +142,6 @@ class Miscellaneous(commands.Cog):
         await ctx.interaction.response.defer()
         cog = cog.lower()
         self.bot.reload_extension(f'commands.{cog}')
-        await self.bot.sync_commands()
         await ctx.interaction.followup.send(
             embed=gen_embed(title='Reload', content=f'Extension {cog} has been reloaded.')
         )

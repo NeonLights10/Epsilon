@@ -226,10 +226,10 @@ class Pubcord(commands.Cog):
             gacha_end = int(entry['end'] / 1000)
             gacha_formatted += f'> {gacha_title} ({gacha_type})\n> <t:{gacha_start}> to <t:{gacha_end}>\n\n'
             gacha_count += 1
-
-        embed_post.add_field(name='Gacha',
-                             value=gacha_formatted,
-                             inline=False)
+        if gacha_count != 1:
+            embed_post.add_field(name='Gacha',
+                                 value=gacha_formatted,
+                                 inline=False)
 
         songs_formatted = ''
         for entry in event_songs:
