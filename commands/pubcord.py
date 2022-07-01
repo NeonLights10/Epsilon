@@ -227,6 +227,8 @@ class Pubcord(commands.Cog):
             gacha_formatted += f'> {gacha_title} ({gacha_type})\n> <t:{gacha_start}> to <t:{gacha_end}>\n\n'
             gacha_count += 1
         if gacha_count != 1:
+            if gacha_formatted == '':
+                gacha_formatted = 'None'
             embed_post.add_field(name='Gacha',
                                  value=gacha_formatted,
                                  inline=False)
@@ -255,6 +257,8 @@ class Pubcord(commands.Cog):
             difficulty_string = " | ".join(entry['difficulty'])
             songs_formatted += f'{band_emoji} {song_title}\n{difficulty_string}\n\n'
 
+        if songs_formatted == "":
+            songs_formatted = "No new songs"
         embed_post.add_field(name='New Songs',
                              value=songs_formatted,
                              inline=False)
