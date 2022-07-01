@@ -299,9 +299,12 @@ class Miscellaneous(commands.Cog):
                            ctx: discord.ApplicationContext):
         await ctx.interaction.response.defer()
         pending = asyncio.all_tasks()
+        embed_content = ''
+        for task in pending:
+            embed_content += f'{task.get_name()} | {task.get_stack()}\n'
         await ctx.interaction.followup.send(
             embed=gen_embed(title='Pending Tasks',
-                            content=f'```{pending}```'),
+                            content=f'```{embed_content}```'),
             ephemeral=True)
 
 
