@@ -336,7 +336,13 @@ class Pubcord(commands.Cog):
                     await db.servers.update_one({"server_id": 432379300684103699},
                                                 {"$set": {'prev_message': new_message.id}})
             except discord.NotFound:
-                pass
+                log.info(f'could not find previous announcement bulletin for {pubcord.name}')
+
+                new_message = await channel.send("Access quick links by clicking the buttons below!",
+                                                 view=self.views[str(pubcord.id)])
+                log.info('posted')
+                await db.servers.update_one({"server_id": 432379300684103699},
+                                            {"$set": {'prev_message': new_message.id}})
             except discord.Forbidden:
                 log.error('Permission Error while attempting to delete stale announcement bulletin')
 

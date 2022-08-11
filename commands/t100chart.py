@@ -175,8 +175,11 @@ class Collection(commands.Cog):
         if document['prev_message_screenshot']:
             if end_of_event_tz < datetime.datetime.now(datetime.timezone.utc):
                 message_id = document['prev_message_screenshot']
-                prev_message = await channel.fetch_message(int(message_id))
-                await prev_message.delete()
+                try:
+                    prev_message = await channel.fetch_message(int(message_id))
+                    await prev_message.delete()
+                except discord.NotFound:
+                    pass
                 log.info('Initial t100 screenshot button deleted')
         if end_of_event_tz < datetime.datetime.now(datetime.timezone.utc):
             self.view = PersistentEvent(bot=self.bot)

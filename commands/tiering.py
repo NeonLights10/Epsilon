@@ -901,7 +901,6 @@ class Tiering(commands.Cog):
                 self.remaining = await remaining_prompt()
                 if self.remaining != 0:
                     self.probability = self.can_remaining / self.remaining
-                    self.probability = round(self.probability * 100, 2)
                 else:
                     self.probability = 0
                     self.children[1].disabled = True
@@ -910,12 +909,14 @@ class Tiering(commands.Cog):
                     g_embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                                         content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                                  f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                                 f"Should I pull? **Yes** ({self.probability}% probability)"))
+                                                 f"Should I pull? **Yes**"
+                                                 f"({round(self.probability * 100, 2)}% probability)"))
                 else:
                     g_embed = gen_embed(title=f'Gift Box #{self.boxnum}',
                                         content=(f"**{self.remaining}/{self.boxsize} remaining**\n"
                                                  f"{self.can_remaining}/{self.cansize} cans remaining\n\n"
-                                                 f"Should I pull? **No** ({self.probability}% probability)"))
+                                                 f"Should I pull? **No**"
+                                                 f"({round(self.probability * 100, 2)}% probability)"))
                 g_embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
                 await interaction.edit_original_message(embed=g_embed, view=self)
 

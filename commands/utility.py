@@ -1525,7 +1525,7 @@ class Utility(commands.Cog):
                         if len(fixed_roles) > 0:
                             for role in fixed_roles:
                                 r_e = fixed_roles[role]
-                                if re.match(r'\d{17,18}', str(r_e)):
+                                if re.match(r'\d{17,19}', str(r_e)):
                                     role_emoji = None
                                     for sguild in self.bot.guilds:
                                         role_emoji = discord.utils.get(sguild.emojis, id=int(r_e))
