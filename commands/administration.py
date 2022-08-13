@@ -3256,6 +3256,7 @@ class Administration(commands.Cog):
             pages.PaginatorButton("next", emoji="➡", style=discord.ButtonStyle.green),
             pages.PaginatorButton("last", emoji="⏩", style=discord.ButtonStyle.green),
         ]
+        strike_pages.reverse()
         paginator = pages.Paginator(pages=strike_pages,
                                     show_disabled=True,
                                     show_indicator=True,
