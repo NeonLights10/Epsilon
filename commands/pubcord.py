@@ -455,13 +455,13 @@ class Pubcord(commands.Cog):
     async def hololive(self,
                        ctx: discord.ApplicationContext):
         await ctx.respond(content=('<:hololive:1011477576558055465> <:hololive:1011477576558055465>'
-                                    ' THE HOLOLIVE COLLAB HAS: '
+                                    ' ***THE HOLOLIVE COLLAB HAS:*** '
                                     '<:hololive:1011477576558055465> <:hololive:1011477576558055465> \n'
                                     '⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️\n'
-                                    '<a:siren:1011477577820545115> NO EVENT, NO GACHA BANNER <a:siren:1011477577820545115>\n'
+                                    '<a:siren:1011477577820545115> ***__`NO EVENT, NO GACHA BANNER`__*** <a:siren:1011477577820545115>\n'
                                     '⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️\n'
-                                    'ONLY COSTUMES AND COVERS\n'
-                                    'AND SOME OTHER COOL COSMETIC THINGS\n'
+                                    '**ONLY COSTUMES AND COVERS**\n'
+                                    '**AND SOME OTHER COOL COSMETIC THINGS**\n'
                                     '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
                                     '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
                                     '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
