@@ -448,6 +448,27 @@ class Pubcord(commands.Cog):
                                      content='Click the button below to add the role. Click it again to remove it.'),
                            view=self.view_anni)
 
+    @discord.slash_command(name='hololive',
+                           description='Hololive Announcement',
+                           guild_ids=[432379300684103699])
+    @default_permissions(manage_roles=True)
+    async def hololive(self,
+                       ctx: discord.ApplicationContext):
+        await ctx.channel.send(content=('<:hololive:1011477576558055465> <:hololive:1011477576558055465>'
+                                        ' THE HOLOLIVE COLLAB HAS: '
+                                        '<:hololive:1011477576558055465> <:hololive:1011477576558055465> \n'
+                                        '⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️\n'
+                                        '<a:siren:1011477577820545115> NO EVENT, NO GACHA BANNER <a:siren:1011477577820545115>\n'
+                                        '⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️\n'
+                                        'ONLY COSTUMES AND COVERS\n'
+                                        'AND SOME OTHER COOL COSMETIC THINGS\n'
+                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                        '<a:mc_fire:1011477578860736512>'))
+
     @discord.slash_command(name='embedimage',
                            description='Set the embed image for the new content quicklink',
                            guild_ids=[432379300684103699])
