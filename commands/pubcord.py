@@ -454,20 +454,20 @@ class Pubcord(commands.Cog):
     @default_permissions(manage_roles=True)
     async def hololive(self,
                        ctx: discord.ApplicationContext):
-        await ctx.channel.send(content=('<:hololive:1011477576558055465> <:hololive:1011477576558055465>'
-                                        ' THE HOLOLIVE COLLAB HAS: '
-                                        '<:hololive:1011477576558055465> <:hololive:1011477576558055465> \n'
-                                        '⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️\n'
-                                        '<a:siren:1011477577820545115> NO EVENT, NO GACHA BANNER <a:siren:1011477577820545115>\n'
-                                        '⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️\n'
-                                        'ONLY COSTUMES AND COVERS\n'
-                                        'AND SOME OTHER COOL COSMETIC THINGS\n'
-                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                        '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                        '<a:mc_fire:1011477578860736512>'))
+        await ctx.respond(content=('<:hololive:1011477576558055465> <:hololive:1011477576558055465>'
+                                    ' THE HOLOLIVE COLLAB HAS: '
+                                    '<:hololive:1011477576558055465> <:hololive:1011477576558055465> \n'
+                                    '⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️\n'
+                                    '<a:siren:1011477577820545115> NO EVENT, NO GACHA BANNER <a:siren:1011477577820545115>\n'
+                                    '⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️\n'
+                                    'ONLY COSTUMES AND COVERS\n'
+                                    'AND SOME OTHER COOL COSMETIC THINGS\n'
+                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                    '<a:mc_fire:1011477578860736512>'))
 
     @discord.slash_command(name='embedimage',
                            description='Set the embed image for the new content quicklink',
