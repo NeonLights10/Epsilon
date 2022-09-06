@@ -7,11 +7,12 @@ from httpx_caching import CachingClient
 
 import discord
 from discord.ext import commands, tasks
-from discord.commands import Option
+from discord.commands import Option, SlashCommandGroup
 from discord.commands.permissions import default_permissions
 
 from formatting.embed import gen_embed
 from __main__ import log, db
+from commands.errorhandler import CheckOwner
 
 
 class AnnouncementButton(discord.ui.Button):
@@ -95,6 +96,7 @@ class Pubcord(commands.Cog):
         self.bot = bot
         self.views = {}
         self.view_anni = None
+        self.check_count = 0
         self.check_boosters.start()
         self.init_announcementbulletins.start()
         self.check_announcementbulletins.start()
@@ -105,6 +107,22 @@ class Pubcord(commands.Cog):
         self.init_announcementbulletins.cancel()
         self.check_announcementbulletins.cancel()
         self.update_pubcord_quicklinks.cancel()
+
+    @staticmethod
+    def is_owner():
+        async def predicate(ctx) -> bool:
+            if isinstance(ctx, discord.ApplicationContext):
+                if ctx.interaction.user.id == 133048058756726784:
+                    return True
+                else:
+                    raise CheckOwner()
+            else:
+                if ctx.author.id == 133048058756726784:
+                    return True
+                else:
+                    raise CheckOwner()
+
+        return commands.check(predicate)
 
     @staticmethod
     async def generate_current_event(force=False) -> discord.Embed | None:
@@ -316,6 +334,7 @@ class Pubcord(commands.Cog):
     @tasks.loop(seconds=5.0)
     async def check_announcementbulletins(self):
         # pubcord currently hardcoded, eventually expand feature (todo)
+        self.check_count += 1
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(913958768105103390)
@@ -345,11 +364,14 @@ class Pubcord(commands.Cog):
                                             {"$set": {'prev_message': new_message.id}})
             except discord.Forbidden:
                 log.error('Permission Error while attempting to delete stale announcement bulletin')
+            except discord.HTTPException:
+                pass
 
     @tasks.loop(hours=24)
     async def update_pubcord_quicklinks(self):
+        log.info(f'Updating quicklinks - check count is currently {self.check_count}')
         new_embed = await self.generate_current_event()
-        if new_embed:
+        if isinstance(new_embed, discord.Embed):
             view = self.views['432379300684103699']
             old_embed = view.children[0].content
             view.children[0].content = new_embed
@@ -370,6 +392,9 @@ class Pubcord(commands.Cog):
                     pass
                 except discord.Forbidden:
                     log.error('Permission Error while attempting to delete stale announcement bulletin')
+                    pass
+                except discord.HTTPException:
+                    pass
             new_message = await channel.send("Access quick links by clicking the buttons below!",
                                              view=self.views[str(pubcord.id)])
             log.info(f'posted announcement bulletin for {pubcord.name}')
@@ -431,6 +456,43 @@ class Pubcord(commands.Cog):
     async def wait_ready_long(self):
         await self.bot.wait_until_ready()
         await asyncio.sleep(20)
+
+    task_maintenance = SlashCommandGroup('tasks', 'Task maintenenace')
+
+    @task_maintenance.command(name='check',
+                              description='DEV ONLY')
+    @is_owner()
+    async def checktasks(self,
+                         ctx: discord.ApplicationContext):
+        await ctx.interaction.response.defer()
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Current Pubcord Task Status',
+                            content=(f'```Check Boosters | Iteration {self.check_boosters.current_loop}\n'
+                                     f'  Failed: {self.check_boosters.failed()}\n'
+                                     f'  Is Running: {self.check_boosters.is_running()}\n\n'
+                                     f'Check Announcement Bulletin | Iteration {self.check_announcementbulletins.current_loop}\n'
+                                     f'  Failed: {self.check_announcementbulletins.failed()}\n'
+                                     f'  Is Running: {self.check_announcementbulletins.is_running()}\n\n'
+                                     f'Update Quicklinks | Iteration {self.update_pubcord_quicklinks.current_loop}\n'
+                                     f'  Failed: {self.update_pubcord_quicklinks.failed()}\n'
+                                     f'  Is Running: {self.update_pubcord_quicklinks.is_running()}')))
+
+    @task_maintenance.command(name='restart',
+                              description='DEV ONLY')
+    @is_owner()
+    async def restarttasks(self,
+                           ctx: discord.ApplicationContext):
+        await ctx.interaction.response.defer()
+        if self.check_boosters.failed():
+            self.check_boosters.restart()
+        if self.check_announcementbulletins.failed():
+            self.check_announcementbulletins.restart()
+        if self.update_pubcord_quicklinks.failed():
+            self.update_pubcord_quicklinks.restart()
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='tasks restart',
+                            content=f'Tasks restarted.'),
+            ephemeral=True)
 
     @discord.slash_command(name='spselfassign',
                            description='Special Role Self-Assign',
