@@ -65,7 +65,7 @@ class Utility(commands.Cog):
     async def initialize_selfassign(self):
         log.info(f'Initializing selfassign routine')
         for guild in self.bot.guilds:
-            log.info(f'Checking selfassign for {guild.name}')
+            # log.info(f'Checking selfassign for {guild.name}')
             selfrole_documents = db.rolereact.find({"server_id": guild.id})
             async for category_document in selfrole_documents:
                 log.info(f'Processing selfassign document for {guild.name}')
