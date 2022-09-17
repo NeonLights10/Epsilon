@@ -13,6 +13,7 @@ from discord.commands.permissions import default_permissions
 
 from formatting.embed import gen_embed, embed_splitter
 from __main__ import log, db
+from commands.errorhandler import CheckOwner
 
 
 class PersistentEvent(discord.ui.View):
@@ -30,7 +31,7 @@ class PersistentEvent(discord.ui.View):
 
             await listen_channel.send(embed=gen_embed(title='Send a t100 Screenshot',
                                                       content=('Please attach your screenshots below and send. You can'
-                                                               ' send images by adding an attachement to the message'
+                                                               ' send images by adding an attachment to the message'
                                                                ' you send.')))
             try:
                 mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
@@ -155,6 +156,22 @@ class Collection(commands.Cog):
         self.update_endofevent.cancel()
 
     @staticmethod
+    def is_owner():
+        async def predicate(ctx) -> bool:
+            if isinstance(ctx, discord.ApplicationContext):
+                if ctx.interaction.user.id == 133048058756726784:
+                    return True
+                else:
+                    raise CheckOwner()
+            else:
+                if ctx.author.id == 133048058756726784:
+                    return True
+                else:
+                    raise CheckOwner()
+
+        return commands.check(predicate)
+
+    @staticmethod
     def has_modrole():
         async def predicate(ctx):
             document = await db.servers.find_one({"server_id": ctx.guild.id})
@@ -220,6 +237,9 @@ class Collection(commands.Cog):
                 log.info('New t100 screenshot button posted')
                 await db.servers.update_one({"server_id": 432379300684103699},
                                             {"$set": {'prev_message_screenshot': new_message.id, 'missing': missing}})
+        else:
+            tid = document['prev_message_screenshot']
+            log.info(f"prev t100 message id: {tid}")
 
     @tasks.loop(seconds=300)
     async def check_removescreenshot_button(self):
@@ -317,6 +337,24 @@ class Collection(commands.Cog):
         await db.servers.update_one({"server_id": ctx.guild.id}, {"$set": {'modmail_channel': channel.id}})
         await ctx.respond(embed=gen_embed(title='t100 Screenshot Collection Channel Configuration',
                                           content=f'Active channel set to {channel.mention}'))
+
+    @t100.command(name='check',
+                  description='DEV ONLY')
+    @is_owner()
+    async def checktasks(self,
+                         ctx: discord.ApplicationContext):
+        await ctx.interaction.response.defer()
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Current Pubcord Task Status',
+                            content=(f'```Check Screenshot Button | Iteration {self.checkscreenshot_button.current_loop}\n'
+                                     f'  Failed: {self.checkscreenshot_button.failed()}\n'
+                                     f'  Is Running: {self.checkscreenshot_button.is_running()}\n\n'
+                                     f'Check Remove Screenshot | Iteration {self.check_removescreenshot_button.current_loop}\n'
+                                     f'  Failed: {self.check_removescreenshot_button.failed()}\n'
+                                     f'  Is Running: {self.check_removescreenshot_button.is_running()}\n\n'
+                                     f'Update End of Event | Iteration {self.update_endofevent.current_loop}\n'
+                                     f'  Failed: {self.update_endofevent.failed()}\n'
+                                     f'  Is Running: {self.update_endofevent.is_running()}```')))
 
 
 def setup(bot):

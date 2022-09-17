@@ -88,6 +88,7 @@ async def get_next_event():
         if api[event]['startAt'][1]:
             event_start_dates[event] = api[event]['startAt'][1]
     res_key, res_val = min(event_start_dates.items(), key=lambda x: abs(current_time - float(x[1])))
+    log.info(f'Current event ID: {res_key}')
     return res_key
 
 
@@ -475,7 +476,7 @@ class Pubcord(commands.Cog):
                                      f'  Is Running: {self.check_announcementbulletins.is_running()}\n\n'
                                      f'Update Quicklinks | Iteration {self.update_pubcord_quicklinks.current_loop}\n'
                                      f'  Failed: {self.update_pubcord_quicklinks.failed()}\n'
-                                     f'  Is Running: {self.update_pubcord_quicklinks.is_running()}')))
+                                     f'  Is Running: {self.update_pubcord_quicklinks.is_running()}```')))
 
     @task_maintenance.command(name='restart',
                               description='DEV ONLY')

@@ -454,7 +454,7 @@ class Administration(commands.Cog):
                         await fun_view.wait()
 
                         if fun_view.value:
-                            self.embed.set_field_at(3,
+                            self.embed.set_field_at(5,
                                                     name='Fun Features',
                                                     value=fun_view.value,
                                                     inline=False)
@@ -525,7 +525,7 @@ class Administration(commands.Cog):
                         await log_view.wait()
 
                         if log_view.value:
-                            self.embed.set_field_at(5,
+                            self.embed.set_field_at(6,
                                                     name='Logging',
                                                     value=log_view.value,
                                                     inline=False)
@@ -549,7 +549,7 @@ class Administration(commands.Cog):
                         await autorole_view.wait()
 
                         if autorole_view.value:
-                            self.embed.set_field_at(6,
+                            self.embed.set_field_at(7,
                                                     name='Auto Assign Role On Join',
                                                     value=autorole_view.value,
                                                     inline=False)
@@ -573,7 +573,7 @@ class Administration(commands.Cog):
                         await modrole_view.wait()
 
                         if modrole_view.value:
-                            self.embed.set_field_at(6,
+                            self.embed.set_field_at(7,
                                                     name='Auto Assign Role On Join',
                                                     value=modrole_view.value,
                                                     inline=False)
@@ -1335,6 +1335,7 @@ class Administration(commands.Cog):
                 self.channel = config_channel
                 self.value = ''
                 self.select_values = None
+                self.defaults = defaults
 
                 self.add_item(LogSelect(self.bot, defaults))
 
@@ -1356,13 +1357,22 @@ class Administration(commands.Cog):
                                row=1)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.defer()
-                for child in self.children:
-                    if child.custom_id == 'logselect':
-                        self.select_values = child.values
                 post = {'log_messages': False,
                         'log_joinleaves': False,
                         'log_kbm': False,
                         'log_strikes': False}
+                for child in self.children:
+                    if child.custom_id == 'logselect':
+                        self.select_values = child.values
+                        if len(self.select_values) == 0:
+                            if self.defaults['log_messages']:
+                                post['log_messages'] = True
+                            if self.defaults['log_joinleaves']:
+                                post['log_joinleaves'] = True
+                            if self.defaults['log_kbm']:
+                                post['log_kbm'] = True
+                            if self.defaults['log_strikes']:
+                                post['log_strikes'] = True
                 for option in self.select_values:
                     match option:
                         case 'Messages':
@@ -1451,7 +1461,7 @@ class Administration(commands.Cog):
                     if view.value:
                         log.info('Workflow confirm')
                         await db.servers.update_one({"server_id": interaction.guild_id},
-                                                    {"$set": {'announcement_channel': new_log_channel.id}})
+                                                    {"$set": {'log_channel': new_log_channel.id}})
 
                         doc = await db.servers.find_one({"server_id": interaction.guild_id})
                         log_messages = doc['log_messages']
@@ -3172,6 +3182,7 @@ class Administration(commands.Cog):
                                      current_time=datetime.datetime.now(datetime.timezone.utc) + relativedelta(
                                          minutes=2),
                                      valid_strikes=valid_strikes)
+        results = sorted(results, key=lambda d: d['time'], reverse=True)
         num_strikes = len(results)
 
         strike_pages = []
