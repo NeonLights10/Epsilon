@@ -3182,7 +3182,7 @@ class Administration(commands.Cog):
                                      current_time=datetime.datetime.now(datetime.timezone.utc) + relativedelta(
                                          minutes=2),
                                      valid_strikes=valid_strikes)
-        results = sorted(results, key=lambda d: d['time'], reverse=True)
+        results = sorted(results, key=lambda d: d['time'])
         num_strikes = len(results)
 
         strike_pages = []
