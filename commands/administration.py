@@ -2548,11 +2548,11 @@ class Administration(commands.Cog):
                 await confirm_view.wait()
                 if confirm_view.value:
                     self.value = self.children[0].value
-                    og_msg = await interaction.original_message()
+                    og_msg = await interaction.original_response()
                     await og_msg.delete()
                     self.stop()
                 else:
-                    og_msg = await interaction.original_message()
+                    og_msg = await interaction.original_response()
                     await og_msg.delete()
                     self.stop()
 

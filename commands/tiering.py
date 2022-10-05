@@ -918,7 +918,7 @@ class Tiering(commands.Cog):
                                                  f"Should I pull? **No**"
                                                  f"({round(self.probability * 100, 2)}% probability)"))
                 g_embed.set_footer(text='Subtracting one can will not subtract from the total remaining.')
-                await interaction.edit_original_message(embed=g_embed, view=self)
+                await interaction.edit_original_response(embed=g_embed, view=self)
 
         await ctx.interaction.response.defer()
         giftbox_view = GiftboxMenu(ctx, giftbox, event)
