@@ -2432,9 +2432,9 @@ class Administration(commands.Cog):
                                                 ephemeral=True)
 
         if reason:
-            await ctx.guild.ban(user, reason=reason[:512], delete_message_days=days)
+            await ctx.guild.ban(user, reason=reason[:512], delete_message_seconds=days*86400)
         else:
-            await ctx.guild.ban(user, delete_message_days=days)
+            await ctx.guild.ban(user, delete_message_seconds=days*86400)
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
         if document['log_channel'] and document['log_kbm']:
@@ -2928,7 +2928,7 @@ class Administration(commands.Cog):
                         await ctx.guild.ban(user,
                                             reason=(f'User has accumulated {max_strike} strikes and therefore is now'
                                                     ' banned from the server.'),
-                                            delete_message_days=ban_delete_days)
+                                            delete_message_seconds = ban_delete_days * 86400)
                         if document['log_channel'] and document['log_kbm']:
                             log_channel = ctx.guild.get_channel(int(document['log_channel']))
                             embed = gen_embed(title='Ban User',
