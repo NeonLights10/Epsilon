@@ -1,4 +1,3 @@
-
 import json
 import os
 import time
@@ -20,6 +19,7 @@ from discord.commands.permissions import default_permissions
 
 from formatting.embed import gen_embed
 from __main__ import log, db
+
 
 # adds commas to a number to make it easier to read
 def format_number(number):
@@ -612,7 +612,7 @@ class Event(commands.Cog):
                 'non_smoothed_estimate': estimate['non_smoothed_estimate'],
                 'ep_per_hour': estimate['ep_per_hour']
             }
-            #log.info(entry)
+            # log.info(entry)
             cutoff_data = [entry]
             post = {
                 'server': server,
@@ -670,7 +670,7 @@ class Event(commands.Cog):
         embed.add_field(name='Progress', value=event_progress, inline=True)
         if graph:
             pass
-            #do graph stuff here
+            # do graph stuff here
         else:
             embed.set_footer(text=f'\nWant a graph? Try this command with the graph parameter\n\n{time.ctime()}')
 
@@ -740,37 +740,38 @@ class Event(commands.Cog):
             await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
                                                                 content=f't300 cutoff is only valid for {vs_text}.'))
 
-        @discord.slash_command(name='t1000',
-                               description='Cutoff estimate for t1000')
-        async def t1000_cutoff(self,
-                              ctx: discord.ApplicationContext,
-                              server: Option(str, "Choose which server to check t1000 cutoff data",
-                                             choices=[OptionChoice('EN', value='1'),
-                                                      OptionChoice('JP', value='0'),
-                                                      OptionChoice('TW', value='2'),
-                                                      OptionChoice('CN', value='3'),
-                                                      OptionChoice('KR', value='4')],
-                                             required=False,
-                                             default='1'),
-                              graph: Option(str, "Do you want to show a graph of the cutoff estimate?",
-                                            choices=[OptionChoice('Show graph', value='1'),
-                                                     OptionChoice('Do not show graph', value='0')],
-                                            required=False,
-                                            default='0')):
-            await ctx.interaction.response.defer()
-            server = int(server)
-            if check_valid_server_tier(server, 1000):
-                if graph == '1':
-                    embed = await self.get_cutoff(server, 1000, True)
-                    await ctx.interaction.followup.send(embed=embed)
-                else:
-                    embed = await self.get_cutoff(server, 1000, False)
-                    await ctx.interaction.followup.send(embed=embed)
+    @discord.slash_command(name='t1000',
+                           description='Cutoff estimate for t1000')
+    async def t1000_cutoff(self,
+                           ctx: discord.ApplicationContext,
+                           server: Option(str, "Choose which server to check t1000 cutoff data",
+                                          choices=[OptionChoice('EN', value='1'),
+                                                   OptionChoice('JP', value='0'),
+                                                   OptionChoice('TW', value='2'),
+                                                   OptionChoice('CN', value='3'),
+                                                   OptionChoice('KR', value='4')],
+                                          required=False,
+                                          default='1'),
+                           graph: Option(str, "Do you want to show a graph of the cutoff estimate?",
+                                         choices=[OptionChoice('Show graph', value='1'),
+                                                  OptionChoice('Do not show graph', value='0')],
+                                         required=False,
+                                         default='0')):
+        await ctx.interaction.response.defer()
+        server = int(server)
+        if check_valid_server_tier(server, 1000):
+            if graph == '1':
+                embed = await self.get_cutoff(server, 1000, True)
+                await ctx.interaction.followup.send(embed=embed)
             else:
-                valid_servers = ['en', 'jp', 'cn']
-                vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
-                await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
-                                                                    content=f't1000 cutoff is only valid for {vs_text}.'))
+                embed = await self.get_cutoff(server, 1000, False)
+                await ctx.interaction.followup.send(embed=embed)
+        else:
+            valid_servers = ['en', 'jp', 'cn']
+            vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
+            await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
+                                                                content=f't1000 cutoff is only valid for {vs_text}.'))
+
 
 def setup(bot):
     bot.add_cog(Event(bot))
