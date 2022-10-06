@@ -18,3 +18,5 @@ twitter~=1.19.3
 httpx~=0.22.0
 httpx_caching
 tabulate
+numpy
+scikit-learn
