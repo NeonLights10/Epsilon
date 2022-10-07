@@ -424,7 +424,7 @@ class Event(commands.Cog):
         options.add_argument('--no-sandbox')
         driver = webdriver.Chrome(options=options, executable_path=driver_path)
         driver.set_window_size(1000, 800)
-        driver.get('./temp-plot.html')
+        driver.get('file://temp-plot.html')
         await asyncio.sleep(1)
         img = driver.find_element(By.CLASS_NAME, 'svg-container')
         img.screenshot(saved_file)
