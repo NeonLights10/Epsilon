@@ -226,17 +226,22 @@ class Event(commands.Cog):
                 fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                 now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
 
-                for song in song_ids:
-                    i = 1
-                    entries = []
-                    song_name = song_api[str(song)]['musicTitle'][1]
-                    if song_name is None:
-                        song_name = song_api[str(song)]['musicTitle'][0]
-                    output = '```'
-                    output += "  Song:  " + song_name + "\n  Time:  " + now_time.strftime(fmt) + "\n\n"
-                    api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid={song}&latest=1'
+                if event_api['eventType'] == "medley":
+                    output = '```  Songs:  '
+                    for index, song in enumerate(song_ids):
+                        song_name = song_api[str(song)]['musicTitle'][1]
+                        if song_name is None:
+                            song_name = song_api[str(song)]['musicTitle'][0]
+                        output += song_name
+                        if index < len(song_ids) - 1:
+                            output += " / "
+                    output += "\n  Time:  " + now_time.strftime(fmt) + "\n\n"
+
+                    api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=-1&latest=1'
                     t10_api = await self.fetch_api(api_url)
 
+                    entries = []
+                    i = 1
                     for points in t10_api['points']:
                         uid = points['uid']
                         for user in t10_api['users']:
@@ -249,6 +254,31 @@ class Event(commands.Cog):
                     output += tabulate(entries, tablefmt="plain",
                                        headers=["#", "Score", "Level", "ID", "Player"]) + "```"
                     songs_output.append(output)
+
+                else:
+                    for song in song_ids:
+                        i = 1
+                        entries = []
+                        song_name = song_api[str(song)]['musicTitle'][1]
+                        if song_name is None:
+                            song_name = song_api[str(song)]['musicTitle'][0]
+                        output = '```'
+                        output += "  Song:  " + song_name + "\n  Time:  " + now_time.strftime(fmt) + "\n\n"
+                        api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid={song}&latest=1'
+                        t10_api = await self.fetch_api(api_url)
+
+                        for points in t10_api['points']:
+                            uid = points['uid']
+                            for user in t10_api['users']:
+                                if uid == user['uid']:
+                                    entries.append(
+                                        [i, format_number(points['value']), user['rank'], user['uid'],
+                                         string_check(user['name'])])
+                                    break
+                            i += 1
+                        output += tabulate(entries, tablefmt="plain",
+                                           headers=["#", "Score", "Level", "ID", "Player"]) + "```"
+                        songs_output.append(output)
             except KeyError:
                 songs_output = "This event doesn't have any songs"
                 pass
