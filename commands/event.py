@@ -412,6 +412,8 @@ class Event(commands.Cog):
             os.mkdir("data/img")
             os.mkdir("data/img/graphs")
 
+        fig.write_image(saved_file)
+
         image_file = File(saved_file, filename=file_name)
         return file_name, image_file
 
