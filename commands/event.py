@@ -421,6 +421,7 @@ class Event(commands.Cog):
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
         driver = webdriver.Chrome(options=options, executable_path=driver_path)
         driver.set_window_size(1000, 800)
         driver.get('https://temp-plot.html')
