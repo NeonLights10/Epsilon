@@ -414,6 +414,7 @@ class Event(commands.Cog):
         with open("config.json") as file:
             config_json = json.load(file)
             driver_path = config_json["chromeDriverPath"]
+            os.chmod(driver_path, 0o755)
         offline.plot(fig, image='svg', auto_open=False, config=config)
 
         options = webdriver.ChromeOptions()
