@@ -8,9 +8,6 @@ import datetime
 import numpy as np
 import plotly
 import plotly.graph_objects as go
-import plotly.offline as offline
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 from sklearn.linear_model import LinearRegression
 
 from datetime import timezone, timedelta
@@ -411,24 +408,6 @@ class Event(commands.Cog):
         file_name = f"server{server}_{event_id}_t{tier}.png"
         saved_file = f"data/img/graphs/{file_name}"
 
-        with open("config.json") as file:
-            config_json = json.load(file)
-            driver_path = config_json["chromeDriverPath"]
-            os.chmod(driver_path, 0o755)
-        offline.plot(fig, image='svg', auto_open=False, config=config)
-
-        options = webdriver.ChromeOptions()
-        options.add_argument('--ignore-certificate-errors')
-        options.add_argument('--ignore-ssl-errors')
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        driver = webdriver.Chrome(options=options, executable_path=driver_path)
-        driver.set_window_size(1000, 800)
-        driver.get('file://temp-plot.html')
-        await asyncio.sleep(1)
-        img = driver.find_element(By.CLASS_NAME, 'svg-container')
-        img.screenshot(saved_file)
-        driver.close()
         image_file = File(saved_file, filename=file_name)
         return file_name, image_file
 
