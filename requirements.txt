@@ -20,3 +20,5 @@ httpx_caching
 tabulate
 numpy
 scikit-learn
+plotly
+selenium

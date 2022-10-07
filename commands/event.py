@@ -1,10 +1,18 @@
+import asyncio
 import json
 import os
 import time
 import math
 import datetime
+
 import numpy as np
+import plotly
+import plotly.graph_objects as go
+import plotly.offline as offline
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 from sklearn.linear_model import LinearRegression
+
 from datetime import timezone, timedelta
 from tabulate import tabulate
 
@@ -352,7 +360,75 @@ class Event(commands.Cog):
                            ep_data: [],
                            time_data: [],
                            estimate_data: []):
-        pass
+        estimate_times = []
+        estimate_values = []
+        for entry in estimate_data:
+            estimate_times.append(entry['time'])
+            estimate_values.append(entry['estimate'])
+        fig = go.Figure()
+        config = {'displayModeBar': False}
+        fig.add_trace(go.Scatter(x=time_data, y=ep_data, mode='lines+markers'))
+        fig.add_trace(go.Scatter(x=estimate_times, y=estimate_values, mode='lines+markers'))
+        fig.update_xaxes(range=[0, 100])
+        fig.update_layout(
+            xaxis=dict(
+                title='Event Progress (%)',
+                showline=True,
+                showgrid=False,
+                showticklabels=True,
+                linecolor='rgb(204, 204, 204)',
+                linewidth=2,
+                ticks='outside',
+                tickfont=dict(
+                    family='Arial',
+                    size=12,
+                    color='rgb(82, 82, 82)',
+                ),
+            ),
+            yaxis=dict(
+                title='EP Values',
+                showgrid=False,
+                zeroline=False,
+                showline=True,
+                ticks='outside',
+                tickfont=dict(
+                    family='Arial',
+                    size=12,
+                    color='rgb(82, 82, 82)',
+                ),
+
+            ),
+            autosize=False,
+            margin=dict(
+                autoexpand=False,
+                l=100,
+                r=20,
+                t=110,
+            ),
+            showlegend=False,
+            template='plotly_dark'
+        )
+        file_name = f"server{server}_{event_id}_t{tier}.png"
+        saved_file = f"data/img/graphs/{file_name}"
+
+        with open("config.json") as file:
+            config_json = json.load(file)
+            driver_path = config_json["chromeDriverPath"]
+        offline.plot(fig, image='svg', auto_open=False, config=config)
+
+        options = webdriver.ChromeOptions()
+        options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--ignore-ssl-errors')
+        options.add_argument('--headless')
+        driver = webdriver.Chrome(options=options, executable_path=driver_path)
+        driver.set_window_size(1000, 800)
+        driver.get('https://temp-plot.html')
+        await asyncio.sleep(1)
+        img = driver.find_element(By.CLASS_NAME, 'svg-container')
+        img.screenshot(saved_file)
+        driver.close()
+        image_file = File(saved_file, filename=file_name)
+        return file_name, image_file
 
     async def calc_cutoff(self, server: int, event_id: int, tier: int):
         event_api = await self.fetch_api(f'https://bestdori.com/api/events/{event_id}.json')
@@ -503,6 +579,8 @@ class Event(commands.Cog):
                     previous_ns_estimate = latest_stored_cutoff['cutoff_data'][-2]['non_smoothed_estimate']
                     previous_ep_per_hour = latest_stored_cutoff['cutoff_data'][-2]['ep_per_hour']
 
+                    log.info(s_estimate)
+                    log.info(previous_s_estimate)
                     cutoff_difference = cutoff - previous_cutoff
                     s_estimate_difference = s_estimate - previous_s_estimate
                     ns_estimate_difference = ns_estimate - previous_ns_estimate
@@ -558,7 +636,7 @@ class Event(commands.Cog):
                 cutoff_difference = latest_retrieved_cutoff - cutoff
                 estimate = await self.calc_cutoff(server, event_id, tier)
                 entry = {
-                    'current_ep': cutoff,
+                    'current_ep': latest_retrieved_cutoff,
                     'smoothed_estimate': estimate['smoothed_estimate'],
                     'non_smoothed_estimate': estimate['non_smoothed_estimate'],
                     'ep_per_hour': estimate['ep_per_hour']
@@ -633,7 +711,6 @@ class Event(commands.Cog):
                                                      estimate['all_time_data'],
                                                      estimate['estimate_data'])
 
-        fmt = "%Y-%m-%d %H:%M:%S %Z%z"
         current_time = time.time() * 1000
         time_left = (float(event_end) - current_time)
         if time_left < 0:
@@ -653,7 +730,7 @@ class Event(commands.Cog):
             else:
                 event_progress = str(event_progress) + '%'
 
-        if s_estimate == 0:
+        if s_estimate == "0":
             s_estimate = '?'
             ns_estimate = '?'
 
@@ -669,12 +746,46 @@ class Event(commands.Cog):
         embed.add_field(name='Time Left', value=time_left_text, inline=True)
         embed.add_field(name='Progress', value=event_progress, inline=True)
         if graph:
-            pass
-            # do graph stuff here
+            embed.set_image(url=f"attachment://{graph_info[0]}")
+            embed.set_footer(text=f'{time.ctime()}')
+            image_file = graph_info[1]
+            return embed, image_file
         else:
             embed.set_footer(text=f'\nWant a graph? Try this command with the graph parameter\n\n{time.ctime()}')
 
         return embed
+
+    @discord.slash_command(name='t50',
+                           description='Cutoff estimate for t100')
+    async def t50_cutoff(self,
+                         ctx: discord.ApplicationContext,
+                         server: Option(str, "Choose which server to check t50 data",
+                                        choices=[OptionChoice('EN', value='1'),
+                                                 OptionChoice('JP', value='0'),
+                                                 OptionChoice('TW', value='2'),
+                                                 OptionChoice('CN', value='3'),
+                                                 OptionChoice('KR', value='4')],
+                                        required=False,
+                                        default='1'),
+                         graph: Option(str, "Do you want to show a graph of the cutoff estimate?",
+                                       choices=[OptionChoice('Show graph', value='1'),
+                                                OptionChoice('Do not show graph', value='0')],
+                                       required=False,
+                                       default='0')):
+        await ctx.interaction.response.defer()
+        server = int(server)
+        if check_valid_server_tier(server, 50):
+            if graph == '1':
+                embed = await self.get_cutoff(server, 50, True)
+                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+            else:
+                embed = await self.get_cutoff(server, 50, False)
+                await ctx.interaction.followup.send(embed=embed)
+        else:
+            valid_servers = ['en', 'cn']
+            vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
+            await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
+                                                                content=f't50 cutoff is only valid for {vs_text}.'))
 
     @discord.slash_command(name='t100',
                            description='Cutoff estimate for t100')
@@ -698,7 +809,7 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 100):
             if graph == '1':
                 embed = await self.get_cutoff(server, 100, True)
-                await ctx.interaction.followup.send(embed=embed)
+                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 100, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -730,7 +841,7 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 300):
             if graph == '1':
                 embed = await self.get_cutoff(server, 300, True)
-                await ctx.interaction.followup.send(embed=embed)
+                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 300, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -762,7 +873,7 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 1000):
             if graph == '1':
                 embed = await self.get_cutoff(server, 1000, True)
-                await ctx.interaction.followup.send(embed=embed)
+                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 1000, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -771,6 +882,38 @@ class Event(commands.Cog):
             vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
             await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
                                                                 content=f't1000 cutoff is only valid for {vs_text}.'))
+
+    @discord.slash_command(name='t2500',
+                           description='Cutoff estimate for t2500')
+    async def t2500_cutoff(self,
+                           ctx: discord.ApplicationContext,
+                           server: Option(str, "Choose which server to check t2500 cutoff data",
+                                          choices=[OptionChoice('EN', value='1'),
+                                                   OptionChoice('JP', value='0'),
+                                                   OptionChoice('TW', value='2'),
+                                                   OptionChoice('CN', value='3'),
+                                                   OptionChoice('KR', value='4')],
+                                          required=False,
+                                          default='1'),
+                           graph: Option(str, "Do you want to show a graph of the cutoff estimate?",
+                                         choices=[OptionChoice('Show graph', value='1'),
+                                                  OptionChoice('Do not show graph', value='0')],
+                                         required=False,
+                                         default='0')):
+        await ctx.interaction.response.defer()
+        server = int(server)
+        if check_valid_server_tier(server, 2500):
+            if graph == '1':
+                embed = await self.get_cutoff(server, 2500, True)
+                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+            else:
+                embed = await self.get_cutoff(server, 2500, False)
+                await ctx.interaction.followup.send(embed=embed)
+        else:
+            valid_servers = ['en', 'jp', 'cn']
+            vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
+            await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
+                                                                content=f't2500 cutoff is only valid for {vs_text}.'))
 
 
 def setup(bot):
