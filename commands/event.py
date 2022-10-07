@@ -408,6 +408,8 @@ class Event(commands.Cog):
         file_name = f"server{server}_{event_id}_t{tier}.png"
         saved_file = f"data/img/graphs/{file_name}"
         if not os.path.exists("data/img/graphs"):
+            os.mkdir("data")
+            os.mkdir("data/img")
             os.mkdir("data/img/graphs")
 
         image_file = File(saved_file, filename=file_name)
