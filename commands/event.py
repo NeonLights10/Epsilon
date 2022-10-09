@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 import time
@@ -6,7 +5,6 @@ import math
 import datetime
 
 import numpy as np
-import plotly
 import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
 
@@ -209,12 +207,11 @@ class Event(commands.Cog):
                                     max_value=999)):
         await ctx.interaction.response.defer()
         server = int(server)
+        if event == 0:
+            event_id = await self.get_current_event_id(server)
+        else:
+            event_id = event
         try:
-            if event == 0:
-                event_id = await self.get_current_event_id(server)
-            else:
-                event_id = event
-
             songs_output = []
             song_ids = []
             song_api = await self.fetch_api('https://bestdori.com/api/songs/all.7.json')
