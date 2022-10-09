@@ -62,10 +62,9 @@ class Update(commands.Cog):
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
-        if api.status_code == 200:
-            return api.json()
-        else:
-            return None
+        log.info(api.status_code)
+        log.info(api.json())
+        return api.json()
 
     async def get_current_event_id(self, server: int):
         current_time = time.time() * 1000
