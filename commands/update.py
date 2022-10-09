@@ -71,30 +71,36 @@ class Update(commands.Cog):
         current_time = time.time() * 1000
         current_event_id = ''
         api = await self.fetch_api('https://bestdori.com/api/events/all.5.json')
-        for event in api:
-            if api[event]['startAt'][server]:
-                if float(api[event]['startAt'][server]) < current_time < float(api[event]['endAt'][server]):
-                    current_event_id = event
-                    break
-        if not current_event_id:
-            try:
-                for event in api:
-                    try:
-                        if current_time < float(api[event]['startAt'][server]):
-                            current_event_id = event
-                            break
-                    except TypeError:  # For between events
-                        continue
-            except KeyError:
-                current_event_id = list(api.keys())[-1]
-        if current_event_id:
-            return current_event_id
+        if api.status_code == 200:
+            for event in api:
+                if api[event]['startAt'][server]:
+                    if float(api[event]['startAt'][server]) < current_time < float(api[event]['endAt'][server]):
+                        current_event_id = event
+                        break
+            if not current_event_id:
+                try:
+                    for event in api:
+                        try:
+                            if current_time < float(api[event]['startAt'][server]):
+                                current_event_id = event
+                                break
+                        except TypeError:  # For between events
+                            continue
+                except KeyError:
+                    current_event_id = list(api.keys())[-1]
+            if current_event_id:
+                return current_event_id
+            else:
+                return 0
         else:
             return 0
 
     async def get_event_name(self, server: int, eventid: int):
         api = await self.fetch_api(f'https://bestdori.com/api/events/{eventid}.json')
-        return api['eventName'][server]
+        if api.status_code == 200:
+            return api['eventName'][server]
+        else:
+            return None
 
     @tasks.loop(seconds=120.0)
     async def t10_2m_tracking(self):
@@ -116,12 +122,16 @@ class Update(commands.Cog):
                 for channel in server_document['channels']:
                     server = int(channel['server'])
                     event_id = await self.get_current_event_id(server)
+                    if event_id == 0:
+                        return
                     try:
                         api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
                         t10_api = await self.fetch_api(api_url)
                         if not t10_api:
                             return
                         event_name = await self.get_event_name(server, event_id)
+                        if not event_name:
+                            return
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                         now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
                         i = 1
@@ -172,12 +182,17 @@ class Update(commands.Cog):
                 for channel in server_document['channels']:
                     server = int(channel['server'])
                     event_id = await self.get_current_event_id(server)
+                    if event_id == 0:
+                        #error, retry in 2 minutes
+                        return
                     try:
                         api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
                         t10_api = await self.fetch_api(api_url)
                         if not t10_api:
                             return
                         event_name = await self.get_event_name(server, event_id)
+                        if not event_name:
+                            return
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                         now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
                         i = 1

@@ -573,41 +573,108 @@ class Event(commands.Cog):
                             value=f'The event will start in <t:{event_start / 1000}:R>',
                             inline=True)
 
-        latest_retrieved_cutoff = cutoff_api['cutoffs'][-1]['ep']
-        latest_retrieved_time = cutoff_api['cutoffs'][-1]['time'] / 1000
+        if len(cutoff_api['cutoffs']) > 0:
+            latest_retrieved_cutoff = cutoff_api['cutoffs'][-1]['ep']
+            latest_retrieved_time = cutoff_api['cutoffs'][-1]['time'] / 1000
 
-        current_time = time.time()
-        update_interval = current_time - float(latest_retrieved_time)
-        days = str(int(update_interval // 86400))
-        hours = str(int(update_interval // 3600 % 24))
-        minutes = str(int(update_interval // 60 % 60))
-        last_updated_text = f'{days}d {hours}h {minutes}m ago'
 
-        latest_stored_cutoff = await db.eventdata.find_one({"server": server,
-                                                            "event_id": event_id,
-                                                            'tier': tier})
+            current_time = time.time()
+            update_interval = current_time - float(latest_retrieved_time)
+            days = str(int(update_interval // 86400))
+            hours = str(int(update_interval // 3600 % 24))
+            minutes = str(int(update_interval // 60 % 60))
+            last_updated_text = f'{days}d {hours}h {minutes}m ago'
 
-        if latest_stored_cutoff:
-            cutoff = latest_stored_cutoff['cutoff_data'][-1]['current_ep']
-            s_estimate = latest_stored_cutoff['cutoff_data'][-1]['smoothed_estimate']
-            ns_estimate = latest_stored_cutoff['cutoff_data'][-1]['non_smoothed_estimate']
-            ep_per_hour = latest_stored_cutoff['cutoff_data'][-1]['ep_per_hour']
+            latest_stored_cutoff = await db.eventdata.find_one({"server": server,
+                                                                "event_id": event_id,
+                                                                'tier': tier})
 
-            if latest_retrieved_cutoff == latest_stored_cutoff['cutoff_data'][-1]['current_ep']:
-                # Data is the same, skip updating and use latest stored
-                # Check if we have previous data - if so, we can calulate difference
-                if len(latest_stored_cutoff['cutoff_data']) >= 2:
-                    previous_cutoff = latest_stored_cutoff['cutoff_data'][-2]['current_ep']
-                    previous_s_estimate = latest_stored_cutoff['cutoff_data'][-2]['smoothed_estimate']
-                    previous_ns_estimate = latest_stored_cutoff['cutoff_data'][-2]['non_smoothed_estimate']
-                    previous_ep_per_hour = latest_stored_cutoff['cutoff_data'][-2]['ep_per_hour']
+            if latest_stored_cutoff:
+                cutoff = latest_stored_cutoff['cutoff_data'][-1]['current_ep']
+                s_estimate = latest_stored_cutoff['cutoff_data'][-1]['smoothed_estimate']
+                ns_estimate = latest_stored_cutoff['cutoff_data'][-1]['non_smoothed_estimate']
+                ep_per_hour = latest_stored_cutoff['cutoff_data'][-1]['ep_per_hour']
 
-                    log.info(s_estimate)
-                    log.info(previous_s_estimate)
-                    cutoff_difference = cutoff - previous_cutoff
-                    s_estimate_difference = s_estimate - previous_s_estimate
-                    ns_estimate_difference = ns_estimate - previous_ns_estimate
-                    ep_per_hour_difference = ep_per_hour - previous_ep_per_hour
+                if latest_retrieved_cutoff == latest_stored_cutoff['cutoff_data'][-1]['current_ep']:
+                    # Data is the same, skip updating and use latest stored
+                    # Check if we have previous data - if so, we can calulate difference
+                    if len(latest_stored_cutoff['cutoff_data']) >= 2:
+                        previous_cutoff = latest_stored_cutoff['cutoff_data'][-2]['current_ep']
+                        previous_s_estimate = latest_stored_cutoff['cutoff_data'][-2]['smoothed_estimate']
+                        previous_ns_estimate = latest_stored_cutoff['cutoff_data'][-2]['non_smoothed_estimate']
+                        previous_ep_per_hour = latest_stored_cutoff['cutoff_data'][-2]['ep_per_hour']
+
+                        log.info(s_estimate)
+                        log.info(previous_s_estimate)
+                        cutoff_difference = cutoff - previous_cutoff
+                        s_estimate_difference = s_estimate - previous_s_estimate
+                        ns_estimate_difference = ns_estimate - previous_ns_estimate
+                        ep_per_hour_difference = ep_per_hour - previous_ep_per_hour
+
+                        if cutoff_difference > 0:
+                            cutoff_difference = "{:+,}".format(cutoff_difference)
+                        else:
+                            cutoff_difference = "{:,}".format(cutoff_difference)
+
+                        if s_estimate_difference > 0:
+                            s_estimate_difference = "{:+,}".format(s_estimate_difference)
+                        else:
+                            s_estimate_difference = "{:,}".format(s_estimate_difference)
+
+                        if ns_estimate_difference > 0:
+                            ns_estimate_difference = "{:+,}".format(ns_estimate_difference)
+                        else:
+                            ns_estimate_difference = "{:,}".format(ns_estimate_difference)
+
+                        if ep_per_hour_difference > 0:
+                            ep_per_hour_difference = "{:+,}".format(ep_per_hour_difference)
+                        else:
+                            ep_per_hour_difference = "{:,}".format(ep_per_hour_difference)
+
+                        cutoff = "{:,}".format(cutoff) + f' ({cutoff_difference})'
+                        s_estimate = "{:,}".format(s_estimate) + f' ({s_estimate_difference})'
+                        ns_estimate = "{:,}".format(ns_estimate) + f' ({ns_estimate_difference})'
+                        ep_per_hour = "{:,}".format(ep_per_hour) + f' ({ep_per_hour_difference})'
+
+                    else:
+                        cutoff = "{:,}".format(cutoff)
+                        s_estimate = "{:,}".format(s_estimate)
+                        ns_estimate = "{:,}".format(ns_estimate)
+                        ep_per_hour = "{:,}".format(ep_per_hour)
+
+                    if graph:
+                        graph_info = []
+                        file_name = f"server{server}_{event_id}_t{tier}.png"
+                        saved_file = f"data/img/graphs/{file_name}"
+                        if os.path.exists(saved_file):
+                            graph_file = File(saved_file, filename=file_name)
+                            graph_info.append(file_name)
+                            graph_info.append(graph_file)
+                        else:
+                            estimate = await self.calc_cutoff(server, event_id, tier)
+                            graph_info = await self.create_graph(server, event_id, tier,
+                                                                 estimate['all_ep_data'],
+                                                                 estimate['all_time_data'],
+                                                                 estimate['estimate_data'])
+                else:
+                    # Data is not the same, udpate DB and calculate values
+                    cutoff_difference = latest_retrieved_cutoff - cutoff
+                    estimate = await self.calc_cutoff(server, event_id, tier)
+                    entry = {
+                        'current_ep': latest_retrieved_cutoff,
+                        'smoothed_estimate': estimate['smoothed_estimate'],
+                        'non_smoothed_estimate': estimate['non_smoothed_estimate'],
+                        'ep_per_hour': estimate['ep_per_hour']
+                    }
+
+                    cutoff_data = latest_stored_cutoff['cutoff_data']
+                    cutoff_data.append(entry)
+                    await db.eventdata.update_one({"server": server, "event_id": event_id, 'tier': tier},
+                                                  {"$set": {'cutoff_data': cutoff_data}})
+
+                    s_estimate_difference = estimate['smoothed_estimate'] - s_estimate
+                    ns_estimate_difference = estimate['non_smoothed_estimate'] - ns_estimate
+                    ep_per_hour_difference = estimate['ep_per_hour'] - ep_per_hour
 
                     if cutoff_difference > 0:
                         cutoff_difference = "{:+,}".format(cutoff_difference)
@@ -634,29 +701,13 @@ class Event(commands.Cog):
                     ns_estimate = "{:,}".format(ns_estimate) + f' ({ns_estimate_difference})'
                     ep_per_hour = "{:,}".format(ep_per_hour) + f' ({ep_per_hour_difference})'
 
-                else:
-                    cutoff = "{:,}".format(cutoff)
-                    s_estimate = "{:,}".format(s_estimate)
-                    ns_estimate = "{:,}".format(ns_estimate)
-                    ep_per_hour = "{:,}".format(ep_per_hour)
-
-                if graph:
-                    graph_info = []
-                    file_name = f"server{server}_{event_id}_t{tier}.png"
-                    saved_file = f"data/img/graphs/{file_name}"
-                    if os.path.exists(saved_file):
-                        graph_file = File(saved_file, filename=file_name)
-                        graph_info.append(file_name)
-                        graph_info.append(graph_file)
-                    else:
-                        estimate = await self.calc_cutoff(server, event_id, tier)
-                        graph_info = await self.create_graph(server, event_id, tier,
-                                                             estimate['all_ep_data'],
-                                                             estimate['all_time_data'],
-                                                             estimate['estimate_data'])
+                    # Update graph regardless of user request
+                    graph_info = await self.create_graph(server, event_id, tier,
+                                                         estimate['all_ep_data'],
+                                                         estimate['all_time_data'],
+                                                         estimate['estimate_data'])
             else:
-                # Data is not the same, udpate DB and calculate values
-                cutoff_difference = latest_retrieved_cutoff - cutoff
+                # No data stored, just go ahead and calculate estimates
                 estimate = await self.calc_cutoff(server, event_id, tier)
                 entry = {
                     'current_ep': latest_retrieved_cutoff,
@@ -664,119 +715,103 @@ class Event(commands.Cog):
                     'non_smoothed_estimate': estimate['non_smoothed_estimate'],
                     'ep_per_hour': estimate['ep_per_hour']
                 }
+                # log.info(entry)
+                cutoff_data = [entry]
+                post = {
+                    'server': server,
+                    'event_id': event_id,
+                    'tier': tier,
+                    'cutoff_data': cutoff_data
+                }
+                await db.eventdata.insert_one(post)
 
-                cutoff_data = latest_stored_cutoff['cutoff_data']
-                cutoff_data.append(entry)
-                await db.eventdata.update_one({"server": server, "event_id": event_id, 'tier': tier},
-                                              {"$set": {'cutoff_data': cutoff_data}})
+                cutoff = "{:,}".format(latest_retrieved_cutoff)
+                s_estimate = "{:,}".format(estimate['smoothed_estimate'])
+                ns_estimate = "{:,}".format(estimate['non_smoothed_estimate'])
+                ep_per_hour = "{:,}".format(estimate['ep_per_hour'])
 
-                s_estimate_difference = estimate['smoothed_estimate'] - s_estimate
-                ns_estimate_difference = estimate['non_smoothed_estimate'] - ns_estimate
-                ep_per_hour_difference = estimate['ep_per_hour'] - ep_per_hour
+                if graph:
+                    graph_info = await self.create_graph(server, event_id, tier,
+                                                         estimate['all_ep_data'],
+                                                         estimate['all_time_data'],
+                                                         estimate['estimate_data'])
 
-                if cutoff_difference > 0:
-                    cutoff_difference = "{:+,}".format(cutoff_difference)
-                else:
-                    cutoff_difference = "{:,}".format(cutoff_difference)
-
-                if s_estimate_difference > 0:
-                    s_estimate_difference = "{:+,}".format(s_estimate_difference)
-                else:
-                    s_estimate_difference = "{:,}".format(s_estimate_difference)
-
-                if ns_estimate_difference > 0:
-                    ns_estimate_difference = "{:+,}".format(ns_estimate_difference)
-                else:
-                    ns_estimate_difference = "{:,}".format(ns_estimate_difference)
-
-                if ep_per_hour_difference > 0:
-                    ep_per_hour_difference = "{:+,}".format(ep_per_hour_difference)
-                else:
-                    ep_per_hour_difference = "{:,}".format(ep_per_hour_difference)
-
-                cutoff = "{:,}".format(cutoff) + f' ({cutoff_difference})'
-                s_estimate = "{:,}".format(s_estimate) + f' ({s_estimate_difference})'
-                ns_estimate = "{:,}".format(ns_estimate) + f' ({ns_estimate_difference})'
-                ep_per_hour = "{:,}".format(ep_per_hour) + f' ({ep_per_hour_difference})'
-
-                # Update graph regardless of user request
-                graph_info = await self.create_graph(server, event_id, tier,
-                                                     estimate['all_ep_data'],
-                                                     estimate['all_time_data'],
-                                                     estimate['estimate_data'])
-        else:
-            # No data stored, just go ahead and calculate estimates
-            estimate = await self.calc_cutoff(server, event_id, tier)
-            entry = {
-                'current_ep': latest_retrieved_cutoff,
-                'smoothed_estimate': estimate['smoothed_estimate'],
-                'non_smoothed_estimate': estimate['non_smoothed_estimate'],
-                'ep_per_hour': estimate['ep_per_hour']
-            }
-            # log.info(entry)
-            cutoff_data = [entry]
-            post = {
-                'server': server,
-                'event_id': event_id,
-                'tier': tier,
-                'cutoff_data': cutoff_data
-            }
-            await db.eventdata.insert_one(post)
-
-            cutoff = "{:,}".format(latest_retrieved_cutoff)
-            s_estimate = "{:,}".format(estimate['smoothed_estimate'])
-            ns_estimate = "{:,}".format(estimate['non_smoothed_estimate'])
-            ep_per_hour = "{:,}".format(estimate['ep_per_hour'])
-
-            if graph:
-                graph_info = await self.create_graph(server, event_id, tier,
-                                                     estimate['all_ep_data'],
-                                                     estimate['all_time_data'],
-                                                     estimate['estimate_data'])
-
-        current_time = time.time() * 1000
-        time_left = (float(event_end) - current_time)
-        if time_left < 0:
-            time_left_text = 'The event is completed.'
-            event_progress = '100'
-        else:
-            time_left_seconds = time_left / 1000
-            days = str(int(time_left_seconds // 86400))
-            hours = str(int(time_left_seconds // 3600 % 24))
-            minutes = str(int(time_left_seconds // 60 % 60))
-            time_left_text = f'{days}d {hours}h {minutes}m'
-
-            event_length = float(event_end) - float(event_start)
-            event_progress = round((((event_length - time_left) / event_length) * 100), 2)
-            if int(event_progress) < 0:
-                event_progress = '100%'
+            current_time = time.time() * 1000
+            time_left = (float(event_end) - current_time)
+            if time_left < 0:
+                time_left_text = 'The event is completed.'
+                event_progress = '100'
             else:
-                event_progress = str(event_progress) + '%'
+                time_left_seconds = time_left / 1000
+                days = str(int(time_left_seconds // 86400))
+                hours = str(int(time_left_seconds // 3600 % 24))
+                minutes = str(int(time_left_seconds // 60 % 60))
+                time_left_text = f'{days}d {hours}h {minutes}m'
 
-        if s_estimate == "0":
-            s_estimate = '?'
-            ns_estimate = '?'
+                event_length = float(event_end) - float(event_start)
+                event_progress = round((((event_length - time_left) / event_length) * 100), 2)
+                if int(event_progress) < 0:
+                    event_progress = '100%'
+                else:
+                    event_progress = str(event_progress) + '%'
 
-        embed = discord.Embed(title=event_name, url=event_url, colour=0x1abc9c)
-        embed.set_thumbnail(url=thumbnail)
-        embed.add_field(name='Current', value=cutoff, inline=True)
-        embed.add_field(name='EP/Hour', value=ep_per_hour, inline=True)
-        embed.add_field(name='\u200b', value='\u200b', inline=True)
-        embed.add_field(name='Estimate', value=s_estimate, inline=True)
-        embed.add_field(name='Estimate (No Smoothing)', value=ns_estimate, inline=True)
-        embed.add_field(name='\u200b', value='\u200b', inline=True)
-        embed.add_field(name='Last Updated', value=last_updated_text, inline=True)
-        embed.add_field(name='Time Left', value=time_left_text, inline=True)
-        embed.add_field(name='Progress', value=event_progress, inline=True)
-        if graph:
-            embed.set_image(url=f"attachment://{graph_info[0]}")
-            embed.set_footer(text=f'{time.ctime()}')
-            image_file = graph_info[1]
-            return embed, image_file
+            if s_estimate == "0":
+                s_estimate = '?'
+                ns_estimate = '?'
+
+            embed = discord.Embed(title=event_name, url=event_url, colour=0x1abc9c)
+            embed.set_thumbnail(url=thumbnail)
+            embed.add_field(name='Current', value=cutoff, inline=True)
+            embed.add_field(name='EP/Hour', value=ep_per_hour, inline=True)
+            embed.add_field(name='\u200b', value='\u200b', inline=True)
+            embed.add_field(name='Estimate', value=s_estimate, inline=True)
+            embed.add_field(name='Estimate (No Smoothing)', value=ns_estimate, inline=True)
+            embed.add_field(name='\u200b', value='\u200b', inline=True)
+            embed.add_field(name='Last Updated', value=last_updated_text, inline=True)
+            embed.add_field(name='Time Left', value=time_left_text, inline=True)
+            embed.add_field(name='Progress', value=event_progress, inline=True)
+            if graph:
+                embed.set_image(url=f"attachment://{graph_info[0]}")
+                embed.set_footer(text=f'{time.ctime()}')
+                image_file = graph_info[1]
+                return embed, image_file
+            else:
+                embed.set_footer(text=f'Want a graph? Try this command with the graph parameter.\n{time.ctime()}')
+
+            return embed
         else:
-            embed.set_footer(text=f'Want a graph? Try this command with the graph parameter.\n{time.ctime()}')
+            current_time = time.time() * 1000
+            time_left = (float(event_end) - current_time)
+            if time_left < 0:
+                time_left_text = 'The event is completed.'
+                event_progress = '100'
+            else:
+                time_left_seconds = time_left / 1000
+                days = str(int(time_left_seconds // 86400))
+                hours = str(int(time_left_seconds // 3600 % 24))
+                minutes = str(int(time_left_seconds // 60 % 60))
+                time_left_text = f'{days}d {hours}h {minutes}m'
 
-        return embed
+                event_length = float(event_end) - float(event_start)
+                event_progress = round((((event_length - time_left) / event_length) * 100), 2)
+                if int(event_progress) < 0:
+                    event_progress = '100%'
+                else:
+                    event_progress = str(event_progress) + '%'
+
+            embed = discord.Embed(title=event_name, url=event_url, colour=0x1abc9c)
+            embed.set_thumbnail(url=thumbnail)
+            embed.add_field(name='Current', value='?', inline=True)
+            embed.add_field(name='EP/Hour', value='?', inline=True)
+            embed.add_field(name='\u200b', value='\u200b', inline=True)
+            embed.add_field(name='Estimate', value='?', inline=True)
+            embed.add_field(name='Estimate (No Smoothing)', value='?', inline=True)
+            embed.add_field(name='\u200b', value='\u200b', inline=True)
+            embed.add_field(name='Last Updated', value='?', inline=True)
+            embed.add_field(name='Time Left', value=time_left_text, inline=True)
+            embed.add_field(name='Progress', value=event_progress, inline=True)
+
+            return embed
 
     @discord.slash_command(name='t50',
                            description='Cutoff estimate for t100')
