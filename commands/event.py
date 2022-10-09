@@ -161,11 +161,11 @@ class Event(commands.Cog):
                                 max_value=999)):
         await ctx.interaction.response.defer()
         server = int(server)
+        if event == 0:
+            event_id = await self.get_current_event_id(server)
+        else:
+            event_id = event
         try:
-            if event == 0:
-                event_id = await self.get_current_event_id(server)
-            else:
-                event_id = event
             api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
             t10_api = await self.fetch_api(api_url)
             event_name = await self.get_event_name(server, event_id)
@@ -365,6 +365,8 @@ class Event(commands.Cog):
         fig = go.Figure()
         config = {'displayModeBar': False}
         fig.add_trace(go.Scatter(x=time_data, y=ep_data, mode='lines+markers'))
+        log.info(estimate_times)
+        log.info(estimate_values)
         fig.add_trace(go.Scatter(x=estimate_times, y=estimate_values, mode='lines+markers'))
         fig.update_xaxes(range=[0, 100])
         fig.update_layout(
@@ -536,6 +538,13 @@ class Event(commands.Cog):
         event_url = f'https://bestdori.com/info/events/{event_id}'
         server_abbv = server_name(server)
         thumbnail = f'https://bestdori.com/assets/{server_abbv}/event/{banner_name}/images_rip/logo.png'
+
+        if (time.time() * 1000) < event_start:
+            embed = discord.Embed(title=event_name, url=event_url, colour=0x1abc9c)
+            embed.set_thumbnail(url=thumbnail)
+            embed.add_field(name='Event has not started.',
+                            value=f'The event will start in <t:{event_start / 1000}:R>',
+                            inline=True)
 
         latest_retrieved_cutoff = cutoff_api['cutoffs'][-1]['ep']
         latest_retrieved_time = cutoff_api['cutoffs'][-1]['time'] / 1000
@@ -901,7 +910,6 @@ class Event(commands.Cog):
             vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
             await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
                                                                 content=f't2500 cutoff is only valid for {vs_text}.'))
-
 
 def setup(bot):
     bot.add_cog(Event(bot))
