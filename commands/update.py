@@ -118,19 +118,23 @@ class Update(commands.Cog):
 
         for guild in self.bot.guilds:
             documents = db.tracking.find({"server_id": guild.id})
+            log.info(f'Processing tracking document for {guild.name}')
             async for server_document in documents:
                 for channel in server_document['channels']:
                     server = int(channel['server'])
                     event_id = await self.get_current_event_id(server)
                     if event_id == 0:
+                        log.error('Could not get event id')
                         return
                     try:
                         api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
                         t10_api = await self.fetch_api(api_url)
                         if not t10_api:
+                            log.error('Could not get t10 data')
                             return
                         event_name = await self.get_event_name(server, event_id)
                         if not event_name:
+                            log.error('Could not get event info')
                             return
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                         now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
@@ -181,7 +185,6 @@ class Update(commands.Cog):
             async for server_document in documents:
                 log.info(f'Processing tracking document for {guild.name}')
                 for channel in server_document['channels']:
-                    log.info('Processing document...')
                     server = int(channel['server'])
                     event_id = await self.get_current_event_id(server)
                     if event_id == 0:
