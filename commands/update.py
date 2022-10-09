@@ -179,6 +179,7 @@ class Update(commands.Cog):
         for guild in self.bot.guilds:
             documents = db.tracking.find({"server_id": guild.id})
             async for server_document in documents:
+                log.info(f'Processing tracking document for {guild.name}')
                 for channel in server_document['channels']:
                     server = int(channel['server'])
                     event_id = await self.get_current_event_id(server)
@@ -218,9 +219,9 @@ class Update(commands.Cog):
                             await post_channel.send(output)
                         except discord.Forbidden:
                             log.error(f'Permission error while attempting to send t10 1h update to {guild.name}')
-                            pass
+                            continue
                         except discord.HTTPException:
-                            pass
+                            continue
 
     @t10_2m_tracking.before_loop
     @t10_1h_tracking.before_loop
@@ -258,27 +259,34 @@ class Update(commands.Cog):
             await db.tracking.insert_one(post)
             document = await db.tracking.find_one({"server_id": ctx.interaction.guild_id})
         channels = document['channels']
-        match interval:
-            case '2m':
-                channels.append({'id': ctx.interaction.channel_id,
-                                 'interval': '2m',
-                                 'server': server})
-                await db.tracking.update_one({"server_id": ctx.interaction.guild_id},
-                                             {"$set": {'channels': channels}})
-            case '1h':
-                channels.append({'id': ctx.interaction.channel_id,
-                                 'interval': '1h',
-                                 'server': server})
-                await db.tracking.update_one({"server_id": ctx.interaction.guild_id},
-                                             {"$set": {'channels': channels}})
+        exists_in_list = [True for elem in channels if ctx.interaction.guild_id in elem.values()]
+        if any(exists_in_list):
+            match interval:
+                case '2m':
+                    channels.append({'id': ctx.interaction.channel_id,
+                                     'interval': '2m',
+                                     'server': server})
+                    await db.tracking.update_one({"server_id": ctx.interaction.guild_id},
+                                                 {"$set": {'channels': channels}})
+                case '1h':
+                    channels.append({'id': ctx.interaction.channel_id,
+                                     'interval': '1h',
+                                     'server': server})
+                    await db.tracking.update_one({"server_id": ctx.interaction.guild_id},
+                                                 {"$set": {'channels': channels}})
 
-        server = server_name(server)
-        await ctx.interaction.followup.send(embed=
-                                            gen_embed(title='Configure t10 tracking',
-                                                      content=f'{interval} t10 tracking has been enabled in'
-                                                              f' {ctx.interaction.channel.mention} for the'
-                                                              f' {server} server.'),
-                                            ephemeral=True)
+            server = server_name(server)
+            await ctx.interaction.followup.send(embed=
+                                                gen_embed(title='Configure t10 tracking',
+                                                          content=f'{interval} t10 tracking has been enabled in'
+                                                                  f' {ctx.interaction.channel.mention} for the'
+                                                                  f' {server} server.'),
+                                                ephemeral=True)
+        else:
+            await ctx.interaction.followup.send(embed=
+                                                gen_embed(title='Configure t10 tracking',
+                                                          content=f't10 tracking has already been enabled for this channel!'),
+                                                ephemeral=True)
 
     @t10_tracking.command(name='disable',
                           description='Disables t10 tracking in the channel the command is run in')
@@ -326,17 +334,24 @@ class Update(commands.Cog):
             document = await db.ctracking.insert_one(post)
 
         channels = document['channels']
-        channels.append({'id': ctx.interaction.channel_id,
-                         'server': server})
-        await db.ctracking.update_one({"server_id": ctx.interaction.guild_id},
-                                      {"$set": {'channels': channels}})
+        exists_in_list = [True for elem in channels if ctx.interaction.guild_id in elem.values()]
+        if any(exists_in_list):
+            channels.append({'id': ctx.interaction.channel_id,
+                             'server': server})
+            await db.ctracking.update_one({"server_id": ctx.interaction.guild_id},
+                                          {"$set": {'channels': channels}})
 
-        await ctx.interaction.followup.send(embed=
-                                            gen_embed(title='Configure cutoff tracking',
-                                                      content=f'Cutoff tracking has been enabled in'
-                                                              f' {ctx.interaction.channel.mention} for the'
-                                                              f' {server_name(server)} server.'),
-                                            ephemeral=True)
+            await ctx.interaction.followup.send(embed=
+                                                gen_embed(title='Configure cutoff tracking',
+                                                          content=f'Cutoff tracking has been enabled in'
+                                                                  f' {ctx.interaction.channel.mention} for the'
+                                                                  f' {server_name(server)} server.'),
+                                                ephemeral=True)
+        else:
+            await ctx.interaction.followup.send(embed=
+                                                gen_embed(title='Configure cutoff tracking',
+                                                          content=f'Cutoff tracking has already been enabled for this channel!'),
+                                                ephemeral=True)
 
     @cutoff_tracking.command(name='disable',
                              description='Disables cutoff tracking in the channel the command is run in')
