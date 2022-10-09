@@ -181,6 +181,7 @@ class Update(commands.Cog):
             async for server_document in documents:
                 log.info(f'Processing tracking document for {guild.name}')
                 for channel in server_document['channels']:
+                    log.info('Processing document...')
                     server = int(channel['server'])
                     event_id = await self.get_current_event_id(server)
                     if event_id == 0:
