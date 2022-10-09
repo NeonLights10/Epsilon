@@ -566,7 +566,7 @@ class Event(commands.Cog):
         server_abbv = server_name(server)
         thumbnail = f'https://bestdori.com/assets/{server_abbv}/event/{banner_name}/images_rip/logo.png'
 
-        if (time.time() * 1000) < event_start:
+        if (time.time() * 1000) < float(event_start):
             embed = discord.Embed(title=event_name, url=event_url, colour=0x1abc9c)
             embed.set_thumbnail(url=thumbnail)
             embed.add_field(name='Event has not started.',
