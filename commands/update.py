@@ -63,6 +63,8 @@ class Update(commands.Cog):
     async def fetch_api(self, url):
         api = await self.client.get(url)
         log.info(f'fetch_api status code: {api.status_code}')
+        if api.status_code == 503:
+            return None
         return api.json()
 
     async def get_current_event_id(self, server: int):
@@ -93,6 +95,40 @@ class Update(commands.Cog):
         else:
             return 0
 
+    async def get__all_current_event_id(self):
+        current_time = time.time() * 1000
+        current_event_id = ''
+        api = await self.fetch_api('https://bestdori.com/api/events/all.5.json')
+        event_ids = []
+        for i in range(5):
+            if api:
+                for event in api:
+                    if api[event]['startAt'][i]:
+                        if float(api[event]['startAt'][i]) < current_time < float(api[event]['endAt'][i]):
+                            current_event_id = event
+                            current_event_name = api[event]['eventName'][i]
+                            break
+                if not current_event_id:
+                    try:
+                        for event in api:
+                            try:
+                                if current_time < float(api[event]['startAt'][i]):
+                                    current_event_id = event
+                                    current_event_name = api[event]['eventName'][i]
+                                    break
+                            except TypeError:  # For between events
+                                continue
+                    except KeyError:
+                        current_event_id = list(api.keys())[-1]
+                        current_event_name = api[-1]['eventName'][i]
+                if current_event_id:
+                    event_ids.append([current_event_id, current_event_name])
+                else:
+                    return 0
+            else:
+                return 0
+        return event_ids
+
     async def get_event_name(self, server: int, eventid: int):
         api = await self.fetch_api(f'https://bestdori.com/api/events/{eventid}.json')
         if api:
@@ -114,26 +150,50 @@ class Update(commands.Cog):
             self.t10_2m_tracking.change_interval(time=wait_time)
             self.twom_synced = True
 
+        event_ids = await self.get_all_current_event_id()
+        if event_ids == 0:
+            return
+
+        jp_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
+        en_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
+        tw_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
+        cn_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
+        kr_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
+
         for guild in self.bot.guilds:
             documents = db.tracking.find({"server_id": guild.id})
             log.info(f'Processing tracking document for {guild.name}')
+
             async for server_document in documents:
                 for channel in server_document['channels']:
-                    server = int(channel['server'])
-                    event_id = await self.get_current_event_id(server)
-                    if event_id == 0:
-                        log.error('Could not get event id')
-                        return
+                    server = int(server_document['server'])
                     try:
-                        api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
-                        t10_api = await self.fetch_api(api_url)
+                        t10_api = None
+                        match server:
+                            case 0:
+                                t10_api = jp_api
+                                event_id = event_ids[0][0]
+                            case 1:
+                                t10_api = en_api
+                                event_id = event_ids[1][0]
+                            case 2:
+                                t10_api = tw_api
+                                event_id = event_ids[2][0]
+                            case 3:
+                                t10_api = cn_api
+                                event_id = event_ids[3][0]
+                            case 4:
+                                t10_api = kr_api
+                                event_id = event_ids[4][0]
                         if not t10_api:
                             log.error('Could not get t10 data')
                             return
-                        event_name = await self.get_event_name(server, event_id)
-                        if not event_name:
-                            log.error('Could not get event info')
-                            return
+                        event_name = event_ids[server][1]
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                         now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
                         i = 1
@@ -162,6 +222,7 @@ class Update(commands.Cog):
                             continue
                         except discord.HTTPException:
                             continue
+                    await asyncio.sleep(1)
 
     @tasks.loop(hours=1)
     async def t10_1h_tracking(self):
@@ -178,24 +239,50 @@ class Update(commands.Cog):
             self.t10_1h_tracking.change_interval(time=wait_time)
             self.oneh_synced = True
 
+        event_ids = await self.get_all_current_event_id()
+        if event_ids == 0:
+            return
+
+        jp_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
+        en_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
+        tw_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
+        cn_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
+        kr_api = await self.fetch_api(
+            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
+
         for guild in self.bot.guilds:
             documents = db.tracking.find({"server_id": guild.id})
+            log.info(f'Processing tracking document for {guild.name}')
+
             async for server_document in documents:
-                log.info(f'Processing tracking document for {guild.name}')
                 for channel in server_document['channels']:
-                    server = int(channel['server'])
-                    event_id = await self.get_current_event_id(server)
-                    if event_id == 0:
-                        #error, retry in 2 minutes
-                        return
+                    server = int(server_document['server'])
                     try:
-                        api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
-                        t10_api = await self.fetch_api(api_url)
+                        t10_api = None
+                        match server:
+                            case 0:
+                                t10_api = jp_api
+                                event_id = event_ids[0][0]
+                            case 1:
+                                t10_api = en_api
+                                event_id = event_ids[1][0]
+                            case 2:
+                                t10_api = tw_api
+                                event_id = event_ids[2][0]
+                            case 3:
+                                t10_api = cn_api
+                                event_id = event_ids[3][0]
+                            case 4:
+                                t10_api = kr_api
+                                event_id = event_ids[4][0]
                         if not t10_api:
+                            log.error('Could not get t10 data')
                             return
-                        event_name = await self.get_event_name(server, event_id)
-                        if not event_name:
-                            return
+                        event_name = event_ids[server][1]
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                         now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
                         i = 1
