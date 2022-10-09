@@ -1808,7 +1808,8 @@ class Administration(commands.Cog):
                             channel: Option(discord.TextChannel, 'Channel to add to the blacklist')):
         await ctx.interaction.response.defer(ephemeral=True)
         document = await db.servers.find_one({"server_id": ctx.guild_id})
-        if blacklist := document['blacklist']:
+        if document['blacklist'] is not None:
+            blacklist = document['blacklist']
             if channel.id not in blacklist:
                 blacklist.append(channel.id)
                 await db.servers.update_one({"server_id": ctx.guild_id},
@@ -1838,7 +1839,8 @@ class Administration(commands.Cog):
                                channel: Option(discord.TextChannel, 'Channel to remove from the blacklist')):
         await ctx.interaction.response.defer(ephemeral=True)
         document = await db.servers.find_one({"server_id": ctx.guild_id})
-        if blacklist := document['blacklist']:
+        if document['blacklist'] is not None:
+            blacklist = document['blacklist']
             if channel.id in blacklist:
                 blacklist.remove(channel.id)
                 await db.servers.update_one({"server_id": ctx.guild_id},
@@ -1869,7 +1871,8 @@ class Administration(commands.Cog):
                             channel: Option(discord.TextChannel, 'Channel to add to the whitelist')):
         await ctx.interaction.response.defer(ephemeral=True)
         document = await db.servers.find_one({"server_id": ctx.guild_id})
-        if whitelist := document['whitelist']:
+        if document['whitelist'] is not None:
+            whitelist = document['whitelist']
             if channel.id not in whitelist:
                 whitelist.append(channel.id)
                 await db.servers.update_one({"server_id": ctx.guild_id},
@@ -1899,7 +1902,8 @@ class Administration(commands.Cog):
                                channel: Option(discord.TextChannel, 'Channel to remove from the whitelist')):
         await ctx.interaction.response.defer(ephemeral=True)
         document = await db.servers.find_one({"server_id": ctx.guild_id})
-        if whitelist := document['whitelist']:
+        if document['whitelist'] is not None:
+            whitelist = document['whitelist']
             if channel.id in whitelist:
                 whitelist.remove(channel.id)
                 await db.servers.update_one({"server_id": ctx.guild_id},
@@ -2432,9 +2436,9 @@ class Administration(commands.Cog):
                                                 ephemeral=True)
 
         if reason:
-            await ctx.guild.ban(user, reason=reason[:512], delete_message_seconds=days*86400)
+            await ctx.guild.ban(user, reason=reason[:512], delete_message_seconds=days * 86400)
         else:
-            await ctx.guild.ban(user, delete_message_seconds=days*86400)
+            await ctx.guild.ban(user, delete_message_seconds=days * 86400)
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
         if document['log_channel'] and document['log_kbm']:
@@ -2555,7 +2559,6 @@ class Administration(commands.Cog):
                     og_msg = await interaction.original_response()
                     await og_msg.delete()
                     self.stop()
-
 
         class ModalPromptView(discord.ui.View):
             def __init__(self, context, max_length):
@@ -2928,7 +2931,7 @@ class Administration(commands.Cog):
                         await ctx.guild.ban(user,
                                             reason=(f'User has accumulated {max_strike} strikes and therefore is now'
                                                     ' banned from the server.'),
-                                            delete_message_seconds = ban_delete_days * 86400)
+                                            delete_message_seconds=ban_delete_days * 86400)
                         if document['log_channel'] and document['log_kbm']:
                             log_channel = ctx.guild.get_channel(int(document['log_channel']))
                             embed = gen_embed(title='Ban User',

@@ -21,4 +21,4 @@ tabulate
 numpy
 scikit-learn
 plotly
-selenium
+kaleido

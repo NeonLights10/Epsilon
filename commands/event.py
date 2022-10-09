@@ -629,10 +629,10 @@ class Event(commands.Cog):
                     else:
                         ep_per_hour_difference = "{:,}".format(ep_per_hour_difference)
 
-                    cutoff = "{:,}".format(cutoff) + f'({cutoff_difference})'
-                    s_estimate = "{:,}".format(s_estimate) + f'({s_estimate_difference})'
-                    ns_estimate = "{:,}".format(ns_estimate) + f'({ns_estimate_difference})'
-                    ep_per_hour = "{:,}".format(ep_per_hour) + f'({ep_per_hour_difference})'
+                    cutoff = "{:,}".format(cutoff) + f' ({cutoff_difference})'
+                    s_estimate = "{:,}".format(s_estimate) + f' ({s_estimate_difference})'
+                    ns_estimate = "{:,}".format(ns_estimate) + f' ({ns_estimate_difference})'
+                    ep_per_hour = "{:,}".format(ep_per_hour) + f' ({ep_per_hour_difference})'
 
                 else:
                     cutoff = "{:,}".format(cutoff)
@@ -694,10 +694,10 @@ class Event(commands.Cog):
                 else:
                     ep_per_hour_difference = "{:,}".format(ep_per_hour_difference)
 
-                cutoff = "{:,}".format(cutoff) + f'({cutoff_difference})'
-                s_estimate = "{:,}".format(s_estimate) + f'({s_estimate_difference})'
-                ns_estimate = "{:,}".format(ns_estimate) + f'({ns_estimate_difference})'
-                ep_per_hour = "{:,}".format(ep_per_hour) + f'({ep_per_hour_difference})'
+                cutoff = "{:,}".format(cutoff) + f' ({cutoff_difference})'
+                s_estimate = "{:,}".format(s_estimate) + f' ({s_estimate_difference})'
+                ns_estimate = "{:,}".format(ns_estimate) + f' ({ns_estimate_difference})'
+                ep_per_hour = "{:,}".format(ep_per_hour) + f' ({ep_per_hour_difference})'
 
                 # Update graph regardless of user request
                 graph_info = await self.create_graph(server, event_id, tier,
@@ -774,7 +774,7 @@ class Event(commands.Cog):
             image_file = graph_info[1]
             return embed, image_file
         else:
-            embed.set_footer(text=f'\nWant a graph? Try this command with the graph parameter\n\n{time.ctime()}')
+            embed.set_footer(text=f'Want a graph? Try this command with the graph parameter.\n{time.ctime()}')
 
         return embed
 
