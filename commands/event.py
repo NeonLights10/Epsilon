@@ -59,10 +59,10 @@ def check_valid_server_tier(server, tier):
         50: ['en', 'cn'],
         100: ['en', 'jp', 'cn', 'tw', 'kr'],
         300: ['en', 'cn'],
-        500: ['tw'],
+        500: ['en', 'tw'],
         1000: ['en', 'jp', 'cn'],
-        2000: ['jp', 'cn'],
-        2500: ['en'],
+        2000: ['en', 'jp', 'cn'],
+        2500: [],
         5000: ['jp'],
         10000: ['jp']
     }
@@ -874,6 +874,38 @@ class Event(commands.Cog):
             await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
                                                                 content=f't300 cutoff is only valid for {vs_text}.'))
 
+    @discord.slash_command(name='t500',
+                           description='Cutoff estimate for t500')
+    async def t500_cutoff(self,
+                          ctx: discord.ApplicationContext,
+                          server: Option(str, "Choose which server to check t300 cutoff data",
+                                         choices=[OptionChoice('EN', value='1'),
+                                                  OptionChoice('JP', value='0'),
+                                                  OptionChoice('TW', value='2'),
+                                                  OptionChoice('CN', value='3'),
+                                                  OptionChoice('KR', value='4')],
+                                         required=False,
+                                         default='1'),
+                          graph: Option(str, "Do you want to show a graph of the cutoff estimate?",
+                                        choices=[OptionChoice('Show graph', value='1'),
+                                                 OptionChoice('Do not show graph', value='0')],
+                                        required=False,
+                                        default='0')):
+        await ctx.interaction.response.defer()
+        server = int(server)
+        if check_valid_server_tier(server, 500):
+            if graph == '1':
+                embed = await self.get_cutoff(server, 500, True)
+                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+            else:
+                embed = await self.get_cutoff(server, 500, False)
+                await ctx.interaction.followup.send(embed=embed)
+        else:
+            valid_servers = ['en', 'tw']
+            vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
+            await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
+                                                                content=f't500 cutoff is only valid for {vs_text}.'))
+
     @discord.slash_command(name='t1000',
                            description='Cutoff estimate for t1000')
     async def t1000_cutoff(self,
@@ -906,11 +938,11 @@ class Event(commands.Cog):
             await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
                                                                 content=f't1000 cutoff is only valid for {vs_text}.'))
 
-    @discord.slash_command(name='t2500',
-                           description='Cutoff estimate for t2500')
-    async def t2500_cutoff(self,
+    @discord.slash_command(name='t2000',
+                           description='Cutoff estimate for t2000')
+    async def t2000_cutoff(self,
                            ctx: discord.ApplicationContext,
-                           server: Option(str, "Choose which server to check t2500 cutoff data",
+                           server: Option(str, "Choose which server to check t2000 cutoff data",
                                           choices=[OptionChoice('EN', value='1'),
                                                    OptionChoice('JP', value='0'),
                                                    OptionChoice('TW', value='2'),
@@ -925,18 +957,18 @@ class Event(commands.Cog):
                                          default='0')):
         await ctx.interaction.response.defer()
         server = int(server)
-        if check_valid_server_tier(server, 2500):
+        if check_valid_server_tier(server, 2000):
             if graph == '1':
-                embed = await self.get_cutoff(server, 2500, True)
+                embed = await self.get_cutoff(server, 2000, True)
                 await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
-                embed = await self.get_cutoff(server, 2500, False)
+                embed = await self.get_cutoff(server, 2000, False)
                 await ctx.interaction.followup.send(embed=embed)
         else:
             valid_servers = ['en', 'jp', 'cn']
             vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
             await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
-                                                                content=f't2500 cutoff is only valid for {vs_text}.'))
+                                                                content=f't2000 cutoff is only valid for {vs_text}.'))
 
 def setup(bot):
     bot.add_cog(Event(bot))
