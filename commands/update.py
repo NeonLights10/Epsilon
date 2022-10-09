@@ -63,15 +63,12 @@ class Update(commands.Cog):
     async def fetch_api(self, url):
         api = await self.client.get(url)
         log.info(f'fetch_api status code: {api.status_code}')
-        log.info(api.json())
         return api.json()
 
     async def get_current_event_id(self, server: int):
         current_time = time.time() * 1000
         current_event_id = ''
         api = await self.fetch_api('https://bestdori.com/api/events/all.5.json')
-        log.info(f'current id status code: {api.status_code}')
-        log.info(api.json())
         if api:
             for event in api:
                 if api[event]['startAt'][server]:
