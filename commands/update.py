@@ -157,9 +157,9 @@ class Update(commands.Cog):
                             await post_channel.send(output)
                         except discord.Forbidden:
                             log.error(f'Permission error while attempting to send t10 2m update to {guild.name}')
-                            pass
+                            continue
                         except discord.HTTPException:
-                            pass
+                            continue
 
     @tasks.loop(hours=1)
     async def t10_1h_tracking(self):
