@@ -71,7 +71,7 @@ class Update(commands.Cog):
         current_time = time.time() * 1000
         current_event_id = ''
         api = await self.fetch_api('https://bestdori.com/api/events/all.5.json')
-        if api.status_code == 200:
+        if api:
             for event in api:
                 if api[event]['startAt'][server]:
                     if float(api[event]['startAt'][server]) < current_time < float(api[event]['endAt'][server]):
@@ -97,7 +97,7 @@ class Update(commands.Cog):
 
     async def get_event_name(self, server: int, eventid: int):
         api = await self.fetch_api(f'https://bestdori.com/api/events/{eventid}.json')
-        if api.status_code == 200:
+        if api:
             return api['eventName'][server]
         else:
             return None
