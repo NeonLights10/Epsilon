@@ -210,7 +210,7 @@ class Update(commands.Cog):
     @t10_2m_tracking.before_loop
     @t10_1h_tracking.before_loop
     async def wait_ready(self):
-        #await self.bot.wait_until_ready()
+        await self.bot.wait_until_ready()
 
     tracking = SlashCommandGroup('tracking', 't10 and cutoff tracking commands')
     t10_tracking = tracking.create_subgroup(name='t10', description='t10 tracking commands')
