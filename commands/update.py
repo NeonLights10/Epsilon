@@ -62,7 +62,10 @@ class Update(commands.Cog):
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
-        return api.json()
+        if api.status_code == 200:
+            return api.json()
+        else:
+            return None
 
     async def get_current_event_id(self, server: int):
         current_time = time.time() * 1000
@@ -116,6 +119,8 @@ class Update(commands.Cog):
                     try:
                         api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
                         t10_api = await self.fetch_api(api_url)
+                        if not t10_api:
+                            return
                         event_name = await self.get_event_name(server, event_id)
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                         now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
@@ -170,6 +175,8 @@ class Update(commands.Cog):
                     try:
                         api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
                         t10_api = await self.fetch_api(api_url)
+                        if not t10_api:
+                            return
                         event_name = await self.get_event_name(server, event_id)
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                         now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
@@ -203,7 +210,7 @@ class Update(commands.Cog):
     @t10_2m_tracking.before_loop
     @t10_1h_tracking.before_loop
     async def wait_ready(self):
-        await self.bot.wait_until_ready()
+        #await self.bot.wait_until_ready()
 
     tracking = SlashCommandGroup('tracking', 't10 and cutoff tracking commands')
     t10_tracking = tracking.create_subgroup(name='t10', description='t10 tracking commands')
