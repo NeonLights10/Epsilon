@@ -67,74 +67,43 @@ class Update(commands.Cog):
             return None
         return api.json()
 
-    async def get_current_event_id(self, server: int):
-        current_time = time.time() * 1000
-        current_event_id = ''
-        api = await self.fetch_api('https://bestdori.com/api/events/all.5.json')
-        if api:
-            for event in api:
-                if api[event]['startAt'][server]:
-                    if float(api[event]['startAt'][server]) < current_time < float(api[event]['endAt'][server]):
-                        current_event_id = event
-                        break
-            if not current_event_id:
-                try:
-                    for event in api:
-                        try:
-                            if current_time < float(api[event]['startAt'][server]):
-                                current_event_id = event
-                                break
-                        except TypeError:  # For between events
-                            continue
-                except KeyError:
-                    current_event_id = list(api.keys())[-1]
-            if current_event_id:
-                return current_event_id
-            else:
-                return 0
-        else:
-            return 0
-
-    async def get__all_current_event_id(self):
+    async def get_all_current_event(self):
         current_time = time.time() * 1000
         current_event_id = ''
         api = await self.fetch_api('https://bestdori.com/api/events/all.5.json')
         event_ids = []
         for i in range(5):
+            current_event_id = ''
             if api:
                 for event in api:
                     if api[event]['startAt'][i]:
                         if float(api[event]['startAt'][i]) < current_time < float(api[event]['endAt'][i]):
                             current_event_id = event
                             current_event_name = api[event]['eventName'][i]
+                            time_left = float(api[event]['endAt'][i]) - current_time
                             break
                 if not current_event_id:
                     try:
                         for event in api:
                             try:
-                                if current_time < float(api[event]['startAt'][i]):
+                                if current_time < float(api[str(event)]['startAt'][i]):
                                     current_event_id = event
                                     current_event_name = api[event]['eventName'][i]
+                                    time_left = 0
                                     break
                             except TypeError:  # For between events
                                 continue
                     except KeyError:
                         current_event_id = list(api.keys())[-1]
                         current_event_name = api[-1]['eventName'][i]
+                        time_left = 0
                 if current_event_id:
-                    event_ids.append([current_event_id, current_event_name])
+                    event_ids.append([current_event_id, current_event_name, time_left])
                 else:
-                    return 0
+                    event_ids.append(None)
             else:
-                return 0
+                return None
         return event_ids
-
-    async def get_event_name(self, server: int, eventid: int):
-        api = await self.fetch_api(f'https://bestdori.com/api/events/{eventid}.json')
-        if api:
-            return api['eventName'][server]
-        else:
-            return None
 
     @tasks.loop(seconds=120.0)
     async def t10_2m_tracking(self):
@@ -150,8 +119,8 @@ class Update(commands.Cog):
             self.t10_2m_tracking.change_interval(time=wait_time)
             self.twom_synced = True
 
-        event_ids = await self.get_all_current_event_id()
-        if event_ids == 0:
+        event_ids = await self.get_all_current_event()
+        if not event_ids:
             return
 
         jp_api = await self.fetch_api(
@@ -171,28 +140,29 @@ class Update(commands.Cog):
 
             async for server_document in documents:
                 for channel in server_document['channels']:
-                    server = int(server_document['server'])
-                    try:
-                        t10_api = None
-                        match server:
-                            case 0:
-                                t10_api = jp_api
-                                event_id = event_ids[0][0]
-                            case 1:
-                                t10_api = en_api
-                                event_id = event_ids[1][0]
-                            case 2:
-                                t10_api = tw_api
-                                event_id = event_ids[2][0]
-                            case 3:
-                                t10_api = cn_api
-                                event_id = event_ids[3][0]
-                            case 4:
-                                t10_api = kr_api
-                                event_id = event_ids[4][0]
-                        if not t10_api:
-                            log.error('Could not get t10 data')
-                            return
+                    server = int(channel['server'])
+                    t10_api = None
+                    match server:
+                        case 0:
+                            t10_api = jp_api
+                            event_id = event_ids[0][0]
+                        case 1:
+                            t10_api = en_api
+                            event_id = event_ids[1][0]
+                        case 2:
+                            t10_api = tw_api
+                            event_id = event_ids[2][0]
+                        case 3:
+                            t10_api = cn_api
+                            event_id = event_ids[3][0]
+                        case 4:
+                            t10_api = kr_api
+                            event_id = event_ids[4][0]
+                    if not t10_api:
+                        log.error('Could not get t10 data')
+                        return
+
+                    if event_ids[server][2] > 0:
                         event_name = event_ids[server][1]
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                         now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
@@ -210,19 +180,18 @@ class Update(commands.Cog):
                         output = ("```" + "  Time:  " + now_time.strftime(
                             fmt) + "\n  Event: " + event_name + "\n\n" + tabulate(
                             entries, tablefmt="plain", headers=["#", "Points", "Level", "ID", "Player"]) + "```")
-                    except HTTPStatusError:
-                        return
 
-                    if channel['interval'] == '2m':
-                        post_channel = guild.get_channel(int(channel['id']))
-                        try:
-                            await post_channel.send(output)
-                        except discord.Forbidden:
-                            log.error(f'Permission error while attempting to send t10 2m update to {guild.name}')
-                            continue
-                        except discord.HTTPException:
-                            continue
-                    await asyncio.sleep(1)
+                        if channel['interval'] == '2m':
+                            post_channel = guild.get_channel(int(channel['id']))
+                            try:
+                                await post_channel.send(output)
+                            except discord.Forbidden:
+                                log.error(
+                                    f'Permission error while attempting to send t10 2m update to {guild.name}')
+                                continue
+                            except discord.HTTPException:
+                                continue
+                        await asyncio.sleep(1)
 
     @tasks.loop(hours=1)
     async def t10_1h_tracking(self):
@@ -239,7 +208,7 @@ class Update(commands.Cog):
             self.t10_1h_tracking.change_interval(time=wait_time)
             self.oneh_synced = True
 
-        event_ids = await self.get_all_current_event_id()
+        event_ids = await self.get_all_current_event()
         if event_ids == 0:
             return
 
@@ -260,28 +229,28 @@ class Update(commands.Cog):
 
             async for server_document in documents:
                 for channel in server_document['channels']:
-                    server = int(server_document['server'])
-                    try:
-                        t10_api = None
-                        match server:
-                            case 0:
-                                t10_api = jp_api
-                                event_id = event_ids[0][0]
-                            case 1:
-                                t10_api = en_api
-                                event_id = event_ids[1][0]
-                            case 2:
-                                t10_api = tw_api
-                                event_id = event_ids[2][0]
-                            case 3:
-                                t10_api = cn_api
-                                event_id = event_ids[3][0]
-                            case 4:
-                                t10_api = kr_api
-                                event_id = event_ids[4][0]
-                        if not t10_api:
-                            log.error('Could not get t10 data')
-                            return
+                    server = int(channel['server'])
+                    t10_api = None
+                    match server:
+                        case 0:
+                            t10_api = jp_api
+                            event_id = event_ids[0][0]
+                        case 1:
+                            t10_api = en_api
+                            event_id = event_ids[1][0]
+                        case 2:
+                            t10_api = tw_api
+                            event_id = event_ids[2][0]
+                        case 3:
+                            t10_api = cn_api
+                            event_id = event_ids[3][0]
+                        case 4:
+                            t10_api = kr_api
+                            event_id = event_ids[4][0]
+                    if not t10_api:
+                        log.error('Could not get t10 data')
+                        return
+                    if event_ids[server][2] > 0:
                         event_name = event_ids[server][1]
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                         now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
@@ -299,18 +268,18 @@ class Update(commands.Cog):
                         output = ("```" + "  Time:  " + now_time.strftime(
                             fmt) + "\n  Event: " + event_name + "\n\n" + tabulate(
                             entries, tablefmt="plain", headers=["#", "Points", "Level", "ID", "Player"]) + "```")
-                    except HTTPStatusError:
-                        return
 
-                    if channel['interval'] == '1h':
-                        post_channel = guild.get_channel(int(channel['id']))
-                        try:
-                            await post_channel.send(output)
-                        except discord.Forbidden:
-                            log.error(f'Permission error while attempting to send t10 1h update to {guild.name}')
-                            continue
-                        except discord.HTTPException:
-                            continue
+                        if channel['interval'] == '2m':
+                            post_channel = guild.get_channel(int(channel['id']))
+                            try:
+                                await post_channel.send(output)
+                            except discord.Forbidden:
+                                log.error(
+                                    f'Permission error while attempting to send t10 1h update to {guild.name}')
+                                continue
+                            except discord.HTTPException:
+                                continue
+                        await asyncio.sleep(1)
 
     @t10_2m_tracking.before_loop
     @t10_1h_tracking.before_loop
