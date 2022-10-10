@@ -145,60 +145,57 @@ class Update(commands.Cog):
             kr_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
 
-        for guild in self.bot.guilds:
-            documents = db.tracking.find({"server_id": guild.id})
-            log.info(f'Processing tracking document for {guild.name}')
+        async for server_document in db.tracking.find():
+            guild = self.bot.get_guild(server_document['server_id'])
+            for channel in server_document['channels']:
+                server = int(channel['server'])
+                t10_api = None
+                match server:
+                    case 0:
+                        t10_api = jp_api
+                    case 1:
+                        t10_api = en_api
+                    case 2:
+                        t10_api = tw_api
+                    case 3:
+                        t10_api = cn_api
+                    case 4:
+                        t10_api = kr_api
+                if not t10_api:
+                    log.warning('Could not get t10 data - either event is not active or error retreiving bestdori data')
+                    continue
 
-            async for server_document in documents:
-                for channel in server_document['channels']:
-                    server = int(channel['server'])
-                    t10_api = None
-                    match server:
-                        case 0:
-                            t10_api = jp_api
-                        case 1:
-                            t10_api = en_api
-                        case 2:
-                            t10_api = tw_api
-                        case 3:
-                            t10_api = cn_api
-                        case 4:
-                            t10_api = kr_api
-                    event_id = event_ids[server][0]
-                    if not t10_api:
-                        log.warning('Could not get t10 data - either event is not active or error retreiving bestdori data')
-                        continue
+                event_id = event_ids[server][0]
+                if event_ids[server][2] > 0:
+                    event_name = event_ids[server][1]
+                    fmt = "%Y-%m-%d %H:%M:%S %Z%z"
+                    now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
+                    i = 1
+                    entries = []
+                    for points in t10_api['points']:
+                        uid = points['uid']
+                        for user in t10_api['users']:
+                            if uid == user['uid']:
+                                entries.append(
+                                    [i, format_number(points['value']), user['rank'], user['uid'],
+                                     string_check(user['name'])])
+                                break
+                        i += 1
+                    output = ("```" + "  Time:  " + now_time.strftime(
+                        fmt) + "\n  Event: " + event_name + "\n\n" + tabulate(
+                        entries, tablefmt="plain", headers=["#", "Points", "Level", "ID", "Player"]) + "```")
 
-                    if event_ids[server][2] > 0:
-                        event_name = event_ids[server][1]
-                        fmt = "%Y-%m-%d %H:%M:%S %Z%z"
-                        now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
-                        i = 1
-                        entries = []
-                        for points in t10_api['points']:
-                            uid = points['uid']
-                            for user in t10_api['users']:
-                                if uid == user['uid']:
-                                    entries.append(
-                                        [i, format_number(points['value']), user['rank'], user['uid'],
-                                         string_check(user['name'])])
-                                    break
-                            i += 1
-                        output = ("```" + "  Time:  " + now_time.strftime(
-                            fmt) + "\n  Event: " + event_name + "\n\n" + tabulate(
-                            entries, tablefmt="plain", headers=["#", "Points", "Level", "ID", "Player"]) + "```")
-
-                        if channel['interval'] == '2m':
-                            post_channel = guild.get_channel(int(channel['id']))
-                            try:
-                                await post_channel.send(output)
-                            except discord.Forbidden:
-                                log.error(
-                                    f'Permission error while attempting to send t10 2m update to {guild.name}')
-                                continue
-                            except discord.HTTPException:
-                                continue
-                        await asyncio.sleep(1)
+                    if channel['interval'] == '2m':
+                        post_channel = guild.get_channel(int(channel['id']))
+                        try:
+                            await post_channel.send(output)
+                        except discord.Forbidden:
+                            log.error(
+                                f'Permission error while attempting to send t10 2m update to {guild.name}')
+                            continue
+                        except discord.HTTPException:
+                            continue
+                    await asyncio.sleep(1)
 
     @tasks.loop(hours=1)
     async def t10_1h_tracking(self):
@@ -241,61 +238,57 @@ class Update(commands.Cog):
             kr_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
 
-        for guild in self.bot.guilds:
-            documents = db.tracking.find({"server_id": guild.id})
-            log.info(f'Processing tracking document for {guild.name}')
+        async for server_document in db.tracking.find():
+            guild = self.bot.get_guild(server_document['server_id'])
+            for channel in server_document['channels']:
+                server = int(channel['server'])
+                t10_api = None
+                match server:
+                    case 0:
+                        t10_api = jp_api
+                    case 1:
+                        t10_api = en_api
+                    case 2:
+                        t10_api = tw_api
+                    case 3:
+                        t10_api = cn_api
+                    case 4:
+                        t10_api = kr_api
+                if not t10_api:
+                    log.warning('Could not get t10 data - either event is not active or error retreiving bestdori data')
+                    continue
 
-            async for server_document in documents:
-                for channel in server_document['channels']:
-                    server = int(channel['server'])
-                    t10_api = None
-                    match server:
-                        case 0:
-                            t10_api = jp_api
-                        case 1:
-                            t10_api = en_api
-                        case 2:
-                            t10_api = tw_api
-                        case 3:
-                            t10_api = cn_api
-                        case 4:
-                            t10_api = kr_api
-                    event_id = event_ids[server][0]
-                    if not t10_api:
-                        log.warning(
-                            'Could not get t10 data - either event is not active or error retreiving bestdori data')
-                        continue
+                event_id = event_ids[server][0]
+                if event_ids[server][2] > 0:
+                    event_name = event_ids[server][1]
+                    fmt = "%Y-%m-%d %H:%M:%S %Z%z"
+                    now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
+                    i = 1
+                    entries = []
+                    for points in t10_api['points']:
+                        uid = points['uid']
+                        for user in t10_api['users']:
+                            if uid == user['uid']:
+                                entries.append(
+                                    [i, format_number(points['value']), user['rank'], user['uid'],
+                                     string_check(user['name'])])
+                                break
+                        i += 1
+                    output = ("```" + "  Time:  " + now_time.strftime(
+                        fmt) + "\n  Event: " + event_name + "\n\n" + tabulate(
+                        entries, tablefmt="plain", headers=["#", "Points", "Level", "ID", "Player"]) + "```")
 
-                    if event_ids[server][2] > 0:
-                        event_name = event_ids[server][1]
-                        fmt = "%Y-%m-%d %H:%M:%S %Z%z"
-                        now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
-                        i = 1
-                        entries = []
-                        for points in t10_api['points']:
-                            uid = points['uid']
-                            for user in t10_api['users']:
-                                if uid == user['uid']:
-                                    entries.append(
-                                        [i, format_number(points['value']), user['rank'], user['uid'],
-                                         string_check(user['name'])])
-                                    break
-                            i += 1
-                        output = ("```" + "  Time:  " + now_time.strftime(
-                            fmt) + "\n  Event: " + event_name + "\n\n" + tabulate(
-                            entries, tablefmt="plain", headers=["#", "Points", "Level", "ID", "Player"]) + "```")
-
-                        if channel['interval'] == '2m':
-                            post_channel = guild.get_channel(int(channel['id']))
-                            try:
-                                await post_channel.send(output)
-                            except discord.Forbidden:
-                                log.error(
-                                    f'Permission error while attempting to send t10 1h update to {guild.name}')
-                                continue
-                            except discord.HTTPException:
-                                continue
-                        await asyncio.sleep(1)
+                    if channel['interval'] == '1h':
+                        post_channel = guild.get_channel(int(channel['id']))
+                        try:
+                            await post_channel.send(output)
+                        except discord.Forbidden:
+                            log.error(
+                                f'Permission error while attempting to send t10 1h update to {guild.name}')
+                            continue
+                        except discord.HTTPException:
+                            continue
+                    await asyncio.sleep(1)
 
     @t10_2m_tracking.before_loop
     async def wait_ready(self):
