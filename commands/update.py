@@ -331,7 +331,7 @@ class Update(commands.Cog):
             document = await db.tracking.find_one({"server_id": ctx.interaction.guild_id})
         channels = document['channels']
         exists_in_list = [True for elem in channels if ctx.interaction.guild_id in elem.values()]
-        if any(exists_in_list):
+        if not any(exists_in_list):
             match interval:
                 case '2m':
                     channels.append({'id': ctx.interaction.channel_id,
@@ -406,7 +406,7 @@ class Update(commands.Cog):
 
         channels = document['channels']
         exists_in_list = [True for elem in channels if ctx.interaction.guild_id in elem.values()]
-        if any(exists_in_list):
+        if not any(exists_in_list):
             channels.append({'id': ctx.interaction.channel_id,
                              'server': server})
             await db.ctracking.update_one({"server_id": ctx.interaction.guild_id},
