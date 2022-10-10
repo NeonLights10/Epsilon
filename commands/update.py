@@ -62,7 +62,7 @@ class Update(commands.Cog):
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
-        log.info(f'fetch_api status code: {api.status_code}')
+        #log.info(f'fetch_api status code: {api.status_code}')
         if api.status_code == 503:
             return None
         return api.json()
