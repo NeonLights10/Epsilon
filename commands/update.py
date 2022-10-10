@@ -123,16 +123,27 @@ class Update(commands.Cog):
         if not event_ids:
             return
 
-        jp_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
-        en_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
-        tw_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
-        cn_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
-        kr_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
+        jp_api = None
+        en_api = None
+        tw_api = None
+        cn_api = None
+        kr_api = None
+
+        if event_ids[0][0]:
+            jp_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
+        if event_ids[1][0]:
+            en_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
+        if event_ids[2][0]:
+            tw_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
+        if event_ids[3][0]:
+            cn_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
+        if event_ids[4][0]:
+            kr_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
 
         for guild in self.bot.guilds:
             documents = db.tracking.find({"server_id": guild.id})
@@ -145,22 +156,18 @@ class Update(commands.Cog):
                     match server:
                         case 0:
                             t10_api = jp_api
-                            event_id = event_ids[0][0]
                         case 1:
                             t10_api = en_api
-                            event_id = event_ids[1][0]
                         case 2:
                             t10_api = tw_api
-                            event_id = event_ids[2][0]
                         case 3:
                             t10_api = cn_api
-                            event_id = event_ids[3][0]
                         case 4:
                             t10_api = kr_api
-                            event_id = event_ids[4][0]
+                    event_id = event_ids[server][0]
                     if not t10_api:
-                        log.error('Could not get t10 data')
-                        return
+                        log.warning('Could not get t10 data - either event is not active or error retreiving bestdori data')
+                        continue
 
                     if event_ids[server][2] > 0:
                         event_name = event_ids[server][1]
@@ -212,16 +219,27 @@ class Update(commands.Cog):
         if event_ids == 0:
             return
 
-        jp_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
-        en_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
-        tw_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
-        cn_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
-        kr_api = await self.fetch_api(
-            f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
+        jp_api = None
+        en_api = None
+        tw_api = None
+        cn_api = None
+        kr_api = None
+
+        if event_ids[0][0]:
+            jp_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
+        if event_ids[1][0]:
+            en_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
+        if event_ids[2][0]:
+            tw_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
+        if event_ids[3][0]:
+            cn_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
+        if event_ids[4][0]:
+            kr_api = await self.fetch_api(
+                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
 
         for guild in self.bot.guilds:
             documents = db.tracking.find({"server_id": guild.id})
@@ -234,22 +252,20 @@ class Update(commands.Cog):
                     match server:
                         case 0:
                             t10_api = jp_api
-                            event_id = event_ids[0][0]
                         case 1:
                             t10_api = en_api
-                            event_id = event_ids[1][0]
                         case 2:
                             t10_api = tw_api
-                            event_id = event_ids[2][0]
                         case 3:
                             t10_api = cn_api
-                            event_id = event_ids[3][0]
                         case 4:
                             t10_api = kr_api
-                            event_id = event_ids[4][0]
+                    event_id = event_ids[server][0]
                     if not t10_api:
-                        log.error('Could not get t10 data')
-                        return
+                        log.warning(
+                            'Could not get t10 data - either event is not active or error retreiving bestdori data')
+                        continue
+
                     if event_ids[server][2] > 0:
                         event_name = event_ids[server][1]
                         fmt = "%Y-%m-%d %H:%M:%S %Z%z"
