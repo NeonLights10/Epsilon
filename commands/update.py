@@ -100,7 +100,7 @@ class Update(commands.Cog):
                 if current_event_id:
                     event_ids.append([current_event_id, current_event_name, time_left])
                 else:
-                    event_ids.append(None)
+                    event_ids.append([])
             else:
                 return None
         return event_ids
