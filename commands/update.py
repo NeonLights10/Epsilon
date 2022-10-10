@@ -146,7 +146,7 @@ class Update(commands.Cog):
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
 
         async for server_document in db.tracking.find():
-            guild = await self.bot.fetch_guild(server_document['server_id'])
+            guild = await self.bot.get_guild(server_document['server_id'])
             if guild:
                 for channel in server_document['channels']:
                     server = int(channel['server'])
@@ -240,7 +240,7 @@ class Update(commands.Cog):
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
 
         async for server_document in db.tracking.find():
-            guild = await self.bot.fetch_guild(server_document['server_id'])
+            guild = await self.bot.get_guild(server_document['server_id'])
             if guild:
                 for channel in server_document['channels']:
                     server = int(channel['server'])
