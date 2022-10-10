@@ -134,16 +134,16 @@ class Update(commands.Cog):
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
         if event_ids[1]:
             en_api = await self.fetch_api(
-                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
+                f'https://bestdori.com/api/eventtop/data?server=1&event={event_ids[1][0]}&mid=0&latest=1')
         if event_ids[2]:
             tw_api = await self.fetch_api(
-                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
+                f'https://bestdori.com/api/eventtop/data?server=2&event={event_ids[2][0]}&mid=0&latest=1')
         if event_ids[3]:
             cn_api = await self.fetch_api(
-                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
+                f'https://bestdori.com/api/eventtop/data?server=3&event={event_ids[3][0]}&mid=0&latest=1')
         if event_ids[4]:
             kr_api = await self.fetch_api(
-                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
+                f'https://bestdori.com/api/eventtop/data?server=4&event={event_ids[4][0]}&mid=0&latest=1')
 
         async for server_document in db.tracking.find():
             guild = self.bot.get_guild(server_document['server_id'])
@@ -228,16 +228,16 @@ class Update(commands.Cog):
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
         if event_ids[1]:
             en_api = await self.fetch_api(
-                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
+                f'https://bestdori.com/api/eventtop/data?server=1&event={event_ids[1][0]}&mid=0&latest=1')
         if event_ids[2]:
             tw_api = await self.fetch_api(
-                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
+                f'https://bestdori.com/api/eventtop/data?server=2&event={event_ids[2][0]}&mid=0&latest=1')
         if event_ids[3]:
             cn_api = await self.fetch_api(
-                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
+                f'https://bestdori.com/api/eventtop/data?server=3&event={event_ids[3][0]}&mid=0&latest=1')
         if event_ids[4]:
             kr_api = await self.fetch_api(
-                f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
+                f'https://bestdori.com/api/eventtop/data?server=4&event={event_ids[4][0]}&mid=0&latest=1')
 
         async for server_document in db.tracking.find():
             guild = self.bot.get_guild(server_document['server_id'])
