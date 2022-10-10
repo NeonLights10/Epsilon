@@ -129,19 +129,19 @@ class Update(commands.Cog):
         cn_api = None
         kr_api = None
 
-        if event_ids[0][0]:
+        if event_ids[0]:
             jp_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
-        if event_ids[1][0]:
+        if event_ids[1]:
             en_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
-        if event_ids[2][0]:
+        if event_ids[2]:
             tw_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
-        if event_ids[3][0]:
+        if event_ids[3]:
             cn_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
-        if event_ids[4][0]:
+        if event_ids[4]:
             kr_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
 
@@ -225,19 +225,19 @@ class Update(commands.Cog):
         cn_api = None
         kr_api = None
 
-        if event_ids[0][0]:
+        if event_ids[0]:
             jp_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[0][0]}&mid=0&latest=1')
-        if event_ids[1][0]:
+        if event_ids[1]:
             en_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[1][0]}&mid=0&latest=1')
-        if event_ids[2][0]:
+        if event_ids[2]:
             tw_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[2][0]}&mid=0&latest=1')
-        if event_ids[3][0]:
+        if event_ids[3]:
             cn_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[3][0]}&mid=0&latest=1')
-        if event_ids[4][0]:
+        if event_ids[4]:
             kr_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=0&event={event_ids[4][0]}&mid=0&latest=1')
 
