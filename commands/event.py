@@ -811,10 +811,13 @@ class Event(commands.Cog):
             embed.add_field(name='Time Left', value=time_left_text, inline=True)
             embed.add_field(name='Progress', value=event_progress, inline=True)
 
-            return embed, 'invalid'
+            if graph:
+                return embed, 'invalid'
+            else:
+                return embed
 
     @discord.slash_command(name='t50',
-                           description='Cutoff estimate for t100')
+                           description='Cutoff estimate for t500')
     async def t50_cutoff(self,
                          ctx: discord.ApplicationContext,
                          server: Option(str, "Choose which server to check t50 data",
