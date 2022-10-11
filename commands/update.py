@@ -19,6 +19,7 @@ from io import BytesIO
 from os import path
 from pathlib import Path
 import math
+import shutil
 
 from formatting.embed import gen_embed
 from __main__ import log, db
@@ -63,10 +64,12 @@ class Update(commands.Cog):
         self.t10_2m_tracking.start()
         self.t10_1h_tracking.start()
         self.update_cards_loop.start()
+        self.update_titles_loop.start()
 
     def cog_unload(self):
         self.t10_2m_tracking.cancel()
         self.update_cards_loop.cancel()
+        self.update_titles_loop.cancel()
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
@@ -571,7 +574,7 @@ class Update(commands.Cog):
             filepath.mkdir(parents=True, exist_ok=True)
         await asyncio.gather(*[self.generate_card_icon(card_id, card_api, chara_api) for card_id in card_api])
 
-    @discord.slash_command(name='updatecards', description='Update cached card images manually')
+    @discord.slash_command(name='updatecards', description='Update card images manually')
     async def update_cards_command(self, ctx: discord.ApplicationContext):
         await ctx.interaction.response.defer()
         await self.update_card_icons()
@@ -580,6 +583,26 @@ class Update(commands.Cog):
     @tasks.loop(seconds=300.0)
     async def update_cards_loop(self):
         await self.update_card_icons()
+
+    async def get_titles(self, server):
+        titles_img_api = await self.fetch_api(f"https://bestdori.com/api/explorer/{server}/assets/thumb/degree.json")
+        for title in titles_img_api:
+            if not os.path.isfile(f'data/img/titles/{server}/{title}'):
+                r = await self.client.get(f'https://bestdori.com/assets/{server}/thumb/degree_rip/{title}', stream=True)
+                with open(f'data/img/titles/{server}/{title}', 'wb') as out_file:
+                    shutil.copyfileobj(r.raw, out_file)
+                del r
+        print('Finished extracting titles')
+
+    @tasks.loop(seconds=300.0)
+    async def update_titles_loop(self):
+        await asyncio.gather(*[self.get_titles(server_name(i)) for i in range(5)])
+
+    @discord.slash_command(name='updatetitles', description='Update title images manually')
+    async def update_cards_command(self, ctx: discord.ApplicationContext):
+        await ctx.interaction.response.defer()
+        await asyncio.gather(*[self.get_titles(server_name(i)) for i in range(5)])
+        await ctx.interaction.followup.send("Titles successfully updated.")
 
 
 def setup(bot):
