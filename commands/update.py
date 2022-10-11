@@ -191,8 +191,7 @@ class Update(commands.Cog):
                             try:
                                 await post_channel.send(output)
                             except discord.Forbidden:
-                                log.error(
-                                    f'Permission error while attempting to send t10 2m update to {guild.name}')
+                                #log.error(f'Permission error while attempting to send t10 2m update to {guild.name}')
                                 continue
                             except discord.HTTPException:
                                 continue
@@ -285,8 +284,7 @@ class Update(commands.Cog):
                             try:
                                 await post_channel.send(output)
                             except discord.Forbidden:
-                                log.error(
-                                    f'Permission error while attempting to send t10 1h update to {guild.name}')
+                                #log.error(f'Permission error while attempting to send t10 1h update to {guild.name}')
                                 continue
                             except discord.HTTPException:
                                 continue
