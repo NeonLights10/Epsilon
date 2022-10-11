@@ -7,3 +7,4 @@ venv
 .idea
 temp.py
 commands/temp.py
+data/img/icons/
