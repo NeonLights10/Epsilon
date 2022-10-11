@@ -8,3 +8,5 @@ venv
 temp.py
 commands/temp.py
 data/img/icons/
+data/img/imgTmp
+data/img/titles
