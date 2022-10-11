@@ -811,7 +811,7 @@ class Event(commands.Cog):
             embed.add_field(name='Time Left', value=time_left_text, inline=True)
             embed.add_field(name='Progress', value=event_progress, inline=True)
 
-            return embed
+            return embed, 'invalid'
 
     @discord.slash_command(name='t50',
                            description='Cutoff estimate for t100')
@@ -835,7 +835,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 50):
             if graph == '1':
                 embed = await self.get_cutoff(server, 50, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 50, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -867,7 +870,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 100):
             if graph == '1':
                 embed = await self.get_cutoff(server, 100, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 100, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -899,7 +905,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 300):
             if graph == '1':
                 embed = await self.get_cutoff(server, 300, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 300, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -931,7 +940,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 500):
             if graph == '1':
                 embed = await self.get_cutoff(server, 500, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 500, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -963,7 +975,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 1000):
             if graph == '1':
                 embed = await self.get_cutoff(server, 1000, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 1000, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -995,7 +1010,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 2000):
             if graph == '1':
                 embed = await self.get_cutoff(server, 2000, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 2000, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -1004,6 +1022,7 @@ class Event(commands.Cog):
             vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
             await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
                                                                 content=f't2000 cutoff is only valid for {vs_text}.'))
+
 
 def setup(bot):
     bot.add_cog(Event(bot))
