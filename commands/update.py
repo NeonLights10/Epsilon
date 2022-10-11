@@ -196,7 +196,7 @@ class Update(commands.Cog):
                                 continue
                             except discord.HTTPException:
                                 continue
-                        await asyncio.sleep(1)
+                        #await asyncio.sleep(1)
 
     @tasks.loop(hours=1)
     async def t10_1h_tracking(self):
@@ -290,7 +290,7 @@ class Update(commands.Cog):
                                 continue
                             except discord.HTTPException:
                                 continue
-                        await asyncio.sleep(1)
+                        #await asyncio.sleep(1)
 
     @t10_2m_tracking.before_loop
     async def wait_ready(self):
