@@ -230,6 +230,81 @@ class Game(commands.Cog):
                                 content=f'Failed to get data for player with ID `{player_id} (Server {server})`.'),
                 ephemeral=True)
 
+    @game_commands.command(name='songinfo',
+                           description='Provides info about a song')
+    async def song_info(self,
+                            ctx: discord.ApplicationContext,
+                            song_name: Option(str, "Song name to lookup", required=True)):
+        await ctx.interaction.response.defer()
+        try:
+            song_id = ""
+            song_api = await self.fetch_api("https://bestdori.com/api/songs/all.7.json")
+            displayed_song_name = ""
+            # TODO: optimize this, or maybe search for incomplete matches if there is no exact match
+            for key in song_api:
+                element = song_api[key]['musicTitle'][1]
+                if element is None:
+                    element = song_api[key]['musicTitle'][0]
+                displayed_song_name = element
+                if element == 'R・I・O・T':
+                    element = 'Riot'
+                if element == 'KIZUNA MUSIC♪':
+                    element = 'KIZUNA MUSIC'
+                if element == song_name or element.lower() == song_name:
+                    song_id = key
+                    break
+
+            if not song_id in song_api:
+                await ctx.interaction.followup.send(
+                    "Couldn't find the song entered, it was possibly entered incorrectly. The song needs to be spelled exactly as it appears in game.",
+                    ephemeral=True
+                )
+                return
+
+            min_bpm = song_api[song_id]['bpm']['0'][0]['bpm']
+            max_bpm = min_bpm
+            for timingpoint in song_api[song_id]['bpm']['0']:
+                if timingpoint['bpm'] < min_bpm:
+                    min_bpm = timingpoint['bpm']
+                if timingpoint['bpm'] > max_bpm:
+                    max_bpm = timingpoint['bpm']
+            if min_bpm != max_bpm:
+                song_bpm = f"{min_bpm} - {max_bpm}"
+            else:
+                song_bpm = min_bpm
+
+            song_levels_data = []
+            for i in range(len(song_api[song_id]['difficulty'])):
+                song_levels_data.append({
+                    "level": song_api[song_id]['difficulty'][str(i)]['playLevel'],
+                    "notes": song_api[song_id]['notes'][str(i)]
+                })
+
+            song_length_sec = int(song_api[song_id]['length'])
+            m, s = divmod(song_length_sec, 60)
+            song_length = ('{:02d}:{:02d}'.format(m, s))
+
+            embed = gen_embed(title=f"{displayed_song_name} (ID: {song_id})")
+            embed.add_field(name='BPM', value=song_bpm, inline=True)
+            embed.add_field(name='Length', value=song_length, inline=True)
+            embed.add_field(name='\u200b', value='\u200b', inline=True)
+
+            diff_names = ["Easy", "Normal", "Hard", "Expert", "Special"]
+            for i, data in enumerate(song_levels_data):
+                embed.add_field(name=f"{diff_names[i]}",
+                                value=f"Level: {data['level']}\nNotes: {data['notes']}",
+                                inline=True)
+            for i in range(6 - len(song_levels_data)): # pad the remaining fields to align properly
+                embed.add_field(name='\u200b', value='\u200b', inline=True)
+
+            await ctx.interaction.followup.send(embed=embed)
+        except HTTPStatusError:
+            await ctx.interaction.followup.send("There was an error fetching the song list from Bestdori.",
+                                                ephemeral=True)
+        except KeyError:
+            await ctx.interaction.followup.send("Failed to process song data",
+                                                ephemeral=True)
+
 
 def setup(bot):
     bot.add_cog(Game(bot))
