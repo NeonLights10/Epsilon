@@ -588,7 +588,7 @@ class Update(commands.Cog):
     async def save_title_img(self, server: str, title: str):
         if not os.path.isfile(f'data/img/titles/{server}/{title}'):
             r = await self.client.get(f'https://bestdori.com/assets/{server}/thumb/degree_rip/{title}')
-            im = Image.new("RGBA", (230,50))
+            im = Image.new("RGBA", (230, 50))
             image = Image.open(BytesIO(r.content))
             im.paste(image)
             im.save(f'data/img/titles/{server}/{title}')

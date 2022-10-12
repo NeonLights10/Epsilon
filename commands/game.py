@@ -31,6 +31,7 @@ from pathlib import Path
 from formatting.embed import gen_embed
 from __main__ import log, db
 
+
 class Game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -151,8 +152,14 @@ class Game(commands.Cog):
                                     content=f'Failed to get data for player with ID `{player_id} (Server {server})`.'),
                     ephemeral=True)
                 return
+
             profile = player_api['data']['profile']
-            embed = gen_embed(title=profile['userName'])
+            if profile is None:
+                await ctx.interaction.followup.send(
+                    embed=gen_embed(title='No player data',
+                                    content=f'No data found for player with ID `{player_id} (Server {server})`.'))
+                return
+            embed = gen_embed(title=f"{profile['userName']} ({server.upper()}: {player_id})")
             embed.add_field(name='Description', value=profile['introduction'], inline=True)
             embed.add_field(name='Level', value=profile['rank'], inline=True)
             embed.add_field(name='\u200b', value='\u200b', inline=True)
@@ -169,14 +176,14 @@ class Game(commands.Cog):
                 profile_picture = f"{profile_situation['situationId']}.png"
             icon = discord.File(f"data/img/icons/base_icons/{profile_picture}", filename=f'{profile_picture}')
 
-            # clear/fc/ap stats - default to "?" if no values
+            # clear/fc/ap stats - default to 0 if no values
             song_stats = {
-                'ex_clear': profile['clearedMusicCountMap'].get('entries', {}).get('expert', '?'),
-                'ex_fc': profile['fullComboMusicCountMap'].get('entries', {}).get('expert', '?'),
-                'ex_ap': profile['allPerfectMusicCountMap'].get('entries', {}).get('expert', '?'),
-                'sp_clear': profile['clearedMusicCountMap'].get('entries', {}).get('special', '?'),
-                'sp_fc': profile['fullComboMusicCountMap'].get('entries', {}).get('special', '?'),
-                'sp_ap': profile['allPerfectMusicCountMap'].get('entries', {}).get('special', '?')
+                'ex_clear': profile['clearedMusicCountMap'].get('entries', {}).get('expert', 0),
+                'ex_fc': profile['fullComboMusicCountMap'].get('entries', {}).get('expert', 0),
+                'ex_ap': profile['allPerfectMusicCountMap'].get('entries', {}).get('expert', 0),
+                'sp_clear': profile['clearedMusicCountMap'].get('entries', {}).get('special', 0),
+                'sp_fc': profile['fullComboMusicCountMap'].get('entries', {}).get('special', 0),
+                'sp_ap': profile['allPerfectMusicCountMap'].get('entries', {}).get('special', 0)
             }
 
             embed.add_field(name='EX Cleared / FC / AP',
