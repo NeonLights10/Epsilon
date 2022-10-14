@@ -188,13 +188,14 @@ class Update(commands.Cog):
 
                         if channel['interval'] == '2m':
                             post_channel = guild.get_channel(int(channel['id']))
-                            try:
-                                await post_channel.send(output)
-                            except discord.Forbidden:
-                                #log.error(f'Permission error while attempting to send t10 2m update to {guild.name}')
-                                continue
-                            except discord.HTTPException:
-                                continue
+                            if post_channel:
+                                try:
+                                    await post_channel.send(output)
+                                except discord.Forbidden:
+                                    #log.error(f'Permission error while attempting to send t10 2m update to {guild.name}')
+                                    continue
+                                except discord.HTTPException:
+                                    continue
                         #await asyncio.sleep(1)
 
     @tasks.loop(hours=1)
@@ -281,13 +282,14 @@ class Update(commands.Cog):
 
                         if channel['interval'] == '1h':
                             post_channel = guild.get_channel(int(channel['id']))
-                            try:
-                                await post_channel.send(output)
-                            except discord.Forbidden:
-                                #log.error(f'Permission error while attempting to send t10 1h update to {guild.name}')
-                                continue
-                            except discord.HTTPException:
-                                continue
+                            if post_channel:
+                                try:
+                                    await post_channel.send(output)
+                                except discord.Forbidden:
+                                    #log.error(f'Permission error while attempting to send t10 1h update to {guild.name}')
+                                    continue
+                                except discord.HTTPException:
+                                    continue
                         #await asyncio.sleep(1)
 
     @t10_2m_tracking.before_loop
