@@ -203,10 +203,10 @@ class Update(commands.Cog):
         if self.oneh_synced:
             self.t10_1h_tracking.change_interval(hours=1)
             self.oneh_synced = False
-        log.info('Sending 2 minute tracking')
+        log.info('Sending 1 hour tracking')
         current_time = datetime.datetime.now(datetime.timezone.utc)
         if current_time.minute != 0:
-            log.info('Not 2 minutes, update interval')
+            log.info('Not 1 hour, update interval')
             remainder = 60 - (current_time.minute % 60)
             wait_time = (current_time + timedelta(minutes=remainder)).replace(second=0, microsecond=0)
             wait_time = wait_time.time()
