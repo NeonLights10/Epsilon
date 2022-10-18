@@ -1,9 +1,9 @@
 import json
 import os
-import time
 import math
 import datetime
 import uuid
+from time import strftime, gmtime
 
 import numpy as np
 import plotly.graph_objects as go
@@ -27,6 +27,7 @@ from PIL.ImageFont import truetype
 from io import BytesIO
 from os import path
 from pathlib import Path
+from operator import itemgetter
 
 from formatting.embed import gen_embed
 from __main__ import log, db
@@ -233,8 +234,8 @@ class Game(commands.Cog):
     @game_commands.command(name='songinfo',
                            description='Provides info about a song')
     async def song_info(self,
-                            ctx: discord.ApplicationContext,
-                            song_name: Option(str, "Song name to lookup", required=True)):
+                        ctx: discord.ApplicationContext,
+                        song_name: Option(str, "Song name to lookup", required=True)):
         await ctx.interaction.response.defer()
         try:
             song_id = ""
@@ -254,7 +255,7 @@ class Game(commands.Cog):
                     song_id = key
                     break
 
-            if not song_id in song_api:
+            if song_id not in song_api:
                 await ctx.interaction.followup.send(
                     "Couldn't find the song entered, it was possibly entered incorrectly. The song needs to be spelled exactly as it appears in game.",
                     ephemeral=True
@@ -294,7 +295,7 @@ class Game(commands.Cog):
                 embed.add_field(name=f"{diff_names[i]}",
                                 value=f"Level: {data['level']}\nNotes: {data['notes']}",
                                 inline=True)
-            for i in range(6 - len(song_levels_data)): # pad the remaining fields to align properly
+            for i in range(6 - len(song_levels_data)):  # pad the remaining fields to align properly
                 embed.add_field(name='\u200b', value='\u200b', inline=True)
 
             await ctx.interaction.followup.send(embed=embed)
@@ -304,6 +305,127 @@ class Game(commands.Cog):
         except KeyError:
             await ctx.interaction.followup.send("Failed to process song data",
                                                 ephemeral=True)
+
+    async def get_song_meta_output(self, fever: bool, songs: tuple = []):
+        song_name_api = await self.fetch_api('https://bestdori.com/api/songs/all.7.json')
+        song_meta_api = await self.fetch_api('https://bestdori.com/api/songs/meta/all.5.json')
+        song_weight_list = []
+        added_songs = []
+
+        if songs:
+            # Get APIs
+
+            # Find the IDs for the input
+            # So 5.3.2 = [2.7628, 1.0763, 3.3251, 1.488]
+            # Means that song (id = 5) on expert (difficulty = 3) on a 7 second skill (duration = 2 + 5) has those meta numbers.
+            # First two = non fever, so if the skill is 60% then song score = 2.7628 + 1.0763 * 60%
+            for song in songs:
+                for x in song_name_api:
+                    try:
+                        if song.lower() in (song_name_api[x]['musicTitle'][1]).lower():
+                            added_songs.append([song_name_api[x]['musicTitle'][1], x])
+                            break
+                    except:
+                        if song.lower() in (song_name_api[x]['musicTitle'][0]).lower():
+                            added_songs.append([song_name_api[x]['musicTitle'][0], x])
+                            break
+            if added_songs:
+                for song in added_songs:
+                    if "4" in song_meta_api[song[1]]:
+                        song_values = song_meta_api[song[1]]["4"]["7"]
+                        song_length = song_name_api[song[1]]['length']
+                        song_length = strftime("%H:%M:%S", gmtime(song_length))
+                        if fever:
+                            song_weight_list.append(
+                                [song[0] + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
+                                 song_length])
+                        else:
+                            song_weight_list.append(
+                                [song[0] + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
+                                 song_length])
+                    song_values = song_meta_api[song[1]]["3"]["7"]
+                    song_length = song_name_api[song[1]]['length']
+                    song_length = strftime("%H:%M:%S", gmtime(song_length))
+                    if fever:
+                        song_weight_list.append(
+                            [song[0], round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
+                    else:
+                        song_weight_list.append(
+                            [song[0], round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
+
+            # TODO: use a set for song_weight_list to avoid duplicate rows (which may happen with multiple search terms)
+            if song_weight_list:
+                song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
+
+            if fever:
+                title = "Song Meta (with Fever)"
+            else:
+                title = "Song Meta (no Fever)"
+            output = ("```" + title + "\n\n" + tabulate(song_weight_list, tablefmt="plain",
+                                                        headers=["Song", "Score %", "Length"]) + "```")
+        else:
+            for x in song_meta_api:
+                if "4" in song_meta_api[x]:
+                    song_values = song_meta_api[x]["4"]["7"]
+                    try:
+                        if song_name_api[x]['musicTitle'][1] is not None:
+                            song_name = song_name_api[x]['musicTitle'][1]
+                        else:
+                            song_name = song_name_api[x]['musicTitle'][0]
+                    except KeyError:
+                        song_name = song_name_api[x]['musicTitle'][0]
+                    song_length = song_name_api[x]['length']
+                    song_length = strftime("%H:%M:%S", gmtime(song_length))
+                    if fever:
+                        song_weight_list.append(
+                            [song_name + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
+                             song_length])
+                    else:
+                        song_weight_list.append(
+                            [song_name + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
+                             song_length])
+                song_values = song_meta_api[x]["3"]["7"]
+                try:
+                    if song_name_api[x]['musicTitle'][1] is not None:
+                        song_name = song_name_api[x]['musicTitle'][1]
+                    else:
+                        song_name = song_name_api[x]['musicTitle'][0]
+                except KeyError:
+                    song_name = song_name_api[x]['musicTitle'][0]
+                song_length = song_name_api[x]['length']
+                song_length = strftime("%H:%M:%S", gmtime(song_length))
+                if fever:
+                    song_weight_list.append(
+                        [song_name, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
+                else:
+                    song_weight_list.append(
+                        [song_name, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
+            if song_weight_list:
+                song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
+                song_weight_list = song_weight_list[:20]
+                if fever:
+                    title = "Song Meta (with Fever)"
+                else:
+                    title = "Song Meta (no Fever)"
+                output = ("```" + title + "\n\n" + tabulate(song_weight_list, tablefmt="plain",
+                                                            headers=["Song", "Score %", "Length"]) + "```")
+        return output
+
+    @game_commands.command(name='songmeta',
+                           description='Show song meta info')
+    async def song_meta(self,
+                        ctx: discord.ApplicationContext,
+                        fever: Option(bool, "Whether or not fever is enabled", required=False, default=True),
+                        songs: Option(str, "Song names to lookup. Separate multiple song names with a comma.", required=False)):
+        await ctx.interaction.response.defer()
+        if songs:
+            songs = songs.replace(', ', ',')
+            song_list = songs.split(',')
+            song_meta = await self.get_song_meta_output(fever, song_list)
+            await ctx.interaction.followup.send(song_meta)
+        else:
+            song_meta = await self.get_song_meta_output(fever)
+            await ctx.interaction.followup.send(song_meta)
 
 
 def setup(bot):
