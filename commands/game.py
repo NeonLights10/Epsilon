@@ -416,7 +416,8 @@ class Game(commands.Cog):
     async def song_meta(self,
                         ctx: discord.ApplicationContext,
                         fever: Option(bool, "Whether or not fever is enabled", required=False, default=True),
-                        songs: Option(str, "Song names to lookup. Separate multiple song names with a comma.", required=False)):
+                        songs: Option(str, "Song names to lookup. Separate multiple song names with a comma.",
+                                      required=False)):
         await ctx.interaction.response.defer()
         if songs:
             songs = songs.replace(', ', ',')
@@ -426,6 +427,61 @@ class Game(commands.Cog):
         else:
             song_meta = await self.get_song_meta_output(fever)
             await ctx.interaction.followup.send(song_meta)
+
+    @game_commands.command(name='leaderboard',
+                           description='View Bestdori leaderboards for various categories.')
+    async def player_leaderboards(self,
+                                  ctx: discord.ApplicationContext,
+                                  server: Option(str, "Choose which server to check leaderboards on",
+                                                 choices=[OptionChoice('EN', value='1'),
+                                                          OptionChoice('JP', value='0'),
+                                                          OptionChoice('TW', value='2'),
+                                                          OptionChoice('CN', value='3'),
+                                                          OptionChoice('KR', value='4')],
+                                                 required=False,
+                                                 default='1'),
+                                  category: Option(str, "Choose the leaderboard category",
+                                                   choices=[OptionChoice('High Score Rating', value='hsr'),
+                                                            OptionChoice('Band Rating', value='dtr'),
+                                                            OptionChoice('All Perfect', value='allPerfectCount'),
+                                                            OptionChoice('Full Combo', value='fullComboCount'),
+                                                            OptionChoice('Clears', value='cleared'),
+                                                            OptionChoice('Player Rank', value='rank')],
+                                                   required=False,
+                                                   default='hsr'),
+                                  entries: Option(int, "Number of entries to display",
+                                                  required=False,
+                                                  default=20)):
+        await ctx.interaction.response.defer()
+        try:
+            lb_api = await self.fetch_api(
+                f'https://bestdori.com/api/sync/list/player?server={server}&stats={category}&limit={entries}&offset=0')
+            total_entries = min(entries, lb_api['count'])
+            category_names = {
+                'hsr': 'High Score Rating',
+                'dtr': 'Band Rating',
+                'allPerfectCount': 'All Perfect Count',
+                'fullComboCount': 'Full Combo Count',
+                'cleared': 'Clear Count',
+                'rank': 'Player Rank'
+            }
+            output = f'Top {total_entries} players for {category_names[category]}:\n'
+            results = []
+            row_count = 1
+            while row_count <= entries:
+                for row in lb_api['rows']:
+                    if row['user']['nickname']:
+                        results.append([str(row_count), row['user']['username'], row['stats'], row['user']['nickname']])
+                    else:
+                        results.append([str(row_count), row['user']['username'], row['stats']])
+                    row_count += 1
+            output += "```" + tabulate(results, tablefmt="plain", headers=["#", "Player", "Value", "Bestdori Name"]) + "```"
+
+            if len(output) > 2000:
+                output = 'Output is greater than 2000 characters, please select a smaller list of values to return!'
+            await ctx.interaction.followup.send(output)
+        except HTTPStatusError:
+            await ctx.interaction.followup.send("Could not get data from Bestdori API.", ephemeral=True)
 
 
 def setup(bot):
