@@ -29,10 +29,17 @@ class PersistentEvent(discord.ui.View):
             def check(m):
                 return m.author == interaction.user and m.channel == listen_channel
 
-            await listen_channel.send(embed=gen_embed(title='Send a t100 Screenshot',
-                                                      content=('Please attach your screenshots below and send. You can'
-                                                               ' send images by adding an attachment to the message'
-                                                               ' you send.')))
+            instruction_embed = gen_embed(title='Send a t100 Screenshot',
+                                          content=('Please attach your screenshots below and send. You can'
+                                                   ' send images by adding an attachment to the message'
+                                                   ' you send.\n\n Be sure to refresh your game by either'
+                                                   ' returning to title with the "Back to Title" button'
+                                                   ' or by completely closing and reopening the game to'
+                                                   ' ensure that rankings are completely updated.\n\n'
+                                                   ' Use the example provided as a reference for an ideal'
+                                                   ' screenshot.'))
+            instruction_embed.set_image(url='https://files.s-neon.xyz/share/event-point-ranking.png')
+            await listen_channel.send(embed=instruction_embed)
             try:
                 mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
             except asyncio.TimeoutError:
