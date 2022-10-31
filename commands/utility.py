@@ -417,7 +417,8 @@ class Utility(commands.Cog):
                           content=f'Converted **{time} {timezone_from}** to **{timezone_to}** is **{final_time}**')
         await ctx.interaction.followup.send(embed=embed)
 
-    selfroleassign = SlashCommandGroup('selfassign', 'Setup self-assign role commands')
+    selfroleassign = SlashCommandGroup('selfassign', 'Setup self-assign role commands',
+                                       default_member_permissions=discord.Permissions(manage_roles=True))
 
     @selfroleassign.command(name='settings',
                             description='See active roles & setup')

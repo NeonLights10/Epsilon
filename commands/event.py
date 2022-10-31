@@ -18,7 +18,7 @@ import discord
 from discord import File
 from discord.ext import commands
 from discord.commands import Option, OptionChoice, SlashCommandGroup
-from discord.commands.permissions import default_permissions
+from discord import default_permissions
 
 from formatting.embed import gen_embed
 from __main__ import log, db

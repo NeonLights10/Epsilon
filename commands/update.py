@@ -307,7 +307,8 @@ class Update(commands.Cog):
         await self.bot.wait_until_ready()
         await asyncio.sleep(12)
 
-    tracking = SlashCommandGroup('tracking', 't10 and cutoff tracking commands')
+    tracking = SlashCommandGroup('tracking', 't10 and cutoff tracking commands',
+                                 default_member_permissions=discord.Permissions(manage_messages=True))
     t10_tracking = tracking.create_subgroup(name='t10', description='t10 tracking commands')
     cutoff_tracking = tracking.create_subgroup(name='cutoff', description='Cutoff tracking commands')
 

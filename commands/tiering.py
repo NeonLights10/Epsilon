@@ -55,7 +55,8 @@ class Tiering(commands.Cog):
 
         return commands.check(predicate)
 
-    guides = SlashCommandGroup('guide', 'Commands to post various tiering guides')
+    guides = SlashCommandGroup('guide', 'Commands to post various tiering guides',
+                               default_member_permissions=discord.Permissions(manage_messages=True))
 
     @guides.command(name='efficiency',
                     description='Generates an efficiency guide for tiering')
@@ -1015,8 +1016,8 @@ class Tiering(commands.Cog):
             await asyncio.sleep(5)
         self.refill_running[str(ctx.interaction.channel.id)] = False
 
-    trackfiller = SlashCommandGroup('trackfiller', 'Filler tracking for tiering servers')
-    trackfiller_permission = trackfiller.subgroup('permission', 'Set which roles can track fillers')
+    trackfiller = SlashCommandGroup('trackfiller', 'Filler tracking for tiering servers',
+                                    default_member_permissions=discord.Permissions(manage_roles=True))
 
     @trackfiller.command(name='enable',
                          description='Enable filler tracking for the server')
