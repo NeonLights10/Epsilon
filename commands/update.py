@@ -59,6 +59,7 @@ class Update(commands.Cog):
 
     def cog_unload(self):
         self.t10_2m_tracking.cancel()
+        self.t10_1h_tracking.cancel()
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
@@ -110,7 +111,7 @@ class Update(commands.Cog):
         if self.twom_synced:
             self.t10_2m_tracking.change_interval(minutes=2)
             self.twom_synced = False
-        log.info('Sending 2 minute tracking')
+        #log.info('Sending 2 minute tracking')
         current_time = datetime.datetime.now(datetime.timezone.utc)
         if (current_time.minute % 2) != 0:
             log.info('Not 2 minutes, update interval')
@@ -145,6 +146,7 @@ class Update(commands.Cog):
             kr_api = await self.fetch_api(
                 f'https://bestdori.com/api/eventtop/data?server=4&event={event_ids[4][0]}&mid=0&latest=1')
 
+        data_fail = False
         async for server_document in db.tracking.find():
             guild = self.bot.get_guild(server_document['server_id'])
             if guild:
@@ -163,7 +165,11 @@ class Update(commands.Cog):
                         case 4:
                             t10_api = kr_api
                     if not t10_api:
-                        log.warning('Could not get t10 data - either event is not active or error retreiving bestdori data')
+                        if not data_fail:
+                            log.warning(
+                                'Could not get t10 data for server ID {server} - either event is not active or error '
+                                'retreiving bestdori data')
+                        data_fail = True
                         continue
 
                     event_id = event_ids[server][0]
@@ -203,7 +209,7 @@ class Update(commands.Cog):
         if self.oneh_synced:
             self.t10_1h_tracking.change_interval(hours=1)
             self.oneh_synced = False
-        log.info('Sending 1 hour tracking')
+        #log.info('Sending 1 hour tracking')
         current_time = datetime.datetime.now(datetime.timezone.utc)
         if current_time.minute != 0:
             log.info('Not 1 hour, update interval')

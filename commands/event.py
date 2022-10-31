@@ -166,7 +166,10 @@ class Event(commands.Cog):
         try:
             api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
             t10_api = await self.fetch_api(api_url)
-            event_name = await self.get_event_name(server, event_id)
+            try:
+                event_name = await self.get_event_name(server, event_id)
+            except json.decoder.JSONDecodeError:
+                event_name = await self.get_event_name(server, event_id - 1)
             fmt = "%Y-%m-%d %H:%M:%S %Z%z"
             now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
             i = 1
@@ -356,7 +359,7 @@ class Event(commands.Cog):
                     else:
                         event_active = False
                         event_progress = "N/A"
-                        time_to_event = event_start - current_time / 1000
+                        time_to_event = event_start - (current_time / 1000)
                         days = str(int(time_to_event // 86400))
                         hours = str(int(time_to_event // 3600 % 24))
                         minutes = str(int(time_to_event // 60 % 60))
@@ -817,7 +820,7 @@ class Event(commands.Cog):
                 return embed
 
     @discord.slash_command(name='t50',
-                           description='Cutoff estimate for t500')
+                           description='Cutoff estimate for t50')
     async def t50_cutoff(self,
                          ctx: discord.ApplicationContext,
                          server: Option(str, "Choose which server to check t50 data",

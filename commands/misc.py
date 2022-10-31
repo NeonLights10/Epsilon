@@ -24,7 +24,7 @@ class Miscellaneous(commands.Cog):
     def is_owner():
         async def predicate(ctx) -> bool:
             if isinstance(ctx, discord.ApplicationContext):
-                if ctx.interaction.user.id == 133048058756726784:
+                if (ctx.interaction.user.id == 133048058756726784) or (ctx.interaction.user.id == 130829029577064448):
                     return True
                 else:
                     raise CheckOwner()
