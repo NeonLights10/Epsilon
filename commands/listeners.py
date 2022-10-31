@@ -12,7 +12,7 @@ from __main__ import check_document, default_prefix, bot, db, log, get_prefix
 async def on_guild_join(guild):
     await check_document(guild, guild.id)
 
-    status = discord.Game(f'{default_prefix}help | {len(bot.guilds)} servers')
+    status = discord.Game(f'/help | {len(bot.guilds)} servers')
     await bot.change_presence(activity=status)
 
     general = discord.utils.find(lambda x: x.name == 'general', guild.text_channels)
