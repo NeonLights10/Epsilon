@@ -365,19 +365,21 @@ class Event(commands.Cog):
                         minutes = str(int(time_to_event // 60 % 60))
                         time_left_text = f'{days}d {hours}h {minutes}m'
 
+                    if not event_active:
+                        await ctx.interaction.followup.send(
+                            embed=gen_embed(title='Event has not started yet.',
+                                            content=f'There is currently no event happening at this time.'))
+                        return
+
                     embed = discord.Embed(title=event_name, url=event_url, color=embed_color)
                     embed.set_thumbnail(url=thumbnail)
                     embed.add_field(name='Time Left' if event_active else 'Begins In', value=time_left_text,
                                     inline=True)
-                    embed.add_field(name='Progress', value=event_progress, inline=True)
+                    embed.add_field(name='Progress', value=f"{event_progress}%", inline=True)
                     embed.add_field(name='End Date', value=event_end_formatted, inline=True)
                     embed.set_footer(
                         text=f"\n\n\nFor more info, try /event \n{time.ctime()}")
                     await ctx.interaction.followup.send(embed=embed)
-            else:
-                await ctx.interaction.followup.send(
-                    embed=gen_embed(title='Event has not started yet.',
-                                    content=f'There is currently no event happening at this time.'))
         except TypeError:
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Missing details on next event',
@@ -573,7 +575,7 @@ class Event(commands.Cog):
             embed = discord.Embed(title=event_name, url=event_url, colour=0x1abc9c)
             embed.set_thumbnail(url=thumbnail)
             embed.add_field(name='Event has not started.',
-                            value=f'The event will start in <t:{event_start / 1000}:R>',
+                            value=f'The event will start in <t:{float(event_start) / 1000}:R>',
                             inline=True)
 
         if len(cutoff_api['cutoffs']) > 0:
