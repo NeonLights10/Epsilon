@@ -72,6 +72,9 @@ class Utility(commands.Cog):
                 post_channel = guild.get_channel(int(category_document['channel_id']))
                 try:
                     post_message = await post_channel.fetch_message(int(category_document['msg_id']))
+                except AttributeError:
+                    log.info(f'Error initializing selfassign for {guild.name}')
+                    continue
                 except discord.NotFound:
                     post_embed = gen_embed(title=category_document['category_name'],
                                            content=category_document['category_description'])
