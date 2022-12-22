@@ -305,19 +305,19 @@ class Miscellaneous(commands.Cog):
         patreon = ctx.guild.get_role(201966886861275137)
         guild = ctx.guild
         if patreon:
-            if patreon not in guild.roles:
-                # To prevent search through the entire audit log, limit to 1 minute in the past
-                async for entry in guild.audit_logs(action=discord.AuditLogAction.member_role_update,
-                                                    user=self.bot.get_user(216303189073461248),
-                                                    after=(datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(weeks=52))):
-                    try:
-                        await entry.target.add_roles(patreon, reason="Auto-reassignment of patron role")
+            log.info('patreon role found')
+            # To prevent search through the entire audit log, limit to 1 minute in the past
+            async for entry in guild.audit_logs(action=discord.AuditLogAction.member_role_update,
+                                                user=self.bot.get_user(216303189073461248),
+                                                after=(datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(weeks=52))):
+                try:
+                    await entry.target.add_roles(patreon, reason="Auto-reassignment of patron role")
 
-                    except discord.Forbidden:
-                        raise commands.CommandError("I don't have permission to modify a user's roles.")
+                except discord.Forbidden:
+                    raise commands.CommandError("I don't have permission to modify a user's roles.")
 
-                    except discord.HTTPException:
-                        raise commands.CommandError("Something happened while attempting to add role.")
+                except discord.HTTPException:
+                    raise commands.CommandError("Something happened while attempting to add role.")
         await ctx.interaction.followup.send('Readded patreon roles',
                                             ephemeral=True)
 
