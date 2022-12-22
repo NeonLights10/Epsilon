@@ -1,6 +1,8 @@
 import psutil
 import time
 import os
+import datetime
+from datetime import timedelta
 
 import discord
 from discord.ext import commands
@@ -292,47 +294,31 @@ class Miscellaneous(commands.Cog):
                                     f'has been deleted.'),
             ephemeral=True)
 
-    @discord.slash_command(name='completetransition',
-                           description='2.0 database breaking changes, DEV ONLY')
+    @discord.slash_command(name='patreonmagic',
+                           description='Fix patreon roles, DEV ONLY')
     @is_owner()
-    async def completetransition(self,
-                                 ctx: discord.ApplicationContext):
+    async def patreon_magic(self,
+                            ctx: discord.ApplicationContext):
         # BREAKING CHANGES BELOW - DO NOT ACTIVATE UNTIL READY
         await ctx.interaction.response.defer(ephemeral=True)
 
-        #  breaking change for any role reaction
-        await db.rolereact.drop()
-        log.info('Dropped rolereact collection')
+        patreon = ctx.guild.get_role(201966886861275137)
+        guild = ctx.guild
+        if patreon:
+            if patreon not in guild.roles:
+                # To prevent search through the entire audit log, limit to 1 minute in the past
+                async for entry in guild.audit_logs(action=discord.AuditLogAction.member_role_update,
+                                                    user=self.bot.get_user(216303189073461248),
+                                                    after=(datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(weeks=52))):
+                    try:
+                        await entry.target.add_roles(patreon, reason="Auto-reassignment of patron role")
 
-        for guild in self.bot.guilds:
-            document = await db.servers.find_one({"server_id": guild.id})
+                    except discord.Forbidden:
+                        raise commands.CommandError("I don't have permission to modify a user's roles.")
 
-            # breaking change for blacklist/whitelist system
-            if blacklist := document['blacklist']:
-                for channel_id in blacklist:
-                    await db.msgid.delete_many({"channel_id": channel_id})
-            if blacklist is not None:
-                if isinstance(blacklist, list):
-                    if len(blacklist) != 0:
-                        pass
-                    else:
-                        await db.servers.update_one({"server_id": guild.id},
-                                                    {"$set": {'blacklist': None}})
-                else:
-                    await db.servers.update_one({"server_id": guild.id},
-                                                {"$set": {'blacklist': None}})
-            if whitelist := document['whitelist'] is not None:
-                if isinstance(whitelist, list):
-                    if len(whitelist) != 0:
-                        pass
-                    else:
-                        await db.servers.update_one({"server_id": guild.id},
-                                                    {"$set": {'whitelist': None}})
-                else:
-                    await db.servers.update_one({"server_id": guild.id},
-                                                {"$set": {'whitelist': None}})
-            log.info(f'Updated document for {guild.name} ({guild.id})')
-        await ctx.interaction.followup.send('Transition complete. Welcome to Kanon 2.0',
+                    except discord.HTTPException:
+                        raise commands.CommandError("Something happened while attempting to add role.")
+        await ctx.interaction.followup.send('Readded patreon roles',
                                             ephemeral=True)
 
 

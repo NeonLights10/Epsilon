@@ -238,27 +238,6 @@ async def on_member_join(member):
             content.set_image(url=random.choice(welcomebanners))
             await welcome_channel.send(embed=content)
 
-
-async def on_member_update(before, after):
-    patreon = before.guild.get_role(201966886861275137)
-    guild = after.guild
-    if patreon:
-        if patreon not in after.roles:
-            # To prevent search through the entire audit log, limit to 1 minute in the past
-            async for entry in guild.audit_logs(action=discord.AuditLogAction.member_role_update,
-                                                user=bot.get_user(216303189073461248),
-                                                after=(datetime.datetime.now() - datetime.timedelta(minutes=1))):
-                if entry.target == before:
-                    try:
-                        await after.add_roles(patreon, reason="Auto-reassignment of patron role")
-
-                    except discord.Forbidden:
-                        raise commands.CommandError("I don't have permission to modify a user's roles.")
-
-                    except discord.HTTPException:
-                        raise commands.CommandError("Something happened while attempting to add role.")
-
-
 async def on_member_remove(member):
     document = await db.servers.find_one({"server_id": member.guild.id})
     if document['log_joinleaves'] and document['log_channel']:
@@ -284,6 +263,24 @@ async def on_member_remove(member):
 
 
 async def on_member_update(before, after):
+    patreon = before.guild.get_role(201966886861275137)
+    guild = after.guild
+    if patreon:
+        if patreon not in after.roles:
+            # To prevent search through the entire audit log, limit to 1 minute in the past
+            async for entry in guild.audit_logs(action=discord.AuditLogAction.member_role_update,
+                                                user=bot.get_user(216303189073461248),
+                                                after=(datetime.datetime.now() - datetime.timedelta(minutes=1))):
+                if entry.target == before:
+                    try:
+                        await after.add_roles(patreon, reason="Auto-reassignment of patron role")
+
+                    except discord.Forbidden:
+                        raise commands.CommandError("I don't have permission to modify a user's roles.")
+
+                    except discord.HTTPException:
+                        raise commands.CommandError("Something happened while attempting to add role.")
+
     document = await db.servers.find_one({'server_id': before.guild.id})
     if document['log_joinleaves'] and int(document['log_channel']):
         if not before.nick == after.nick:
@@ -300,7 +297,7 @@ async def on_member_update(before, after):
                               value=f'{after.nick}#{after.discriminator}',
                               inline=False)
             content.add_field(name='ID',
-                              value=f'```ml\nUser = {after.author.id}```',
+                              value=f'```ml\nUser = {after.id}```',
                               inline=False)
             content.set_footer(text=time.ctime())
             await log_channel.send(embed=content)
