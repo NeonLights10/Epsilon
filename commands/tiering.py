@@ -516,11 +516,15 @@ class Tiering(commands.Cog):
                                                                 content=f'Changed name to {new_room_title}'))
 
         elif spots:
-            if spots:
-                if 0 < spots <= 4:
-                    namesuffix = f'-{spots}'
-                else:
-                    namesuffix = '-f'
+            if re.search(r'(-)(\d{5})(-)', currentname):
+                roomcode = re.match(r"(-)(\d{5})(-)", currentname).group(1)
+            else:
+                roomcode = 'xxxxx'
+
+            if 0 < spots <= 4:
+                namesuffix = f'-{spots}'
+            else:
+                namesuffix = '-f'
             new_room_title = f'{nameprefix}{roomcode}{namesuffix}'
             await ctx.interaction.channel.edit(name=new_room_title)
             await ctx.interaction.followup.send(embed=gen_embed(title='Edit Room',

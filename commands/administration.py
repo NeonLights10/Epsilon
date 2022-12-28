@@ -2038,8 +2038,6 @@ class Administration(commands.Cog):
                                       before=ctx.interaction.message,
                                       after=after_value)
                 return
-        else:
-            raise commands.UserInputError('lmao bad')
 
         if time:
             after_value = datetime.datetime.now(datetime.timezone.utc) - time_result
@@ -3418,6 +3416,11 @@ async def check_strike(ctx, member, current_time=datetime.datetime.now(datetime.
         if len(valid_strikes) >= 3:
             # Ban time boom boom. stop searching and step out
             log.info('max_strike exceeded, proceed to ban')
+            results = db.warns.find(query).sort('time', pymongo.DESCENDING)
+            document = await results.to_list(length=None)
+            document.pop(0)
+            for strike in document:
+                valid_strikes.append(strike)
             return valid_strikes
 
         # Else it's time to step in and start the recursion to check the next two months again.
