@@ -89,7 +89,11 @@ class Event(commands.Cog):
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
-        return api.json()
+        try:
+            parsed = api.json()
+        except json.decoder.JSONDecodeError:
+            return None
+        return parsed
 
     async def get_current_event_id(self, server: int):
         current_time = time.time() * 1000
