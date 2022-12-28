@@ -804,12 +804,15 @@ class Event(commands.Cog):
                 minutes = str(int(time_left_seconds // 60 % 60))
                 time_left_text = f'{days}d {hours}h {minutes}m'
 
-                event_length = float(event_end) - float(event_start)
-                event_progress = round((((event_length - time_left) / event_length) * 100), 2)
-                if int(event_progress) < 0:
-                    event_progress = '100%'
+                if float(event_start) > float(current_time):
+                    event_progress = 'Not started'
                 else:
-                    event_progress = str(event_progress) + '%'
+                    event_length = float(event_end) - float(event_start)
+                    event_progress = round((((event_length - time_left) / event_length) * 100), 2)
+                    if int(event_progress) < 0:
+                        event_progress = '100%'
+                    else:
+                        event_progress = str(event_progress) + '%'
 
             embed = discord.Embed(title=event_name, url=event_url, colour=0x1abc9c)
             embed.set_thumbnail(url=thumbnail)
