@@ -85,6 +85,9 @@ class Utility(commands.Cog):
                         continue
                     await db.rolereact.update_one({"msg_id": category_document['msg_id']},
                                                   {"$set": {"msg_id": post_message.id}})
+                except discord.Forbidden:
+                    log.info(f'Error initializing selfassign for {guild.name}')
+                    continue
 
                 selectrole_view = discord.ui.View(timeout=None)
                 options = []
