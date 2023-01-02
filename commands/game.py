@@ -3,7 +3,7 @@ import os
 import math
 import datetime
 import uuid
-from time import strftime, gmtime
+from time import strftime, gmtime, localtime
 
 import numpy as np
 import plotly.graph_objects as go
@@ -475,13 +475,119 @@ class Game(commands.Cog):
                     else:
                         results.append([str(row_count), row['user']['username'], row['stats']])
                     row_count += 1
-            output += "```" + tabulate(results, tablefmt="plain", headers=["#", "Player", "Value", "Bestdori Name"]) + "```"
+            output += "```" + tabulate(results, tablefmt="plain",
+                                       headers=["#", "Player", "Value", "Bestdori Name"]) + "```"
 
             if len(output) > 2000:
                 output = 'Output is greater than 2000 characters, please select a smaller list of values to return!'
             await ctx.interaction.followup.send(output)
         except HTTPStatusError:
             await ctx.interaction.followup.send("Could not get data from Bestdori API.", ephemeral=True)
+
+    @game_commands.command(name='character',
+                           description='Posts character info.')
+    async def chara_lookup(self,
+                           ctx: discord.ApplicationContext,
+                           character: Option(str, "Character Name", required=True)):
+        await ctx.interaction.response.defer()
+        try:
+            r = await self.fetch_api('https://bestdori.com/api/characters/all.2.json')
+            character = character.capitalize()
+            chara_id = False
+            for x in r:
+                if chara_id:
+                    break
+                chara_list = r[x]['characterName']
+                if chara_list[1] is not None and character in chara_list[1]:
+                    chara_id = x
+                elif chara_list[0] is not None and character in chara_list[0]:
+                    chara_id = x
+
+            if not chara_id:
+                await ctx.interaction.followup.send("Could not find character.")
+                return
+
+            chara_api = await self.fetch_api(f'https://bestdori.com/api/characters/{int(chara_id)}.json')
+            chara_names = chara_api['characterName'][1] + ' / ' + chara_api['characterName'][0]
+
+            try:
+                chara_favfood = '**Favorite Food**: ' + chara_api['profile']['favoriteFood'][1]
+                chara_seiyuu = '**Seiyuu**: ' + chara_api['profile']['characterVoice'][1]
+                chara_hatedfood = '**Hated Food**: ' + chara_api['profile']['hatedFood'][1]
+                chara_hobbies = '**Hobbies**: ' + chara_api['profile']['hobby'][1]
+                chara_about = chara_api['profile']['selfIntroduction'][1]
+                chara_school = '**School**: ' + chara_api['profile']['school'][1]
+            except IndexError:
+                chara_favfood = '**Favorite Food**: ' + chara_api['profile']['favoriteFood'][0]
+                chara_seiyuu = '**Seiyuu**: ' + chara_api['profile']['characterVoice'][0]
+                chara_hatedfood = '**Hated Food**: ' + chara_api['profile']['hatedFood'][0]
+                chara_hobbies = '**Hobbies**: ' + chara_api['profile']['hobby'][0]
+                chara_about = chara_api['profile']['selfIntroduction'][0]
+                chara_school = '**School**: ' + chara_api['profile']['school'][0]
+
+            if 'hanasakigawa_high' in chara_school:
+                chara_school = '**School**: Hanasakigawa High'
+            elif 'haneoka_high' in chara_school:
+                chara_school = '**School**: Haneoka High'
+            elif 'tsukinomori_high' in chara_school:
+                chara_school = '**School**: Tsukinomori High'
+
+            chara_year_anime = '**Year (anime)**: ' + str(chara_api['profile']['schoolYear'][0])
+            chara_position = '**Position**: ' + chara_api['profile']['part'].capitalize()
+            if 'Guitar_vocal' in chara_position:
+                chara_position = '**Position**: Guitarist + Vocals'
+            chara_birthday_fmt = '**Birthday**: ' + strftime("%d %b %Y",
+                                                             localtime(int(chara_api['profile']['birthday']) / 1000))
+            chara_constellation = '**Constellation**: ' + chara_api['profile']['constellation'].capitalize()
+            chara_height = '**Height**: ' + str(chara_api['profile']['height']) + "cm"
+            chara_image_url = f'https://bestdori.com/res/icon/chara_icon_{chara_id}.png'
+            chara_url = f'https://bestdori.com/info/characters/{chara_id}'
+
+            chara_info = tabulate(
+                [[chara_seiyuu], [chara_height], [chara_birthday_fmt], [chara_position], [chara_constellation]],
+                tablefmt="plain")
+            chara_interests = [chara_favfood, chara_hatedfood, chara_hobbies]
+            chara_edu = [chara_school, chara_year_anime]
+
+            embed = discord.Embed(title=chara_names, url=chara_url, description=chara_about)
+            embed.set_thumbnail(url=chara_image_url)
+            embed.add_field(name='About', value=chara_info, inline=True)
+            embed.add_field(name='Interests', value='\n'.join(chara_interests), inline=True)
+            embed.add_field(name='School', value='\n'.join(chara_edu), inline=True)
+            await ctx.interaction.followup.send(embed=embed)
+        except HTTPStatusError:
+            await ctx.interaction.followup.send("Could not get data from Bestdori API.", ephemeral=True)
+
+    @game_commands.command(name='staruse',
+                           description='Provides star usage when aiming for a certain amount of EP.')
+    async def staruse(self,
+                      ctx: discord.ApplicationContext,
+                      ep_per_song: Option(int),
+                      current_ep: Option(int),
+                      target_ep: Option(int),
+                      flames_used: Option(int),
+                      current_player_rank: Option(int),
+                      server: Option(str),
+                      hrs_left: Option(float)):
+        await ctx.interaction.followup.send("Command not implemented.")
+
+    @game_commands.command(name='epgain',
+                           description='Calculates EP gain for a single game.')
+    async def epgain(self,
+                     ctx: discord.ApplicationContext,
+                     your_score: Option(int),
+                     multi_score: Option(int),
+                     bp_percent: Option(int),
+                     flames_used: Option(int),
+                     event_type: Option(int),
+                     vs_placement: Option(int)):
+        await ctx.interaction.followup.send("Command not implemented.")
+
+    @game_commands.command(name='card',
+                           description='Provides embedded image of card with specified filters.')
+    async def card_lookup(self,
+                          ctx: discord.ApplicationContext):
+        await ctx.interaction.followup.send("Command not implemented.")
 
 
 def setup(bot):
