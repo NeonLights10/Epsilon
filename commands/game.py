@@ -75,6 +75,16 @@ character_names = [
     'CHU²'
 ]
 
+school_name_dict = {
+    'hanasakigawa_high': "Hanasakigawa Girls' Academy",
+    'haneoka_high': "Haneoka Girls' Academy",
+    'tsukinomori_high': "Tsukinomori Girls' Academy",
+    'geijutsu_high': "Geijutsu Academy",
+    'shirayuki_high': "Shirayuki Private Academy",
+    'kamogawa_middle': "Kamogawa Central Middle School",
+    'celosia_international': "Celosia International Academy"
+}
+
 
 class Game(commands.Cog):
     def __init__(self, bot):
@@ -368,7 +378,7 @@ class Game(commands.Cog):
                         if song.lower() in (song_name_api[x]['musicTitle'][1]).lower():
                             added_songs.append([song_name_api[x]['musicTitle'][1], x])
                             break
-                    except:
+                    except IndexError:
                         if song.lower() in (song_name_api[x]['musicTitle'][0]).lower():
                             added_songs.append([song_name_api[x]['musicTitle'][0], x])
                             break
@@ -558,6 +568,10 @@ class Game(commands.Cog):
                 return
 
             chara_api = await self.fetch_api(f'https://bestdori.com/api/characters/{int(chara_id)}.json')
+            if 'profile' not in chara_api:
+                await ctx.interaction.followup.send("Character does not have a profile.", ephemeral=True)
+                return
+
             chara_names = chara_api['characterName'][1] + ' / ' + chara_api['characterName'][0]
             if chara_api['nickname'][1] is not None:
                 chara_names = chara_names + f" ({chara_api['nickname'][1]})"
@@ -568,21 +582,20 @@ class Game(commands.Cog):
                 chara_hatedfood = '**Hated Food**: ' + chara_api['profile']['hatedFood'][1]
                 chara_hobbies = '**Hobbies**: ' + chara_api['profile']['hobby'][1]
                 chara_about = chara_api['profile']['selfIntroduction'][1]
-                chara_school = '**School**: ' + chara_api['profile']['school'][1]
+                chara_school = chara_api['profile']['school'][1]
             except IndexError:
                 chara_favfood = '**Favorite Food**: ' + chara_api['profile']['favoriteFood'][0]
                 chara_seiyuu = '**Seiyuu**: ' + chara_api['profile']['characterVoice'][0]
                 chara_hatedfood = '**Hated Food**: ' + chara_api['profile']['hatedFood'][0]
                 chara_hobbies = '**Hobbies**: ' + chara_api['profile']['hobby'][0]
                 chara_about = chara_api['profile']['selfIntroduction'][0]
-                chara_school = '**School**: ' + chara_api['profile']['school'][0]
+                chara_school = chara_api['profile']['school'][0]
 
-            if 'hanasakigawa_high' in chara_school:
-                chara_school = '**School**: Hanasakigawa High'
-            elif 'haneoka_high' in chara_school:
-                chara_school = '**School**: Haneoka High'
-            elif 'tsukinomori_high' in chara_school:
-                chara_school = '**School**: Tsukinomori High'
+            for school_key in school_name_dict:
+                if school_key in chara_school:
+                    chara_school = school_name_dict[school_key]
+                    break
+            chara_school = '**School**: ' + chara_school
 
             chara_year_anime = '**Year (anime)**: ' + str(chara_api['profile']['schoolYear'][0])
             chara_position = '**Position**: ' + chara_api['profile']['part'].capitalize()
