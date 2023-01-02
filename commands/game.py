@@ -32,6 +32,49 @@ from operator import itemgetter
 from formatting.embed import gen_embed
 from __main__ import log, db
 
+character_names = [
+    'Kasumi Toyama',
+    'Tae Hanazono',
+    'Rimi Ushigome',
+    'Saya Yamabuki',
+    'Arisa Ichigaya',
+    'Ran Mitake',
+    'Moca Aoba',
+    'Himari Uehara',
+    'Tomoe Udagawa',
+    'Tsugumi Hazawa',
+    'Kokoro Tsurumaki',
+    'Kaoru Seta',
+    'Hagumi Kitazawa',
+    'Kanon Matsubara',
+    'Misaki Okusawa',
+    'Aya Maruyama',
+    'Hina Hikawa',
+    'Chisato Shirasagi',
+    'Maya Yamato',
+    'Eve Wakamiya',
+    'Yukina Minato',
+    'Sayo Hikawa',
+    'Lisa Imai',
+    'Ako Udagawa',
+    'Rinko Shirokane',
+    'Mashiro Kurata',
+    'Toko Kirigaya',
+    'Nanami Hiromachi',
+    'Tsukushi Futaba',
+    'Rui Yashio',
+    'Rei Wakana',
+    'Rokka Asahi',
+    'Masuki Sato',
+    'Reona Nyubara',
+    'Chiyu Tamade',
+    'LAYER',  # RAS nicknames below
+    'LOCK',
+    'MASKING',
+    'PAREO',
+    'CHU²'
+]
+
 
 class Game(commands.Cog):
     def __init__(self, bot):
@@ -484,31 +527,40 @@ class Game(commands.Cog):
         except HTTPStatusError:
             await ctx.interaction.followup.send("Could not get data from Bestdori API.", ephemeral=True)
 
+    async def chara_name_autocomplete(self, ctx):
+        return [name for name in character_names if ctx.value.lower() in name.lower()]
+
     @game_commands.command(name='character',
                            description='Posts character info.')
     async def chara_lookup(self,
                            ctx: discord.ApplicationContext,
-                           character: Option(str, "Character Name", required=True)):
+                           character: Option(str, "Character Name", autocomplete=chara_name_autocomplete, required=True)):
         await ctx.interaction.response.defer()
         try:
             r = await self.fetch_api('https://bestdori.com/api/characters/all.2.json')
-            character = character.capitalize()
             chara_id = False
             for x in r:
                 if chara_id:
                     break
-                chara_list = r[x]['characterName']
-                if chara_list[1] is not None and character in chara_list[1]:
+                chara_list_name = r[x]['characterName']
+                chara_list_nickname = r[x]['nickname']
+                if chara_list_name[1] is not None and character.lower() in chara_list_name[1].lower():
                     chara_id = x
-                elif chara_list[0] is not None and character in chara_list[0]:
+                elif chara_list_name[0] is not None and character.lower() in chara_list_name[0].lower():
+                    chara_id = x
+                elif chara_list_nickname[1] is not None and character.lower() in chara_list_nickname[1].lower():
+                    chara_id = x
+                elif chara_list_nickname[0] is not None and character.lower() in chara_list_nickname[0].lower():
                     chara_id = x
 
             if not chara_id:
-                await ctx.interaction.followup.send("Could not find character.")
+                await ctx.interaction.followup.send("Could not find character.", ephemeral=True)
                 return
 
             chara_api = await self.fetch_api(f'https://bestdori.com/api/characters/{int(chara_id)}.json')
             chara_names = chara_api['characterName'][1] + ' / ' + chara_api['characterName'][0]
+            if chara_api['nickname'][1] is not None:
+                chara_names = chara_names + f" ({chara_api['nickname'][1]})"
 
             try:
                 chara_favfood = '**Favorite Food**: ' + chara_api['profile']['favoriteFood'][1]
