@@ -4,6 +4,7 @@ import math
 import datetime
 import uuid
 from time import strftime, gmtime, localtime
+import time
 
 import numpy as np
 import plotly.graph_objects as go
@@ -84,6 +85,64 @@ school_name_dict = {
     'kamogawa_middle': "Kamogawa Central Middle School",
     'celosia_international': "Celosia International Academy"
 }
+
+
+def find_rank(rank: int):
+    xp_table = get_xp_table()
+    xp = xp_table[rank]
+    return xp
+
+
+def get_xp_table():
+    xp_table = [0, 0, 10, 160, 1360, 2960, 3960, 7360, 10160, 13360, 16960, 20960, 25360, 30160, 35360, 40960, 46960,
+                53280, 59920, 66880, 74160, 81760, 89680, 97920, 106480, 115360, 124560, 134080, 143920, 154080, 164560,
+                175360, 186480, 197920, 209680, 221760, 234160, 246880, 259920, 273280, 286960, 300960, 315280, 329920,
+                344880, 360160, 375760, 391680, 407920, 424480, 441360, 458560, 476080, 493920, 512080, 530560, 549360,
+                568480, 587920, 607680, 627760, 648160, 668880, 689920, 711280, 732960, 754960, 777280, 799920, 822880,
+                846160, 869790, 893680, 917920, 942480, 967360, 992560, 1018080, 1043920, 1070080, 1096560, 1123360,
+                1150480, 1177920, 1205680, 1233760, 1262160, 1290880, 1319920, 1349280, 1378960, 1408960, 1439280,
+                1469920, 1500880, 1532160, 1563760, 1595680, 1627920, 1660480, 1693360, 1728800, 1766800, 1807360,
+                1850480, 1896160, 1945680, 1999040, 2056240, 2117280, 2182160, 2251520, 2325360, 2403680, 2486480,
+                2573760, 2665840, 2762720, 2864400, 2970880, 3082160, 3198400, 3319600, 3445760, 3576880, 3712960,
+                3854080, 4000240, 4151440, 4307680, 4468960, 4635320, 4806760, 4983280, 5164880, 5351560, 5543340,
+                5740220, 5942200, 6149280, 6361460, 6578750, 6801150, 7028660, 7261280, 7499010, 7741860, 7989830,
+                8242920, 8501130, 8764460, 9032910, 9306480, 9585170, 9868980, 10157910, 10451960, 10751130, 11055420,
+                11364830, 11679360, 11999010, 12323780, 12653670, 12988680, 13328810, 13674060, 14024430, 14379920,
+                14740530, 15106260, 15477110, 15853080, 16234170, 16620380, 17011710, 17408160, 17809730, 18216420,
+                18628230, 19045160, 19467210, 19894380, 20326670, 20764080, 21206610, 21654260, 22107030, 22564920,
+                23027930, 23496060, 23969310, 24447680, 24931170, 25419780, 25913510, 26412360, 26916330, 27425420,
+                27939630, 28458960, 28983410, 29512980, 30047670, 30587480, 31132410, 31682460, 32237630, 32797920,
+                33363330, 33933860, 34509510, 35090280, 35676170, 36267180, 36863310, 37464560, 38070930, 38682420,
+                39299030, 39920760, 40547610, 41179580, 41816670, 42458880, 43106210, 43758660, 44416230, 45078290,
+                45746730, 46419660, 47097710, 47780880, 48469170, 49162580, 49861110, 50564760, 51273530, 51987420,
+                52706430, 53430560, 54159810, 54894180, 55633670, 56378280, 57128010, 57882860, 58642830, 59407920,
+                60178130, 60953460, 61733910, 62519480, 63310170, 64105980, 64906910, 65712960, 66524130, 67340420,
+                68161830, 68988360, 68920010, 70656780, 71498670, 72345680, 73197810, 74055060, 74917430, 75784920,
+                76657530, 77535260, 78418110, 79306080, 80199170, 81097380, 82000710, 82909160, 83822730, 84741420,
+                85665230, 86594160, 87528210, 88467380, 89411670, 90361080, 91315610, 92275260, 93240030, 94209920,
+                95184930, 96165060, 97150310, 98140680, 99136170, 100136780, 101142510, 102153360, 103169330, 104190420,
+                105216630, 106247960]
+    return xp_table
+
+
+def get_xp_per_flame(flames_used: int):
+    if flames_used == 1:
+        xp = 2500
+    elif flames_used == 2:
+        xp = 3000
+    elif flames_used == 3:
+        xp = 3500
+    return xp
+
+
+def get_ep_per_flame(flames_used: int):
+    if flames_used == 1:
+        flames_ep_modifier = 5
+    elif flames_used == 2:
+        flames_ep_modifier = 10
+    else:
+        flames_ep_modifier = 15
+    return flames_ep_modifier
 
 
 class Game(commands.Cog):
@@ -544,7 +603,8 @@ class Game(commands.Cog):
                            description='Posts character info.')
     async def chara_lookup(self,
                            ctx: discord.ApplicationContext,
-                           character: Option(str, "Character Name", autocomplete=chara_name_autocomplete, required=True)):
+                           character: Option(str, "Character Name", autocomplete=chara_name_autocomplete,
+                                             required=True)):
         await ctx.interaction.response.defer()
         try:
             r = await self.fetch_api('https://bestdori.com/api/characters/all.2.json')
@@ -623,18 +683,126 @@ class Game(commands.Cog):
         except HTTPStatusError:
             await ctx.interaction.followup.send("Could not get data from Bestdori API.", ephemeral=True)
 
+    async def get_current_event_id(self, server: int):
+        current_time = time.time() * 1000
+        current_event_id = ''
+        api = await self.fetch_api('https://bestdori.com/api/events/all.5.json')
+        for event in api:
+            if api[event]['startAt'][server]:
+                if float(api[event]['startAt'][server]) < current_time < float(api[event]['endAt'][server]):
+                    current_event_id = event
+                    break
+        if not current_event_id:
+            try:
+                for event in api:
+                    try:
+                        if current_time < float(api[event]['startAt'][server]):
+                            current_event_id = event
+                            break
+                    except TypeError:  # For between events
+                        continue
+            except KeyError:
+                current_event_id = list(api.keys())[-1]
+        if current_event_id:
+            return current_event_id
+        else:
+            return 0
+
+    async def get_event_time_left_sec(self, server: int, eventid: int):
+        current_time = time.time() * 1000.0
+        end_time = await self.get_event_end_time(server, eventid)
+        time_left_sec = (float(end_time) - current_time) / 1000
+        return time_left_sec
+
+    async def get_event_end_time(self, server: int, eventid: int):
+        api = await self.fetch_api(f'https://bestdori.com/api/events/{eventid}.json')
+        end_time = api['endAt'][server]
+        return float(end_time)
+
     @game_commands.command(name='staruse',
                            description='Provides star usage when aiming for a certain amount of EP.')
     async def staruse(self,
                       ctx: discord.ApplicationContext,
-                      ep_per_song: Option(int),
-                      current_ep: Option(int),
-                      target_ep: Option(int),
-                      flames_used: Option(int),
-                      current_player_rank: Option(int),
-                      server: Option(str),
-                      hrs_left: Option(float)):
-        await ctx.interaction.followup.send("Command not implemented.")
+                      ep_per_song: Option(int, "EP gained per song", required=True),
+                      current_ep: Option(int, "Current event point total", required=True),
+                      target_ep: Option(int, "Target event point total", required=True),
+                      flames_per_game: Option(int, "Flames used per game", choices=[1, 2, 3], required=True),
+                      current_player_rank: Option(int, "Current player rank (1 - 300)", required=True),
+                      server: Option(str, "Server to get the current event's remaining time",
+                                     choices=[OptionChoice('EN', value='1'),
+                                              OptionChoice('JP', value='0'),
+                                              OptionChoice('TW', value='2'),
+                                              OptionChoice('CN', value='3'),
+                                              OptionChoice('KR', value='4')],
+                                     required=False,
+                                     default='1'),
+                      hrs_left: Option(float, "Manually input remaining time. Overrides time from 'server' argument.",
+                                       required=False),
+                      ):
+        await ctx.interaction.response.defer()
+        if current_player_rank > 300:
+            output_string = "Beginning rank can't be over 300."
+        else:
+            xp_per_flame = get_xp_per_flame(flames_per_game)
+            # , timeleft: int = timeLeftInt('en')
+            # songs played
+            songs_played = (target_ep - current_ep) / ep_per_song
+
+            # beg xp
+            if current_player_rank != 300:
+                current_xp = find_rank(current_player_rank)
+
+                # xp gained + end xp
+                xp_gained = xp_per_flame * songs_played
+                ending_xp = current_xp + xp_gained
+                xp_table = get_xp_table()
+
+                if ending_xp > xp_table[-1]:
+                    end_rank = 300
+                else:
+
+                    for x in range(len(xp_table)):
+                        if ending_xp < xp_table[x]:
+                            end_rank = x - 1
+                            break
+                        elif ending_xp == xp_table[x]:
+                            end_rank = x
+                            break
+            else:
+                end_rank = 300
+
+            server_id = int(server)
+
+            if hrs_left is None:
+                event_id = await self.get_current_event_id(server_id)
+                hrs_left = await self.get_event_time_left_sec(server_id, event_id) / 3600
+
+            # rankups
+            rank_up_amt = end_rank - current_player_rank
+            if rank_up_amt <= 0:
+                rank_up_amt = 1
+
+            # other stuff
+            nat_flames = (32 * (int(hrs_left) / 24))  # assuming 16 hours efficient
+            pts_per_refill = ((ep_per_song / flames_per_game) * 10)
+            pts_from_rankup = (rank_up_amt * ((ep_per_song / flames_per_game) * 10))
+            pts_naturally = (ep_per_song / flames_per_game) * nat_flames
+
+            # time spent
+            time_spent = math.floor((songs_played * 150) / 3600)  # seconds
+
+            # gems used
+            stars_used = ((((target_ep - current_ep) - pts_naturally - pts_from_rankup) / pts_per_refill) * 100)
+            if stars_used < 0:
+                stars_used = 0
+            else:
+                stars_used = math.ceil(stars_used / 100.00) * 100
+
+            output_string = ("```" + tabulate(
+                [['Stars Used', "{:,}".format(stars_used)], ['Target', "{:,}".format(target_ep)],
+                 ['Beginning Rank', current_player_rank], ['Ending Rank', end_rank], ['Hours Spent', time_spent]],
+                tablefmt="plain") + "```")
+        await ctx.interaction.followup.send(output_string)
 
     @game_commands.command(name='epgain',
                            description='Calculates EP gain for a single game.')
