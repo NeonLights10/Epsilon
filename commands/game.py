@@ -456,11 +456,11 @@ class Game(commands.Cog):
             # First two = non fever, so if the skill is 60% then song score = 2.7628 + 1.0763 * 60%
             for song in songs:
                 for x in song_name_api:
-                    try:
+                    if song_name_api[x]['musicTitle'][1] is not None:
                         if song.lower() in (song_name_api[x]['musicTitle'][1]).lower():
                             added_songs.append([song_name_api[x]['musicTitle'][1], x])
                             break
-                    except IndexError:
+                    elif song_name_api[x]['musicTitle'][0] is not None:
                         if song.lower() in (song_name_api[x]['musicTitle'][0]).lower():
                             added_songs.append([song_name_api[x]['musicTitle'][0], x])
                             break
