@@ -72,6 +72,9 @@ class Utility(commands.Cog):
                 post_channel = guild.get_channel(int(category_document['channel_id']))
                 try:
                     post_message = await post_channel.fetch_message(int(category_document['msg_id']))
+                except AttributeError:
+                    log.info(f'Error initializing selfassign for {guild.name}')
+                    continue
                 except discord.NotFound:
                     post_embed = gen_embed(title=category_document['category_name'],
                                            content=category_document['category_description'])
@@ -82,6 +85,9 @@ class Utility(commands.Cog):
                         continue
                     await db.rolereact.update_one({"msg_id": category_document['msg_id']},
                                                   {"$set": {"msg_id": post_message.id}})
+                except discord.Forbidden:
+                    log.info(f'Error initializing selfassign for {guild.name}')
+                    continue
 
                 selectrole_view = discord.ui.View(timeout=None)
                 options = []
@@ -417,7 +423,8 @@ class Utility(commands.Cog):
                           content=f'Converted **{time} {timezone_from}** to **{timezone_to}** is **{final_time}**')
         await ctx.interaction.followup.send(embed=embed)
 
-    selfroleassign = SlashCommandGroup('selfassign', 'Setup self-assign role commands')
+    selfroleassign = SlashCommandGroup('selfassign', 'Setup self-assign role commands',
+                                       default_member_permissions=discord.Permissions(manage_roles=True))
 
     @selfroleassign.command(name='settings',
                             description='See active roles & setup')

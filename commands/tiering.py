@@ -55,7 +55,8 @@ class Tiering(commands.Cog):
 
         return commands.check(predicate)
 
-    guides = SlashCommandGroup('guide', 'Commands to post various tiering guides')
+    guides = SlashCommandGroup('guide', 'Commands to post various tiering guides',
+                               default_member_permissions=discord.Permissions(manage_messages=True))
 
     @guides.command(name='efficiency',
                     description='Generates an efficiency guide for tiering')
@@ -515,11 +516,15 @@ class Tiering(commands.Cog):
                                                                 content=f'Changed name to {new_room_title}'))
 
         elif spots:
-            if spots:
-                if 0 < spots <= 4:
-                    namesuffix = f'-{spots}'
-                else:
-                    namesuffix = '-f'
+            if re.search(r'(-)(\d{5})(-)', currentname):
+                roomcode = re.match(r"(-)(\d{5})(-)", currentname).group(1)
+            else:
+                roomcode = 'xxxxx'
+
+            if 0 < spots <= 4:
+                namesuffix = f'-{spots}'
+            else:
+                namesuffix = '-f'
             new_room_title = f'{nameprefix}{roomcode}{namesuffix}'
             await ctx.interaction.channel.edit(name=new_room_title)
             await ctx.interaction.followup.send(embed=gen_embed(title='Edit Room',
@@ -1015,8 +1020,8 @@ class Tiering(commands.Cog):
             await asyncio.sleep(5)
         self.refill_running[str(ctx.interaction.channel.id)] = False
 
-    trackfiller = SlashCommandGroup('trackfiller', 'Filler tracking for tiering servers')
-    trackfiller_permission = trackfiller.subgroup('permission', 'Set which roles can track fillers')
+    trackfiller = SlashCommandGroup('trackfiller', 'Filler tracking for tiering servers',
+                                    default_member_permissions=discord.Permissions(manage_roles=True))
 
     @trackfiller.command(name='enable',
                          description='Enable filler tracking for the server')

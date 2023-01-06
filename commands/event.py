@@ -18,7 +18,7 @@ import discord
 from discord import File
 from discord.ext import commands
 from discord.commands import Option, OptionChoice, SlashCommandGroup
-from discord.commands.permissions import default_permissions
+from discord import default_permissions
 
 from formatting.embed import gen_embed
 from __main__ import log, db
@@ -89,7 +89,11 @@ class Event(commands.Cog):
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
-        return api.json()
+        try:
+            parsed = api.json()
+        except json.decoder.JSONDecodeError:
+            return None
+        return parsed
 
     async def get_current_event_id(self, server: int):
         current_time = time.time() * 1000
@@ -166,7 +170,10 @@ class Event(commands.Cog):
         try:
             api_url = f'https://bestdori.com/api/eventtop/data?server={server}&event={event_id}&mid=0&latest=1'
             t10_api = await self.fetch_api(api_url)
-            event_name = await self.get_event_name(server, event_id)
+            try:
+                event_name = await self.get_event_name(server, event_id)
+            except json.decoder.JSONDecodeError:
+                event_name = await self.get_event_name(server, event_id - 1)
             fmt = "%Y-%m-%d %H:%M:%S %Z%z"
             now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
             i = 1
@@ -356,25 +363,27 @@ class Event(commands.Cog):
                     else:
                         event_active = False
                         event_progress = "N/A"
-                        time_to_event = event_start - current_time / 1000
+                        time_to_event = event_start - (current_time / 1000)
                         days = str(int(time_to_event // 86400))
                         hours = str(int(time_to_event // 3600 % 24))
                         minutes = str(int(time_to_event // 60 % 60))
                         time_left_text = f'{days}d {hours}h {minutes}m'
 
+                    if not event_active:
+                        await ctx.interaction.followup.send(
+                            embed=gen_embed(title='Event has not started yet.',
+                                            content=f'There is currently no event happening at this time.'))
+                        return
+
                     embed = discord.Embed(title=event_name, url=event_url, color=embed_color)
                     embed.set_thumbnail(url=thumbnail)
                     embed.add_field(name='Time Left' if event_active else 'Begins In', value=time_left_text,
                                     inline=True)
-                    embed.add_field(name='Progress', value=event_progress, inline=True)
+                    embed.add_field(name='Progress', value=f"{event_progress}%", inline=True)
                     embed.add_field(name='End Date', value=event_end_formatted, inline=True)
                     embed.set_footer(
                         text=f"\n\n\nFor more info, try /event \n{time.ctime()}")
                     await ctx.interaction.followup.send(embed=embed)
-            else:
-                await ctx.interaction.followup.send(
-                    embed=gen_embed(title='Event has not started yet.',
-                                    content=f'There is currently no event happening at this time.'))
         except TypeError:
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Missing details on next event',
@@ -570,7 +579,7 @@ class Event(commands.Cog):
             embed = discord.Embed(title=event_name, url=event_url, colour=0x1abc9c)
             embed.set_thumbnail(url=thumbnail)
             embed.add_field(name='Event has not started.',
-                            value=f'The event will start in <t:{event_start / 1000}:R>',
+                            value=f'The event will start in <t:{float(event_start) / 1000}:R>',
                             inline=True)
 
         if len(cutoff_api['cutoffs']) > 0:
@@ -748,12 +757,15 @@ class Event(commands.Cog):
                 minutes = str(int(time_left_seconds // 60 % 60))
                 time_left_text = f'{days}d {hours}h {minutes}m'
 
-                event_length = float(event_end) - float(event_start)
-                event_progress = round((((event_length - time_left) / event_length) * 100), 2)
-                if int(event_progress) < 0:
-                    event_progress = '100%'
+                if float(event_start) > float(current_time):
+                    event_progress = 'Not started'
                 else:
-                    event_progress = str(event_progress) + '%'
+                    event_length = float(event_end) - float(event_start)
+                    event_progress = round((((event_length - time_left) / event_length) * 100), 2)
+                    if int(event_progress) < 0:
+                        event_progress = '100%'
+                    else:
+                        event_progress = str(event_progress) + '%'
 
             if s_estimate == "0":
                 s_estimate = '?'
@@ -792,12 +804,15 @@ class Event(commands.Cog):
                 minutes = str(int(time_left_seconds // 60 % 60))
                 time_left_text = f'{days}d {hours}h {minutes}m'
 
-                event_length = float(event_end) - float(event_start)
-                event_progress = round((((event_length - time_left) / event_length) * 100), 2)
-                if int(event_progress) < 0:
-                    event_progress = '100%'
+                if float(event_start) > float(current_time):
+                    event_progress = 'Not started'
                 else:
-                    event_progress = str(event_progress) + '%'
+                    event_length = float(event_end) - float(event_start)
+                    event_progress = round((((event_length - time_left) / event_length) * 100), 2)
+                    if int(event_progress) < 0:
+                        event_progress = '100%'
+                    else:
+                        event_progress = str(event_progress) + '%'
 
             embed = discord.Embed(title=event_name, url=event_url, colour=0x1abc9c)
             embed.set_thumbnail(url=thumbnail)
@@ -811,10 +826,13 @@ class Event(commands.Cog):
             embed.add_field(name='Time Left', value=time_left_text, inline=True)
             embed.add_field(name='Progress', value=event_progress, inline=True)
 
-            return embed
+            if graph:
+                return embed, 'invalid'
+            else:
+                return embed
 
     @discord.slash_command(name='t50',
-                           description='Cutoff estimate for t100')
+                           description='Cutoff estimate for t50')
     async def t50_cutoff(self,
                          ctx: discord.ApplicationContext,
                          server: Option(str, "Choose which server to check t50 data",
@@ -835,7 +853,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 50):
             if graph == '1':
                 embed = await self.get_cutoff(server, 50, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 50, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -867,7 +888,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 100):
             if graph == '1':
                 embed = await self.get_cutoff(server, 100, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 100, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -899,7 +923,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 300):
             if graph == '1':
                 embed = await self.get_cutoff(server, 300, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 300, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -931,7 +958,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 500):
             if graph == '1':
                 embed = await self.get_cutoff(server, 500, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 500, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -963,7 +993,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 1000):
             if graph == '1':
                 embed = await self.get_cutoff(server, 1000, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 1000, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -995,7 +1028,10 @@ class Event(commands.Cog):
         if check_valid_server_tier(server, 2000):
             if graph == '1':
                 embed = await self.get_cutoff(server, 2000, True)
-                await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
+                if isinstance(embed[1], str):
+                    await ctx.interaction.followup.send(embed=embed[0])
+                else:
+                    await ctx.interaction.followup.send(file=embed[1], embed=embed[0])
             else:
                 embed = await self.get_cutoff(server, 2000, False)
                 await ctx.interaction.followup.send(embed=embed)
@@ -1004,6 +1040,7 @@ class Event(commands.Cog):
             vs_text = ', '.join(valid_servers[:-1]) + ', and ' + valid_servers[-1]
             await ctx.interaction.followup.send(embed=gen_embed(title='Cannot Retrieve Cutoff',
                                                                 content=f't2000 cutoff is only valid for {vs_text}.'))
+
 
 def setup(bot):
     bot.add_cog(Event(bot))

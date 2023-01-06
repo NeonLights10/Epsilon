@@ -12,7 +12,7 @@ import pymongo
 from bson.objectid import ObjectId
 
 import discord
-from discord.commands.permissions import default_permissions
+from discord import default_permissions
 from discord.ext import commands, pages
 from discord.commands import Option, SlashCommandGroup
 from discord.ui import InputText
@@ -1798,7 +1798,8 @@ class Administration(commands.Cog):
             await sent_menu_message.edit(embed=embed,
                                          view=main_menu_view)
 
-    blacklist = SlashCommandGroup('blacklist', 'Configure blacklist channels')
+    blacklist = SlashCommandGroup('blacklist', 'Configure blacklist channels',
+                                  default_member_permissions=discord.Permissions(manage_guild=True))
 
     @blacklist.command(name='add',
                        description='Add channel to the blacklist')
@@ -1861,7 +1862,8 @@ class Administration(commands.Cog):
                                                           content='Blacklist is not enabled!'),
                                                 ephemeral=True)
 
-    whitelist = SlashCommandGroup('whitelist', 'Configure whitelist channels')
+    whitelist = SlashCommandGroup('whitelist', 'Configure whitelist channels',
+                                  default_member_permissions=discord.Permissions(manage_guild=True))
 
     @whitelist.command(name='add',
                        description='Add channel to the whitelist')
@@ -2036,8 +2038,6 @@ class Administration(commands.Cog):
                                       before=ctx.interaction.message,
                                       after=after_value)
                 return
-        else:
-            raise commands.UserInputError('lmao bad')
 
         if time:
             after_value = datetime.datetime.now(datetime.timezone.utc) - time_result
@@ -2145,7 +2145,8 @@ class Administration(commands.Cog):
             await ctx.message.delete()
             await sent.delete(delay=5)
 
-    rolecommand = SlashCommandGroup('role', 'Add/remove roles and users to roles')
+    rolecommand = SlashCommandGroup('role', 'Add/remove roles and users to roles',
+                                    default_member_permissions=discord.Permissions(manage_roles=True))
 
     async def role_color_autocomplete(self,
                                       ctx):
@@ -2236,7 +2237,8 @@ class Administration(commands.Cog):
                                                                      f' from role {role.mention}')),
                                             ephemeral=True)
 
-    timeout = SlashCommandGroup('timeout', 'Set/remove timeout on a user')
+    timeout = SlashCommandGroup('timeout', 'Set/remove timeout on a user',
+                                default_member_permissions=discord.Permissions(moderate_members=True))
 
     @timeout.command(name='set',
                      description='Timeout a user')
@@ -3414,6 +3416,11 @@ async def check_strike(ctx, member, current_time=datetime.datetime.now(datetime.
         if len(valid_strikes) >= 3:
             # Ban time boom boom. stop searching and step out
             log.info('max_strike exceeded, proceed to ban')
+            results = db.warns.find(query).sort('time', pymongo.DESCENDING)
+            document = await results.to_list(length=None)
+            document.pop(0)
+            for strike in document:
+                valid_strikes.append(strike)
             return valid_strikes
 
         # Else it's time to step in and start the recursion to check the next two months again.
