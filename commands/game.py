@@ -837,13 +837,92 @@ class Game(commands.Cog):
                            description='Calculates EP gain for a single game.')
     async def epgain(self,
                      ctx: discord.ApplicationContext,
-                     your_score: Option(int),
-                     multi_score: Option(int),
-                     bp_percent: Option(int),
-                     flames_used: Option(int),
-                     event_type: Option(int),
-                     vs_placement: Option(int)):
-        await ctx.interaction.followup.send("Command not implemented.")
+                     your_score: Option(int, "Individual score", min_value=0, required=True),
+                     flames_used: Option(int, "Flames used per game", choices=[0, 1, 2, 3], required=True),
+                     event_type: Option(int, "Event type (Note: Medley and Team Live calculations are not supported yet)",
+                                        choices=[
+                                            OptionChoice("Normal", value=1),
+                                            OptionChoice("Live Goals", value=2),
+                                            OptionChoice("Challenge Live", value=3),
+                                            OptionChoice("VS Live", value=4)
+                                        ],
+                                        required=True),
+                     bonus_percent: Option(int, "Event bonus percentage, not including the base 100%. Used in events other than VS Live.",
+                                           min_value=0,
+                                           default=0,
+                                           required=False),
+                     multi_score: Option(int,
+                                         "Total room score in Multi Live. Used in events other than VS Live.",
+                                         default=9000000,
+                                         required=False),
+                     vs_placement: Option(int, "VS Live placement",
+                                          min_value=1, max_value=5, default=1, required=False)
+                     ):
+        await ctx.interaction.response.defer()
+        bp_percent_modifier = (bonus_percent / 100) + 1
+
+        ep_per_flame = 1 if flames_used == 0 else get_ep_per_flame(flames_used)
+        match event_type:
+            case 1:
+                event_scaling = 10000
+                event_base = 50
+            case 2:
+                event_scaling = 13000
+                event_base = 40
+            case 3:
+                event_scaling = 25000
+                event_base = 20
+            case 4:
+                event_scaling = 550
+                event_base = 1
+
+        if event_type == 1 or event_type == 2 or event_type == 3:
+            ep = event_base
+            team_score = multi_score - your_score
+            if your_score <= 1600000:
+                ep += math.floor(your_score / event_scaling)
+            else:
+                ep += math.floor(1600000 / event_scaling)
+                if your_score <= 1750000:
+                    ep += math.floor((your_score - 1600000) / event_scaling / 2)
+                else:
+                    ep += math.floor((1750000 - 1600000) / event_scaling / 2)
+                    if your_score <= 2000000:
+                        ep += math.floor((your_score - 1750000) / event_scaling / 3)
+                    else:
+                        ep += math.floor((2000000 - 1750000) / event_scaling / 3)
+                        ep += math.floor((your_score - 2000000) / event_scaling / 4)
+            if team_score <= 6400000:
+                ep += math.floor(team_score / event_scaling / 10)
+            else:
+                ep += math.floor(6400000 / event_scaling / 10)
+                if team_score <= 7000000:
+                    ep += math.floor((team_score - 6400000) / event_scaling / 10 / 2)
+                else:
+                    ep += math.floor((7000000 - 6400000) / event_scaling / 10 / 2)
+                    if team_score <= 8000000:
+                        ep += math.floor((team_score - 7000000) / event_scaling / 10 / 3)
+                    else:
+                        ep += math.floor((8000000 - 7000000) / event_scaling / 10 / 3)
+                        ep += math.floor((team_score - 8000000) / event_scaling / 10 / 4)
+
+            ep = (ep * bp_percent_modifier)
+            ep *= ep_per_flame
+        else:
+            # bp calcs
+            match vs_placement:
+                case 1:
+                    placement_bonus = 60
+                case 2:
+                    placement_bonus = 52
+                case 3:
+                    placement_bonus = 44
+                case 4:
+                    placement_bonus = 37
+                case 5:
+                    placement_bonus = 30
+            ep = (placement_bonus + math.floor(your_score / 5500)) * ep_per_flame
+        await ctx.interaction.followup.send("EP Gain: " + str(math.floor(ep)))
 
     @game_commands.command(name='card',
                            description='Provides embedded image of card with specified filters.')
