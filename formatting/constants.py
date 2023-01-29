@@ -49,3 +49,13 @@ COLORS = ['blue', 'blurple', 'dark_blue', 'dark_gold', 'dark_gray', 'dark_magent
                   'dark_purple', 'dark_red', 'dark_teal', 'fuschia', 'gold', 'green', 'light_gray', 'magenta',
                   'nitro_pink', 'orange', 'purple', 'red', 'teal', 'yellow']
 FILTER = ["Khelp.*", "kvote.*", "kmonthly.*", "kdaily.*", "kdrop.*", "kd.*", "kupgrade.*", "kup.*", "kburn.*", "kb.*", "kmultiburn.*", "kmb.*", "kvisit.*", "kvi.*", "kgems.*", "kcollection.*", "kc.*", "kview.*", "kv.*", "ktags.*", "kt.*", "ktagcreate.*", "ktc.*", "ktagdelete.*", "ktagrename.*", "ktagemoji.*", "kuntag.*", "kuse.*", "ku.*", "kdye.*", "kdyerefill.*", "kdyeremove.*", "kinventori.*", "ki.*", "kbits.*", "kbi.*", "kmorph.*", "kmorphremove.*", "kmr.*", "kframeremove.*", "ktrimremove.*", "kaliasremove.*", "kiteminfo.*", "kii.*", "kspreadsheet.*", "kcooldowns.*", "kcd.*", "kreminders.*", "krm.*", "klookup.*", "klu.*", "kcardinfo.*", "kci.*", "kuserinfo.*", "kui.*", "knodeinfo.*", "kni.*", "kworkerinfo.*", "kwi.*", "kleaderboard.*", "klb.*", "kaffectionlist.*", "kafl.*", "kwishlist.*", "kwl.*", "kwishadd.*", "kwa.*", "kwishremove.*", "kwr.*", "kwishwatch.*", "kww.*", "kwishipgrade.*", "kwu.*", "kitemshop.*", "kis.*", "kgemshop.*", "kgs.*", "kticketshop.*", "kts.*", "kframeshop.*", "kfs.*", "kbackgroundshop.*", "kbgs.*", "kbuy.*", "kblackmarket.*", "kbm.*", "kbid.*", "kgive.*", "kg.*", "ktrade.*", "kmultitrade.*", "kmt.*", "kjobboard.*", "kjb.*", "kjobworker.*", "kjw.*", "kjobnode.*", "kjn.*", "knodes.*", "kn.*", "kwork.*", "kw.*", "kclaninfo.*", "knodetax.*", "kalbum.*", "ka.*", "kalbumcreate.*", "kac.*", "kalbumdelete.*", "kad.*", "kalbumrename.*", "kalbumcardadd.*", "kaca.*", "kalbumcardremove.*", "kacrm.*", "kalbumpageadd.*", "kalbumpageremove.*", "kalbumpageswap.*", "kalbumbackground.*", "kbackgrounds.*", "kbg.*", "kevent.*", "kinvite.*"]
+
+SCHOOL_NAME_DICT = {
+    'hanasakigawa_high': "Hanasakigawa Girls' Academy",
+    'haneoka_high': "Haneoka Girls' Academy",
+    'tsukinomori_high': "Tsukinomori Girls' Academy",
+    'geijutsu_high': "Geijutsu Academy",
+    'shirayuki_high': "Shirayuki Private Academy",
+    'kamogawa_middle': "Kamogawa Central Middle School",
+    'celosia_international': "Celosia International Academy"
+}

@@ -31,60 +31,8 @@ from pathlib import Path
 from operator import itemgetter
 
 from formatting.embed import gen_embed
+from formatting.constants import SCHOOL_NAME_DICT
 from __main__ import log, db
-
-character_names = [
-    'Kasumi Toyama',
-    'Tae Hanazono',
-    'Rimi Ushigome',
-    'Saya Yamabuki',
-    'Arisa Ichigaya',
-    'Ran Mitake',
-    'Moca Aoba',
-    'Himari Uehara',
-    'Tomoe Udagawa',
-    'Tsugumi Hazawa',
-    'Kokoro Tsurumaki',
-    'Kaoru Seta',
-    'Hagumi Kitazawa',
-    'Kanon Matsubara',
-    'Misaki Okusawa',
-    'Aya Maruyama',
-    'Hina Hikawa',
-    'Chisato Shirasagi',
-    'Maya Yamato',
-    'Eve Wakamiya',
-    'Yukina Minato',
-    'Sayo Hikawa',
-    'Lisa Imai',
-    'Ako Udagawa',
-    'Rinko Shirokane',
-    'Mashiro Kurata',
-    'Toko Kirigaya',
-    'Nanami Hiromachi',
-    'Tsukushi Futaba',
-    'Rui Yashio',
-    'Rei Wakana',
-    'Rokka Asahi',
-    'Masuki Sato',
-    'Reona Nyubara',
-    'Chiyu Tamade',
-    'LAYER',  # RAS nicknames below
-    'LOCK',
-    'MASKING',
-    'PAREO',
-    'CHU²'
-]
-
-school_name_dict = {
-    'hanasakigawa_high': "Hanasakigawa Girls' Academy",
-    'haneoka_high': "Haneoka Girls' Academy",
-    'tsukinomori_high': "Tsukinomori Girls' Academy",
-    'geijutsu_high': "Geijutsu Academy",
-    'shirayuki_high': "Shirayuki Private Academy",
-    'kamogawa_middle': "Kamogawa Central Middle School",
-    'celosia_international': "Celosia International Academy"
-}
 
 
 def find_rank(rank: int):
@@ -585,7 +533,16 @@ class Game(commands.Cog):
             await ctx.interaction.followup.send("Could not get data from Bestdori API.", ephemeral=True)
 
     async def chara_name_autocomplete(self, ctx):
-        return [name for name in character_names if ctx.value.lower() in name.lower()]
+        chara_api = await self.fetch_api('https://bestdori.com/api/characters/all.2.json')
+        main_charas = [chara_api[chara_id] for chara_id in chara_api if 'bandId' in chara_api[chara_id]]
+        print(f'{len(main_charas)} main characters found')
+        names = [chara['characterName'] for chara in main_charas]
+        nicknames = [chara['nickname'] for chara in main_charas]
+        jp_name_match = [name[0] for name in names if name[0] is not None and ctx.value.lower() in name[0].lower()]
+        en_name_match = [name[1] for name in names if name[1] is not None and ctx.value.lower() in name[1].lower()]
+        jp_nick_match = [nick[0] for nick in nicknames if nick[0] is not None and ctx.value.lower() in nick[0].lower()]
+        en_nick_match = [nick[1] for nick in nicknames if nick[1] is not None and ctx.value.lower() in nick[1].lower()]
+        return en_name_match + en_nick_match + jp_name_match + jp_nick_match
 
     @game_commands.command(name='character',
                            description='Posts character info.')
@@ -639,9 +596,9 @@ class Game(commands.Cog):
                 chara_about = chara_api['profile']['selfIntroduction'][0]
                 chara_school = chara_api['profile']['school'][0]
 
-            for school_key in school_name_dict:
+            for school_key in SCHOOL_NAME_DICT:
                 if school_key in chara_school:
-                    chara_school = school_name_dict[school_key]
+                    chara_school = SCHOOL_NAME_DICT[school_key]
                     break
             chara_school = '**School**: ' + chara_school
 
