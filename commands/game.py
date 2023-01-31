@@ -279,35 +279,40 @@ class Game(commands.Cog):
                                 content=f'Failed to get data for player with ID `{player_id} (Server {server})`.'),
                 ephemeral=True)
 
+    async def song_name_autocomplete(self, ctx: discord.ApplicationContext):
+        song_list = await self.fetch_api('https://bestdori.com/api/songs/all.7.json')
+        matches = []
+        for x in range(0,4):
+            matches.extend([song_list[song_id]['musicTitle'][x] for song_id in song_list if
+                              song_list[song_id]['musicTitle'][x] is not None and ctx.value.lower() in song_list[song_id]['musicTitle'][x].lower()])
+        return set(matches)
+
     @game_commands.command(name='songinfo',
                            description='Provides info about a song')
     async def song_info(self,
                         ctx: discord.ApplicationContext,
-                        song_name: Option(str, "Song name to lookup", required=True)):
+                        name: Option(str, "Song name to lookup", required=True, autocomplete=song_name_autocomplete)):
         await ctx.interaction.response.defer()
         try:
             song_id = ""
             song_api = await self.fetch_api("https://bestdori.com/api/songs/all.7.json")
             displayed_song_name = ""
-            # TODO: optimize this, or maybe search for incomplete matches if there is no exact match
             for key in song_api:
                 element = song_api[key]['musicTitle'][1]
-                if element is None:
-                    element = song_api[key]['musicTitle'][0]
-                displayed_song_name = element
-                if element == 'R・I・O・T':
-                    element = 'Riot'
-                if element == 'KIZUNA MUSIC♪':
-                    element = 'KIZUNA MUSIC'
-                if element == song_name or element.lower() == song_name:
+                if element is not None and element == name:
+                    displayed_song_name = element
                     song_id = key
                     break
+                else:
+                    element = song_api[key]['musicTitle'][0]
+                    if element is not None and element == name:
+                        displayed_song_name = element
+                        song_id = key
+                        break
 
             if song_id not in song_api:
                 await ctx.interaction.followup.send(
-                    "Couldn't find the song entered, it was possibly entered incorrectly. The song needs to be spelled exactly as it appears in game.",
-                    ephemeral=True
-                )
+                    "Couldn't find the specified song.", ephemeral=True)
                 return
 
             min_bpm = song_api[song_id]['bpm']['0'][0]['bpm']
@@ -354,54 +359,51 @@ class Game(commands.Cog):
             await ctx.interaction.followup.send("Failed to process song data",
                                                 ephemeral=True)
 
-    async def get_song_meta_output(self, fever: bool, songs: tuple = []):
+    async def get_song_meta_output(self, fever: bool, song: str = ""):
         song_name_api = await self.fetch_api('https://bestdori.com/api/songs/all.7.json')
         song_meta_api = await self.fetch_api('https://bestdori.com/api/songs/meta/all.5.json')
         song_weight_list = []
-        added_songs = []
+        song_id = ""
 
-        if songs:
+        if song != "":
             # Get APIs
 
             # Find the IDs for the input
             # So 5.3.2 = [2.7628, 1.0763, 3.3251, 1.488]
             # Means that song (id = 5) on expert (difficulty = 3) on a 7 second skill (duration = 2 + 5) has those meta numbers.
             # First two = non fever, so if the skill is 60% then song score = 2.7628 + 1.0763 * 60%
-            for song in songs:
-                for x in song_name_api:
-                    if song_name_api[x]['musicTitle'][1] is not None:
-                        if song.lower() in (song_name_api[x]['musicTitle'][1]).lower():
-                            added_songs.append([song_name_api[x]['musicTitle'][1], x])
-                            break
-                    elif song_name_api[x]['musicTitle'][0] is not None:
-                        if song.lower() in (song_name_api[x]['musicTitle'][0]).lower():
-                            added_songs.append([song_name_api[x]['musicTitle'][0], x])
-                            break
-            if added_songs:
-                for song in added_songs:
-                    if "4" in song_meta_api[song[1]]:
-                        song_values = song_meta_api[song[1]]["4"]["7"]
-                        song_length = song_name_api[song[1]]['length']
-                        song_length = strftime("%H:%M:%S", gmtime(song_length))
-                        if fever:
-                            song_weight_list.append(
-                                [song[0] + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
-                                 song_length])
-                        else:
-                            song_weight_list.append(
-                                [song[0] + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
-                                 song_length])
-                    song_values = song_meta_api[song[1]]["3"]["7"]
-                    song_length = song_name_api[song[1]]['length']
+            for x in song_name_api:
+                if song_name_api[x]['musicTitle'][1] is not None:
+                    if song == song_name_api[x]['musicTitle'][1]:
+                        song_id = x
+                        break
+                elif song_name_api[x]['musicTitle'][0] is not None:
+                    if song.lower() in (song_name_api[x]['musicTitle'][0]).lower():
+                        song_id = x
+                        break
+            if song_id != "":
+                if "4" in song_meta_api[song_id]:
+                    song_values = song_meta_api[song_id]["4"]["7"]
+                    song_length = song_name_api[song_id]['length']
                     song_length = strftime("%H:%M:%S", gmtime(song_length))
                     if fever:
                         song_weight_list.append(
-                            [song[0], round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
+                            [song + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
+                             song_length])
                     else:
                         song_weight_list.append(
-                            [song[0], round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
+                            [song + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
+                             song_length])
+                song_values = song_meta_api[song_id]["3"]["7"]
+                song_length = song_name_api[song_id]['length']
+                song_length = strftime("%H:%M:%S", gmtime(song_length))
+                if fever:
+                    song_weight_list.append(
+                        [song, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
+                else:
+                    song_weight_list.append(
+                        [song, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
 
-            # TODO: use a set for song_weight_list to avoid duplicate rows (which may happen with multiple search terms)
             if song_weight_list:
                 song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
 
@@ -459,18 +461,16 @@ class Game(commands.Cog):
                                                             headers=["Song", "Score %", "Length"]) + "```")
         return output
 
+
     @game_commands.command(name='songmeta',
                            description='Show song meta info')
     async def song_meta(self,
                         ctx: discord.ApplicationContext,
                         fever: Option(bool, "Whether or not fever is enabled", required=False, default=True),
-                        songs: Option(str, "Song names to lookup. Separate multiple song names with a comma.",
-                                      required=False)):
+                        song: Option(str, "Song name to lookup", required=False, autocomplete=song_name_autocomplete)):
         await ctx.interaction.response.defer()
-        if songs:
-            songs = songs.replace(', ', ',')
-            song_list = songs.split(',')
-            song_meta = await self.get_song_meta_output(fever, song_list)
+        if song:
+            song_meta = await self.get_song_meta_output(fever, song)
             await ctx.interaction.followup.send(song_meta)
         else:
             song_meta = await self.get_song_meta_output(fever)
@@ -532,7 +532,7 @@ class Game(commands.Cog):
         except HTTPStatusError:
             await ctx.interaction.followup.send("Could not get data from Bestdori API.", ephemeral=True)
 
-    async def chara_name_autocomplete(self, ctx):
+    async def chara_name_autocomplete(self, ctx: discord.ApplicationContext):
         chara_api = await self.fetch_api('https://bestdori.com/api/characters/all.2.json')
         main_charas = [chara_api[chara_id] for chara_id in chara_api if 'bandId' in chara_api[chara_id]]
         print(f'{len(main_charas)} main characters found')
