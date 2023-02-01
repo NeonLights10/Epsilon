@@ -190,7 +190,7 @@ class Game(commands.Cog):
     async def game_lookup(self,
                           ctx: discord.ApplicationContext,
                           id: Option(int, "Player ID to lookup",
-                                            required=True),
+                                     required=True),
                           server: Option(str, "Choose which server to lookup the player ID on",
                                          choices=[OptionChoice('EN', value='en'),
                                                   OptionChoice('JP', value='jp'),
@@ -201,11 +201,11 @@ class Game(commands.Cog):
                                          default='en')):
         await ctx.interaction.response.defer()
         try:
-            player_api = await self.fetch_api(f'https://bestdori.com/api/player/{server}/{player_id}?mode=2')
+            player_api = await self.fetch_api(f'https://bestdori.com/api/player/{server}/{id}?mode=2')
             if not player_api['result']:
                 await ctx.interaction.followup.send(
                     embed=gen_embed(title='Error fetching player data',
-                                    content=f'Failed to get data for player with ID `{player_id} (Server {server})`.'),
+                                    content=f'Failed to get data for player with ID `{id} (Server {server})`.'),
                     ephemeral=True)
                 return
 
@@ -213,9 +213,9 @@ class Game(commands.Cog):
             if profile is None:
                 await ctx.interaction.followup.send(
                     embed=gen_embed(title='No player data',
-                                    content=f'No data found for player with ID `{player_id} (Server {server})`.'))
+                                    content=f'No data found for player with ID `{id} (Server {server})`.'))
                 return
-            embed = gen_embed(title=f"{profile['userName']} ({server.upper()}: {player_id})")
+            embed = gen_embed(title=f"{profile['userName']} ({server.upper()}: {id})")
             embed.add_field(name='Description', value=profile['introduction'], inline=True)
             embed.add_field(name='Level', value=profile['rank'], inline=True)
             embed.add_field(name='\u200b', value='\u200b', inline=True)
@@ -277,13 +277,13 @@ class Game(commands.Cog):
         except HTTPStatusError:
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error fetching player data',
-                                content=f'Failed to get data for player with ID `{player_id} (Server {server})`.'),
+                                content=f'Failed to get data for player with ID `{id} (Server {server})`.'),
                 ephemeral=True)
         except KeyError as e:
             print(e)
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error fetching player data',
-                                content=f'Failed to get data for player with ID `{player_id} (Server {server})`.'),
+                                content=f'Failed to get data for player with ID `{id} (Server {server})`.'),
                 ephemeral=True)
 
     async def song_name_autocomplete(self, ctx: discord.ApplicationContext):
@@ -697,10 +697,10 @@ class Game(commands.Cog):
         if current_player_rank > 500:
             output_string = "Beginning rank can't be over 500."
         else:
-            xp_per_flame = get_xp_per_flame(flames_per_game)
+            xp_per_flame = get_xp_per_flame(flames)
             # , timeleft: int = timeLeftInt('en')
             # songs played
-            songs_played = (target_ep - current_ep) / ep_per_song
+            songs_played = (target - current) / ep
 
             # beg xp
             if current_player_rank != 500:
@@ -738,9 +738,9 @@ class Game(commands.Cog):
 
             # other stuff
             nat_flames = (32 * (int(hrs_left) / 24))  # assuming 16 hours efficient
-            pts_per_refill = ((ep_per_song / flames_per_game) * 10)
-            pts_from_rankup = (rank_up_amt * ((ep_per_song / flames_per_game) * 10))
-            pts_naturally = (ep_per_song / flames_per_game) * nat_flames
+            pts_per_refill = ((ep / flames) * 10)
+            pts_from_rankup = (rank_up_amt * ((ep / flames) * 10))
+            pts_naturally = (ep / flames) * nat_flames
 
             # time spent
             time_spent = math.floor((songs_played * 150) / 3600)  # seconds
@@ -750,14 +750,14 @@ class Game(commands.Cog):
                 time_spent_str = str(time_spent)
 
             # gems used
-            stars_used = ((((target_ep - current_ep) - pts_naturally - pts_from_rankup) / pts_per_refill) * 100)
+            stars_used = ((((target - current) - pts_naturally - pts_from_rankup) / pts_per_refill) * 100)
             if stars_used < 0:
                 stars_used = 0
             else:
                 stars_used = math.ceil(stars_used / 100.00) * 100
 
             output_string = ("```" + tabulate(
-                [['Stars Used', "{:,}".format(stars_used)], ['Target', "{:,}".format(target_ep)],
+                [['Stars Used', "{:,}".format(stars_used)], ['Target', "{:,}".format(target)],
                  ['Beginning Rank', current_player_rank], ['Ending Rank', end_rank],
                  ['Songs played', songs_played], ['Hours Spent (approx.)', time_spent]],
                 tablefmt="plain") + "```")
@@ -769,32 +769,32 @@ class Game(commands.Cog):
                      ctx: discord.ApplicationContext,
                      score: Option(int, "Individual score", min_value=0, required=True),
                      flames: Option(int, "Flames used per game", choices=[0, 1, 2, 3], required=True),
-                     event_type: Option(int,
+                     event: Option(int,
                                         "Event type (Note: Medley and Team Live calculations are not supported yet)",
-                                        choices=[
+                                   choices=[
                                             OptionChoice("Normal", value=1),
                                             OptionChoice("Live Goals", value=2),
                                             OptionChoice("Challenge Live", value=3),
                                             OptionChoice("VS Live", value=4)
                                         ],
-                                        required=True),
-                     bonus_percent: Option(int,
+                                   required=True),
+                     bonus: Option(int,
                                            "Event bonus percentage, not including the base 100%. Used in events other than VS Live.",
-                                           min_value=0,
-                                           default=0,
-                                           required=False),
-                     multi_score: Option(int,
+                                   min_value=0,
+                                   default=0,
+                                   required=False),
+                     total: Option(int,
                                          "Total room score in Multi Live. Used in events other than VS Live.",
-                                         default=9000000,
-                                         required=False),
+                                   default=9000000,
+                                   required=False),
                      ranking: Option(int, "VS Live multi rank placement (1-5)",
-                                          min_value=1, max_value=5, default=1, required=False)
+                                     min_value=1, max_value=5, default=1, required=False)
                      ):
         await ctx.interaction.response.defer()
-        bp_percent_modifier = (bonus_percent / 100) + 1
+        bp_percent_modifier = (bonus / 100) + 1
 
-        ep_per_flame = 1 if flames_used == 0 else get_ep_per_flame(flames_used)
-        match event_type:
+        ep_per_flame = 1 if flames == 0 else get_ep_per_flame(flames)
+        match event:
             case 1:
                 event_scaling = 10000
                 event_base = 50
@@ -808,22 +808,22 @@ class Game(commands.Cog):
                 event_scaling = 550
                 event_base = 1
 
-        if event_type <= 3:
+        if event <= 3:
             ep = event_base
-            team_score = multi_score - your_score
-            if your_score <= 1600000:
-                ep += math.floor(your_score / event_scaling)
+            team_score = total - score
+            if score <= 1600000:
+                ep += math.floor(score / event_scaling)
             else:
                 ep += math.floor(1600000 / event_scaling)
-                if your_score <= 1750000:
-                    ep += math.floor((your_score - 1600000) / event_scaling / 2)
+                if score <= 1750000:
+                    ep += math.floor((score - 1600000) / event_scaling / 2)
                 else:
                     ep += math.floor((1750000 - 1600000) / event_scaling / 2)
-                    if your_score <= 2000000:
-                        ep += math.floor((your_score - 1750000) / event_scaling / 3)
+                    if score <= 2000000:
+                        ep += math.floor((score - 1750000) / event_scaling / 3)
                     else:
                         ep += math.floor((2000000 - 1750000) / event_scaling / 3)
-                        ep += math.floor((your_score - 2000000) / event_scaling / 4)
+                        ep += math.floor((score - 2000000) / event_scaling / 4)
             if team_score <= 6400000:
                 ep += math.floor(team_score / event_scaling / 10)
             else:
@@ -842,7 +842,7 @@ class Game(commands.Cog):
             ep *= ep_per_flame
         else:
             # bp calcs
-            match vs_placement:
+            match ranking:
                 case 1:
                     placement_bonus = 60
                 case 2:
@@ -853,7 +853,7 @@ class Game(commands.Cog):
                     placement_bonus = 37
                 case 5:
                     placement_bonus = 30
-            ep = (placement_bonus + math.floor(your_score / 5500)) * ep_per_flame
+            ep = (placement_bonus + math.floor(score / 5500)) * ep_per_flame
         await ctx.interaction.followup.send("EP Gain: " + str(math.floor(ep)))
 
     @game_commands.command(name='card',
