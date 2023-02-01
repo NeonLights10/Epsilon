@@ -590,7 +590,7 @@ class Update(commands.Cog):
         await self.update_card_icons()
         await ctx.interaction.followup.send("Cards successfully updated.")
 
-    @tasks.loop(seconds=300.0)
+    @tasks.loop(hours=168.0)
     async def update_cards_loop(self):
         await self.update_card_icons()
 
@@ -608,7 +608,7 @@ class Update(commands.Cog):
         await asyncio.gather(*[self.save_title_img(server, title) for title in titles_img_api])
         log.info(f'Finished extracting titles for server {server}')
 
-    @tasks.loop(seconds=300.0)
+    @tasks.loop(seconds=168.0)
     async def update_titles_loop(self):
         for i in range(5):
             if not path.exists(f'data/img/titles/{server_name(i)}/'):
