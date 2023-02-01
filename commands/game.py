@@ -62,6 +62,13 @@ def get_xp_table():
 
 
 def get_xp_per_flame(flames_used: int):
+    match flames_used:
+        case 1:
+            return 2500
+        case 2:
+            return 3000
+        case 3:
+            return 3500
     if flames_used == 1:
         xp = 2500
     elif flames_used == 2:
@@ -182,7 +189,7 @@ class Game(commands.Cog):
                            description='Searches a player on the specified server by ID')
     async def game_lookup(self,
                           ctx: discord.ApplicationContext,
-                          player_id: Option(int, "Player ID to lookup",
+                          id: Option(int, "Player ID to lookup",
                                             required=True),
                           server: Option(str, "Choose which server to lookup the player ID on",
                                          choices=[OptionChoice('EN', value='en'),
@@ -668,10 +675,10 @@ class Game(commands.Cog):
                            description='Provides star usage when aiming for a certain amount of EP.')
     async def staruse(self,
                       ctx: discord.ApplicationContext,
-                      ep_per_song: Option(int, "EP gained per song", required=True),
-                      current_ep: Option(int, "Current event point total", min_value=0, required=True),
-                      target_ep: Option(int, "Target event point total", min_value=0, required=True),
-                      flames_per_game: Option(int, "Flames used per game", choices=[1, 2, 3], required=True),
+                      ep: Option(int, "EP gained per song", required=True),
+                      current: Option(int, "Current event point total", min_value=0, required=True),
+                      target: Option(int, "Target event point total", min_value=0, required=True),
+                      flames: Option(int, "Flames used per game", choices=[1, 2, 3], required=True),
                       current_player_rank: Option(int, "Current player rank", min_value=1, max_value=500,
                                                   required=True),
                       server: Option(str, "Server to get the current event's remaining time",
@@ -760,8 +767,8 @@ class Game(commands.Cog):
                            description='Calculates EP gain for a single game.')
     async def epgain(self,
                      ctx: discord.ApplicationContext,
-                     your_score: Option(int, "Individual score", min_value=0, required=True),
-                     flames_used: Option(int, "Flames used per game", choices=[0, 1, 2, 3], required=True),
+                     score: Option(int, "Individual score", min_value=0, required=True),
+                     flames: Option(int, "Flames used per game", choices=[0, 1, 2, 3], required=True),
                      event_type: Option(int,
                                         "Event type (Note: Medley and Team Live calculations are not supported yet)",
                                         choices=[
@@ -780,7 +787,7 @@ class Game(commands.Cog):
                                          "Total room score in Multi Live. Used in events other than VS Live.",
                                          default=9000000,
                                          required=False),
-                     vs_placement: Option(int, "VS Live placement",
+                     ranking: Option(int, "VS Live multi rank placement (1-5)",
                                           min_value=1, max_value=5, default=1, required=False)
                      ):
         await ctx.interaction.response.defer()
@@ -801,7 +808,7 @@ class Game(commands.Cog):
                 event_scaling = 550
                 event_base = 1
 
-        if event_type == 1 or event_type == 2 or event_type == 3:
+        if event_type <= 3:
             ep = event_base
             team_score = multi_score - your_score
             if your_score <= 1600000:
