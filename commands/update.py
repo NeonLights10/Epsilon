@@ -492,7 +492,7 @@ class Update(commands.Cog):
                     server = server_key
                     break
             if server == "":
-                print(f'card {card_id} was not released on any server')
+                log.warning(f'card {card_id} was not released on any server')
                 return
             # DO THE GACHA ICONS IN THIS LOGIC TOO IF RARITY > 1
             if not path.exists(full_icons_path):
@@ -566,11 +566,11 @@ class Update(commands.Cog):
                                         im.save(gacha_icons_path)
                         im.save(full_icons_path)
                     except Exception as e:
-                        print(f"Failed adding card with ID {card_id} ({e})")
+                        log.error(f"Failed adding card with ID {card_id} ({e})")
                         pass
-                print(f'updated card {card_id}')
+                log.info(f'updated card {card_id}')
         except Exception as e:
-            print(f"Failed adding card with ID {card_id} ({e})")
+            log.error(f"Failed adding card with ID {card_id} ({e})")
             pass
 
     async def update_card_icons(self):
@@ -601,12 +601,12 @@ class Update(commands.Cog):
             image = Image.open(BytesIO(r.content))
             im.paste(image)
             im.save(f'data/img/titles/{server}/{title}')
-            print(f'saved title {server}/{title}')
+            log.info(f'saved title {server}/{title}')
 
     async def get_titles(self, server):
         titles_img_api = await self.fetch_api(f"https://bestdori.com/api/explorer/{server}/assets/thumb/degree.json")
         await asyncio.gather(*[self.save_title_img(server, title) for title in titles_img_api])
-        print(f'Finished extracting titles for server {server}')
+        log.info(f'Finished extracting titles for server {server}')
 
     @tasks.loop(seconds=300.0)
     async def update_titles_loop(self):
