@@ -282,8 +282,13 @@ class Game(commands.Cog):
         except KeyError as e:
             print(e)
             await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error',
+                                content=f'Failed to process player data'),
+                ephemeral=True)
+        except json.decoder.JSONDecodeError:
+            await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error fetching player data',
-                                content=f'Failed to get data for player with ID `{id} (Server {server})`.'),
+                                content='Could not decode response from Bestdori API.'),
                 ephemeral=True)
 
     async def song_name_autocomplete(self, ctx: discord.ApplicationContext):
@@ -360,70 +365,105 @@ class Game(commands.Cog):
 
             await ctx.interaction.followup.send(embed=embed)
         except HTTPStatusError:
-            await ctx.interaction.followup.send("There was an error fetching the song list from Bestdori.",
-                                                ephemeral=True)
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error fetching song list',
+                                content='Could not get song list from Bestdori API.'),
+                ephemeral=True)
         except KeyError:
-            await ctx.interaction.followup.send("Failed to process song data",
-                                                ephemeral=True)
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error',
+                                content='Failed to process song data.'),
+                ephemeral=True)
+        except json.decoder.JSONDecodeError:
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error fetching song data',
+                                content='Could not decode response from Bestdori API.'),
+                ephemeral=True)
 
-    async def get_song_meta_output(self, fever: bool, song: str = ""):
-        song_name_api = await self.fetch_api('https://bestdori.com/api/songs/all.7.json')
-        song_meta_api = await self.fetch_api('https://bestdori.com/api/songs/meta/all.5.json')
-        song_weight_list = []
-        song_id = ""
 
-        if song != "":
-            # Get APIs
+    @game_commands.command(name='songmeta',
+                           description='Show song meta info')
+    async def song_meta(self,
+                        ctx: discord.ApplicationContext,
+                        fever: Option(bool, "Whether or not fever is enabled", required=False, default=True),
+                        song: Option(str, "Song name to lookup", required=False, autocomplete=song_name_autocomplete)):
+        await ctx.interaction.response.defer()
+        try:
+            song_name_api = await self.fetch_api('https://bestdori.com/api/songs/all.7.json')
+            song_meta_api = await self.fetch_api('https://bestdori.com/api/songs/meta/all.5.json')
+            song_weight_list = []
+            song_id = ""
 
-            # Find the IDs for the input
-            # So 5.3.2 = [2.7628, 1.0763, 3.3251, 1.488]
-            # Means that song (id = 5) on expert (difficulty = 3) on a 7 second skill (duration = 2 + 5) has those meta numbers.
-            # First two = non fever, so if the skill is 60% then song score = 2.7628 + 1.0763 * 60%
-            for x in song_name_api:
-                if song_name_api[x]['musicTitle'][1] is not None:
-                    if song == song_name_api[x]['musicTitle'][1]:
-                        song_id = x
-                        break
-                elif song_name_api[x]['musicTitle'][0] is not None:
-                    if song.lower() in (song_name_api[x]['musicTitle'][0]).lower():
-                        song_id = x
-                        break
-            if song_id != "":
-                if "4" in song_meta_api[song_id]:
-                    song_values = song_meta_api[song_id]["4"]["7"]
+            if song != "":
+                # Get APIs
+
+                # Find the IDs for the input
+                # So 5.3.2 = [2.7628, 1.0763, 3.3251, 1.488]
+                # Means that song (id = 5) on expert (difficulty = 3) on a 7 second skill (duration = 2 + 5) has those meta numbers.
+                # First two = non fever, so if the skill is 60% then song score = 2.7628 + 1.0763 * 60%
+                for x in song_name_api:
+                    if song_name_api[x]['musicTitle'][1] is not None:
+                        if song == song_name_api[x]['musicTitle'][1]:
+                            song_id = x
+                            break
+                    elif song_name_api[x]['musicTitle'][0] is not None:
+                        if song.lower() in (song_name_api[x]['musicTitle'][0]).lower():
+                            song_id = x
+                            break
+                if song_id != "":
+                    if "4" in song_meta_api[song_id]:
+                        song_values = song_meta_api[song_id]["4"]["7"]
+                        song_length = song_name_api[song_id]['length']
+                        song_length = strftime("%H:%M:%S", gmtime(song_length))
+                        if fever:
+                            song_weight_list.append(
+                                [song + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
+                                 song_length])
+                        else:
+                            song_weight_list.append(
+                                [song + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
+                                 song_length])
+                    song_values = song_meta_api[song_id]["3"]["7"]
                     song_length = song_name_api[song_id]['length']
                     song_length = strftime("%H:%M:%S", gmtime(song_length))
                     if fever:
                         song_weight_list.append(
-                            [song + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
-                             song_length])
+                            [song, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
                     else:
                         song_weight_list.append(
-                            [song + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
-                             song_length])
-                song_values = song_meta_api[song_id]["3"]["7"]
-                song_length = song_name_api[song_id]['length']
-                song_length = strftime("%H:%M:%S", gmtime(song_length))
+                            [song, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
+
+                if song_weight_list:
+                    song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
+
                 if fever:
-                    song_weight_list.append(
-                        [song, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
+                    title = "Song Meta (with Fever)"
                 else:
-                    song_weight_list.append(
-                        [song, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
-
-            if song_weight_list:
-                song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
-
-            if fever:
-                title = "Song Meta (with Fever)"
+                    title = "Song Meta (no Fever)"
+                output = ("```" + title + "\n\n" + tabulate(song_weight_list, tablefmt="plain",
+                                                            headers=["Song", "Score %", "Length"]) + "```")
             else:
-                title = "Song Meta (no Fever)"
-            output = ("```" + title + "\n\n" + tabulate(song_weight_list, tablefmt="plain",
-                                                        headers=["Song", "Score %", "Length"]) + "```")
-        else:
-            for x in song_meta_api:
-                if "4" in song_meta_api[x]:
-                    song_values = song_meta_api[x]["4"]["7"]
+                for x in song_meta_api:
+                    if "4" in song_meta_api[x]:
+                        song_values = song_meta_api[x]["4"]["7"]
+                        try:
+                            if song_name_api[x]['musicTitle'][1] is not None:
+                                song_name = song_name_api[x]['musicTitle'][1]
+                            else:
+                                song_name = song_name_api[x]['musicTitle'][0]
+                        except KeyError:
+                            song_name = song_name_api[x]['musicTitle'][0]
+                        song_length = song_name_api[x]['length']
+                        song_length = strftime("%H:%M:%S", gmtime(song_length))
+                        if fever:
+                            song_weight_list.append(
+                                [song_name + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
+                                 song_length])
+                        else:
+                            song_weight_list.append(
+                                [song_name + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
+                                 song_length])
+                    song_values = song_meta_api[x]["3"]["7"]
                     try:
                         if song_name_api[x]['musicTitle'][1] is not None:
                             song_name = song_name_api[x]['musicTitle'][1]
@@ -435,53 +475,30 @@ class Game(commands.Cog):
                     song_length = strftime("%H:%M:%S", gmtime(song_length))
                     if fever:
                         song_weight_list.append(
-                            [song_name + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
-                             song_length])
+                            [song_name, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
                     else:
                         song_weight_list.append(
-                            [song_name + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
-                             song_length])
-                song_values = song_meta_api[x]["3"]["7"]
-                try:
-                    if song_name_api[x]['musicTitle'][1] is not None:
-                        song_name = song_name_api[x]['musicTitle'][1]
+                            [song_name, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
+                if song_weight_list:
+                    song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
+                    song_weight_list = song_weight_list[:20]
+                    if fever:
+                        title = "Song Meta (with Fever)"
                     else:
-                        song_name = song_name_api[x]['musicTitle'][0]
-                except KeyError:
-                    song_name = song_name_api[x]['musicTitle'][0]
-                song_length = song_name_api[x]['length']
-                song_length = strftime("%H:%M:%S", gmtime(song_length))
-                if fever:
-                    song_weight_list.append(
-                        [song_name, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
-                else:
-                    song_weight_list.append(
-                        [song_name, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
-            if song_weight_list:
-                song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
-                song_weight_list = song_weight_list[:20]
-                if fever:
-                    title = "Song Meta (with Fever)"
-                else:
-                    title = "Song Meta (no Fever)"
-                output = ("```" + title + "\n\n" + tabulate(song_weight_list, tablefmt="plain",
-                                                            headers=["Song", "Score %", "Length"]) + "```")
-        return output
-
-
-    @game_commands.command(name='songmeta',
-                           description='Show song meta info')
-    async def song_meta(self,
-                        ctx: discord.ApplicationContext,
-                        fever: Option(bool, "Whether or not fever is enabled", required=False, default=True),
-                        song: Option(str, "Song name to lookup", required=False, autocomplete=song_name_autocomplete)):
-        await ctx.interaction.response.defer()
-        if song:
-            song_meta = await self.get_song_meta_output(fever, song)
-            await ctx.interaction.followup.send(song_meta)
-        else:
-            song_meta = await self.get_song_meta_output(fever)
-            await ctx.interaction.followup.send(song_meta)
+                        title = "Song Meta (no Fever)"
+                    output = ("```" + title + "\n\n" + tabulate(song_weight_list, tablefmt="plain",
+                                                                headers=["Song", "Score %", "Length"]) + "```")
+            await ctx.interaction.followup.send(output)
+        except HTTPStatusError:
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error fetching song meta',
+                                content='Could not get song meta list from Bestdori API.'),
+                ephemeral=True)
+        except json.decoder.JSONDecodeError:
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error',
+                                content='Could not decode response from Bestdori API.'),
+                ephemeral=True)
 
     @game_commands.command(name='leaderboard',
                            description='View Bestdori leaderboards for various categories.')
@@ -537,7 +554,15 @@ class Game(commands.Cog):
                 output = 'Output is greater than 2000 characters, please select a smaller list of values to return!'
             await ctx.interaction.followup.send(output)
         except HTTPStatusError:
-            await ctx.interaction.followup.send("Could not get data from Bestdori API.", ephemeral=True)
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error fetching leaderboard',
+                                content='Could not get leaderboard data from Bestdori.'),
+                ephemeral=True)
+        except json.decoder.JSONDecodeError:
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error',
+                                content='Could not decode response from Bestdori API.'),
+                ephemeral=True)
 
     async def chara_name_autocomplete(self, ctx: discord.ApplicationContext):
         chara_api = await self.fetch_api('https://bestdori.com/api/characters/all.2.json')
@@ -576,12 +601,14 @@ class Game(commands.Cog):
                     chara_id = x
 
             if not chara_id:
-                await ctx.interaction.followup.send("Could not find character.", ephemeral=True)
+                await ctx.interaction.followup.send(
+                    embed=gen_embed(title='Error', content='Could not find character.'), ephemeral=True)
                 return
 
             chara_api = await self.fetch_api(f'https://bestdori.com/api/characters/{int(chara_id)}.json')
             if 'profile' not in chara_api:
-                await ctx.interaction.followup.send("Character does not have a profile.", ephemeral=True)
+                await ctx.interaction.followup.send(
+                    embed=gen_embed(title='Error', content='Character does not have a profile.'), ephemeral=True)
                 return
 
             chara_names = chara_api['characterName'][1] + ' / ' + chara_api['characterName'][0]
@@ -633,7 +660,15 @@ class Game(commands.Cog):
             embed.add_field(name='School', value='\n'.join(chara_edu), inline=True)
             await ctx.interaction.followup.send(embed=embed)
         except HTTPStatusError:
-            await ctx.interaction.followup.send("Could not get data from Bestdori API.", ephemeral=True)
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error fetching character info',
+                                content='Could not get data from Bestdori API.'),
+                ephemeral=True)
+        except json.decoder.JSONDecodeError:
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error',
+                                content='Could not decode response from Bestdori API.'),
+                ephemeral=True)
 
     async def get_current_event_id(self, server: int):
         current_time = time.time() * 1000
@@ -694,74 +729,86 @@ class Game(commands.Cog):
                       ):
         await ctx.interaction.response.defer()
 
-        if rank > 500:
-            output_string = "Beginning rank can't be over 500."
-        else:
-            xp_per_flame = get_xp_per_flame(flames)
-            # , timeleft: int = timeLeftInt('en')
-            # songs played
-            songs_played = (target - current) / ep
+        try:
+            if rank > 500:
+                output_string = "Beginning rank can't be over 500."
+            else:
+                xp_per_flame = get_xp_per_flame(flames)
+                # , timeleft: int = timeLeftInt('en')
+                # songs played
+                songs_played = (target - current) / ep
 
-            # beg xp
-            if rank != 500:
-                current_xp = find_rank(rank)
+                # beg xp
+                if rank != 500:
+                    current_xp = find_rank(rank)
 
-                # xp gained + end xp
-                xp_gained = xp_per_flame * songs_played
-                ending_xp = current_xp + xp_gained
-                xp_table = get_xp_table()
+                    # xp gained + end xp
+                    xp_gained = xp_per_flame * songs_played
+                    ending_xp = current_xp + xp_gained
+                    xp_table = get_xp_table()
 
-                if ending_xp > xp_table[-1]:
-                    end_rank = 500
+                    if ending_xp > xp_table[-1]:
+                        end_rank = 500
+                    else:
+
+                        for x in range(len(xp_table)):
+                            if ending_xp < xp_table[x]:
+                                end_rank = x - 1
+                                break
+                            elif ending_xp == xp_table[x]:
+                                end_rank = x
+                                break
                 else:
+                    end_rank = 500
 
-                    for x in range(len(xp_table)):
-                        if ending_xp < xp_table[x]:
-                            end_rank = x - 1
-                            break
-                        elif ending_xp == xp_table[x]:
-                            end_rank = x
-                            break
-            else:
-                end_rank = 500
+                server_id = int(server)
 
-            server_id = int(server)
+                if hours is None:
+                    event_id = await self.get_current_event_id(server_id)
+                    hours = await self.get_event_time_left_sec(server_id, event_id) / 3600
 
-            if hours is None:
-                event_id = await self.get_current_event_id(server_id)
-                hours = await self.get_event_time_left_sec(server_id, event_id) / 3600
+                # rankups
+                rank_up_amt = end_rank - rank
+                if rank_up_amt <= 0:
+                    rank_up_amt = 1
 
-            # rankups
-            rank_up_amt = end_rank - rank
-            if rank_up_amt <= 0:
-                rank_up_amt = 1
+                # other stuff
+                nat_flames = (32 * (int(hours) / 24))  # assuming 16 hours efficient
+                pts_per_refill = ((ep / flames) * 10)
+                pts_from_rankup = (rank_up_amt * ((ep / flames) * 10))
+                pts_naturally = (ep / flames) * nat_flames
 
-            # other stuff
-            nat_flames = (32 * (int(hours) / 24))  # assuming 16 hours efficient
-            pts_per_refill = ((ep / flames) * 10)
-            pts_from_rankup = (rank_up_amt * ((ep / flames) * 10))
-            pts_naturally = (ep / flames) * nat_flames
+                # time spent
+                time_spent = math.floor((songs_played * 150) / 3600)  # seconds
+                if time_spent > hours:
+                    time_spent_str = f'{time_spent} (Warning: event ends in {hours} hours)'
+                else:
+                    time_spent_str = str(time_spent)
 
-            # time spent
-            time_spent = math.floor((songs_played * 150) / 3600)  # seconds
-            if time_spent > hours:
-                time_spent_str = f'{time_spent} (Warning: event ends in {hours} hours)'
-            else:
-                time_spent_str = str(time_spent)
+                # gems used
+                stars_used = ((((target - current) - pts_naturally - pts_from_rankup) / pts_per_refill) * 100)
+                if stars_used < 0:
+                    stars_used = 0
+                else:
+                    stars_used = math.ceil(stars_used / 100.00) * 100
 
-            # gems used
-            stars_used = ((((target - current) - pts_naturally - pts_from_rankup) / pts_per_refill) * 100)
-            if stars_used < 0:
-                stars_used = 0
-            else:
-                stars_used = math.ceil(stars_used / 100.00) * 100
+                output_string = ("```" + tabulate(
+                    [['Stars Used', "{:,}".format(stars_used)], ['Target', "{:,}".format(target)],
+                     ['Beginning Rank', rank], ['Ending Rank', end_rank],
+                     ['Songs played', songs_played], ['Hours Spent (approx.)', time_spent]],
+                    tablefmt="plain") + "```")
+            await ctx.interaction.followup.send(output_string)
+        except HTTPStatusError:
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error fetching event data',
+                                content='Could not get data from Bestdori API.'),
+                ephemeral=True)
+        except json.decoder.JSONDecodeError:
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error',
+                                content='Could not decode response from Bestdori API.'),
+                ephemeral=True)
 
-            output_string = ("```" + tabulate(
-                [['Stars Used', "{:,}".format(stars_used)], ['Target', "{:,}".format(target)],
-                 ['Beginning Rank', rank], ['Ending Rank', end_rank],
-                 ['Songs played', songs_played], ['Hours Spent (approx.)', time_spent]],
-                tablefmt="plain") + "```")
-        await ctx.interaction.followup.send(output_string)
 
     @game_commands.command(name='epgain',
                            description='Calculates EP gain for a single game.')
@@ -854,13 +901,14 @@ class Game(commands.Cog):
                 case 5:
                     placement_bonus = 30
             ep = (placement_bonus + math.floor(score / 5500)) * ep_per_flame
-        await ctx.interaction.followup.send("EP Gain: " + str(math.floor(ep)))
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Result', content=f'EP Gain: {math.floor(ep)}'))
 
-    @game_commands.command(name='card',
-                           description='Provides embedded image of card with specified filters.')
-    async def card_lookup(self,
-                          ctx: discord.ApplicationContext):
-        await ctx.interaction.followup.send("Command not implemented.")
+    # @game_commands.command(name='card',
+    #                        description='Provides embedded image of card with specified filters.')
+    # async def card_lookup(self,
+    #                       ctx: discord.ApplicationContext):
+    #     await ctx.interaction.followup.send("Command not implemented.")
 
 
 def setup(bot):
