@@ -679,8 +679,8 @@ class Game(commands.Cog):
                       current: Option(int, "Current event point total", min_value=0, required=True),
                       target: Option(int, "Target event point total", min_value=0, required=True),
                       flames: Option(int, "Flames used per game", choices=[1, 2, 3], required=True),
-                      current_player_rank: Option(int, "Current player rank", min_value=1, max_value=500,
-                                                  required=True),
+                      rank: Option(int, "Current player rank", min_value=1, max_value=500,
+                                   required=True),
                       server: Option(str, "Server to get the current event's remaining time",
                                      choices=[OptionChoice('EN', value='1'),
                                               OptionChoice('JP', value='0'),
@@ -689,12 +689,12 @@ class Game(commands.Cog):
                                               OptionChoice('KR', value='4')],
                                      required=False,
                                      default='1'),
-                      hrs_left: Option(float, "Manually input remaining time. Overrides time from 'server' argument.",
-                                       required=False),
+                      hours: Option(float, "Manually input remaining time in hours. Overrides time from 'server' argument.",
+                                    required=False),
                       ):
         await ctx.interaction.response.defer()
 
-        if current_player_rank > 500:
+        if rank > 500:
             output_string = "Beginning rank can't be over 500."
         else:
             xp_per_flame = get_xp_per_flame(flames)
@@ -703,8 +703,8 @@ class Game(commands.Cog):
             songs_played = (target - current) / ep
 
             # beg xp
-            if current_player_rank != 500:
-                current_xp = find_rank(current_player_rank)
+            if rank != 500:
+                current_xp = find_rank(rank)
 
                 # xp gained + end xp
                 xp_gained = xp_per_flame * songs_played
@@ -727,25 +727,25 @@ class Game(commands.Cog):
 
             server_id = int(server)
 
-            if hrs_left is None:
+            if hours is None:
                 event_id = await self.get_current_event_id(server_id)
-                hrs_left = await self.get_event_time_left_sec(server_id, event_id) / 3600
+                hours = await self.get_event_time_left_sec(server_id, event_id) / 3600
 
             # rankups
-            rank_up_amt = end_rank - current_player_rank
+            rank_up_amt = end_rank - rank
             if rank_up_amt <= 0:
                 rank_up_amt = 1
 
             # other stuff
-            nat_flames = (32 * (int(hrs_left) / 24))  # assuming 16 hours efficient
+            nat_flames = (32 * (int(hours) / 24))  # assuming 16 hours efficient
             pts_per_refill = ((ep / flames) * 10)
             pts_from_rankup = (rank_up_amt * ((ep / flames) * 10))
             pts_naturally = (ep / flames) * nat_flames
 
             # time spent
             time_spent = math.floor((songs_played * 150) / 3600)  # seconds
-            if time_spent > hrs_left:
-                time_spent_str = f'{time_spent} (Warning: event ends in {hrs_left} hours)'
+            if time_spent > hours:
+                time_spent_str = f'{time_spent} (Warning: event ends in {hours} hours)'
             else:
                 time_spent_str = str(time_spent)
 
@@ -758,7 +758,7 @@ class Game(commands.Cog):
 
             output_string = ("```" + tabulate(
                 [['Stars Used', "{:,}".format(stars_used)], ['Target', "{:,}".format(target)],
-                 ['Beginning Rank', current_player_rank], ['Ending Rank', end_rank],
+                 ['Beginning Rank', rank], ['Ending Rank', end_rank],
                  ['Songs played', songs_played], ['Hours Spent (approx.)', time_spent]],
                 tablefmt="plain") + "```")
         await ctx.interaction.followup.send(output_string)
