@@ -574,7 +574,7 @@ class Game(commands.Cog):
         en_name_match = [name[1] for name in names if name[1] is not None and ctx.value.lower() in name[1].lower()]
         jp_nick_match = [nick[0] for nick in nicknames if nick[0] is not None and ctx.value.lower() in nick[0].lower()]
         en_nick_match = [nick[1] for nick in nicknames if nick[1] is not None and ctx.value.lower() in nick[1].lower()]
-        return en_name_match + en_nick_match + jp_name_match + jp_nick_match
+        return set(en_name_match + en_nick_match + jp_name_match + jp_nick_match)
 
     @game_commands.command(name='character',
                            description='Posts character info.')
@@ -589,16 +589,17 @@ class Game(commands.Cog):
             for x in r:
                 if chara_id:
                     break
-                chara_list_name = r[x]['characterName']
-                chara_list_nickname = r[x]['nickname']
-                if chara_list_name[1] is not None and character.lower() in chara_list_name[1].lower():
-                    chara_id = x
-                elif chara_list_name[0] is not None and character.lower() in chara_list_name[0].lower():
-                    chara_id = x
-                elif chara_list_nickname[1] is not None and character.lower() in chara_list_nickname[1].lower():
-                    chara_id = x
-                elif chara_list_nickname[0] is not None and character.lower() in chara_list_nickname[0].lower():
-                    chara_id = x
+                chara_name_data = [r[x]['characterName'], r[x]['nickname']]
+
+                match chara_name_data:
+                    case [[_, name, *_], _] if name == character:
+                        chara_id = x
+                    case [[name, *_], _] if name == character:
+                        chara_id = x
+                    case [_, [_, nick, *_]] if nick == character:
+                        chara_id = x
+                    case [_, [nick, *_]] if nick  == character:
+                        chara_id = x
 
             if not chara_id:
                 await ctx.interaction.followup.send(
@@ -668,6 +669,11 @@ class Game(commands.Cog):
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error',
                                 content='Could not decode response from Bestdori API.'),
+                ephemeral=True)
+        except KeyError as e:
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error',
+                                content=f'Could not find key `{e.args[0]}` in character data.'),
                 ephemeral=True)
 
     async def get_current_event_id(self, server: int):
