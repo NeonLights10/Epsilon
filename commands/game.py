@@ -69,23 +69,18 @@ def get_xp_per_flame(flames_used: int):
             return 3000
         case 3:
             return 3500
-    if flames_used == 1:
-        xp = 2500
-    elif flames_used == 2:
-        xp = 3000
-    elif flames_used == 3:
-        xp = 3500
-    return xp
 
 
 def get_ep_per_flame(flames_used: int):
-    if flames_used == 1:
-        flames_ep_modifier = 5
-    elif flames_used == 2:
-        flames_ep_modifier = 10
-    else:
-        flames_ep_modifier = 15
-    return flames_ep_modifier
+    match flames_used:
+        case 0:
+            return 1
+        case 1:
+            return 5
+        case 2:
+            return 10
+        case _:
+            return 15
 
 
 class Game(commands.Cog):
@@ -294,9 +289,10 @@ class Game(commands.Cog):
     async def song_name_autocomplete(self, ctx: discord.ApplicationContext):
         song_list = await self.fetch_api('https://bestdori.com/api/songs/all.7.json')
         matches = []
-        for x in range(0,4):
+        for x in range(0, 4):
             matches.extend([song_list[song_id]['musicTitle'][x] for song_id in song_list if
-                              song_list[song_id]['musicTitle'][x] is not None and ctx.value.lower() in song_list[song_id]['musicTitle'][x].lower()])
+                            song_list[song_id]['musicTitle'][x] is not None and ctx.value.lower() in
+                            song_list[song_id]['musicTitle'][x].lower()])
         return set(matches)
 
     @game_commands.command(name='songinfo',
@@ -379,7 +375,6 @@ class Game(commands.Cog):
                 embed=gen_embed(title='Error fetching song data',
                                 content='Could not decode response from Bestdori API.'),
                 ephemeral=True)
-
 
     @game_commands.command(name='songmeta',
                            description='Show song meta info')
@@ -598,7 +593,7 @@ class Game(commands.Cog):
                         chara_id = x
                     case [_, [_, nick, *_]] if nick == character:
                         chara_id = x
-                    case [_, [nick, *_]] if nick  == character:
+                    case [_, [nick, *_]] if nick == character:
                         chara_id = x
 
             if not chara_id:
@@ -730,7 +725,8 @@ class Game(commands.Cog):
                                               OptionChoice('KR', value='4')],
                                      required=False,
                                      default='1'),
-                      hours: Option(float, "Manually input remaining time in hours. Overrides time from 'server' argument.",
+                      hours: Option(float,
+                                    "Manually input remaining time in hours. Overrides time from 'server' argument.",
                                     required=False),
                       ):
         await ctx.interaction.response.defer()
@@ -815,7 +811,6 @@ class Game(commands.Cog):
                                 content='Could not decode response from Bestdori API.'),
                 ephemeral=True)
 
-
     @game_commands.command(name='epgain',
                            description='Calculates EP gain for a single game.')
     async def epgain(self,
@@ -823,21 +818,21 @@ class Game(commands.Cog):
                      score: Option(int, "Individual score", min_value=0, required=True),
                      flames: Option(int, "Flames used per game", choices=[0, 1, 2, 3], required=True),
                      event: Option(int,
-                                        "Event type (Note: Medley and Team Live calculations are not supported yet)",
+                                   "Event type (Note: Medley and Team Live calculations are not supported yet)",
                                    choices=[
-                                            OptionChoice("Normal", value=1),
-                                            OptionChoice("Live Goals", value=2),
-                                            OptionChoice("Challenge Live", value=3),
-                                            OptionChoice("VS Live", value=4)
-                                        ],
+                                       OptionChoice("Normal", value=1),
+                                       OptionChoice("Live Goals", value=2),
+                                       OptionChoice("Challenge Live", value=3),
+                                       OptionChoice("VS Live", value=4)
+                                   ],
                                    required=True),
                      bonus: Option(int,
-                                           "Event bonus percentage, not including the base 100%. Used in events other than VS Live.",
+                                   "Event bonus percentage, not including the base 100%. Used in events other than VS Live.",
                                    min_value=0,
                                    default=0,
                                    required=False),
                      total: Option(int,
-                                         "Total room score in Multi Live. Used in events other than VS Live.",
+                                   "Total room score in Multi Live. Used in events other than VS Live.",
                                    default=9000000,
                                    required=False),
                      ranking: Option(int, "VS Live multi rank placement (1-5)",
@@ -846,7 +841,7 @@ class Game(commands.Cog):
         await ctx.interaction.response.defer()
         bp_percent_modifier = (bonus / 100) + 1
 
-        ep_per_flame = 1 if flames == 0 else get_ep_per_flame(flames)
+        ep_per_flame = get_ep_per_flame(flames)
         match event:
             case 1:
                 event_scaling = 10000
