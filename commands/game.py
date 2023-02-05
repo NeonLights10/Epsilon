@@ -733,7 +733,9 @@ class Game(commands.Cog):
 
         try:
             if rank > 500:
-                output_string = "Beginning rank can't be over 500."
+                ctx.interaction.followup.send(
+                    embed=gen_embed(title="Error", content="Beginning rank can't be over 500."))
+                return
             else:
                 xp_per_flame = get_xp_per_flame(flames)
                 # , timeleft: int = timeLeftInt('en')
@@ -794,12 +796,13 @@ class Game(commands.Cog):
                 else:
                     stars_used = math.ceil(stars_used / 100.00) * 100
 
-                output_string = ("```" + tabulate(
-                    [['Stars Used', "{:,}".format(stars_used)], ['Target', "{:,}".format(target)],
-                     ['Beginning Rank', rank], ['Ending Rank', end_rank],
-                     ['Songs played', songs_played], ['Hours Spent (approx.)', time_spent]],
-                    tablefmt="plain") + "```")
-            await ctx.interaction.followup.send(output_string)
+                embed = gen_embed(title='Result')
+                embed.add_field(name='Stars Used:', value=stars_used)
+                embed.add_field(name='Beginning Rank', value=rank)
+                embed.add_field(name='Ending Rank', value=end_rank)
+                embed.add_field(name='Songs Played', value=songs_played)
+                embed.add_field(name='Hours Spent (approx.)', value=time_spent)
+                await ctx.interaction.followup.send(embed=embed)
         except HTTPStatusError:
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error fetching event data',
