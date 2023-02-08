@@ -83,29 +83,30 @@ def get_ep_per_flame(flames_used: int):
             return 15
 
 
-def get_song_meta_rows(song_meta_api: dict, song_name_api: dict, song_id: str, fever: bool, song_name: str = "") -> list:
+def get_song_meta_rows(song_meta_api: dict, song_name_api: dict, song_id: str, fever: bool,
+                       song_name: str = "") -> list:
     output_rows = []
+
+    diff_names = {"0": "Easy",
+                  "1": "Normal",
+                  "2": "Hard",
+                  "3": "Expert",
+                  "4": "Special"}
 
     song_length = song_name_api[song_id]['length']
     song_length = strftime("%H:%M:%S", gmtime(song_length))
 
-    if "4" in song_meta_api[song_id]:
-        song_values = song_meta_api[song_id]["4"]["7"]
-        if fever:
-            output_rows.append(
-                [song_name + ' (SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
-                 song_length])
-        else:
-            output_rows.append(
-                [song_name + ' (SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
-                 song_length])
-    song_values = song_meta_api[song_id]["3"]["7"]
-    if fever:
-        output_rows.append(
-            [song_name, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
-    else:
-        output_rows.append(
-            [song_name, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
+    for key, diff in diff_names.items():
+        if key in song_meta_api[song_id]:
+            song_values = song_meta_api[song_id][key]["7"]
+            if fever:
+                output_rows.append(
+                    [f'{song_name} ({diff})', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
+                     song_length])
+            else:
+                output_rows.append(
+                    [f'{song_name} ({diff})', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
+                     song_length])
 
     return output_rows
 
@@ -442,21 +443,35 @@ class Game(commands.Cog):
                     if song_name != "":
                         song_weight_list.extend(get_song_meta_rows(song_meta_api, song_name_api, x, fever, song_name))
 
+            if fever:
+                title = "Song Meta (with Fever)"
+            else:
+                title = "Song Meta (no Fever)"
+
             if song_weight_list:
                 song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
-                song_weight_list = song_weight_list[:20]
-                if fever:
-                    title = "Song Meta (with Fever)"
-                else:
-                    title = "Song Meta (no Fever)"
-                output = ("```" + tabulate(song_weight_list, tablefmt="plain",
-                                                            headers=["Song", "Score %", "Length"]) + "```")
-                await ctx.interaction.followup.send(
-                    embed=gen_embed(title=title, content=output))
+                rows_per_page = 20
+                output_pages = []
+                curr_page_results = []
+                for index, row in enumerate(song_weight_list):
+                    data = [index+1]
+                    data.extend(row)
+                    curr_page_results.append(data)
+                    if ((index + 1) >= rows_per_page and (index + 1) % rows_per_page == 0) or (
+                            index == len(song_weight_list) - 1):
+                        page_str = "```" + tabulate(curr_page_results, tablefmt="plain",
+                                                    headers=["#", "Song", "Score %", "Length"]) + "```"
+                        output_pages.append(gen_embed(
+                            title=f'Entries {(index // rows_per_page) * rows_per_page + 1} - {index + 1} of {len(song_weight_list)}',
+                            content=page_str))
+                        curr_page_results = []
+
+                paginator = pages.Paginator(pages=output_pages)
+                await paginator.respond(ctx.interaction)
                 return
             else:
                 await ctx.interaction.followup.send(
-                    embed=gen_embed(title="Error", content="No songs found."))
+                    embed=gen_embed(title=title, content="No songs found."))
         except HTTPStatusError:
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error fetching song meta',
@@ -472,7 +487,6 @@ class Game(commands.Cog):
                 embed=gen_embed(title='Error',
                                 content=f'Failed to process song meta: Could not find key `{e.args[0]}`'),
                 ephemeral=True)
-
 
     @game_commands.command(name='leaderboard',
                            description='View Bestdori leaderboards for various categories.')
@@ -522,11 +536,13 @@ class Game(commands.Cog):
                 if row['user']['username']:
                     data.append(row['user']['nickname'])
                 curr_page_results.append(data)
-                if ((index+1) >= rows_per_page and (index+1) % rows_per_page == 0) or (index == len(lb_api['rows']) - 1):
+                if ((index + 1) >= rows_per_page and (index + 1) % rows_per_page == 0) or (
+                        index == len(lb_api['rows']) - 1):
                     page_str = "```" + tabulate(curr_page_results, tablefmt="plain",
-                                                 headers=["#", "Player", "Value", "Bestdori Name"]) + "```"
-                    output_pages.append(gen_embed(title=f'Entries {(index // rows_per_page) * rows_per_page + 1} - {index+1} of {total_entries} for {category_names[category]}',
-                                                  content=page_str))
+                                                headers=["#", "Player", "Value", "Bestdori Name"]) + "```"
+                    output_pages.append(gen_embed(
+                        title=f'Entries {(index // rows_per_page) * rows_per_page + 1} - {index + 1} of {total_entries} for {category_names[category]}',
+                        content=page_str))
                     curr_page_results = []
 
             paginator = pages.Paginator(pages=output_pages)
