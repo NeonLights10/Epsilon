@@ -18,7 +18,7 @@ from httpx_caching import CachingClient
 
 import discord
 from discord import File
-from discord.ext import commands
+from discord.ext import commands, pages
 from discord.commands import Option, OptionChoice, SlashCommandGroup
 from discord.commands.permissions import default_permissions
 
@@ -81,6 +81,33 @@ def get_ep_per_flame(flames_used: int):
             return 10
         case _:
             return 15
+
+
+def get_song_meta_rows(song_meta_api: dict, song_name_api: dict, song_id: str, fever: bool, song_name: str = "") -> list:
+    output_rows = []
+
+    song_length = song_name_api[song_id]['length']
+    song_length = strftime("%H:%M:%S", gmtime(song_length))
+
+    if "4" in song_meta_api[song_id]:
+        song_values = song_meta_api[song_id]["4"]["7"]
+        if fever:
+            output_rows.append(
+                [song_name + ' (SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
+                 song_length])
+        else:
+            output_rows.append(
+                [song_name + ' (SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
+                 song_length])
+    song_values = song_meta_api[song_id]["3"]["7"]
+    if fever:
+        output_rows.append(
+            [song_name, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
+    else:
+        output_rows.append(
+            [song_name, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
+
+    return output_rows
 
 
 class Game(commands.Cog):
@@ -275,10 +302,9 @@ class Game(commands.Cog):
                                 content=f'Failed to get data for player with ID `{id} (Server {server})`.'),
                 ephemeral=True)
         except KeyError as e:
-            print(e)
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error',
-                                content=f'Failed to process player data'),
+                                content=f'Failed to process player data: Could not find key `{e.args[0]}`'),
                 ephemeral=True)
         except json.decoder.JSONDecodeError:
             await ctx.interaction.followup.send(
@@ -365,10 +391,10 @@ class Game(commands.Cog):
                 embed=gen_embed(title='Error fetching song list',
                                 content='Could not get song list from Bestdori API.'),
                 ephemeral=True)
-        except KeyError:
+        except KeyError as e:
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error',
-                                content='Failed to process song data.'),
+                                content=f'Failed to process song data: Could not find key `{e.args[0]}`'),
                 ephemeral=True)
         except json.decoder.JSONDecodeError:
             await ctx.interaction.followup.send(
@@ -388,8 +414,9 @@ class Game(commands.Cog):
             song_meta_api = await self.fetch_api('https://bestdori.com/api/songs/meta/all.5.json')
             song_weight_list = []
             song_id = ""
+            name_server_order = (1, 0, 2, 3, 4)
 
-            if song != "":
+            if song != "" and song is not None:
                 # Get APIs
 
                 # Find the IDs for the input
@@ -397,93 +424,39 @@ class Game(commands.Cog):
                 # Means that song (id = 5) on expert (difficulty = 3) on a 7 second skill (duration = 2 + 5) has those meta numbers.
                 # First two = non fever, so if the skill is 60% then song score = 2.7628 + 1.0763 * 60%
                 for x in song_name_api:
-                    if song_name_api[x]['musicTitle'][1] is not None:
-                        if song == song_name_api[x]['musicTitle'][1]:
-                            song_id = x
-                            break
-                    elif song_name_api[x]['musicTitle'][0] is not None:
-                        if song.lower() in (song_name_api[x]['musicTitle'][0]).lower():
+                    for i in name_server_order:
+                        if song_name_api[x]['musicTitle'][i] is not None and song == song_name_api[x]['musicTitle'][i]:
                             song_id = x
                             break
                 if song_id != "":
-                    if "4" in song_meta_api[song_id]:
-                        song_values = song_meta_api[song_id]["4"]["7"]
-                        song_length = song_name_api[song_id]['length']
-                        song_length = strftime("%H:%M:%S", gmtime(song_length))
-                        if fever:
-                            song_weight_list.append(
-                                [song + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
-                                 song_length])
-                        else:
-                            song_weight_list.append(
-                                [song + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
-                                 song_length])
-                    song_values = song_meta_api[song_id]["3"]["7"]
-                    song_length = song_name_api[song_id]['length']
-                    song_length = strftime("%H:%M:%S", gmtime(song_length))
-                    if fever:
-                        song_weight_list.append(
-                            [song, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
-                    else:
-                        song_weight_list.append(
-                            [song, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
+                    song_weight_list.extend(get_song_meta_rows(song_meta_api, song_name_api, song_id, fever, song))
 
-                if song_weight_list:
-                    song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
+            else:
 
+                for x in song_meta_api:
+                    song_name = ""
+                    for i in name_server_order:
+                        if song_name_api[x]['musicTitle'][i] is not None:
+                            song_name = song_name_api[x]['musicTitle'][i]
+                            break
+                    if song_name != "":
+                        song_weight_list.extend(get_song_meta_rows(song_meta_api, song_name_api, x, fever, song_name))
+
+            if song_weight_list:
+                song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
+                song_weight_list = song_weight_list[:20]
                 if fever:
                     title = "Song Meta (with Fever)"
                 else:
                     title = "Song Meta (no Fever)"
-                output = ("```" + title + "\n\n" + tabulate(song_weight_list, tablefmt="plain",
+                output = ("```" + tabulate(song_weight_list, tablefmt="plain",
                                                             headers=["Song", "Score %", "Length"]) + "```")
+                await ctx.interaction.followup.send(
+                    embed=gen_embed(title=title, content=output))
+                return
             else:
-                for x in song_meta_api:
-                    if "4" in song_meta_api[x]:
-                        song_values = song_meta_api[x]["4"]["7"]
-                        try:
-                            if song_name_api[x]['musicTitle'][1] is not None:
-                                song_name = song_name_api[x]['musicTitle'][1]
-                            else:
-                                song_name = song_name_api[x]['musicTitle'][0]
-                        except KeyError:
-                            song_name = song_name_api[x]['musicTitle'][0]
-                        song_length = song_name_api[x]['length']
-                        song_length = strftime("%H:%M:%S", gmtime(song_length))
-                        if fever:
-                            song_weight_list.append(
-                                [song_name + '(SP)', round(((song_values[2] + song_values[3] * 2) * 1.1) * 100),
-                                 song_length])
-                        else:
-                            song_weight_list.append(
-                                [song_name + '(SP)', round(((song_values[0] + song_values[1] * 2) * 1.1) * 100),
-                                 song_length])
-                    song_values = song_meta_api[x]["3"]["7"]
-                    try:
-                        if song_name_api[x]['musicTitle'][1] is not None:
-                            song_name = song_name_api[x]['musicTitle'][1]
-                        else:
-                            song_name = song_name_api[x]['musicTitle'][0]
-                    except KeyError:
-                        song_name = song_name_api[x]['musicTitle'][0]
-                    song_length = song_name_api[x]['length']
-                    song_length = strftime("%H:%M:%S", gmtime(song_length))
-                    if fever:
-                        song_weight_list.append(
-                            [song_name, round(((song_values[2] + song_values[3] * 2) * 1.1) * 100), song_length])
-                    else:
-                        song_weight_list.append(
-                            [song_name, round(((song_values[0] + song_values[1] * 2) * 1.1) * 100), song_length])
-                if song_weight_list:
-                    song_weight_list = sorted(song_weight_list, key=itemgetter(1), reverse=True)
-                    song_weight_list = song_weight_list[:20]
-                    if fever:
-                        title = "Song Meta (with Fever)"
-                    else:
-                        title = "Song Meta (no Fever)"
-                    output = ("```" + title + "\n\n" + tabulate(song_weight_list, tablefmt="plain",
-                                                                headers=["Song", "Score %", "Length"]) + "```")
-            await ctx.interaction.followup.send(output)
+                await ctx.interaction.followup.send(
+                    embed=gen_embed(title="Error", content="No songs found."))
         except HTTPStatusError:
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error fetching song meta',
@@ -494,6 +467,12 @@ class Game(commands.Cog):
                 embed=gen_embed(title='Error',
                                 content='Could not decode response from Bestdori API.'),
                 ephemeral=True)
+        except KeyError as e:
+            await ctx.interaction.followup.send(
+                embed=gen_embed(title='Error',
+                                content=f'Failed to process song meta: Could not find key `{e.args[0]}`'),
+                ephemeral=True)
+
 
     @game_commands.command(name='leaderboard',
                            description='View Bestdori leaderboards for various categories.')
@@ -518,12 +497,14 @@ class Game(commands.Cog):
                                                    default='hsr'),
                                   entries: Option(int, "Number of entries to display",
                                                   required=False,
-                                                  default=20)):
+                                                  default=20,
+                                                  min_value=1,
+                                                  max_value=50)):
         await ctx.interaction.response.defer()
         try:
             lb_api = await self.fetch_api(
                 f'https://bestdori.com/api/sync/list/player?server={server}&stats={category}&limit={entries}&offset=0')
-            total_entries = min(entries, lb_api['count'])
+            total_entries = min(entries, len(lb_api['rows']))
             category_names = {
                 'hsr': 'High Score Rating',
                 'dtr': 'Band Rating',
@@ -532,22 +513,24 @@ class Game(commands.Cog):
                 'cleared': 'Clear Count',
                 'rank': 'Player Rank'
             }
-            output = f'Top {total_entries} players for {category_names[category]}:\n'
-            results = []
-            row_count = 1
-            while row_count <= entries:
-                for row in lb_api['rows']:
-                    if row['user']['nickname']:
-                        results.append([str(row_count), row['user']['username'], row['stats'], row['user']['nickname']])
-                    else:
-                        results.append([str(row_count), row['user']['username'], row['stats']])
-                    row_count += 1
-            output += "```" + tabulate(results, tablefmt="plain",
-                                       headers=["#", "Player", "Value", "Bestdori Name"]) + "```"
 
-            if len(output) > 2000:
-                output = 'Output is greater than 2000 characters, please select a smaller list of values to return!'
-            await ctx.interaction.followup.send(output)
+            rows_per_page = 20
+            output_pages = []
+            curr_page_results = []
+            for index, row in enumerate(lb_api['rows']):
+                data = [str(index+1), row['user']['username'], row['stats']]
+                if row['user']['username']:
+                    data.append(row['user']['nickname'])
+                curr_page_results.append(data)
+                if ((index+1) >= rows_per_page and (index+1) % rows_per_page == 0) or (index == len(lb_api['rows']) - 1):
+                    page_str = "```" + tabulate(curr_page_results, tablefmt="plain",
+                                                 headers=["#", "Player", "Value", "Bestdori Name"]) + "```"
+                    output_pages.append(gen_embed(title=f'Entries {(index // rows_per_page) * rows_per_page + 1} - {index+1} of {total_entries} for {category_names[category]}',
+                                                  content=page_str))
+                    curr_page_results = []
+
+            paginator = pages.Paginator(pages=output_pages)
+            await paginator.respond(ctx.interaction)
         except HTTPStatusError:
             await ctx.interaction.followup.send(
                 embed=gen_embed(title='Error fetching leaderboard',
@@ -562,7 +545,6 @@ class Game(commands.Cog):
     async def chara_name_autocomplete(self, ctx: discord.ApplicationContext):
         chara_api = await self.fetch_api('https://bestdori.com/api/characters/all.2.json')
         main_charas = [chara_api[chara_id] for chara_id in chara_api if 'bandId' in chara_api[chara_id]]
-        print(f'{len(main_charas)} main characters found')
         names = [chara['characterName'] for chara in main_charas]
         nicknames = [chara['nickname'] for chara in main_charas]
         jp_name_match = [name[0] for name in names if name[0] is not None and ctx.value.lower() in name[0].lower()]
