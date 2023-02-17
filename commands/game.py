@@ -83,7 +83,7 @@ def get_ep_per_flame(flames_used: int):
             return 15
 
 
-def get_song_meta_rows(song_meta_api: dict, song_name_api: dict, song_id: str, fever: bool,
+def get_song_meta_rows(song_meta_api: dict, song_name_api: dict, song_id: str, fever: bool, difficulty: str,
                        song_name: str = "") -> list:
     output_rows = []
 
@@ -93,10 +93,15 @@ def get_song_meta_rows(song_meta_api: dict, song_name_api: dict, song_id: str, f
                   "3": "Expert",
                   "4": "Special"}
 
+    if difficulty == "":
+        selected_diffs = diff_names
+    else:
+        selected_diffs = {difficulty: diff_names[difficulty]}
+
     song_length = song_name_api[song_id]['length']
     song_length = strftime("%H:%M:%S", gmtime(song_length))
 
-    for key, diff in diff_names.items():
+    for key, diff in selected_diffs.items():
         if key in song_meta_api[song_id]:
             song_values = song_meta_api[song_id][key]["7"]
             if fever:
@@ -408,7 +413,18 @@ class Game(commands.Cog):
     async def song_meta(self,
                         ctx: discord.ApplicationContext,
                         fever: Option(bool, "Whether or not fever is enabled", required=False, default=True),
-                        song: Option(str, "Song name to lookup", required=False, autocomplete=song_name_autocomplete)):
+                        song: Option(str, "Song name to lookup", required=False, autocomplete=song_name_autocomplete),
+                        difficulty: Option(str, "Song difficulty",
+                                           choices=[
+                                               OptionChoice("Easy", "0"),
+                                               OptionChoice("Normal", "1"),
+                                               OptionChoice("Hard", "2"),
+                                               OptionChoice("Expert", "3"),
+                                               OptionChoice("Special", "4")
+                                           ],
+                                           required=False,
+                                           default="")
+                        ):
         await ctx.interaction.response.defer()
         try:
             song_name_api = await self.fetch_api('https://bestdori.com/api/songs/all.7.json')
@@ -430,7 +446,7 @@ class Game(commands.Cog):
                             song_id = x
                             break
                 if song_id != "":
-                    song_weight_list.extend(get_song_meta_rows(song_meta_api, song_name_api, song_id, fever, song))
+                    song_weight_list.extend(get_song_meta_rows(song_meta_api, song_name_api, song_id, fever, difficulty, song))
 
             else:
 
@@ -441,7 +457,7 @@ class Game(commands.Cog):
                             song_name = song_name_api[x]['musicTitle'][i]
                             break
                     if song_name != "":
-                        song_weight_list.extend(get_song_meta_rows(song_meta_api, song_name_api, x, fever, song_name))
+                        song_weight_list.extend(get_song_meta_rows(song_meta_api, song_name_api, x, fever, difficulty, song_name))
 
             if fever:
                 title = "Song Meta (with Fever)"
