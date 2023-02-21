@@ -35,7 +35,7 @@ from formatting.constants import SCHOOL_NAME_DICT
 from __main__ import log, db
 
 
-def find_rank(rank: int):
+def get_xp_from_rank(rank: int) -> int:
     xp_table = get_xp_table()
     if rank < 145:
         return xp_table[rank]
@@ -43,6 +43,13 @@ def find_rank(rank: int):
         n = rank - 145
         return xp_table[145] + 2560 * n * (n + 1) + n * 237730
 
+def get_rank_from_xp(xp: int) -> int:
+    if xp <= 0:
+        return 1
+    if xp >= get_xp_from_rank(500):
+        return 500
+
+    return next(i for i in range(1, 499) if get_xp_from_rank(i) <= xp < get_xp_from_rank(i + 1))
 
 def get_xp_table():
     xp_table = [0, 0, 10, 160, 1360, 2960, 4960, 7360, 10160, 13360, 16960, 20960, 25360, 30160, 35360, 40960, 46960,
@@ -758,24 +765,13 @@ class Game(commands.Cog):
 
                 # beg xp
                 if rank != 500:
-                    current_xp = find_rank(rank)
+                    current_xp = get_xp_from_rank(rank)
 
                     # xp gained + end xp
                     xp_gained = xp_per_flame * songs_played
                     ending_xp = current_xp + xp_gained
-                    xp_table = get_xp_table()
 
-                    if ending_xp > xp_table[-1]:
-                        end_rank = 500
-                    else:
-
-                        for x in range(len(xp_table)):
-                            if ending_xp < xp_table[x]:
-                                end_rank = x - 1
-                                break
-                            elif ending_xp == xp_table[x]:
-                                end_rank = x
-                                break
+                    end_rank = get_rank_from_xp(ending_xp)
                 else:
                     end_rank = 500
 
@@ -814,8 +810,8 @@ class Game(commands.Cog):
                 embed.add_field(name='Stars Used:', value=stars_used)
                 embed.add_field(name='Beginning Rank', value=rank)
                 embed.add_field(name='Ending Rank', value=end_rank)
-                embed.add_field(name='Songs Played', value=songs_played)
-                embed.add_field(name='Hours Spent (approx.)', value=time_spent)
+                embed.add_field(name='Songs Played', value=math.ceil(songs_played))
+                embed.add_field(name='Hours Spent (approx.)', value=time_spent_str)
                 await ctx.interaction.followup.send(embed=embed)
         except HTTPStatusError:
             await ctx.interaction.followup.send(
