@@ -43,6 +43,7 @@ def get_xp_from_rank(rank: int) -> int:
         n = rank - 145
         return xp_table[145] + 2560 * n * (n + 1) + n * 237730
 
+
 def get_rank_from_xp(xp: int) -> int:
     if xp <= 0:
         return 1
@@ -50,6 +51,7 @@ def get_rank_from_xp(xp: int) -> int:
         return 500
 
     return next(i for i in range(1, 499) if get_xp_from_rank(i) <= xp < get_xp_from_rank(i + 1))
+
 
 def get_xp_table():
     xp_table = [0, 0, 10, 160, 1360, 2960, 4960, 7360, 10160, 13360, 16960, 20960, 25360, 30160, 35360, 40960, 46960,
@@ -344,23 +346,37 @@ class Game(commands.Cog):
             song_id = ""
             song_api = await self.fetch_api("https://bestdori.com/api/songs/all.7.json")
             displayed_song_name = ""
+            name_server_order = (1, 0, 2, 3, 4)
+            server_id = 1
+            song_found = False
             for key in song_api:
-                element = song_api[key]['musicTitle'][1]
-                if element is not None and element == name:
-                    displayed_song_name = element
-                    song_id = key
-                    break
-                else:
-                    element = song_api[key]['musicTitle'][0]
+                for i in name_server_order:
+                    element = song_api[key]['musicTitle'][i]
                     if element is not None and element == name:
                         displayed_song_name = element
                         song_id = key
+                        server_id = i
+                        song_found = True
                         break
+                if song_found:
+                    break
 
-            if song_id not in song_api:
+            if not song_found:
                 await ctx.interaction.followup.send(
                     "Couldn't find the specified song.", ephemeral=True)
                 return
+
+            band_api = await self.fetch_api("https://bestdori.com/api/bands/all.1.json")
+            band_name = band_api[str(song_api[song_id]["bandId"])]["bandName"][server_id]
+            if band_name is None:
+                band_name = "Unknown"
+
+            category_names = {
+                "normal": "(Original)",
+                "anime": "(Cover)",
+                "tie_up": "(Tie-up)"
+            }
+            song_category = category_names.get(song_api[song_id]["tag"], "")
 
             min_bpm = song_api[song_id]['bpm']['0'][0]['bpm']
             max_bpm = min_bpm
@@ -385,10 +401,21 @@ class Game(commands.Cog):
             m, s = divmod(song_length_sec, 60)
             song_length = ('{:02d}:{:02d}'.format(m, s))
 
-            embed = gen_embed(title=f"{displayed_song_name} (ID: {song_id})")
+            server_names = ['JP', 'EN', 'TW', 'CN', 'KR']
+            available_servers = []
+            for i, x in enumerate(song_api[song_id]["publishedAt"]):
+                if x is not None:
+                    available_servers.append(server_names[i])
+
+            embed = gen_embed(title=displayed_song_name, content=f"{band_name} {song_category}")
+            if len(song_api[song_id]["jacketImage"]) > 0:
+                jacket_image = song_api[song_id]["jacketImage"][0]
+                song_folder = str(math.ceil(int(song_id) / 10) * 10).zfill(3)
+                embed.set_thumbnail(
+                    url=f'https://bestdori.com/assets/{server_names[server_id].lower()}/musicjacket/musicjacket{song_folder}_rip/assets-star-forassetbundle-startapp-musicjacket-musicjacket{song_folder}-{jacket_image}-jacket.png')
+            embed.add_field(name="ID", value=song_id, inline=True)
             embed.add_field(name='BPM', value=song_bpm, inline=True)
             embed.add_field(name='Length', value=song_length, inline=True)
-            embed.add_field(name='\u200b', value='\u200b', inline=True)
 
             diff_names = ["Easy", "Normal", "Hard", "Expert", "Special"]
             for i, data in enumerate(song_levels_data):
@@ -397,6 +424,13 @@ class Game(commands.Cog):
                                 inline=True)
             for i in range(6 - len(song_levels_data)):  # pad the remaining fields to align properly
                 embed.add_field(name='\u200b', value='\u200b', inline=True)
+
+            embed.add_field(name="Availability",
+                            value=", ".join(available_servers),
+                            inline=True)
+            embed.add_field(name="Additional Resources",
+                            value=f"[Chart and Simulator](https://bestdori.com/tool/chart/{song_id}/expert/)",
+                            inline=True)
 
             await ctx.interaction.followup.send(embed=embed)
         except HTTPStatusError:
@@ -453,7 +487,8 @@ class Game(commands.Cog):
                             song_id = x
                             break
                 if song_id != "":
-                    song_weight_list.extend(get_song_meta_rows(song_meta_api, song_name_api, song_id, fever, difficulty, song))
+                    song_weight_list.extend(
+                        get_song_meta_rows(song_meta_api, song_name_api, song_id, fever, difficulty, song))
 
             else:
 
@@ -464,7 +499,8 @@ class Game(commands.Cog):
                             song_name = song_name_api[x]['musicTitle'][i]
                             break
                     if song_name != "":
-                        song_weight_list.extend(get_song_meta_rows(song_meta_api, song_name_api, x, fever, difficulty, song_name))
+                        song_weight_list.extend(
+                            get_song_meta_rows(song_meta_api, song_name_api, x, fever, difficulty, song_name))
 
             if fever:
                 title = "Song Meta (with Fever)"
@@ -477,7 +513,7 @@ class Game(commands.Cog):
                 output_pages = []
                 curr_page_results = []
                 for index, row in enumerate(song_weight_list):
-                    data = [index+1]
+                    data = [index + 1]
                     data.extend(row)
                     curr_page_results.append(data)
                     if ((index + 1) >= rows_per_page and (index + 1) % rows_per_page == 0) or (
@@ -555,7 +591,7 @@ class Game(commands.Cog):
             output_pages = []
             curr_page_results = []
             for index, row in enumerate(lb_api['rows']):
-                data = [str(index+1), row['user']['username'], row['stats']]
+                data = [str(index + 1), row['user']['username'], row['stats']]
                 if row['user']['username']:
                     data.append(row['user']['nickname'])
                 curr_page_results.append(data)
