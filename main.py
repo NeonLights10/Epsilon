@@ -115,7 +115,7 @@ fhandler = logging.FileHandler(f"logs/{NAME}.log", mode='a')
 fhandler.setFormatter(logging.Formatter(
     fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s"
 ))
-fhandler.setLevel(logging.WARNING)
+fhandler.setLevel(logging.ERROR)
 log.addHandler(fhandler)
 
 ####################

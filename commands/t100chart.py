@@ -210,7 +210,7 @@ class Collection(commands.Cog):
             if document['prev_message_screenshot']:
                 missing = document['missing']
             else:
-                missing = "1-100"
+                missing = "1-10 (titles), 11-101"
             if missing == "none":
                 new_message = await channel.send(
                     f"All T100 ranking screenshots for the most recent event have been obtained! Thank you <3",

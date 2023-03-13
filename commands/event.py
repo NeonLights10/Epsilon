@@ -174,6 +174,8 @@ class Event(commands.Cog):
                 event_name = await self.get_event_name(server, event_id)
             except json.decoder.JSONDecodeError:
                 event_name = await self.get_event_name(server, event_id - 1)
+            except TypeError:
+                event_name = await self.get_event_name(server, event_id - 1)
             fmt = "%Y-%m-%d %H:%M:%S %Z%z"
             now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
             i = 1
@@ -227,6 +229,11 @@ class Event(commands.Cog):
             try:
                 for x in event_api['musics'][0]:
                     song_ids.append(x['musicId'])
+            except TypeError:
+                event_api = await self.fetch_api(f'https://bestdori.com/api/events/{event_id - 1}.json')
+                for x in event_api['musics'][0]:
+                    song_ids.append(x['musicId'])
+            try:
                 fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                 now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
 
@@ -566,8 +573,13 @@ class Event(commands.Cog):
         cutoff_api = await self.fetch_api(
             f'https://bestdori.com/api/tracker/data?server={server}&event={event_id}&tier={tier}')
         event_api = await self.fetch_api(f'https://bestdori.com/api/events/{event_id}.json')
-
-        event_name = event_api['eventName'][server]
+        try:
+            event_name = event_api['eventName'][server]
+        except TypeError:
+            cutoff_api = await self.fetch_api(
+                f'https://bestdori.com/api/tracker/data?server={server}&event={event_id - 1}&tier={tier}')
+            event_api = await self.fetch_api(f'https://bestdori.com/api/events/{event_id - 1}.json')
+            event_name = event_api['eventName'][server]
         banner_name = event_api['assetBundleName']
         event_start = event_api['startAt'][server]
         event_end = event_api['endAt'][server]
