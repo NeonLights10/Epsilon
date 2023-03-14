@@ -287,7 +287,10 @@ async def on_message(message):
         if ctx.guild.id == 432379300684103699:
             await _emoji_log(message)
 
-        whitelist = document['whitelist']
+        try:
+            whitelist = document['whitelist']
+        except KeyError:
+            whitelist = None
         if ctx.author.bot is False:
             if ctx.prefix:
                 # bypass check for now for t100 chart hub, keep prefix check first though
