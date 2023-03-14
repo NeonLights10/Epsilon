@@ -249,6 +249,7 @@ bot.load_extension("commands.pubcord")
 bot.load_extension("commands.old")
 bot.load_extension("commands.event")
 bot.load_extension("commands.update")
+bot.load_extension("commands.game")
 
 
 @bot.event

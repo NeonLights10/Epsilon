@@ -14,6 +14,14 @@ from discord.ext import commands, tasks
 from discord.commands import Option, OptionChoice, SlashCommandGroup
 from discord.commands.permissions import default_permissions
 
+from PIL import Image
+from io import BytesIO
+from os import path
+from pathlib import Path
+import math
+import shutil
+import requests
+
 from formatting.embed import gen_embed
 from __main__ import log, db
 
@@ -56,10 +64,14 @@ class Update(commands.Cog):
         self.twom_synced = False
         self.t10_2m_tracking.start()
         self.t10_1h_tracking.start()
+        self.update_cards_loop.start()
+        self.update_titles_loop.start()
 
     def cog_unload(self):
         self.t10_2m_tracking.cancel()
         self.t10_1h_tracking.cancel()
+        self.update_cards_loop.cancel()
+        self.update_titles_loop.cancel()
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
@@ -455,6 +467,164 @@ class Update(commands.Cog):
                                                 gen_embed(title='Configure cutoff tracking',
                                                           content='Cutoff tracking is not enabled for this channel!'),
                                                 ephemeral=True)
+
+    async def generate_card_icon(self, card_id: str, card_api: any, chara_api: any):
+        try:
+            im = Image.new("RGBA", (180, 180))
+            folder = str(math.floor(int(card_id) / 50)).zfill(5)
+            res_set_name = card_api[card_id]['resourceSetName']
+            rarity = str(card_api[card_id]['rarity'])
+            attribute = str(card_api[card_id]['attribute'])
+            character_id = str(card_api[card_id]['characterId'])
+            band_id = chara_api[character_id]['bandId']
+            chara_name = chara_api[character_id]['characterName'][1]
+            chara_name = chara_name.split(' ', 1)[0].lower()
+            card_type = card_api[card_id]['type']
+            base_icons_path = f"data/img/icons/base_icons/{card_id}.png"
+            full_icons_path = f"data/img/icons/full_icons/{card_id}.png"
+            gacha_icons_path = f"data/img/icons/{chara_name}/{rarity}/{card_id}.png"
+            gacha_types = ['limited', 'permanent', 'birthday']
+
+            # account for card being unavailable on jp
+            server = ""
+            for i, server_key in enumerate(["jp", "en", "tw", "cn", "kr"]):
+                if card_api[card_id]['releasedAt'][i] is not None:
+                    server = server_key
+                    break
+            if server == "":
+                log.warning(f'card {card_id} was not released on any server')
+                return
+            # DO THE GACHA ICONS IN THIS LOGIC TOO IF RARITY > 1
+            if not path.exists(full_icons_path):
+                url_list = []
+                if card_type == 'birthday' or card_type == 'others' or card_type == 'kirafes':
+                    untrained_url = f'https://bestdori.com/assets/{server}/thumb/chara/card{folder}_rip/{res_set_name}_after_training.png'
+                    url_list.append(untrained_url)
+                    trained_url = f'https://bestdori.com/assets/{server}/thumb/chara/card{folder}_rip/{res_set_name}_after_training.png'
+                    url_list.append(trained_url)
+                else:
+                    untrained_url = f'https://bestdori.com/assets/{server}/thumb/chara/card{folder}_rip/{res_set_name}_normal.png'
+                    url_list.append(untrained_url)
+                    if int(rarity) > 2:
+                        trained_url = f'https://bestdori.com/assets/{server}/thumb/chara/card{folder}_rip/{res_set_name}_after_training.png'
+                        url_list.append(trained_url)
+                for url in url_list:
+                    if path.exists(full_icons_path):
+                        full_icons_path = f"data/img/icons/full_icons/{card_id}_trained.png"
+                        base_icons_path = f"data/img/icons/base_icons/{card_id}_trained.png"
+                    image = await self.client.get(url)
+                    try:
+                        image = Image.open(BytesIO(image.content))
+                        im.paste(image)
+                        im.save(base_icons_path)
+                        if rarity == '1':
+                            rarity_png = "data/img/2star.png"
+                            star_png = "data/img/star1.png"
+                        elif rarity == '2':
+                            rarity_png = "data/img/2star.png"
+                            star_png = "data/img/star2.png"
+                        elif rarity == '3':
+                            rarity_png = "data/img/3star.png"
+                            star_png = "data/img/star3.png"
+                        else:
+                            rarity_png = "data/img/4star.png"
+                            star_png = "data/img/star4.png"
+                        rarity_bg = Image.open(rarity_png)
+                        star_bg = Image.open(star_png)
+                        if rarity == '1':
+                            im.paste(star_bg, (5, 20), mask=star_bg)
+                        else:
+                            im.paste(star_bg, (5, 50), mask=star_bg)
+                        im.paste(rarity_bg, mask=rarity_bg)
+
+                        if attribute == 'powerful':
+                            attr_png = "data/img/power2.png"
+                        elif attribute == 'cool':
+                            attr_png = "data/img/cool2.png"
+                        elif attribute == 'pure':
+                            attr_png = "data/img/pure2.png"
+                        else:
+                            attr_png = "data/img/happy2.png"
+                        attr_bg = Image.open(attr_png)
+                        im.paste(attr_bg, (132, 2), mask=attr_bg)
+
+                        band_png = f"data/img/band_{band_id}.png"
+                        band_bg = Image.open(band_png)
+                        im.paste(band_bg, (1, 2), mask=band_bg)
+                        # The last URL in the list will always be the trained card which isn't needed for the gacha cards
+                        if card_type in gacha_types:
+                            if not path.exists(f'data/img/icons/{chara_name}/{rarity}/'):
+                                filepath = Path(f'data/img/icons/{chara_name}/{rarity}/')
+                                filepath.mkdir(parents=True, exist_ok=True)
+                            if not path.exists(gacha_icons_path):
+                                if int(rarity) == 2:
+                                    im.save(gacha_icons_path)
+                                elif int(rarity) > 2:
+                                    if card_type == 'birthday':
+                                        im.save(gacha_icons_path)
+                                    elif url != url_list[-1]:
+                                        im.save(gacha_icons_path)
+                        im.save(full_icons_path)
+                    except Exception as e:
+                        log.error(f"Failed adding card with ID {card_id} ({e})")
+                        pass
+                log.info(f'updated card {card_id}')
+        except Exception as e:
+            log.error(f"Failed adding card with ID {card_id} ({e})")
+            pass
+
+    async def update_card_icons(self):
+        card_api = await self.fetch_api("https://bestdori.com/api/cards/all.5.json")
+        chara_api = await self.fetch_api("https://bestdori.com/api/characters/all.2.json")
+        if not path.exists('data/img/icons/base_icons/'):
+            filepath = Path('data/img/icons/base_icons/')
+            filepath.mkdir(parents=True, exist_ok=True)
+        if not path.exists('data/img/icons/full_icons/'):
+            filepath = Path('data/img/icons/full_icons/')
+            filepath.mkdir(parents=True, exist_ok=True)
+        await asyncio.gather(*[self.generate_card_icon(card_id, card_api, chara_api) for card_id in card_api])
+
+    @discord.slash_command(name='updatecards', description='Update card images manually')
+    async def update_cards_command(self, ctx: discord.ApplicationContext):
+        await ctx.interaction.response.defer()
+        await self.update_card_icons()
+        await ctx.interaction.followup.send("Cards successfully updated.")
+
+    @tasks.loop(hours=168.0)
+    async def update_cards_loop(self):
+        await self.update_card_icons()
+
+    async def save_title_img(self, server: str, title: str):
+        if not os.path.isfile(f'data/img/titles/{server}/{title}'):
+            r = await self.client.get(f'https://bestdori.com/assets/{server}/thumb/degree_rip/{title}')
+            im = Image.new("RGBA", (230, 50))
+            image = Image.open(BytesIO(r.content))
+            im.paste(image)
+            im.save(f'data/img/titles/{server}/{title}')
+            log.info(f'saved title {server}/{title}')
+
+    async def get_titles(self, server):
+        titles_img_api = await self.fetch_api(f"https://bestdori.com/api/explorer/{server}/assets/thumb/degree.json")
+        await asyncio.gather(*[self.save_title_img(server, title) for title in titles_img_api])
+        log.info(f'Finished extracting titles for server {server}')
+
+    @tasks.loop(seconds=168.0)
+    async def update_titles_loop(self):
+        for i in range(5):
+            if not path.exists(f'data/img/titles/{server_name(i)}/'):
+                filepath = Path(f'data/img/titles/{server_name(i)}/')
+                filepath.mkdir(parents=True, exist_ok=True)
+        await asyncio.gather(*[self.get_titles(server_name(i)) for i in range(5)])
+
+    @discord.slash_command(name='updatetitles', description='Update title images manually')
+    async def update_titles_command(self, ctx: discord.ApplicationContext):
+        await ctx.interaction.response.defer()
+        for i in range(5):
+            if not path.exists(f'data/img/titles/{server_name(i)}/'):
+                filepath = Path(f'data/img/titles/{server_name(i)}/')
+                filepath.mkdir(parents=True, exist_ok=True)
+        await asyncio.gather(*[self.get_titles(server_name(i)) for i in range(5)])
+        await ctx.interaction.followup.send("Titles successfully updated.")
 
 
 def setup(bot):
