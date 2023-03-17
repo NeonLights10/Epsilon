@@ -565,6 +565,20 @@ class Pubcord(commands.Cog):
         await ctx.interaction.followup.send('New content embed has been updated with new image!',
                                             ephemeral=True)
 
+    @discord.slash_command(name='verify',
+                           description='Verify your account to access the server.',
+                           guild_ids=[432379300684103699])
+    async def embedimage(self,
+                         ctx: discord.ApplicationContext):
+        await ctx.interaction.response.defer(ephemeral=True)
+        pubcord = self.bot.get_guild(432379300684103699)
+        role = pubcord.get_role(719791739367325706)
+        await ctx.user.add_roles(role)
+        await ctx.interaction.followup.send(embed=gen_embed(title='Verified',
+                                                            content=(f'{ctx.user.mention} has been added'
+                                                                     f' to role {role.mention}')),
+                                            ephemeral=True)
+
 
 def setup(bot):
     bot.add_cog(Pubcord(bot))
