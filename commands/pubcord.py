@@ -568,7 +568,7 @@ class Pubcord(commands.Cog):
     @discord.slash_command(name='verify',
                            description='Verify your account to access the server.',
                            guild_ids=[432379300684103699])
-    async def embedimage(self,
+    async def verify(self,
                          ctx: discord.ApplicationContext):
         await ctx.interaction.response.defer(ephemeral=True)
         pubcord = self.bot.get_guild(432379300684103699)
