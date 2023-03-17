@@ -521,7 +521,7 @@ class Pubcord(commands.Cog):
                                     ' ***THE HOLOLIVE COLLAB HAS:*** '
                                     '<:hololive:1011477576558055465> <:hololive:1011477576558055465> \n'
                                     '⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️\n'
-                                    '<a:siren:1011477577820545115> ***__`NO EVENT, NO GACHA BANNER`__*** <a:siren:1011477577820545115>\n'
+                                    '<a:siren:101147757820545115> ***__`NO EVENT, NO GACHA BANNER`__*** <a:siren:1011477577820545115>\n'
                                     '⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️\n'
                                     '**ONLY COSTUMES AND COVERS**\n'
                                     '**AND SOME OTHER COOL COSMETIC THINGS**\n'
@@ -570,7 +570,7 @@ class Pubcord(commands.Cog):
                            guild_ids=[432379300684103699])
     async def verify(self,
                          ctx: discord.ApplicationContext):
-        await ctx.interaction.response.defer(ephemeral=True)
+        await ctx.interaction.response.defer(ephemeral=False)
         pubcord = self.bot.get_guild(432379300684103699)
         role = pubcord.get_role(719791739367325706)
         await ctx.user.add_roles(role)
