@@ -437,13 +437,17 @@ class Pubcord(commands.Cog):
             if emoteserver_member:
                 if emoteserver_member not in emoteserver.premium_subscribers:
                     if member not in pubcord.premium_subscribers:
-                        log.info('Not boosting either server, removing')
-                        roles = member.roles
-                        roles.remove(pubcord_booster_role)
-                        await member.edit(roles=roles, reason="No longer boosting main OR emote server")
+                        boosting = False
+                        for uuid in boosters:
+                            if member.id == uuid:
+                                boosting = True
+                        if not boosting:
+                            log.info('Not boosting either server, removing')
+                            roles = member.roles
+                            roles.remove(pubcord_booster_role)
+                            await member.edit(roles=roles, reason="No longer boosting main OR emote server")
             else:
                 if member not in pubcord.premium_subscribers:
-                    document = await db.servers.find_one({"server_id": 432379300684103699})
                     boosting = False
                     for uuid in boosters:
                         if member.id == uuid:
