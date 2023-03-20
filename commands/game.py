@@ -146,7 +146,8 @@ class Game(commands.Cog):
 
             if path.exists(icon_path):
                 icon_paths.append(icon_path)
-            # TODO: use a placeholder "unknown card" image if the card icon doesn't exist
+            else: # use empty frame as placeholder
+                icon_paths.append("data/img/2star.png")
 
         images = [Image.open(x) for x in icon_paths]
         widths, heights = zip(*(i.size for i in images))
@@ -295,13 +296,12 @@ class Game(commands.Cog):
             embed.add_field(name='High Score Rating', value=total_hsr, inline=True)
 
             # display the player's equipped band and titles
-            title_ids = []
-            title_ids.append(profile['userProfileDegreeMap']['entries']['first']['degreeId'])
+            title_ids = [profile['userProfileDegreeMap']['entries']['first']['degreeId']]
             if 'second' in profile['userProfileDegreeMap']['entries']:
                 title_ids.append(profile['userProfileDegreeMap']['entries']['second']['degreeId'])
 
             band_members = []
-            card_order = [3, 1, 0, 2, 4]
+            card_order = (3, 1, 0, 2, 4)
             for i in card_order:
                 band_members.append(profile['mainDeckUserSituations']['entries'][i])
             band_name_and_path = await self.generate_band_and_titles_image(band_members, title_ids, server)
