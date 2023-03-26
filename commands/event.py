@@ -109,11 +109,11 @@ class Event(commands.Cog):
                 for event in api:
                     try:
                         if current_time < float(api[event]['startAt'][server]):
-                            current_event_id = event
+                            current_event_id = int(event)
                             break
                     except TypeError:
                         # For between events, show previous event
-                        current_event_id = event - 1
+                        current_event_id = int(event) - 1
                         break
             except KeyError:
                 current_event_id = list(api.keys())[-1]
