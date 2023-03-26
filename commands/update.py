@@ -468,9 +468,9 @@ class Update(commands.Cog):
                                                           content='Cutoff tracking is not enabled for this channel!'),
                                                 ephemeral=True)
 
-    async def generate_card_icon(self, card_id: str, card_api: any, chara_api: any):
+    async def generate_card_icon(self, card_id: str, card_api: any, chara_api: any) -> int:
+        images_saved = 0
         try:
-            im = Image.new("RGBA", (180, 180))
             folder = str(math.floor(int(card_id) / 50)).zfill(5)
             res_set_name = card_api[card_id]['resourceSetName']
             rarity = str(card_api[card_id]['rarity'])
@@ -493,7 +493,7 @@ class Update(commands.Cog):
                     break
             if server == "":
                 log.warning(f'card {card_id} was not released on any server')
-                return
+                return images_saved
             # DO THE GACHA ICONS IN THIS LOGIC TOO IF RARITY > 1
             if not path.exists(full_icons_path):
                 url_list = []
@@ -514,6 +514,7 @@ class Update(commands.Cog):
                         base_icons_path = f"data/img/icons/base_icons/{card_id}_trained.png"
                     image = await self.client.get(url)
                     try:
+                        im = Image.new("RGBA", (180, 180))
                         image = Image.open(BytesIO(image.content))
                         im.paste(image)
                         im.save(base_icons_path)
@@ -565,13 +566,14 @@ class Update(commands.Cog):
                                     elif url != url_list[-1]:
                                         im.save(gacha_icons_path)
                         im.save(full_icons_path)
+                        images_saved += 1
                     except Exception as e:
-                        log.error(f"Failed adding card with ID {card_id} ({e})")
-                        pass
-                log.info(f'updated card {card_id}')
+                        #log.error(f"Failed adding card with ID {card_id} ({e})")
+                        continue
+                #log.info(f'updated card {card_id}')
         except Exception as e:
             log.error(f"Failed adding card with ID {card_id} ({e})")
-            pass
+        return images_saved
 
     async def update_card_icons(self):
         card_api = await self.fetch_api("https://bestdori.com/api/cards/all.5.json")
@@ -582,7 +584,12 @@ class Update(commands.Cog):
         if not path.exists('data/img/icons/full_icons/'):
             filepath = Path('data/img/icons/full_icons/')
             filepath.mkdir(parents=True, exist_ok=True)
-        await asyncio.gather(*[self.generate_card_icon(card_id, card_api, chara_api) for card_id in card_api])
+        update_count = 0
+        for card_id in card_api:
+            update_count += await self.generate_card_icon(card_id, card_api, chara_api)
+        if update_count > 0:
+            log.info(f'Downloaded {update_count} card images')
+        # await asyncio.gather(*[self.generate_card_icon(card_id, card_api, chara_api) for card_id in card_api])
 
     @discord.slash_command(name='updatecards', description='Update card images manually')
     async def update_cards_command(self, ctx: discord.ApplicationContext):
@@ -594,19 +601,27 @@ class Update(commands.Cog):
     async def update_cards_loop(self):
         await self.update_card_icons()
 
-    async def save_title_img(self, server: str, title: str):
+    async def save_title_img(self, server: str, title: str) -> bool:
         if not os.path.isfile(f'data/img/titles/{server}/{title}'):
             r = await self.client.get(f'https://bestdori.com/assets/{server}/thumb/degree_rip/{title}')
             im = Image.new("RGBA", (230, 50))
             image = Image.open(BytesIO(r.content))
             im.paste(image)
             im.save(f'data/img/titles/{server}/{title}')
-            log.info(f'saved title {server}/{title}')
+            return True
+            #log.info(f'saved title {server}/{title}')
+        else:
+            return False
 
     async def get_titles(self, server):
         titles_img_api = await self.fetch_api(f"https://bestdori.com/api/explorer/{server}/assets/thumb/degree.json")
-        await asyncio.gather(*[self.save_title_img(server, title) for title in titles_img_api])
-        log.info(f'Finished extracting titles for server {server}')
+        update_count = 0
+        for title in titles_img_api:
+            if await self.save_title_img(server, title):
+                update_count += 1
+        # await asyncio.gather(*[self.save_title_img(server, title) for title in titles_img_api])
+        if update_count > 0:
+            log.info(f'Downloaded {update_count} title images on server {server}')
 
     @tasks.loop(seconds=168.0)
     async def update_titles_loop(self):
