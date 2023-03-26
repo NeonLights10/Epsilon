@@ -21,7 +21,7 @@ class Help(commands.Cog):
                     command_list.append(c.name)
         return [command for command in command_list if command.startswith(ctx.value.lower())]
 
-    @bridge.bridge_command(name='help',
+    @discord.slash_command(name='help',
                            description='Shows all available commands and help context.')
     async def help(self,
                    ctx,

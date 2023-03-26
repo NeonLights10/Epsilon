@@ -111,8 +111,10 @@ class Event(commands.Cog):
                         if current_time < float(api[event]['startAt'][server]):
                             current_event_id = event
                             break
-                    except TypeError:  # For between events
-                        continue
+                    except TypeError:
+                        # For between events, show previous event
+                        current_event_id = event - 1
+                        break
             except KeyError:
                 current_event_id = list(api.keys())[-1]
         if current_event_id:
@@ -173,9 +175,9 @@ class Event(commands.Cog):
             try:
                 event_name = await self.get_event_name(server, event_id)
             except json.decoder.JSONDecodeError:
-                event_name = await self.get_event_name(server, event_id - 1)
-            except TypeError:
-                event_name = await self.get_event_name(server, event_id - 1)
+                await ctx.interaction.followup.send(
+                    embed=gen_embed(title='Error fetching player data',
+                                    content='Could not decode response from Bestdori API.'))
             fmt = "%Y-%m-%d %H:%M:%S %Z%z"
             now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
             i = 1
@@ -226,13 +228,8 @@ class Event(commands.Cog):
             song_api = await self.fetch_api('https://bestdori.com/api/songs/all.7.json')
             event_api = await self.fetch_api(f'https://bestdori.com/api/events/{event_id}.json')
 
-            try:
-                for x in event_api['musics'][0]:
-                    song_ids.append(x['musicId'])
-            except TypeError:
-                event_api = await self.fetch_api(f'https://bestdori.com/api/events/{event_id - 1}.json')
-                for x in event_api['musics'][0]:
-                    song_ids.append(x['musicId'])
+            for x in event_api['musics'][0]:
+                song_ids.append(x['musicId'])
             try:
                 fmt = "%Y-%m-%d %H:%M:%S %Z%z"
                 now_time = datetime.datetime.now(timezone(-timedelta(hours=4), 'US/Eastern'))
@@ -573,13 +570,7 @@ class Event(commands.Cog):
         cutoff_api = await self.fetch_api(
             f'https://bestdori.com/api/tracker/data?server={server}&event={event_id}&tier={tier}')
         event_api = await self.fetch_api(f'https://bestdori.com/api/events/{event_id}.json')
-        try:
-            event_name = event_api['eventName'][server]
-        except TypeError:
-            cutoff_api = await self.fetch_api(
-                f'https://bestdori.com/api/tracker/data?server={server}&event={event_id - 1}&tier={tier}')
-            event_api = await self.fetch_api(f'https://bestdori.com/api/events/{event_id - 1}.json')
-            event_name = event_api['eventName'][server]
+        event_name = event_api['eventName'][server]
         banner_name = event_api['assetBundleName']
         event_start = event_api['startAt'][server]
         event_end = event_api['endAt'][server]
@@ -597,7 +588,6 @@ class Event(commands.Cog):
         if len(cutoff_api['cutoffs']) > 0:
             latest_retrieved_cutoff = cutoff_api['cutoffs'][-1]['ep']
             latest_retrieved_time = cutoff_api['cutoffs'][-1]['time'] / 1000
-
 
             current_time = time.time()
             update_interval = current_time - float(latest_retrieved_time)
