@@ -89,7 +89,7 @@ class Miscellaneous(commands.Cog):
                                        content=('**Thanks to:**\nReileky#4161, SinisterSmiley#0704, Makoto#7777, '
                                                 'Vince.#6969, Elise ☆#0001, EN_Gaige#3910, shimmerleaf#2115, '
                                                 'Hypnotic Rhythm#1260, wachie#0320, Ashlyne#8080, nehelenia#4489, '
-                                                'careblaire#6969, Reileky#4161')))
+                                                'careblaire#6969, Reileky#4161, FrostPH#0017, Dash0219#1204')))
 
     async def unload_autocomplete(self,
                                   ctx: discord.ApplicationContext):
