@@ -529,7 +529,7 @@ class Pubcord(commands.Cog):
                                            content='Click the button below to add the role. '
                                                    'Click it again to remove it.'),
                            view=self.view_anni)
-        await ctx.interaction.response.send(embed=gen_embed(title='Special Self Assign',
+        await ctx.interaction.followup.send(embed=gen_embed(title='Special Self Assign',
                                                             content='Special role self assign has been created!'))
 
     @discord.slash_command(name='hololive',
