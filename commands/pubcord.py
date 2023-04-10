@@ -525,10 +525,12 @@ class Pubcord(commands.Cog):
         if self.view_anni:
             self.view_anni.stop()
         self.view_anni = SpecialRole(role.name, ctx.interaction.guild_id, role)
-        await ctx.interaction.followup.send(embed= gen_embed(title=f'{role.name} Role',
-                                                             content='Click the button below to add the role. '
-                                                                     'Click it again to remove it.'),
-                                            view=self.view_anni)
+        await channel.send(embed=gen_embed(title=f'{role.name} Role',
+                                           content='Click the button below to add the role. '
+                                                   'Click it again to remove it.'),
+                           view=self.view_anni)
+        await ctx.interaction.response.send(embed=gen_embed(title='Special Self Assign',
+                                                            content='Special role self assign has been created!')
 
     @discord.slash_command(name='hololive',
                            description='Hololive Announcement',
