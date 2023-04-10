@@ -521,13 +521,14 @@ class Pubcord(commands.Cog):
                            ctx: discord.ApplicationContext,
                            role: Option(discord.SlashCommandOptionType.role, 'Role to set for self-assign'),
                            channel: Option(discord.SlashCommandOptionType.channel, 'Channel to post button in')):
+        await ctx.interaction.response.defer()
         if self.view_anni:
             self.view_anni.stop()
         self.view_anni = SpecialRole(role.name, ctx.interaction.guild_id, role)
-        await channel.send(embed=
-                           gen_embed(title=f'{role.id} Role',
-                                     content='Click the button below to add the role. Click it again to remove it.'),
-                           view=self.view_anni)
+        await ctx.interaction.followup.send(embed= gen_embed(title=f'{role.name} Role',
+                                                             content='Click the button below to add the role. '
+                                                                     'Click it again to remove it.'),
+                                            view=self.view_anni)
 
     @discord.slash_command(name='hololive',
                            description='Hololive Announcement',
