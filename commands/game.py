@@ -135,8 +135,129 @@ class Game(commands.Cog):
         api = await self.client.get(url)
         return api.json()
 
+    async def generate_card_icon(self, card_id: str, card_api: any, chara_api: any) -> int:
+        images_saved = 0
+        try:
+            folder = str(math.floor(int(card_id) / 50)).zfill(5)
+            res_set_name = card_api[card_id]['resourceSetName']
+            rarity = str(card_api[card_id]['rarity'])
+            attribute = str(card_api[card_id]['attribute'])
+            character_id = str(card_api[card_id]['characterId'])
+            band_id = chara_api[character_id]['bandId']
+            chara_name = chara_api[character_id]['characterName'][1]
+            chara_name = chara_name.split(' ', 1)[0].lower()
+            card_type = card_api[card_id]['type']
+            base_icons_path = f"data/img/icons/base_icons/{card_id}.png"
+            full_icons_path = f"data/img/icons/full_icons/{card_id}.png"
+            gacha_icons_path = f"data/img/icons/{chara_name}/{rarity}/{card_id}.png"
+            gacha_types = ['limited', 'permanent', 'birthday']
+
+            # account for card being unavailable on jp
+            server = ""
+            for i, server_key in enumerate(["jp", "en", "tw", "cn", "kr"]):
+                if card_api[card_id]['releasedAt'][i] is not None:
+                    server = server_key
+                    break
+            if server == "":
+                log.warning(f'card {card_id} was not released on any server')
+                return images_saved
+            # DO THE GACHA ICONS IN THIS LOGIC TOO IF RARITY > 1
+            if not path.exists(full_icons_path):
+                url_list = []
+                if card_type == 'birthday' or card_type == 'others' or card_type == 'kirafes':
+                    untrained_url = f'https://bestdori.com/assets/{server}/thumb/chara/card{folder}_rip/{res_set_name}_after_training.png'
+                    url_list.append(untrained_url)
+                    trained_url = f'https://bestdori.com/assets/{server}/thumb/chara/card{folder}_rip/{res_set_name}_after_training.png'
+                    url_list.append(trained_url)
+                else:
+                    untrained_url = f'https://bestdori.com/assets/{server}/thumb/chara/card{folder}_rip/{res_set_name}_normal.png'
+                    url_list.append(untrained_url)
+                    if int(rarity) > 2:
+                        trained_url = f'https://bestdori.com/assets/{server}/thumb/chara/card{folder}_rip/{res_set_name}_after_training.png'
+                        url_list.append(trained_url)
+                for url in url_list:
+                    if path.exists(full_icons_path):
+                        full_icons_path = f"data/img/icons/full_icons/{card_id}_trained.png"
+                        base_icons_path = f"data/img/icons/base_icons/{card_id}_trained.png"
+                    image = await self.client.get(url)
+                    try:
+                        im = Image.new("RGBA", (180, 180))
+                        image = Image.open(BytesIO(image.content))
+                        im.paste(image)
+                        im.save(base_icons_path)
+                        if rarity == '1':
+                            rarity_png = "data/img/2star.png"
+                            star_png = "data/img/star1.png"
+                        elif rarity == '2':
+                            rarity_png = "data/img/2star.png"
+                            star_png = "data/img/star2.png"
+                        elif rarity == '3':
+                            rarity_png = "data/img/3star.png"
+                            star_png = "data/img/star3.png"
+                        else:
+                            rarity_png = "data/img/4star.png"
+                            star_png = "data/img/star4.png"
+                        rarity_bg = Image.open(rarity_png)
+                        star_bg = Image.open(star_png)
+                        if rarity == '1':
+                            im.paste(star_bg, (5, 20), mask=star_bg)
+                        else:
+                            im.paste(star_bg, (5, 50), mask=star_bg)
+                        im.paste(rarity_bg, mask=rarity_bg)
+
+                        if attribute == 'powerful':
+                            attr_png = "data/img/power2.png"
+                        elif attribute == 'cool':
+                            attr_png = "data/img/cool2.png"
+                        elif attribute == 'pure':
+                            attr_png = "data/img/pure2.png"
+                        else:
+                            attr_png = "data/img/happy2.png"
+                        attr_bg = Image.open(attr_png)
+                        im.paste(attr_bg, (132, 2), mask=attr_bg)
+
+                        band_png = f"data/img/band_{band_id}.png"
+                        band_bg = Image.open(band_png)
+                        im.paste(band_bg, (1, 2), mask=band_bg)
+                        # The last URL in the list will always be the trained card which isn't needed for the gacha cards
+                        if card_type in gacha_types:
+                            if not path.exists(f'data/img/icons/{chara_name}/{rarity}/'):
+                                filepath = Path(f'data/img/icons/{chara_name}/{rarity}/')
+                                filepath.mkdir(parents=True, exist_ok=True)
+                            if not path.exists(gacha_icons_path):
+                                if int(rarity) == 2:
+                                    im.save(gacha_icons_path)
+                                elif int(rarity) > 2:
+                                    if card_type == 'birthday':
+                                        im.save(gacha_icons_path)
+                                    elif url != url_list[-1]:
+                                        im.save(gacha_icons_path)
+                        im.save(full_icons_path)
+                        images_saved += 1
+                    except Exception as e:
+                        #log.error(f"Failed adding card with ID {card_id} ({e})")
+                        continue
+                #log.info(f'updated card {card_id}')
+        except Exception as e:
+            log.error(f"Failed adding card with ID {card_id} ({e})")
+        return images_saved
+
+    async def save_title_img(self, server: str, title: str) -> bool:
+        if not os.path.isfile(f'data/img/titles/{server}/{title}'):
+            r = await self.client.get(f'https://bestdori.com/assets/{server}/thumb/degree_rip/{title}')
+            im = Image.new("RGBA", (230, 50))
+            image = Image.open(BytesIO(r.content))
+            im.paste(image)
+            im.save(f'data/img/titles/{server}/{title}')
+            return True
+            #log.info(f'saved title {server}/{title}')
+        else:
+            return False
+
     async def generate_band_and_titles_image(self, member_situations: list, equipped_title_ids: list, server: str):
         icon_paths = []
+        card_api = False
+        chara_api = False
         for situation in member_situations:
             icon_path = ""
             if situation['illust'] == "after_training":
@@ -144,9 +265,18 @@ class Game(commands.Cog):
             else:
                 icon_path = f"data/img/icons/full_icons/{situation['situationId']}.png"
 
+            # try to download the card image if it doesn't exist
+            if not path.exists(icon_path):
+                if not card_api:
+                    card_api = await self.fetch_api("https://bestdori.com/api/cards/all.5.json")
+                if not chara_api:
+                    chara_api = await self.fetch_api("https://bestdori.com/api/characters/all.2.json")
+                await self.generate_card_icon(situation['situationId'], card_api, chara_api)
+                icon_paths.append(icon_path)
+            # check path.exists again in case the download failed, and default to empty frame if failed
             if path.exists(icon_path):
                 icon_paths.append(icon_path)
-            else: # use empty frame as placeholder
+            else:
                 icon_paths.append("data/img/2star.png")
 
         images = [Image.open(x) for x in icon_paths]
@@ -175,10 +305,13 @@ class Game(commands.Cog):
                 image_contents = []
                 title_info = titles_api[str(title_id)]
                 event_title = f"data/img/titles/{server}/{title_info['baseImageName'][server_id]}.png"
+                if not path.exists(event_title):
+                    await self.save_title_img(server, f"{title_info['baseImageName'][server_id]}.png")
                 image_contents.append(event_title)
-                event = Image.open(image_contents[0])
-                event = event.resize((368, 80), Image.ANTIALIAS)
-                new_im.paste(event, (x_offset, 250), event)
+                if path.exists(event_title):
+                    event = Image.open(image_contents[0])
+                    event = event.resize((368, 80), Image.ANTIALIAS)
+                    new_im.paste(event, (x_offset, 250), event)
 
                 tier = title_info['rank'][server_id]
                 if tier != 'none' and tier != 'normal' and tier != 'extra':
@@ -200,10 +333,13 @@ class Game(commands.Cog):
             title_info = titles_api[str(equipped_title_ids[0])]
             server_id = server_id_map[server]
             event_title = f"data/img/titles/{server}/{title_info['baseImageName'][server_id]}.png"
+            if not path.exists(event_title):
+                await self.save_title_img(server, f"{title_info['baseImageName'][server_id]}.png")
             image_contents.append(event_title)
-            event = Image.open(image_contents[0])
-            event = event.resize((368, 80), Image.ANTIALIAS)
-            new_im.paste(event, (x_offset, 250), event)
+            if path.exists(event_title):
+                event = Image.open(image_contents[0])
+                event = event.resize((368, 80), Image.ANTIALIAS)
+                new_im.paste(event, (x_offset, 250), event)
 
             tier = title_info['rank'][server_id]
             if tier != 'none':
