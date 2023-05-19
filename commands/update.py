@@ -592,7 +592,7 @@ class Update(commands.Cog):
         # await asyncio.gather(*[self.generate_card_icon(card_id, card_api, chara_api) for card_id in card_api])
 
     @discord.slash_command(name='updatecards', description='Update card images manually')
-    @default_permissions(manage_server=True)
+    @default_permissions(manage_servers=True)
     async def update_cards_command(self, ctx: discord.ApplicationContext):
         await ctx.interaction.response.defer()
         await self.update_card_icons()
@@ -633,7 +633,7 @@ class Update(commands.Cog):
         await asyncio.gather(*[self.get_titles(server_name(i)) for i in range(5)])
 
     @discord.slash_command(name='updatetitles', description='Update title images manually')
-    @default_permissions(manage_server=True)
+    @default_permissions(manage_servers=True)
     async def update_titles_command(self, ctx: discord.ApplicationContext):
         await ctx.interaction.response.defer()
         for i in range(5):
