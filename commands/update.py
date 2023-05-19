@@ -64,14 +64,14 @@ class Update(commands.Cog):
         self.twom_synced = False
         self.t10_2m_tracking.start()
         self.t10_1h_tracking.start()
-        self.update_cards_loop.start()
-        self.update_titles_loop.start()
+        #self.update_cards_loop.start()
+        #self.update_titles_loop.start()
 
     def cog_unload(self):
         self.t10_2m_tracking.cancel()
         self.t10_1h_tracking.cancel()
-        self.update_cards_loop.cancel()
-        self.update_titles_loop.cancel()
+        #self.update_cards_loop.cancel()
+        #self.update_titles_loop.cancel()
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
@@ -592,6 +592,7 @@ class Update(commands.Cog):
         # await asyncio.gather(*[self.generate_card_icon(card_id, card_api, chara_api) for card_id in card_api])
 
     @discord.slash_command(name='updatecards', description='Update card images manually')
+    @default_permissions(manage_server=True)
     async def update_cards_command(self, ctx: discord.ApplicationContext):
         await ctx.interaction.response.defer()
         await self.update_card_icons()
@@ -632,6 +633,7 @@ class Update(commands.Cog):
         await asyncio.gather(*[self.get_titles(server_name(i)) for i in range(5)])
 
     @discord.slash_command(name='updatetitles', description='Update title images manually')
+    @default_permissions(manage_server=True)
     async def update_titles_command(self, ctx: discord.ApplicationContext):
         await ctx.interaction.response.defer()
         for i in range(5):

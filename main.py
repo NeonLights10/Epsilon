@@ -218,14 +218,15 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 ##########
 
 
-class EpsilonBot(bridge.Bot):
+class EpsilonBot(bridge.AutoShardedBot):
 
     def __init__(self, command_prefix, intents, case_insensitive, debug_guilds=None):
         super().__init__(max_messages=2000,
                          command_prefix=command_prefix,
                          intents=intents,
                          case_insensitive=case_insensitive,
-                         debug_guilds=debug_guilds)
+                         debug_guilds=debug_guilds,
+                         shard_count=2)
         self.command_count = 0
         self.message_count = 0
         self.uptime = time.time()
@@ -250,6 +251,7 @@ bot.load_extension("commands.old")
 bot.load_extension("commands.event")
 bot.load_extension("commands.update")
 bot.load_extension("commands.game")
+#bot.load_extension("commands.custom")
 
 
 @bot.event
