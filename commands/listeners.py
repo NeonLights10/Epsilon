@@ -56,7 +56,11 @@ async def on_guild_join(guild):
 
 
 async def on_message_delete(message):
-    document = await db.servers.find_one({"server_id": message.guild.id})
+    try:
+        document = await db.servers.find_one({"server_id": message.guild.id})
+    except AttributeError:
+        return
+
     try:
         if msglog := int(document['log_channel']):
             if not message.author.id == bot.user.id and message.author.bot is False:

@@ -127,8 +127,9 @@ sys.stdout.write(f"\x1b]2;{NAME} {BOTVERSION}\x07")
 log.info('\n')
 log.info(f'Establishing connection to MongoDB database {databaseName}')
 
+#f"mongodb+srv://admin:{DBPASSWORD}@delphinium.jnxfw.mongodb.net/{databaseName}?retryWrites=true&w=majority"
 mclient = motor.motor_asyncio.AsyncIOMotorClient(
-    f"mongodb+srv://admin:{DBPASSWORD}@delphinium.jnxfw.mongodb.net/{databaseName}?retryWrites=true&w=majority")
+    f"mongodb://admin:{DBPASSWORD}@40.76.246.112/{databaseName}?retryWrites=true&authSource=admin")
 mclient.get_io_loop = asyncio.get_running_loop
 
 db = mclient[databaseName]
@@ -251,7 +252,7 @@ bot.load_extension("commands.old")
 bot.load_extension("commands.event")
 bot.load_extension("commands.update")
 bot.load_extension("commands.game")
-#bot.load_extension("commands.custom")
+bot.load_extension("commands.custom")
 
 
 @bot.event
@@ -284,15 +285,10 @@ async def on_message(message):
     ctx = await bot.get_context(message)
 
     if isinstance(ctx.channel, discord.TextChannel):
-        document = await db.servers.find_one({"server_id": ctx.guild.id})
 
         if ctx.guild.id == 432379300684103699:
             await _emoji_log(message)
 
-        try:
-            whitelist = document['whitelist']
-        except KeyError:
-            whitelist = None
         if ctx.author.bot is False:
             if ctx.prefix:
                 # bypass check for now for t100 chart hub, keep prefix check first though
@@ -300,6 +296,11 @@ async def on_message(message):
                     pass
                 else:
                     # whitelist check
+                    document = await db.servers.find_one({"server_id": ctx.guild.id})
+                    try:
+                        whitelist = document['whitelist']
+                    except KeyError:
+                        whitelist = None
                     if whitelist and ctx.channel.id not in whitelist:
                         return
                     log.info(
@@ -314,10 +315,15 @@ async def on_message(message):
                     ref_message = await ctx.message.channel.fetch_message(ctx.message.reference.message_id)
 
                     if ref_message.author == bot.user:
+                        document = await db.servers.find_one({"server_id": ctx.guild.id})
                         if document['modmail_channel'] and ctx.channel.id == document['modmail_channel']:
                             await modmail_response_guild(message, ctx, ref_message)
                             return
                         elif document['chat']:
+                            try:
+                                whitelist = document['whitelist']
+                            except KeyError:
+                                whitelist = None
                             if whitelist and ctx.channel not in whitelist:
                                 return
                             log.info("Found a reply to me, generating response...")
@@ -326,7 +332,12 @@ async def on_message(message):
                             return
 
             if bot.user.id in ctx.message.raw_mentions and ctx.author != bot.user:
+                document = await db.servers.find_one({"server_id": ctx.guild.id})
                 if document['chat']:
+                    try:
+                        whitelist = document['whitelist']
+                    except TypeError:
+                        whitelist = None
                     if whitelist and ctx.channel not in whitelist:
                         return
                     log.info("Found a reply to me, generating response...")
@@ -334,6 +345,11 @@ async def on_message(message):
                     await ctx.message.reply(content=msg)
                     return
 
+            document = await db.servers.find_one({"server_id": ctx.guild.id})
+            try:
+                blacklist = document['blacklist']
+            except TypeError:
+                blacklist = None
             if document['blacklist']:
                 if ctx.channel.id not in document['blacklist']:
                     post = {'server_id': ctx.guild.id,
