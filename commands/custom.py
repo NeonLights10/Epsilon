@@ -38,8 +38,7 @@ class Custom(commands.Cog):
         return commands.check(predicate)
 
     @discord.slash_command(name='customcommands',
-                           description='Create and manage custom commands',
-                           guild_ids=[911509078038151168])
+                           description='Create and manage custom commands')
     @default_permissions(manage_messages=True)
     async def custom_commands(self,
                               ctx: discord.ApplicationContext):
@@ -400,8 +399,7 @@ class Custom(commands.Cog):
         return [command for command in command_list if command.startswith(ctx.value.lower())]
 
     @discord.slash_command(name='custom',
-                           description='Send a custom command for this server.',
-                           guild_ids=[911509078038151168])
+                           description='Send a custom command for this server.')
     @default_permissions(manage_messages=True)
     async def send_custom_command(self,
                                   ctx: discord.ApplicationContext,
