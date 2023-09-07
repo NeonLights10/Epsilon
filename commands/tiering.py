@@ -473,7 +473,8 @@ class Tiering(commands.Cog):
                                                content=f'Closed room'))
 
     @discord.slash_command(name='room',
-                           description=('Changes the room name. If no options are filled out, the room will close.'))
+                           description=('Changes the room name. If no options are filled out, the room will close.'),
+                           cooldown=discord.ext.commands.Cooldown(rate=2.0, per=600.0))
     async def sroom(self,
                     ctx: discord.ApplicationContext,
                     roomcode: Option(str, 'Room Code. Should be a 5 digit number from 00000-99999',

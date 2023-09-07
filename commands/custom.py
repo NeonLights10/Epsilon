@@ -297,9 +297,23 @@ class Custom(commands.Cog):
                     await db.servers.update_one({"server_id": 432379300684103699,
                                                  "name": old_command_name},
                                                 {"$set": {'name': modal.name.lower(),
-                                                          'message': modal.message}})
+                                                          'message': modal.message}},
+                                                upsert=True)
                     self.embed.fields[0].name = modal.name.lower()
                     self.embed.fields[0].value = modal.message
+                    already_exists = False
+                    for i in range(len(self.all_commands)):
+                        if self.all_commands[i]['name'] == modal.name.lower():
+                            self.all_commands[i]['message'] = modal.message
+                            already_exists = True
+                            break
+                    if not already_exists:
+                        for i in range(len(self.all_commands)):
+                            if self.all_commands[i]['name'] == old_command_name:
+                                del self.all_commands[i]
+                                break
+                        self.all_commands.append({'name': modal.name.lower(),
+                                                  'message': modal.message})
                     await interaction.message.edit(embed=self.embed,
                                                    view=self)
                 await self.check_count(interaction)
