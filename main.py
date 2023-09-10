@@ -129,7 +129,7 @@ log.info(f'Establishing connection to MongoDB database {databaseName}')
 
 #f"mongodb+srv://admin:{DBPASSWORD}@delphinium.jnxfw.mongodb.net/{databaseName}?retryWrites=true&w=majority"
 mclient = motor.motor_asyncio.AsyncIOMotorClient(
-    f"mongodb://admin:{DBPASSWORD}@40.76.246.112/{databaseName}?retryWrites=true&authSource=admin")
+    f"mongodb://admin:{DBPASSWORD}@104.131.182.231/{databaseName}?retryWrites=true&authSource=admin")
 mclient.get_io_loop = asyncio.get_running_loop
 
 db = mclient[databaseName]
