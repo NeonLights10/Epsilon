@@ -294,11 +294,11 @@ class Custom(commands.Cog):
                         content=f'Custom command {modal.name} edited!'),
                         ephemeral=True,
                         delete_after=5.0)
-                    await db.servers.update_one({"server_id": 432379300684103699,
-                                                 "name": old_command_name},
-                                                {"$set": {'name': modal.name.lower(),
-                                                          'message': modal.message}},
-                                                upsert=True)
+                    await db.custom_commands.update_one({"server_id": 432379300684103699,
+                                                        "name": old_command_name},
+                                                        {"$set": {'name': modal.name.lower(),
+                                                        'message': modal.message}},
+                                                        upsert=True)
                     self.embed.fields[0].name = modal.name.lower()
                     self.embed.fields[0].value = modal.message
                     already_exists = False
