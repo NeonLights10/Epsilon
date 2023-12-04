@@ -112,7 +112,11 @@ class Utility(commands.Cog):
                                                             emoji=e))
                     if len(options) > 0:
                         selectrole_view.add_item(SelfRoleSelect(options))
-                    await post_message.edit(view=selectrole_view)
+                    try:
+                        await post_message.edit(view=selectrole_view)
+                    except discord.errors.HTTPException as e:
+                        log.info(f'Error initializing selfassign for {guild.name}')
+                        continue
 
     @initialize_selfassign.before_loop
     async def wait_ready(self):
