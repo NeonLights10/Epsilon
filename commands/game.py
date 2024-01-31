@@ -128,7 +128,7 @@ def get_song_meta_rows(song_meta_api: dict, song_name_api: dict, song_id: str, f
 class Game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.client = AsyncClient()
+        self.client = AsyncClient(follow_redirects=True)
         self.client = CachingClient(self.client)
 
     async def fetch_api(self, url):
