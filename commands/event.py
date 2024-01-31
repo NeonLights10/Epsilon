@@ -75,7 +75,7 @@ def check_valid_server_tier(server, tier):
 class Event(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.client = AsyncClient()
+        self.client = AsyncClient(follow_redirects=True)
         self.client = CachingClient(self.client)
 
         with open("config.json") as file:
