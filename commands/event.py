@@ -89,6 +89,7 @@ class Event(commands.Cog):
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
+        log.info(f'{url} returned ' + api.status_code)
         try:
             parsed = api.json()
         except json.decoder.JSONDecodeError:
