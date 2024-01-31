@@ -130,7 +130,7 @@ class Pubcord(commands.Cog):
         current_time = time.time() * 1000
         current_event_id = await get_next_event()
 
-        client = AsyncClient()
+        client = AsyncClient(follow_redirects=True)
         client = CachingClient(client)
 
         events_url = f'https://bestdori.com/api/events/{current_event_id}.json'
