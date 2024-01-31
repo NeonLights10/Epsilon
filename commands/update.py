@@ -58,7 +58,7 @@ def server_name(num):
 class Update(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.client = AsyncClient()
+        self.client = AsyncClient(follow_redirects=True)
         self.client = CachingClient(self.client)
         self.oneh_synced = False
         self.twom_synced = False
