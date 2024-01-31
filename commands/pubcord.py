@@ -78,7 +78,7 @@ async def get_next_event():
     current_time = time.time() * 1000
 
     url = 'https://bestdori.com/api/events/all.5.json'
-    client = AsyncClient()
+    client = AsyncClient(follow_redirects=True)
     client = CachingClient(client)
 
     r = await client.get(url)
