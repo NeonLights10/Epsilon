@@ -89,11 +89,13 @@ class Custom(commands.Cog):
                 for entry in self.all_commands:
                     if name == entry['name']:
                         message = entry['message']
+                        image = entry['image']
                 self.embed.fields[0].name = name
                 if len(message) < 1024:
                     self.embed.fields[0].value = message
                 else:
                     self.embed.fields[0].value = 'Command message is too long to display. Edit command to see content.'
+                self.embed.set_image(url=image)
                 edit_button = self.view.get_item('edit_command')
                 edit_button.disabled = False
                 remove_button = self.view.get_item('remove_command')
@@ -165,7 +167,7 @@ class Custom(commands.Cog):
                         return
                     int_embed.set_image(url=self.children[2].value)
 
-                await interaction.response.send_message(int_embed, view=confirm_view)
+                await interaction.response.send_message(embed=int_embed, view=confirm_view)
                 await confirm_view.wait()
                 if confirm_view.value:
                     self.name = self.children[0].value
