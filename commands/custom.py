@@ -6,6 +6,8 @@ from discord.commands import Option
 from discord.commands.permissions import default_permissions
 from discord.ui import InputText
 
+import validators
+
 from formatting.embed import gen_embed
 from __main__ import log, db
 from commands.errorhandler import CheckOwner
@@ -104,9 +106,11 @@ class Custom(commands.Cog):
                 super().__init__(title='Custom Command Message')
                 self.name = None
                 self.message = None
+                self.image = None
                 if selected_command:
                     self.name = selected_command['name']
                     self.message = selected_command['message']
+                    self.image = selected_command['image']
                     self.add_item(
                         InputText(
                             label='Custom Command Name',
@@ -119,6 +123,12 @@ class Custom(commands.Cog):
                             value=self.message,
                             style=discord.InputTextStyle.long,
                             max_length=max_length))
+                    self.add_item(
+                        InputText(
+                            label='Custom Command Image',
+                            value=self.image,
+                            style=discord.InputTextStyle.short,
+                            required=False))
                 else:
                     self.add_item(
                         InputText(
@@ -132,17 +142,36 @@ class Custom(commands.Cog):
                             placeholder='Enter your custom command message here.',
                             style=discord.InputTextStyle.long,
                             max_length=max_length))
+                    self.add_item(
+                        InputText(
+                            label='Custom Command Image',
+                            placeholder='Enter the URL for the image here.',
+                            style=discord.InputTextStyle.short,
+                            required=False))
 
             async def callback(self, interaction: discord.Interaction):
                 confirm_view = Confirm()
-                await interaction.response.send_message(embed=gen_embed(
+                int_embed = gen_embed(
                     title='Does the command message look correct?',
-                    content=self.children[1].value),
-                    view=confirm_view)
+                    content=self.children[1].value)
+
+                if self.children[2].value:
+                    if not validators.url(self.children[2].value):
+                        await interaction.response.send_message(embed=gen_embed(
+                            title='Error',
+                            content='Image URL is invalid. Please try again.'
+                        ), ephemeral=True)
+                        self.stop()
+                        return
+                    int_embed.set_image(url=self.children[2].value)
+
+                await interaction.response.send_message(int_embed, view=confirm_view)
                 await confirm_view.wait()
                 if confirm_view.value:
                     self.name = self.children[0].value
                     self.message = self.children[1].value
+                    if self.children[2].value:
+                        self.image = self.children[2].value
                     og_msg = await interaction.original_response()
                     await og_msg.delete()
                     self.stop()
@@ -231,11 +260,13 @@ class Custom(commands.Cog):
                             '_id': _id,
                             'server_id': ctx.interaction.guild_id,
                             'name': modal.name.lower(),
-                            'message': modal.message
+                            'message': modal.message,
+                            'image': modal.image
                         }
                         await db.custom_commands.insert_one(post)
                         self.all_commands.append({'name': modal.name.lower(),
-                                                  'message': modal.message})
+                                                  'message': modal.message,
+                                                  'image': modal.image})
                         embd_text = ""
                         for cmd in self.all_commands:
                             embd_text += cmd['name'] + '\n'
@@ -274,8 +305,10 @@ class Custom(commands.Cog):
                 for entry in self.all_commands:
                     if n == entry['name']:
                         m = entry['message']
+                        i = entry['image']
                 command_to_edit = {'name': n,
-                                   'message': m}
+                                   'message': m,
+                                   'image': i}
                 old_command_name = self.embed.fields[0].name
                 modal = CustomCommandModal(EMBED_MAX_LENGTH, command_to_edit)
                 await interaction.response.send_modal(modal)
@@ -295,16 +328,19 @@ class Custom(commands.Cog):
                         ephemeral=True,
                         delete_after=5.0)
                     await db.custom_commands.update_one({"server_id": 432379300684103699,
-                                                        "name": old_command_name},
+                                                         "name": old_command_name},
                                                         {"$set": {'name': modal.name.lower(),
-                                                        'message': modal.message}},
+                                                                  'message': modal.message,
+                                                                  'image': modal.image}},
                                                         upsert=True)
                     self.embed.fields[0].name = modal.name.lower()
                     self.embed.fields[0].value = modal.message
+                    self.embed.set_image(url=modal.image)
                     already_exists = False
                     for i in range(len(self.all_commands)):
                         if self.all_commands[i]['name'] == modal.name.lower():
                             self.all_commands[i]['message'] = modal.message
+                            self.all_commands[i]['image'] = modal.image
                             already_exists = True
                             break
                     if not already_exists:
@@ -313,7 +349,8 @@ class Custom(commands.Cog):
                                 del self.all_commands[i]
                                 break
                         self.all_commands.append({'name': modal.name.lower(),
-                                                  'message': modal.message})
+                                                  'message': modal.message,
+                                                  'image': modal.image})
                     await interaction.message.edit(embed=self.embed,
                                                    view=self)
                 await self.check_count(interaction)
@@ -340,7 +377,8 @@ class Custom(commands.Cog):
                     options.append(discord.SelectOption(label=entry['name'],
                                                         value=entry['name']))
                     new_command_list.append({'name': entry['name'],
-                                             'message': entry['message']})
+                                             'message': entry['message'],
+                                             'image': entry['image']})
                 self.selectmenu = CommandSelect(options, self.embed, self.all_commands)
                 if len(self.all_commands) > 1:
                     self.add_item(self.selectmenu)
@@ -371,7 +409,8 @@ class Custom(commands.Cog):
         command_list = []
         async for document in db_commands:
             command_list.append({'name': document['name'],
-                                 'message': document['message']})
+                                 'message': document['message'],
+                                 'image': document['image']})
 
         embed = gen_embed(name='Custom Commands',
                           content='You can configure custom commands for this server using the select dropdown below.')
@@ -424,9 +463,10 @@ class Custom(commands.Cog):
         db_command = await db.custom_commands.find_one({"server_id": ctx.interaction.guild_id,
                                                         "name": command})
         if db_command:
-            await ctx.interaction.followup.send(embed=gen_embed(title=db_command['name'],
-                                                                content=db_command['message']),
-                                                ephemeral=False)
+            embed = gen_embed(title=db_command['name'],
+                              content=db_command['message'])
+            embed.set_image(url=db_command['image'])
+            await ctx.interaction.followup.send(embed, ephemeral=False)
         else:
             await ctx.interaction.followup.send(embed=gen_embed(title='Custom Commands',
                                                                 content='This command is not a valid custom command!'),
