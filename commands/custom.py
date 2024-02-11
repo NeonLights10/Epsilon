@@ -329,7 +329,7 @@ class Custom(commands.Cog):
                         content=f'Custom command {modal.name} edited!'),
                         ephemeral=True,
                         delete_after=5.0)
-                    await db.custom_commands.update_one({"server_id": 432379300684103699,
+                    await db.custom_commands.update_one({"server_id": interaction.guild.id,
                                                          "name": old_command_name},
                                                         {"$set": {'name': modal.name.lower(),
                                                                   'message': modal.message,
