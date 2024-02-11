@@ -468,7 +468,7 @@ class Custom(commands.Cog):
             embed = gen_embed(title=db_command['name'],
                               content=db_command['message'])
             embed.set_image(url=db_command['image'])
-            await ctx.interaction.followup.send(embed, ephemeral=False)
+            await ctx.interaction.followup.send(embed=embed, ephemeral=False)
         else:
             await ctx.interaction.followup.send(embed=gen_embed(title='Custom Commands',
                                                                 content='This command is not a valid custom command!'),
