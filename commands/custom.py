@@ -392,6 +392,7 @@ class Custom(commands.Cog):
                         new_field_text += new_command['name'] + '\n'
                 self.embed.fields[0].name = 'Current Available Commands'
                 self.embed.fields[0].value = new_field_text
+                self.embed.set_image(url=None)
                 if len(self.all_commands) < 1:
                     edit_button = main_menu_view.get_item('edit_command')
                     edit_button.disabled = True
