@@ -152,7 +152,7 @@ async def on_message_edit(before, after):
             if not before.author.id == bot.user.id and before.author.bot is False:
                 if not before.content == after.content:
                     log_channel = before.guild.get_channel(msglog)
-                    content = gen_embed(name=f'{message.author.name} ({message.author.display_name})',
+                    content = gen_embed(name=f'{before.author.name} ({before.author.display_name})',
                                         icon_url=before.author.display_avatar.url,
                                         title=f'Message edited in #{before.channel.name}',
                                         content=f'[Go to Message]({after.jump_url})')
