@@ -92,7 +92,7 @@ log.info(f"Set logging level to {config_json['log_level']}")
 
 if config_json["debug_mode"]:
     debuglog = logging.getLogger('discord')
-    debuglog.setLevel(logging.DEBUG)
+    debuglog.setLevel(logging.INFO)
     dhandler = logging.FileHandler(filename='logs/discord.log', encoding='utf-8', mode='w')
     dhandler.setFormatter(logging.Formatter('{asctime}:{levelname}:{name}: {message}', style='{'))
     debuglog.addHandler(dhandler)
