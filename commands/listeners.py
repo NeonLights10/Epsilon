@@ -68,7 +68,7 @@ async def on_message_delete(message):
                 if re.match(f'^{prefix}', message.content) is None:
                     log_channel = message.guild.get_channel(msglog)
                     sent_time = math.trunc(time.mktime(message.created_at.timetuple()))
-                    content = gen_embed(name=f'{message.author.name}#{message.author.discriminator}',
+                    content = gen_embed(name=f'{message.author.name} ({message.author.display_name})',
                                         icon_url=message.author.display_avatar.url,
                                         title=f'Message deleted in {message.channel.name}',
                                         content=f'Message sent <t:{sent_time}>')
@@ -100,7 +100,7 @@ async def on_bulk_message_delete(messages):
                     if re.match(f'^{prefix}', message.content) is None:
                         log_channel = message.guild.get_channel(msglog)
                         sent_time = math.trunc(time.mktime(message.created_at.timetuple()))
-                        content = gen_embed(name=f'{message.author.name}#{message.author.discriminator}',
+                        content = gen_embed(name=f'{message.author.name} ({message.author.display_name})',
                                             icon_url=message.author.display_avatar.url,
                                             title=f'Message deleted in #{message.channel.name}',
                                             content=f'Message sent <t:{sent_time}>')
@@ -152,7 +152,7 @@ async def on_message_edit(before, after):
             if not before.author.id == bot.user.id and before.author.bot is False:
                 if not before.content == after.content:
                     log_channel = before.guild.get_channel(msglog)
-                    content = gen_embed(name=f'{before.author.name}#{before.author.discriminator}',
+                    content = gen_embed(name=f'{message.author.name} ({message.author.display_name})',
                                         icon_url=before.author.display_avatar.url,
                                         title=f'Message edited in #{before.channel.name}',
                                         content=f'[Go to Message]({after.jump_url})')
