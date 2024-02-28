@@ -127,7 +127,7 @@ sys.stdout.write(f"\x1b]2;{NAME} {BOTVERSION}\x07")
 log.info('\n')
 log.info(f'Establishing connection to MongoDB database {databaseName}')
 
-#f"mongodb+srv://admin:{DBPASSWORD}@delphinium.jnxfw.mongodb.net/{databaseName}?retryWrites=true&w=majority"
+# f"mongodb+srv://admin:{DBPASSWORD}@delphinium.jnxfw.mongodb.net/{databaseName}?retryWrites=true&w=majority"
 mclient = motor.motor_asyncio.AsyncIOMotorClient(
     f"mongodb://admin:{DBPASSWORD}@104.131.182.231/{databaseName}?retryWrites=true&authSource=admin")
 mclient.get_io_loop = asyncio.get_running_loop
@@ -385,9 +385,11 @@ async def on_message(message):
 async def get_msgid(message, attempts=1, blacklist=None):
     # Construct the aggregation pipeline, match for the current server id and exclude bot messages if they somehow
     # snuck past the initial regex.
-    pipeline = [
-        {'$match': {'$and': [{'server_id': message.guild.id}, {'author_id': {'$not': {'$regex': str(bot.user.id)}}}]}},
-        {'$sample': {'size': 1}}]
+    pipeline = [{'$sample': {'size': 500}},
+                {'$match':
+                    {'$and': [{'server_id': message.guild.id},
+                              {'author_id': {'$not': {'$regex': str(bot.user.id)}}}]}},
+                {'$limit': 1}]
     async for msgid in db.msgid.aggregate(pipeline):
         # Searches each channel until it finds the channel the message was sent in.
         # This lets us fetch the message.
