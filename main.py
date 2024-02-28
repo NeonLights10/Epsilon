@@ -327,7 +327,12 @@ async def on_message(message):
                             if whitelist and ctx.channel not in whitelist:
                                 return
                             log.info("Found a reply to me, generating response...")
-                            msg = await get_msgid(ctx.message)
+                            try:
+                                blacklist = document['blacklist']
+                            except TypeError:
+                                blacklist = None
+                            log.info("Obtained blacklist")
+                            msg = await get_msgid(ctx.message, blacklist=blacklist)
                             await ctx.message.reply(content=msg)
                             return
 
@@ -377,7 +382,7 @@ async def on_message(message):
 
 # This recursive function checks the database for a message ID for the bot to fetch a message and respond with when
 # mentioned or replied to.
-async def get_msgid(message, attempts=1):
+async def get_msgid(message, attempts=1, blacklist=None):
     # Construct the aggregation pipeline, match for the current server id and exclude bot messages if they somehow
     # snuck past the initial regex.
     pipeline = [
@@ -392,7 +397,14 @@ async def get_msgid(message, attempts=1):
                     # We fetch the message, as we do not store any message contents for user privacy. If the message
                     # is deleted, we can't access it.
                     msg = await channel.fetch_message(msgid['msg_id'])
-
+                    document = await db.servers.find_one({"server_id": msg.guild.id})
+                    if blacklist:
+                        if msg.channel.id in blacklist:
+                            attempts += 1
+                            mid = msgid['msg_id']
+                            await db.msgid.delete_one({"msg_id": mid})
+                            log.info("Channel blacklisted, removing entry from db...")
+                            return await get_msgid(message, attempts, blacklist)
                     # Now let's doublecheck that we aren't mentioning ourselves or another bot, and that the messages
                     # has no embeds or attachments.
                     filter = f"(?:{'|'.join(FILTER)})"
