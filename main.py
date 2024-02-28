@@ -434,6 +434,8 @@ async def get_msgid(message, attempts=1, blacklist=None):
                     await db.msgid.delete_one({"msg_id": mid})
                     log.info("Removing entry from db...")
                     return await get_msgid(message, attempts)
+    attempts += 1
+    return await get_msgid(message, attempts)
 
 
 async def modmail_response_guild(message, ctx, ref_message):
