@@ -354,7 +354,7 @@ class Collection(commands.Cog):
             await ctx.respond(embed=gen_embed(title='missing',
                                               content='The message is not currently up! Cannot change description.'))
 
-    t100 = SlashCommandGroup('t100', 't100 related commands', guild_ids=[616088522100703241])
+    t100 = SlashCommandGroup('t100chart', 't100 related commands', guild_ids=[616088522100703241])
 
     @t100.command(name='channel',
                   description='Set the active channel for t100 screenshot collection',
