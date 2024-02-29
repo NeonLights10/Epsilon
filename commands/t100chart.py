@@ -166,7 +166,7 @@ class Collection(commands.Cog):
     def is_owner():
         async def predicate(ctx) -> bool:
             if isinstance(ctx, discord.ApplicationContext):
-                allowed_users = [133048058756726784, 130829029577064448, 197608336286285824, 437121108756398101]
+                allowed_users = [133048058756726784, 130829029577064448, 197608336286285824, 437121108756398101, 226216353357496320]
                 if ctx.interaction.user.id in allowed_users:
                     return True
                 else:
@@ -303,14 +303,16 @@ class Collection(commands.Cog):
                            description='Post missing t100 screenshot button')
     @is_owner()
     async def requestcollection(self, ctx, *, description: str):
+        await ctx.interaction.response.defer()
         self.view = PersistentEvent(bot=self.bot)
         missing = description
         if missing == "none":
-            new_message = await ctx.channel.send(
+            new_message = await ctx.interaction.followup.send(
                 f"All T100 ranking screenshots for the most recent event have been obtained! Thank you <3",
                 view=self.view)
         else:
-            new_message = await ctx.channel.send((f"We’re collecting T100 ranking screenshots for the most recent event"
+            new_message = await ctx.interaction.followup.send((
+                                                  f"We’re collecting T100 ranking screenshots for the most recent event"
                                                   f". If you placed anywhere in this position, please click the button "
                                                   f"below and send your screenshots of all the positions "
                                                   f"you can see! Make sure all borders are intact, no effects from "
