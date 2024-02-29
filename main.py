@@ -227,7 +227,7 @@ class EpsilonBot(bridge.AutoShardedBot):
                          intents=intents,
                          case_insensitive=case_insensitive,
                          debug_guilds=debug_guilds,
-                         shard_count=2)
+                         shard_count=4)
         self.command_count = 0
         self.message_count = 0
         self.uptime = time.time()

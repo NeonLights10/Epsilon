@@ -166,7 +166,8 @@ class Collection(commands.Cog):
     def is_owner():
         async def predicate(ctx) -> bool:
             if isinstance(ctx, discord.ApplicationContext):
-                if ctx.interaction.user.id == 133048058756726784:
+                allowed_users = [133048058756726784, 130829029577064448, 197608336286285824, 437121108756398101]
+                if ctx.interaction.user.id in allowed_users:
                     return True
                 else:
                     raise CheckOwner()
@@ -298,6 +299,27 @@ class Collection(commands.Cog):
         await self.bot.wait_until_ready()
         await asyncio.sleep(10)
 
+    @discord.slash_command(name='requestcollection',
+                           description='Post missing t100 screenshot button')
+    @is_owner()
+    async def requestcollection(self, ctx, *, description: str):
+        self.view = PersistentEvent(bot=self.bot)
+        missing = description
+        if missing == "none":
+            new_message = await ctx.channel.send(
+                f"All T100 ranking screenshots for the most recent event have been obtained! Thank you <3",
+                view=self.view)
+        else:
+            new_message = await ctx.channel.send((f"We’re collecting T100 ranking screenshots for the most recent event"
+                                                  f". If you placed anywhere in this position, please click the button "
+                                                  f"below and send your screenshots of all the positions "
+                                                  f"you can see! Make sure all borders are intact, no effects from "
+                                                  f"screenshotting too soon after tapping the screen, and grab ALL "
+                                                  f"the positions that you can see!\n "
+                                                  f"> Missing: {missing}"),
+                                                 view=self.view)
+        log.info(f't100 screenshot button posted in {ctx.guild.name} in #{ctx.channel.name}')
+
     @discord.slash_command(name='missing',
                            description='Change the description for missing t100 screenshots',
                            guild_ids=[616088522100703241])
@@ -353,15 +375,16 @@ class Collection(commands.Cog):
         await ctx.interaction.response.defer()
         await ctx.interaction.followup.send(
             embed=gen_embed(title='Current Pubcord Task Status',
-                            content=(f'```Check Screenshot Button | Iteration {self.checkscreenshot_button.current_loop}\n'
-                                     f'  Failed: {self.checkscreenshot_button.failed()}\n'
-                                     f'  Is Running: {self.checkscreenshot_button.is_running()}\n\n'
-                                     f'Check Remove Screenshot | Iteration {self.check_removescreenshot_button.current_loop}\n'
-                                     f'  Failed: {self.check_removescreenshot_button.failed()}\n'
-                                     f'  Is Running: {self.check_removescreenshot_button.is_running()}\n\n'
-                                     f'Update End of Event | Iteration {self.update_endofevent.current_loop}\n'
-                                     f'  Failed: {self.update_endofevent.failed()}\n'
-                                     f'  Is Running: {self.update_endofevent.is_running()}```')))
+                            content=(
+                                f'```Check Screenshot Button | Iteration {self.checkscreenshot_button.current_loop}\n'
+                                f'  Failed: {self.checkscreenshot_button.failed()}\n'
+                                f'  Is Running: {self.checkscreenshot_button.is_running()}\n\n'
+                                f'Check Remove Screenshot | Iteration {self.check_removescreenshot_button.current_loop}\n'
+                                f'  Failed: {self.check_removescreenshot_button.failed()}\n'
+                                f'  Is Running: {self.check_removescreenshot_button.is_running()}\n\n'
+                                f'Update End of Event | Iteration {self.update_endofevent.current_loop}\n'
+                                f'  Failed: {self.update_endofevent.failed()}\n'
+                                f'  Is Running: {self.update_endofevent.is_running()}```')))
 
 
 def setup(bot):
