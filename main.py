@@ -406,6 +406,8 @@ async def get_msgid(message, attempts=1, blacklist=None):
                     msg = await channel.fetch_message(msgid['msg_id'])
                     document = await db.servers.find_one({"server_id": msg.guild.id})
                     if blacklist:
+                        log.info(f"blacklist detected: {','.join(str(x) for x in blacklist)}")
+                        log.info(msg.channel.id)
                         if msg.channel.id in blacklist:
                             attempts += 1
                             mid = msgid['msg_id']
