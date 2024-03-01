@@ -346,6 +346,11 @@ async def on_message(message):
                     if whitelist and ctx.channel not in whitelist:
                         return
                     log.info("Found a reply to me, generating response...")
+                    try:
+                        blacklist = document['blacklist']
+                    except TypeError:
+                        blacklist = None
+                    log.info("Obtained blacklist")
                     msg = await get_msgid(ctx.message)
                     await ctx.message.reply(content=msg)
                     return
