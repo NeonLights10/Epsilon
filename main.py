@@ -351,7 +351,7 @@ async def on_message(message):
                     except TypeError:
                         blacklist = None
                     log.info("Obtained blacklist")
-                    msg = await get_msgid(ctx.message)
+                    msg = await get_msgid(ctx.message, blacklist=blacklist)
                     await ctx.message.reply(content=msg)
                     return
 
@@ -407,7 +407,7 @@ async def get_msgid(message, attempts=1, blacklist=None):
                     document = await db.servers.find_one({"server_id": msg.guild.id})
                     if blacklist:
                         log.info(f"blacklist detected: {','.join(str(x) for x in blacklist)}")
-                        log.info(msg.channel.id)
+                        #log.info(msg.channel.id)
                         if msg.channel.id in blacklist:
                             attempts += 1
                             mid = msgid['msg_id']
