@@ -396,7 +396,7 @@ async def get_msgid(message, attempts=1, blacklist=None):
                      {'$and': [{'server_id': message.guild.id},
                                {'author_id': {'$not': {'$regex': str(bot.user.id)}}}]}},
                 {'$limit': 1}]
-    async for msgid in res := db.msgid.aggregate(pipeline):
+    async for msgid in db.msgid.aggregate(pipeline):
         # Searches each channel until it finds the channel the message was sent in.
         # This lets us fetch the message.
         for channel in message.guild.channels:
@@ -423,7 +423,6 @@ async def get_msgid(message, attempts=1, blacklist=None):
                             msg.author.bot is False) and (re.match(filter, msg.content) is None):
                         log.info("Attempts taken:{}".format(attempts))
                         log.info("Message ID:{}".format(msg.id))
-                        del res
                         return msg.clean_content
                     else:
                         # If we fail, remove that message ID from the DB so we never call it again.
