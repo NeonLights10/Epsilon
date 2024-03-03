@@ -222,12 +222,13 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 class EpsilonBot(bridge.AutoShardedBot):
 
     def __init__(self, command_prefix, intents, case_insensitive, debug_guilds=None):
-        super().__init__(max_messages=2000,
+        super().__init__(max_messages=2500,
                          command_prefix=command_prefix,
                          intents=intents,
                          case_insensitive=case_insensitive,
                          debug_guilds=debug_guilds,
-                         shard_count=4)
+                         shard_count=3,
+                         chunk_guilds_at_startup=False)
         self.command_count = 0
         self.message_count = 0
         self.uptime = time.time()
@@ -284,7 +285,7 @@ async def on_message(message):
     bot.message_count += 1
     ctx = await bot.get_context(message)
 
-    if isinstance(ctx.channel, discord.TextChannel):
+    if isinstance(ctx.channel, discord.TextChannel) or isinstance(ctx.channel, discord.Thread):
 
         if ctx.guild.id == 432379300684103699:
             await _emoji_log(message)
@@ -392,10 +393,10 @@ async def get_msgid(message, attempts=1, blacklist=None):
     # snuck past the initial regex.
     pipeline = [{'$sample': {'size': 500}},
                 {'$match':
-                    {'$and': [{'server_id': message.guild.id},
-                              {'author_id': {'$not': {'$regex': str(bot.user.id)}}}]}},
+                     {'$and': [{'server_id': message.guild.id},
+                               {'author_id': {'$not': {'$regex': str(bot.user.id)}}}]}},
                 {'$limit': 1}]
-    async for msgid in db.msgid.aggregate(pipeline):
+    async for msgid in res := db.msgid.aggregate(pipeline):
         # Searches each channel until it finds the channel the message was sent in.
         # This lets us fetch the message.
         for channel in message.guild.channels:
@@ -407,7 +408,7 @@ async def get_msgid(message, attempts=1, blacklist=None):
                     document = await db.servers.find_one({"server_id": msg.guild.id})
                     if blacklist:
                         log.info(f"blacklist detected: {','.join(str(x) for x in blacklist)}")
-                        #log.info(msg.channel.id)
+                        # log.info(msg.channel.id)
                         if msg.channel.id in blacklist:
                             attempts += 1
                             mid = msgid['msg_id']
@@ -422,6 +423,7 @@ async def get_msgid(message, attempts=1, blacklist=None):
                             msg.author.bot is False) and (re.match(filter, msg.content) is None):
                         log.info("Attempts taken:{}".format(attempts))
                         log.info("Message ID:{}".format(msg.id))
+                        del res
                         return msg.clean_content
                     else:
                         # If we fail, remove that message ID from the DB so we never call it again.
