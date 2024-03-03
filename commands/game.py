@@ -238,8 +238,10 @@ class Game(commands.Cog):
                         #log.error(f"Failed adding card with ID {card_id} ({e})")
                         continue
                 #log.info(f'updated card {card_id}')
+        except KeyError as e:
+            log.error(e)
         except Exception as e:
-            log.error(f"Failed adding card with ID {card_id} ({e})")
+            log.error(f"Failed adding card with ID {card_id} ({str(e)})")
         return images_saved
 
     async def save_title_img(self, server: str, title: str) -> bool:
@@ -254,10 +256,8 @@ class Game(commands.Cog):
         else:
             return False
 
-    async def generate_band_and_titles_image(self, member_situations: list, equipped_title_ids: list, server: str):
+    async def generate_band_and_titles_image(self, member_situations: list, equipped_title_ids: list, server: str, card_api: any, chara_api: any):
         icon_paths = []
-        card_api = False
-        chara_api = False
         for situation in member_situations:
             icon_path = ""
             if situation['illust'] == "after_training":
@@ -267,12 +267,7 @@ class Game(commands.Cog):
 
             # try to download the card image if it doesn't exist
             if not path.exists(icon_path):
-                if not card_api:
-                    card_api = await self.fetch_api("https://bestdori.com/api/cards/all.5.json")
-                if not chara_api:
-                    chara_api = await self.fetch_api("https://bestdori.com/api/characters/all.2.json")
-                await self.generate_card_icon(situation['situationId'], card_api, chara_api)
-                icon_paths.append(icon_path)
+                await self.generate_card_icon(str(situation['situationId']), card_api, chara_api)
             # check path.exists again in case the download failed, and default to empty frame if failed
             if path.exists(icon_path):
                 icon_paths.append(icon_path)
@@ -316,16 +311,22 @@ class Game(commands.Cog):
                 tier = title_info['rank'][server_id]
                 if tier != 'none' and tier != 'normal' and tier != 'extra':
                     tier_title = f'data/img/titles/{server}/event_point_{tier}.png'
-                    image_contents.append(tier_title)
-                    tier = Image.open(image_contents[1])
-                    tier = tier.resize((368, 80), Image.ANTIALIAS)
-                    new_im.paste(tier, (x_offset, 250), tier)
+                    if not path.exists(tier_title):
+                        await self.save_title_img(server, f'event_point_{tier}.png')
+                    if path.exists(tier_title):
+                        image_contents.append(tier_title)
+                        tier = Image.open(image_contents[1])
+                        tier = tier.resize((368, 80), Image.ANTIALIAS)
+                        new_im.paste(tier, (x_offset, 250), tier)
                 elif tier == 'normal' or tier == 'extra':
                     tier_title = f'data/img/titles/{server}/try_clear_{tier}.png'
-                    image_contents.append(tier_title)
-                    tier = Image.open(image_contents[1])
-                    tier = tier.resize((368, 80), Image.ANTIALIAS)
-                    new_im.paste(tier, (x_offset, 250), tier)
+                    if not path.exists(tier_title):
+                        await self.save_title_img(server, f'try_clear_{tier}.png')
+                    if path.exists(tier_title):
+                        image_contents.append(tier_title)
+                        tier = Image.open(image_contents[1])
+                        tier = tier.resize((368, 80), Image.ANTIALIAS)
+                        new_im.paste(tier, (x_offset, 250), tier)
                 x_offset += 525
         else:
             x_offset = 250
@@ -342,12 +343,24 @@ class Game(commands.Cog):
                 new_im.paste(event, (x_offset, 250), event)
 
             tier = title_info['rank'][server_id]
-            if tier != 'none':
+            if tier != 'none' and tier != 'normal' and tier != 'extra':
                 tier_title = f'data/img/titles/{server}/event_point_{tier}.png'
-                image_contents.append(tier_title)
-                tier = Image.open(image_contents[1])
-                tier = tier.resize((368, 80), Image.ANTIALIAS)
-                new_im.paste(tier, (x_offset, 250), tier)
+                if not path.exists(tier_title):
+                    await self.save_title_img(server, f'event_point_{tier}.png')
+                if path.exists(tier_title):
+                    image_contents.append(tier_title)
+                    tier = Image.open(image_contents[1])
+                    tier = tier.resize((368, 80), Image.ANTIALIAS)
+                    new_im.paste(tier, (x_offset, 250), tier)
+            elif tier == 'normal' or tier == 'extra':
+                tier_title = f'data/img/titles/{server}/try_clear_{tier}.png'
+                if not path.exists(tier_title):
+                    await self.save_title_img(server, f'try_clear_{tier}.png')
+                if path.exists(tier_title):
+                    image_contents.append(tier_title)
+                    tier = Image.open(image_contents[1])
+                    tier = tier.resize((368, 80), Image.ANTIALIAS)
+                    new_im.paste(tier, (x_offset, 250), tier)
 
         file_name = f'{str(uuid.uuid4())}.png'
         saved_file_path = f'data/img/imgTmp/{file_name}'
@@ -382,6 +395,8 @@ class Game(commands.Cog):
                                     content=f'Failed to get data for player with ID `{id} (Server {server})`.'),
                     ephemeral=True)
                 return
+            card_api = await self.fetch_api("https://bestdori.com/api/cards/all.5.json")
+            chara_api = await self.fetch_api("https://bestdori.com/api/characters/all.2.json")
 
             profile = player_api['data']['profile']
             if profile is None:
@@ -404,7 +419,14 @@ class Game(commands.Cog):
                 profile_picture = f"{profile_situation['situationId']}_trained.png"
             else:
                 profile_picture = f"{profile_situation['situationId']}.png"
-            icon = discord.File(f"data/img/icons/base_icons/{profile_picture}", filename=f'{profile_picture}')
+            profile_picture_path = f"data/img/icons/base_icons/{profile_picture}"
+            if not path.exists(profile_picture_path):
+                await self.generate_card_icon(str(profile_situation['situationId']), card_api, chara_api)
+            if path.exists(profile_picture_path):
+                icon = discord.File(f"data/img/icons/base_icons/{profile_picture}", filename=f'{profile_picture}')
+            else:
+                # placeholder in case download failed
+                icon = discord.File("data/img/2star.png", filename=f'{profile_picture}')
 
             # clear/fc/ap stats - default to 0 if no values
             song_stats = {
@@ -440,7 +462,7 @@ class Game(commands.Cog):
             card_order = (3, 1, 0, 2, 4)
             for i in card_order:
                 band_members.append(profile['mainDeckUserSituations']['entries'][i])
-            band_name_and_path = await self.generate_band_and_titles_image(band_members, title_ids, server)
+            band_name_and_path = await self.generate_band_and_titles_image(band_members, title_ids, server, card_api, chara_api)
             band_image_file = discord.File(band_name_and_path[1], filename=band_name_and_path[0])
 
             embed.set_thumbnail(url=f"attachment://{profile_picture}")

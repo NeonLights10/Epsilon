@@ -64,14 +64,10 @@ class Update(commands.Cog):
         self.twom_synced = False
         self.t10_2m_tracking.start()
         self.t10_1h_tracking.start()
-        self.update_cards_loop.start()
-        self.update_titles_loop.start()
 
     def cog_unload(self):
         self.t10_2m_tracking.cancel()
         self.t10_1h_tracking.cancel()
-        self.update_cards_loop.cancel()
-        self.update_titles_loop.cancel()
 
     async def fetch_api(self, url):
         api = await self.client.get(url)
