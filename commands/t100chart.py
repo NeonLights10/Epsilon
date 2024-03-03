@@ -292,12 +292,15 @@ class Collection(commands.Cog):
     async def wait_ready(self):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
+        while not self.bot.ready:
+            await asyncio.sleep(2)
 
     @check_removescreenshot_button.before_loop
     @checkscreenshot_button.before_loop
     async def wait_ready_long(self):
         await self.bot.wait_until_ready()
-        await asyncio.sleep(10)
+        while not self.bot.ready:
+            await asyncio.sleep(10)
 
     @discord.slash_command(name='requestcollection',
                            description='Post missing t100 screenshot button')

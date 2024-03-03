@@ -313,11 +313,14 @@ class Update(commands.Cog):
     @t10_2m_tracking.before_loop
     async def wait_ready(self):
         await self.bot.wait_until_ready()
+        while not self.bot.ready:
+            await asyncio.sleep(2)
 
     @t10_1h_tracking.before_loop
     async def wait_long(self):
         await self.bot.wait_until_ready()
-        await asyncio.sleep(12)
+        while not self.bot.ready:
+            await asyncio.sleep(12)
 
     tracking = SlashCommandGroup('tracking', 't10 and cutoff tracking commands',
                                  default_member_permissions=discord.Permissions(manage_messages=True))

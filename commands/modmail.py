@@ -193,6 +193,8 @@ class Modmail(commands.Cog):
     async def wait_ready(self):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
+        while not self.bot.ready:
+            await asyncio.sleep(2)
 
     async def modmail_prompt(self, ctx: discord.ApplicationContext):
         listen_channel = ctx.interaction.channel

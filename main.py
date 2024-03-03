@@ -231,6 +231,7 @@ class EpsilonBot(bridge.AutoShardedBot):
                          chunk_guilds_at_startup=False)
         self.command_count = 0
         self.message_count = 0
+        self.ready = False
         self.uptime = time.time()
 
 
@@ -260,6 +261,7 @@ bot.load_extension("commands.custom")
 async def on_ready():
     for guild in bot.guilds:
         await check_document(guild, guild.id)
+    bot.ready = True
 
     log.info("\n### PRE-STARTUP CHECKS PASSED ###\n")
 

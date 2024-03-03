@@ -121,7 +121,8 @@ class Utility(commands.Cog):
     @initialize_selfassign.before_loop
     async def wait_ready(self):
         await self.bot.wait_until_ready()
-        await asyncio.sleep(2)
+        while not self.bot.ready:
+            await asyncio.sleep(2)
 
     @staticmethod
     def has_modrole():
