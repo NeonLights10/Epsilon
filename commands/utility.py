@@ -56,6 +56,7 @@ class SelfRoleSelect(discord.ui.Select):
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.selfassign_semaphore = asyncio.Semaphore(50)
         self.initialize_selfassign.start()
 
     def cog_unload(self):
@@ -64,7 +65,15 @@ class Utility(commands.Cog):
     @tasks.loop(seconds=1.0, count=1)
     async def initialize_selfassign(self):
         log.info(f'Initializing selfassign routine')
+        selfassign_tasks = []
         for guild in self.bot.guilds:
+            await self.selfassign_semaphore.acquire()
+            new_task = asyncio.create_task(self.initialize_selfassign_for_guild(guild))
+            selfassign_tasks.append(new_task)
+        await asyncio.gather(*selfassign_tasks)
+
+    async def initialize_selfassign_for_guild(self, guild):
+        try:
             # log.info(f'Checking selfassign for {guild.name}')
             selfrole_documents = db.rolereact.find({"server_id": guild.id})
             async for category_document in selfrole_documents:
@@ -117,6 +126,10 @@ class Utility(commands.Cog):
                     except discord.errors.HTTPException as e:
                         log.info(f'Error initializing selfassign for {guild.name}')
                         continue
+            self.selfassign_semaphore.release()
+        except Exception as e:
+            self.selfassign_semaphore.release()
+            raise e
 
     @initialize_selfassign.before_loop
     async def wait_ready(self):
