@@ -56,7 +56,7 @@ class SelfRoleSelect(discord.ui.Select):
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.selfassign_semaphore = asyncio.Semaphore(50)
+        self.selfassign_semaphore = asyncio.Semaphore(25)
         self.initialize_selfassign.start()
 
     def cog_unload(self):
