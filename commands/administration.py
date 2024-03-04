@@ -1806,7 +1806,7 @@ class Administration(commands.Cog):
     @default_permissions(manage_guild=True)
     async def blacklist_add(self,
                             ctx: discord.ApplicationContext,
-                            channel: Option(Union[discord.TextChannel, discord.Thread], 'Channel to add to the blacklist')):
+                            channel: Option(discord.abc.GuildChannel, 'Channel to add to the blacklist')):
         await ctx.interaction.response.defer(ephemeral=True)
         document = await db.servers.find_one({"server_id": ctx.guild_id})
         if document['blacklist'] is not None:
@@ -1837,7 +1837,7 @@ class Administration(commands.Cog):
     @default_permissions(manage_guild=True)
     async def blacklist_remove(self,
                                ctx: discord.ApplicationContext,
-                               channel: Option(Union[discord.TextChannel, discord.Thread], 'Channel to remove from the blacklist')):
+                               channel: Option(discord.abc.GuildChannel, 'Channel to remove from the blacklist')):
         await ctx.interaction.response.defer(ephemeral=True)
         document = await db.servers.find_one({"server_id": ctx.guild_id})
         if document['blacklist'] is not None:
@@ -1870,7 +1870,7 @@ class Administration(commands.Cog):
     @default_permissions(manage_guild=True)
     async def whitelist_add(self,
                             ctx: discord.ApplicationContext,
-                            channel: Option(Union[discord.TextChannel, discord.Thread], 'Channel to add to the whitelist')):
+                            channel: Option(discord.abc.GuildChannel, 'Channel to add to the whitelist')):
         await ctx.interaction.response.defer(ephemeral=True)
         document = await db.servers.find_one({"server_id": ctx.guild_id})
         if document['whitelist'] is not None:
@@ -1901,7 +1901,7 @@ class Administration(commands.Cog):
     @default_permissions(manage_guild=True)
     async def whitelist_remove(self,
                                ctx: discord.ApplicationContext,
-                               channel: Option(Union[discord.TextChannel, discord.Thread], 'Channel to remove from the whitelist')):
+                               channel: Option(discord.abc.GuildChannel, 'Channel to remove from the whitelist')):
         await ctx.interaction.response.defer(ephemeral=True)
         document = await db.servers.find_one({"server_id": ctx.guild_id})
         if document['whitelist'] is not None:
