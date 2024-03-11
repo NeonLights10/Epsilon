@@ -309,17 +309,20 @@ class Pubcord(commands.Cog):
             'content': newcontent_embed
         }
         gamecrash_embed = gen_embed(
-            title='I have an android and my game keeps crashing! What do I do?',
-            content=("Good news! The **version 4.10.3** update should fix the crashing issue for Android users."
-                     " If you are still having issues, you can try the workarounds below.\n\n"
-                     "※ Clear the cache in Android settings and restart the phone; then clear cache in game and"
-                     " restart.\n"
-                     "※ Delete your Google ad ID (if you don't have one, make a new one and then delete it).\n"
-                     "※ Use a VPN to connect from Japan/Singapore using mobile data."
-                     ))
-        gamecrash_embed.set_footer(text='Updated 3/10/22')
+            title='Upcoming Event Schedule',
+            content=("Due to technical reasons and a longer preparation time for the required version update, "
+                     "certain affected events will be pushed back to a later date."))
+        gamecrash_embed.set_footer(text='Updated 3/10/24')
+        gamecrash_embed.add_field(name='March 17', value=':AfterglowLogo::attrPure:  Medley Live Event [Afterlight '
+                                                         '~Though Dark Shadows Fall~]('
+                                                         '<https://bestdori.com/info/events/229/Our-Afterglow-Despite'
+                                                         '-Even-the-Darkest-Shadows>)', inline=False)
+        gamecrash_embed.add_field(name='March 27', value=':PasupareLogo::attrPure: Mission Live Event [Bloom in the '
+                                                         'Wilds, O Flowery Maidens]('
+                                                         '<https://bestdori.com/info/events/231/Bloom-in-the'
+                                                         '-Wasteland-Maidens-of-Flower>)', inline=False)
         gamecrash_content = {
-            'label': 'My game crashes!',
+            'label': 'Upcoming Event Schedule',
             'style': discord.ButtonStyle.primary,
             'custom_id': f'{pubcord.id}:gamecrash',
             'content': gamecrash_embed
