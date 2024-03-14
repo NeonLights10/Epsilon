@@ -1,5 +1,7 @@
 import os
 import sys
+import tracemalloc
+import linecache
 
 import asyncio
 import re
@@ -12,7 +14,7 @@ import colorlog
 import twitter
 
 import discord
-from discord.ext import bridge
+from discord.ext import bridge, tasks
 
 import motor.motor_asyncio
 
@@ -96,6 +98,9 @@ if config_json["debug_mode"]:
     dhandler = logging.FileHandler(filename='logs/discord.log', encoding='utf-8', mode='w')
     dhandler.setFormatter(logging.Formatter('{asctime}:{levelname}:{name}: {message}', style='{'))
     debuglog.addHandler(dhandler)
+
+    tracemalloc.start(10)
+    prev_snapshot = None
 
 if os.path.isfile(f"logs/{NAME}.log"):
     log.info("Moving old bot log")
@@ -281,7 +286,6 @@ async def on_ready():
         log.info(f" - {ser}")
     print(flush=True)
 
-
 @bot.event
 async def on_message(message):
     bot.message_count += 1
@@ -384,6 +388,24 @@ async def on_message(message):
                 if ctx.command.name == 'modmail':
                     await bot.invoke(ctx)
 
+
+@tasks.loop(seconds=60)
+async def snapshot_memory():
+    if not config_json["debug_mode"]:
+        return
+    snapshot = tracemalloc.take_snapshot().filter_traces((tracemalloc.Filter(False, tracemalloc.__file__),tracemalloc.Filter(False, linecache.__file__),))
+    global prev_snapshot
+    if prev_snapshot is not None:
+        top_stats = snapshot.compare_to(prev_snapshot, 'filename')
+        with open("memory_logs.txt", "a") as memfile:
+            memfile.write(f'[ Top 10 differences @ {time.time()} ]\n')
+            for stat in top_stats[:10]:
+                memfile.write(f'new KiB = {stat.size_diff/1024}, total KiB = {stat.size / 1024}, new memory blocks = {stat.count_diff}, total memory blocks = {stat.count}\n')
+                for line in stat.traceback.format():                    
+                    memfile.write(line + "\n")
+            memfile.write("\n\n")
+
+    prev_snapshot = snapshot
 
 ##########
 
