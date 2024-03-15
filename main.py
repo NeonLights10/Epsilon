@@ -179,7 +179,6 @@ async def check_document(guild, id):
         log.info("Did not find one, creating document...")
         await initialize_document(guild, id)
     else:
-        document = await db.servers.find_one({"server_id": id})
         # Changeable to update old documents whenever a new feature/config is added
         await db.servers.update_many(
             {"server_id": id},
