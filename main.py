@@ -261,6 +261,7 @@ bot.load_extension("commands.custom")
 async def on_ready():
     for guild in bot.guilds:
         await check_document(guild, guild.id)
+    gc.collect()
     bot.ready = True
 
     log.info("\n### PRE-STARTUP CHECKS PASSED ###\n")
@@ -375,7 +376,6 @@ async def on_message(message):
                         'msg_id': ctx.message.id}
                 await db.msgid.insert_one(post)
             del document
-            gc.collect()
 
     elif isinstance(ctx.channel, discord.DMChannel):
         if ctx.author.bot is False:
