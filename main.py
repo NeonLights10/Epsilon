@@ -5,6 +5,7 @@ import asyncio
 import re
 import json
 import time
+import gc
 
 import logging
 import colorlog
@@ -221,12 +222,12 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 class EpsilonBot(bridge.AutoShardedBot):
 
     def __init__(self, command_prefix, intents, case_insensitive, debug_guilds=None):
-        super().__init__(max_messages=2000,
+        super().__init__(max_messages=1000,
                          command_prefix=command_prefix,
                          intents=intents,
                          case_insensitive=case_insensitive,
                          debug_guilds=debug_guilds,
-                         shard_count=2,
+                         shard_count=1,
                          chunk_guilds_at_startup=False)
         self.command_count = 0
         self.message_count = 0
@@ -373,6 +374,8 @@ async def on_message(message):
                         'channel_id': ctx.channel.id,
                         'msg_id': ctx.message.id}
                 await db.msgid.insert_one(post)
+            del document
+            gc.collect()
 
     elif isinstance(ctx.channel, discord.DMChannel):
         if ctx.author.bot is False:

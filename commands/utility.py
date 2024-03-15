@@ -3,6 +3,7 @@ import datetime
 import copy
 import random
 import re
+import gc
 import emoji as emojize
 from datetime import timedelta
 
@@ -71,6 +72,8 @@ class Utility(commands.Cog):
             new_task = asyncio.create_task(self.initialize_selfassign_for_guild(guild))
             selfassign_tasks.append(new_task)
         await asyncio.gather(*selfassign_tasks)
+        del selfassign_tasks
+        gc.collect()
 
     async def initialize_selfassign_for_guild(self, guild):
         try:
@@ -126,6 +129,7 @@ class Utility(commands.Cog):
                     except discord.errors.HTTPException as e:
                         log.info(f'Error initializing selfassign for {guild.name}')
                         continue
+            del selfrole_documents
             self.selfassign_semaphore.release()
         except Exception as e:
             self.selfassign_semaphore.release()
