@@ -444,7 +444,8 @@ class Pubcord(commands.Cog):
                             roles = member.roles
                             roles.remove(pubcord_booster_role)
                             await member.edit(roles=roles, reason="No longer boosting main OR emote server")
-                            boosters.remove(member.id)
+                            if member.id in boosters:
+                                boosters.remove(member.id)
             else:
                 if member not in pubcord.premium_subscribers:
                     boosting = False
@@ -453,7 +454,8 @@ class Pubcord(commands.Cog):
                         roles = member.roles
                         roles.remove(pubcord_booster_role)
                         await member.edit(roles=roles, reason="No longer boosting main OR emote server")
-                        boosters.remove(member.id)
+                        if member.id in boosters:
+                            boosters.remove(member.id)
 
         await db.servers.update_one({"server_id": 432379300684103699},
                                     {"$set": {'boosters': boosters}})
