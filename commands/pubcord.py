@@ -411,10 +411,6 @@ class Pubcord(commands.Cog):
         document = await db.servers.find_one({"server_id": 432379300684103699})
         boosters = document['boosters']
         pubcord = self.bot.get_guild(432379300684103699)
-        async for entry in pubcord.audit_logs(action=discord.AuditLogAction.member_role_update,
-                                            user=self.bot.get_user(216303189073461248),
-                                            after=(datetime.datetime.now() - datetime.timedelta(minutes=3))):
-            boosters.append(entry.target.id)
         emoteserver = self.bot.get_guild(815821301700493323)
         pubcord_booster_role = pubcord.get_role(913239378598436966)
         for member in pubcord.premium_subscribers:
@@ -470,6 +466,8 @@ class Pubcord(commands.Cog):
         await self.bot.wait_until_ready()
         while not self.bot.ready:
             await asyncio.sleep(2)
+        pubcord_chunk = self.bot.get_guild(432379300684103699)
+        await pubcord_chunk.chunk()
 
     @check_announcementbulletins.before_loop
     async def wait_ready_long(self):
