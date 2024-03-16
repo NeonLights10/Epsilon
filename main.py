@@ -261,36 +261,6 @@ bot.load_extension("commands.custom")
 
 @bot.event
 async def on_ready():
-    classtracker = ClassTracker()
-    import commands.administration as cadmin
-    import commands.event as cevent
-    import commands.custom as ccustom
-    import commands.fun as cfun
-    import commands.gacha as cgacha
-    import commands.game as cgame
-    import commands.misc as cmisc
-    import commands.modmail as cmodmail
-    import commands.pubcord as cpubcord
-    import commands.t100chart as ct100
-    import commands.tiering as ctiering
-    import commands.update as cupdate
-    import commands.utility as cutility
-    classtracker.track_class(EpsilonBot)
-    classtracker.track_class(cadmin.Administration)
-    classtracker.track_class(cevent.Event)
-    classtracker.track_class(ccustom.Custom)
-    classtracker.track_class(cfun.Fun)
-    classtracker.track_class(cgacha.Gacha)
-    classtracker.track_class(cgame.Game)
-    classtracker.track_class(cmisc.Miscellaneous)
-    classtracker.track_class(cmodmail.Modmail)
-    classtracker.track_class(cpubcord.Pubcord)
-    classtracker.track_class(ct100.Collection)
-    classtracker.track_class(ctiering.Tiering)
-    classtracker.track_class(cupdate.Update)
-    classtracker.track_class(cutility.Utility)
-    classtracker.start_periodic_snapshots(interval=10)
-    web_interface = web.start_in_background(tracker=classtracker)
     for guild in bot.guilds:
         await check_document(guild, guild.id)
     gc.collect()
@@ -316,10 +286,40 @@ async def on_ready():
 
 
 @tasks.loop(seconds=60)
-async def report_diff(tr):
+async def report_diff(tr, ctr):
     log.info(tr.print_diff())
+    log.info(ctr.stats.print_summary())
 
-report_diff.start(tr = tracker.SummaryTracker())
+classtracker = ClassTracker()
+import commands.administration as cadmin
+import commands.event as cevent
+import commands.custom as ccustom
+import commands.fun as cfun
+import commands.gacha as cgacha
+import commands.game as cgame
+import commands.misc as cmisc
+import commands.modmail as cmodmail
+import commands.pubcord as cpubcord
+import commands.t100chart as ct100
+import commands.tiering as ctiering
+import commands.update as cupdate
+import commands.utility as cutility
+classtracker.track_class(EpsilonBot)
+classtracker.track_class(cadmin.Administration)
+classtracker.track_class(cevent.Event)
+classtracker.track_class(ccustom.Custom)
+classtracker.track_class(cfun.Fun)
+classtracker.track_class(cgacha.Gacha)
+classtracker.track_class(cgame.Game)
+classtracker.track_class(cmisc.Miscellaneous)
+classtracker.track_class(cmodmail.Modmail)
+classtracker.track_class(cpubcord.Pubcord)
+classtracker.track_class(ct100.Collection)
+classtracker.track_class(ctiering.Tiering)
+classtracker.track_class(cupdate.Update)
+classtracker.track_class(cutility.Utility)
+classtracker.start_periodic_snapshots(interval=10)
+report_diff.start(tr = tracker.SummaryTracker(), ctr=classtracker)
 
 @bot.event
 async def on_message(message):
