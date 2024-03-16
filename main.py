@@ -266,7 +266,7 @@ async def on_ready():
     classtracker.track_class(EpsilonBot)
     classtracker.track_class(cadmin.Administration)
     classtracker.start_periodic_snapshots(interval=10)
-    web_interface = web.start_in_background(host='34.239.7.57', tracker=classtracker)
+    web_interface = web.start_in_background(tracker=classtracker)
     for guild in bot.guilds:
         await check_document(guild, guild.id)
     gc.collect()
