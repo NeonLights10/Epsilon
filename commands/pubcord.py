@@ -290,6 +290,8 @@ class Pubcord(commands.Cog):
     async def init_announcementbulletins(self):
         # pubcord currently hardcoded, eventually expand feature (todo)
         document = await db.servers.find_one({"server_id": 432379300684103699})
+        await db.servers.update_one({"server_id": 432379300684103699},
+                                    {"$set": {'boosters': []}})
         pubcord = self.bot.get_guild(432379300684103699)
         channel = pubcord.get_channel(913958768105103390) # 913958768105103390
         if document['prev_message']:
