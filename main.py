@@ -286,7 +286,7 @@ async def on_ready():
 
 
 @tasks.loop(seconds=20)
-async def report_diff(tr, ctr):
+async def report_diff(tr):
     log.info(tr.print_diff())
 
 report_diff.start(tr=tracker.SummaryTracker())
