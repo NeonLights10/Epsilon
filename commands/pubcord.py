@@ -409,13 +409,10 @@ class Pubcord(commands.Cog):
     async def check_boosters(self):
         log.info('Running Pubcord Booster Role Parity Check')
         document = await db.servers.find_one({"server_id": 432379300684103699})
-        boosters = document['boosters']
         pubcord = self.bot.get_guild(432379300684103699)
         emoteserver = self.bot.get_guild(815821301700493323)
         pubcord_booster_role = pubcord.get_role(913239378598436966)
         for member in pubcord.premium_subscribers:
-            if member not in boosters:
-                boosters.append(member.id)
             if not member.get_role(913239378598436966):
                 log.info('Adding member to booster role - boosting main server')
                 roles = member.roles
@@ -423,8 +420,6 @@ class Pubcord(commands.Cog):
                 await member.edit(roles=roles, reason="Boosting main server")
 
         for member in emoteserver.premium_subscribers:
-            if member not in boosters:
-                boosters.append(member.id)
             pubcord_member = pubcord.get_member(member.id)
             if pubcord_member:
                 if not pubcord_member.get_role(913239378598436966):
@@ -444,8 +439,6 @@ class Pubcord(commands.Cog):
                             roles = member.roles
                             roles.remove(pubcord_booster_role)
                             await member.edit(roles=roles, reason="No longer boosting main OR emote server")
-                            if member.id in boosters:
-                                boosters.remove(member.id)
             else:
                 if member not in pubcord.premium_subscribers:
                     boosting = False
@@ -454,11 +447,7 @@ class Pubcord(commands.Cog):
                         roles = member.roles
                         roles.remove(pubcord_booster_role)
                         await member.edit(roles=roles, reason="No longer boosting main OR emote server")
-                        if member.id in boosters:
-                            boosters.remove(member.id)
 
-        await db.servers.update_one({"server_id": 432379300684103699},
-                                    {"$set": {'boosters': boosters}})
         log.info('Parity Check Complete')
 
     @check_boosters.before_loop
