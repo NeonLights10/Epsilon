@@ -311,9 +311,9 @@ class Miscellaneous(commands.Cog):
     @discord.slash_command(name='objgraph',
                            description='Object graph, DEV ONLY')
     @is_owner()
-    async def pendingtasks(self,
-                           ctx: discord.ApplicationContext,
-                           func: Option(str, 'function')):
+    async def objgraph(self,
+                       ctx: discord.ApplicationContext,
+                       func: Option(str, 'function')):
         await ctx.interaction.response.defer()
         import objgraph
 
