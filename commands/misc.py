@@ -1,4 +1,5 @@
 import asyncio
+from io import StringIO
 
 import psutil
 import time
@@ -306,6 +307,40 @@ class Miscellaneous(commands.Cog):
             embed=gen_embed(title='Pending Tasks',
                             content=f'```{embed_content}```'),
             ephemeral=True)
+
+    @discord.slash_command(name='objgraph',
+                           description='Object graph, DEV ONLY')
+    @is_owner()
+    async def pendingtasks(self,
+                           ctx: discord.ApplicationContext,
+                           func: Option(str, 'function')):
+        await ctx.interaction.response.defer()
+        import objgraph
+
+        if func == 'growth':
+            f = StringIO()
+            objgraph.show_growth(limit=10, file=f)
+            f.seek(0)
+            data = f.read()
+            f.close()
+
+        elif func == 'leaks':
+            f = StringIO()
+            objgraph.show_most_common_types(objects=objgraph.get_leaking_objects(), file=f)
+            f.seek(0)
+            data = f.read()
+            f.close()
+
+        elif func == 'leakstats':
+            data = objgraph.typestats(objects=objgraph.get_leaking_objects())
+
+        else:
+            data = eval('objgraph.' + func)
+
+        await ctx.interaction.followup.send(
+            embed=gen_embed(title='Objgraph',
+                            content=f'```{data}```'),
+            ephemeral=False)
 
 
 def setup(bot):

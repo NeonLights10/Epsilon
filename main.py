@@ -288,9 +288,8 @@ async def on_ready():
 @tasks.loop(seconds=20)
 async def report_diff(tr, ctr):
     log.info(tr.print_diff())
-    log.info(ctr.stats.print_summary())
 
-report_diff.start(tr = tracker.SummaryTracker())
+report_diff.start(tr=tracker.SummaryTracker())
 
 @bot.event
 async def on_message(message):
