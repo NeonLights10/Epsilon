@@ -443,9 +443,6 @@ class Pubcord(commands.Cog):
                 if emoteserver_member not in emoteserver.premium_subscribers:
                     if member not in pubcord.premium_subscribers:
                         boosting = False
-                        for uuid in boosters:
-                            if member.id == uuid:
-                                boosting = True
                         if not boosting:
                             log.info('Not boosting either server, removing')
                             roles = member.roles
@@ -455,9 +452,6 @@ class Pubcord(commands.Cog):
             else:
                 if member not in pubcord.premium_subscribers:
                     boosting = False
-                    for uuid in boosters:
-                        if member.id == uuid:
-                            boosting = True
                     if not boosting:
                         log.info('Not boosting either server, removing')
                         roles = member.roles
