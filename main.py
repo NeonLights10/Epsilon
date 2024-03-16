@@ -236,6 +236,7 @@ class EpsilonBot(bridge.AutoShardedBot):
         self.ready = False
         self.uptime = time.time()
 
+
 bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
 # bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
 bot.remove_command('help')
@@ -265,7 +266,7 @@ async def on_ready():
     classtracker.track_class(EpsilonBot)
     classtracker.track_class(cadmin.Administration)
     classtracker.start_periodic_snapshots(interval=10)
-    web_interface = web.start_in_background(tracker=classtracker)
+    web_interface = web.start_in_background(host='34.239.7.57', tracker=classtracker)
     for guild in bot.guilds:
         await check_document(guild, guild.id)
     gc.collect()
@@ -289,14 +290,12 @@ async def on_ready():
         log.info(f" - {ser}")
     print(flush=True)
 
+
 @tasks.loop(seconds=60)
 async def report_diff(tr):
     log.info(tr.print_diff())
 
-@report_diff.before_loop
-async def init_tracker():
-    tr = tracker.SummaryTracker()
-    report_diff.start(tr)
+report_diff.start(tr = tracker.SummaryTracker())
 
 @bot.event
 async def on_message(message):
@@ -678,5 +677,3 @@ async def twtfix(message):
 
 
 bot.run(TOKEN)
-
-
