@@ -462,16 +462,24 @@ class Pubcord(commands.Cog):
         log.info('Parity Check Complete')
 
     @check_boosters.before_loop
-    @init_announcementbulletins.before_loop
     async def wait_ready(self):
         # log.info('wait till ready')
         await self.bot.wait_until_ready()
         while not self.bot.ready:
             await asyncio.sleep(2)
         pubcord_chunk = self.bot.get_guild(432379300684103699)
+        emoteserver_chunk = self.bot.get_guild(815821301700493323)
         log.info('Chunking pubcord members...')
         await pubcord_chunk.chunk()
+        await emoteserver_chunk.chunk()
         log.info('Chunking complete')
+
+    @init_announcementbulletins.before_loop
+    async def wait_ready(self):
+        # log.info('wait till ready')
+        await self.bot.wait_until_ready()
+        while not self.bot.ready:
+            await asyncio.sleep(2)
 
     @check_announcementbulletins.before_loop
     async def wait_ready_long(self):
