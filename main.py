@@ -262,9 +262,33 @@ bot.load_extension("commands.custom")
 @bot.event
 async def on_ready():
     classtracker = ClassTracker()
-    import commands.administration as cadmin
+    import commands.administration
+    import commands.event
+    import commands.custom
+    import commands.fun
+    import commands.gacha
+    import commands.game
+    import commands.misc
+    import commands.modmail
+    import commands.pubcord
+    import commands.t100chart
+    import commands.tiering
+    import commands.update
+    import commands.utility
     classtracker.track_class(EpsilonBot)
-    classtracker.track_class(cadmin.Administration)
+    classtracker.track_class(commands.administration.Administration)
+    classtracker.track_class(commands.event.Event)
+    classtracker.track_class(commands.custom.Custom)
+    classtracker.track_class(commands.fun.Fun)
+    classtracker.track_class(commands.gacha.Gacha)
+    classtracker.track_class(commands.game.Game)
+    classtracker.track_class(commands.misc.Miscellaneous)
+    classtracker.track_class(commands.modmail.Modmail)
+    classtracker.track_class(commands.pubcord.Pubcord)
+    classtracker.track_class(commands.t100chart.Collection)
+    classtracker.track_class(commands.tiering.Tiering)
+    classtracker.track_class(commands.update.Update)
+    classtracker.track_class(commands.utility.Utility)
     classtracker.start_periodic_snapshots(interval=10)
     web_interface = web.start_in_background(tracker=classtracker)
     for guild in bot.guilds:
