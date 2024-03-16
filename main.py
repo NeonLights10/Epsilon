@@ -285,7 +285,7 @@ async def on_ready():
     print(flush=True)
 
 
-@tasks.loop(seconds=60)
+@tasks.loop(seconds=5)
 async def report_diff(tr, ctr):
     log.info(tr.print_diff())
     log.info(ctr.stats.print_summary())
@@ -318,7 +318,7 @@ classtracker.track_class(ct100.Collection)
 classtracker.track_class(ctiering.Tiering)
 classtracker.track_class(cupdate.Update)
 classtracker.track_class(cutility.Utility)
-classtracker.start_periodic_snapshots(interval=10)
+classtracker.start_periodic_snapshots(interval=5)
 report_diff.start(tr = tracker.SummaryTracker(), ctr=classtracker)
 
 @bot.event
