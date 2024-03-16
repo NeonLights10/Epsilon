@@ -1,5 +1,7 @@
 import os
 import sys
+from pympler import tracker, web
+from pympler.classtracker import ClassTracker
 
 import asyncio
 import re
@@ -13,7 +15,7 @@ import colorlog
 import twitter
 
 import discord
-from discord.ext import bridge
+from discord.ext import bridge, tasks
 
 import motor.motor_asyncio
 
@@ -227,13 +229,12 @@ class EpsilonBot(bridge.AutoShardedBot):
                          intents=intents,
                          case_insensitive=case_insensitive,
                          debug_guilds=debug_guilds,
-                         shard_count=1,
+                         shard_count=2,
                          chunk_guilds_at_startup=False)
         self.command_count = 0
         self.message_count = 0
         self.ready = False
         self.uptime = time.time()
-
 
 bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
 # bot = EpsilonBot(command_prefix=get_prefix, intents=intents, case_insensitive=True)
@@ -259,6 +260,24 @@ bot.load_extension("commands.custom")
 
 @bot.event
 async def on_ready():
+    classtracker = ClassTracker()
+    import commands
+    classtracker.track_class(EpsilonBot)
+    classtracker.track_class(commands.administration.Administration)
+    classtracker.track_class(commands.custom.Custom)
+    classtracker.track_class(commands.event.Event)
+    classtracker.track_class(commands.fun.Fun)
+    classtracker.track_class(commands.gacha.Gacha)
+    classtracker.track_class(commands.game.Game)
+    classtracker.track_class(commands.misc.Miscellaneous)
+    classtracker.track_class(commands.modmail.Modmail)
+    classtracker.track_class(commands.pubcord.Pubcord)
+    classtracker.track_class(commands.t100chart.Collection)
+    classtracker.track_class(commands.tiering.Tiering)
+    classtracker.track_class(commands.update.Update)
+    classtracker.track_class(commands.utility.Utility)
+    classtracker.start_periodic_snapshots(interval=10)
+    web_interface = web.start_in_background(tracker=classtracker)
     for guild in bot.guilds:
         await check_document(guild, guild.id)
     gc.collect()
@@ -282,6 +301,14 @@ async def on_ready():
         log.info(f" - {ser}")
     print(flush=True)
 
+@tasks.loop(seconds=60)
+async def report_diff(tr):
+    log.info(tr.print_diff())
+
+@report_diff.before_loop
+async def init_tracker():
+    tr = tracker.SummaryTracker()
+    report_diff.start(tr)
 
 @bot.event
 async def on_message(message):
@@ -663,3 +690,5 @@ async def twtfix(message):
 
 
 bot.run(TOKEN)
+
+
