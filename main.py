@@ -284,13 +284,6 @@ async def on_ready():
         log.info(f" - {ser}")
     print(flush=True)
 
-
-@tasks.loop(seconds=20)
-async def report_diff(tr):
-    log.info(tr.print_diff())
-
-report_diff.start(tr=tracker.SummaryTracker())
-
 @bot.event
 async def on_message(message):
     bot.message_count += 1
