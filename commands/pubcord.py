@@ -312,15 +312,19 @@ class Pubcord(commands.Cog):
             title='Upcoming Event Schedule',
             content=("Due to technical reasons and a longer preparation time for the required version update, "
                      "certain affected events will be pushed back to a later date."))
-        gamecrash_embed.set_footer(text='Updated 3/10/24')
-        gamecrash_embed.add_field(name='March 17', value='<:AfterglowLogo:432981108338982922><:attrPure:432978922892820495>  Medley Live Event [Afterlight '
-                                                         '~Though Dark Shadows Fall~]('
-                                                         '<https://bestdori.com/info/events/229/Our-Afterglow-Despite'
-                                                         '-Even-the-Darkest-Shadows>)', inline=False)
-        gamecrash_embed.add_field(name='March 27', value='<:PasupareLogo:432981125455937536><:attrPure:432978922892820495> Mission Live Event [Bloom in the '
-                                                         'Wilds, O Flowery Maidens]('
-                                                         '<https://bestdori.com/info/events/231/Bloom-in-the'
-                                                         '-Wasteland-Maidens-of-Flower>)', inline=False)
+        gamecrash_embed.set_footer(text='Updated 4/1/24')
+        gamecrash_embed.add_field(name='April 4', value="<:HHWLogo:432981119437242388><:attrCool:432978841162612756> "
+                                                         " Challenge Live Event [Kokoro's Happy Summer Treasure!]("
+                                                         "<https://bestdori.com/info/events/232/Kokoro-s-Happy-Happy-Summer-Treasure>)",
+                                  inline=False)
+        gamecrash_embed.add_field(name='April 14', value="<:PopipaLogo:432981132414287872><:attrPowerful:432978890064134145> "
+                                                         "Medley Live Event [Poppin' western journey]("
+                                                         "<https://bestdori.com/info/events/233/Poppin-western-journey>)",
+                                  inline=False)
+        gamecrash_embed.add_field(name='April 24',
+                                  value="<:MorfonicaLogo:682986271462654054><:attrCool:432978841162612756> Challenge Live "
+                                        "Event [Auftakt of the Flickering Flames (tentative title)]",
+                                  inline=False)
         gamecrash_content = {
             'label': 'Upcoming Event Schedule',
             'style': discord.ButtonStyle.primary,
