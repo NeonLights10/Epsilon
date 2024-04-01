@@ -323,7 +323,7 @@ class Pubcord(commands.Cog):
                                   inline=False)
         gamecrash_embed.add_field(name='April 24',
                                   value="<:MorfonicaLogo:682986271462654054><:attrCool:432978841162612756> Challenge Live "
-                                        "Event [Auftakt of the Flickering Flames (tentative title)]",
+                                        "Event [Auftakt of the Flickering Flames (tentative title)](<https://bestdori.com/info/events/234/Auftakt-of-the-Flickering-Flames>)",
                                   inline=False)
         gamecrash_content = {
             'label': 'Upcoming Event Schedule',
