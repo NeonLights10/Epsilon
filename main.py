@@ -151,7 +151,6 @@ async def initialize_document(guild, id):
             'name': guild.name,
             'modrole': None,
             'autorole': None,
-            'log_channel': None,
             'log_messages': False,
             'log_joinleaves': False,
             'log_kbm': False,
@@ -181,19 +180,21 @@ async def check_document(guild, id):
         await initialize_document(guild, id)
     else:
         # Changeable to update old documents whenever a new feature/config is added
-        await db.servers.update_many(
-            {"server_id": id},
-            [{'$set': {
-                "name": guild.name,
-                "log_messages": {
-                    '$cond': [{'$not': ["$log_messages"]}, False, "$log_messages"]},
-                "modmail_button_channel": {
-                    '$cond': [{'$not': ["$modmail_button_channel"]}, None, "$modmail_button_channel"]},
-                "prev_message_modmail": {
-                    '$cond': [{'$not': ["$prev_message_modmail"]}, None, "$prev_message_modmail"]}
-            }}]
-        )
-
+        document = await db.servers.find_one({"server_id": id})
+        if document['log_channel']:
+            post = {'log_messages': [document['log_messages'], document['log_channel']],
+                    'log_joinleaves': [document['log_joinleaves'], document['log_channel']],
+                    'log_kbm': [document['log_kbm'], document['log_channel']],
+                    'log_strikes': [document['log_strikes'], document['log_channel']]}
+            await db.servers.update_one({"server_id": id},
+                                        {"$set": post})
+        else:
+            post = {'log_messages': [document['log_messages'], None],
+                    'log_joinleaves': [document['log_joinleaves'], None],
+                    'log_kbm': [document['log_kbm'], None],
+                    'log_strikes': [document['log_strikes'], None]}
+            await db.servers.update_one({"server_id": id},
+                                        {"$set": post})
 
 ##########
 
