@@ -1378,6 +1378,7 @@ class Administration(commands.Cog):
 
             async def callback(self, interaction: discord.Interaction):
                 await interaction.response.defer()
+                self.view.stop()
 
         class LogMenu(discord.ui.View):
             def __init__(self, og_context, bot, defaults):
