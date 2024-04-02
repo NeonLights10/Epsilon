@@ -1920,14 +1920,14 @@ class Administration(commands.Cog):
         else:
             ls_channel = 'None'
 
-        e_text = '\nLog messages: ' + f"{'Enabled' if log_info_list['log_messages'][0] else 'Disabled'} | "
-        e_text += f'{lm_channel}'
-        e_text += '\nLog member join/leaves: ' + f"{'Enabled' if log_info_list['log_joinleaves'][0] else 'Disabled'} | "
-        e_text += f'{ljl_channel}'
-        e_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if log_info_list['log_kbm'][0] else 'Disabled'} | "
-        e_text += f'{lk_channel}'
-        e_text += '\nLog strikes: ' + f"{'Enabled' if log_info_list['log_strikes'][0] else 'Disabled'} | "
-        e_text += f'{ls_channel}'
+        embed_text = '\nLog messages: ' + f"{'Enabled' if log_info_list['log_messages'][0] else 'Disabled'} | "
+        embed_text += f'{lm_channel}'
+        embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if log_info_list['log_joinleaves'][0] else 'Disabled'} | "
+        embed_text += f'{ljl_channel}'
+        embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if log_info_list['log_kbm'][0] else 'Disabled'} | "
+        embed_text += f'{lk_channel}'
+        embed_text += '\nLog strikes: ' + f"{'Enabled' if log_info_list['log_strikes'][0] else 'Disabled'} | "
+        embed_text += f'{ls_channel}'
         embed.add_field(name='Logging',
                         value=f'{embed_text}',
                         inline=False)
