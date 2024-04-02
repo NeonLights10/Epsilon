@@ -2473,8 +2473,8 @@ class Administration(commands.Cog):
                                                 ephemeral=True)
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-        if document['log_channel'] and document['log_kbm']:
-            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+        if document['log_kbm'][0] and document['log_kbm'][1]:
+            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
             await log_channel.send(embed=gen_embed(title='Timeout User',
                                                    content=(f'{user.mention} has been put in timeout for'
                                                             f' {humanize_timedelta(timedelta=time_result)}.'
@@ -2495,8 +2495,8 @@ class Administration(commands.Cog):
         await user.remove_timeout(reason='Invoked by slash command')
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-        if document['log_channel'] and document['log_kbm']:
-            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+        if document['log_kbm'][0] and document['log_kbm'][1]:
+            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
             await log_channel.send(embed=gen_embed(title='Remove Timeout from User',
                                                    content=(f'{user.mention} has had their timeout removed by'
                                                             f' {ctx.interaction.user.mention}.')))
@@ -2549,8 +2549,8 @@ class Administration(commands.Cog):
             await ctx.guild.kick(user)
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-        if document['log_channel'] and document['log_kbm']:
-            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+        if  document['log_kbm'][0] and document['log_kbm'][1]:
+            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
             await log_channel.send(embed=
                                    gen_embed(title='Kick User',
                                              content=(f'{user.name}#{user.discriminator} has been kicked by'
@@ -2611,8 +2611,8 @@ class Administration(commands.Cog):
             await ctx.guild.ban(user, delete_message_seconds=days * 86400)
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-        if document['log_channel'] and document['log_kbm']:
-            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+        if document['log_kbm'][0] and document['log_kbm'][1]:
+            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
             await log_channel.send(embed=
                                    gen_embed(title='Ban User',
                                              content=(f'{user.name}#{user.discriminator} has been banned by'
@@ -3061,8 +3061,8 @@ class Administration(commands.Cog):
                     await ctx.interaction.followup.send(embed=embed)
 
                     document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-                    if document['log_channel'] and document['log_strikes']:
-                        log_channel = ctx.guild.get_channel(int(document['log_channel']))
+                    if document['log_strikes'][0] and document['log_strikes'][1]:
+                        log_channel = ctx.guild.get_channel(int(document['log_strikes'][1]))
                         await log_channel.send(embed=embed)
 
                     valid_strikes = []  # potentially redundant but added as a safe measure
@@ -3102,8 +3102,8 @@ class Administration(commands.Cog):
                                             reason=(f'User has accumulated {max_strike} strikes and therefore is now'
                                                     ' banned from the server.'),
                                             delete_message_seconds=ban_delete_days * 86400)
-                        if document['log_channel'] and document['log_kbm']:
-                            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+                        if document['log_kbm'][0] and document['log_kbm'][1]:
+                            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
                             embed = gen_embed(title='Ban User',
                                               content=(f'{user.name}#{user.discriminator} (ID: {user.id} has been'
                                                        ' banned.\nReason: Accumulated maximum # of strikes'))
@@ -3168,8 +3168,8 @@ class Administration(commands.Cog):
                                     content=(f'{user.name}#{user.discriminator} has been image muted for'
                                              f' {humanize_timedelta(timedelta=image_mute_time)}')),
                                     ephemeral=True)
-                                if document['log_channel'] and document['log_kbm']:
-                                    log_channel = ctx.guild.get_channel(int(document['log_channel']))
+                                if document['log_kbm'][0] and document['log_kbm'][1]:
+                                    log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
                                     embed = gen_embed(
                                         title='Image Mute User',
                                         content=(
@@ -3222,8 +3222,8 @@ class Administration(commands.Cog):
                             content=(f'{user.name}#{user.discriminator} has been timed out for'
                                      f' {humanize_timedelta(timedelta=timeout_time)}')),
                             ephemeral=True)
-                        if document['log_channel'] and document['log_kbm']:
-                            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+                        if document['log_kbm'][0] and document['log_kbm'][1]:
+                            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
                             embed = gen_embed(title='Timeout User',
                                               content=(f'{user.name}#{user.discriminator} has been timed out for'
                                                        f' {humanize_timedelta(timedelta=timeout_time)}'
