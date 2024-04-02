@@ -493,12 +493,12 @@ class Administration(commands.Cog):
                                 or defaults['log_joinleaves'][0]
                                 or defaults['log_kbm'][0]
                                 or defaults['log_strikes'][0]):
-                            content = (f'*Enabled*\nConfigured message log channel: {log_message_channel}'
+                            content = (f'**Enabled**\nConfigured message log channel: {log_message_channel}'
                                        f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
                                        f'\nConfigured mod action log channel: {log_kbm_channel}'
                                        f'\nConfigured strike log channel: {log_strikes_channel}')
                         else:
-                            content = (f'*Disabled*\nConfigured message log channel: {log_message_channel}'
+                            content = (f'**Disabled**\nConfigured message log channel: {log_message_channel}'
                                        f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
                                        f'\nConfigured mod action log channel: {log_kbm_channel}'
                                        f'\nConfigured strike log channel: {log_strikes_channel}')
@@ -1387,7 +1387,7 @@ class Administration(commands.Cog):
                 self.value = ''
                 self.select_values = None
                 self.defaults = defaults
-                self.channels = []
+                self.channels = [None, None, None, None]
 
                 self.add_item(LogSelect(self.bot, defaults))
 
@@ -1441,32 +1441,24 @@ class Administration(commands.Cog):
 
                 if self.defaults["log_messages"][1]:
                     log_message_channel = interaction.guild.get_channel(int(self.defaults["log_messages"][1]))
-                    self.channels[0] = log_message_channel.name
                     log_message_channel = log_message_channel.mention
                 else:
                     log_message_channel = 'None'
-                    self.channels[0] = 'None'
                 if self.defaults['log_joinleaves'][1]:
                     log_joinleaves_channel = interaction.guild.get_channel(int(self.defaults["log_joinleaves"][1]))
-                    self.channels[1] = log_joinleaves_channel.name
                     log_joinleaves_channel = log_joinleaves_channel.mention
                 else:
                     log_joinleaves_channel = 'None'
-                    self.channels[1] = 'None'
                 if self.defaults['log_kbm'][1]:
                     log_kbm_channel = interaction.guild.get_channel(int(self.defaults["log_kbm"][1]))
-                    self.channels[2] = log_kbm_channel.name
                     log_kbm_channel = log_kbm_channel.mention
                 else:
                     log_kbm_channel = 'None'
-                    self.channels[2] = 'None'
                 if self.defaults['log_strikes'][1]:
                     log_strikes_channel = interaction.guild.get_channel(int(self.defaults["log_strikes"][1]))
-                    self.channels[3] = log_strikes_channel.name
                     log_strikes_channel = log_strikes_channel.mention
                 else:
                     log_strikes_channel = 'None'
-                    self.channels[3] = 'None'
 
                 e_text = '\nLog messages: ' + f"{'Enabled' if post['log_messages'] else 'Disabled'} | "
                 e_text += f'{log_message_channel}'
@@ -1521,6 +1513,27 @@ class Administration(commands.Cog):
                         return await log_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
 
                 await interaction.response.defer()
+
+                if self.defaults["log_messages"][1]:
+                    log_message_channel = interaction.guild.get_channel(int(self.defaults["log_messages"][1]))
+                    self.channels[0] = log_message_channel.name
+                else:
+                    self.channels[0] = 'None'
+                if self.defaults['log_joinleaves'][1]:
+                    log_joinleaves_channel = interaction.guild.get_channel(int(self.defaults["log_joinleaves"][1]))
+                    self.channels[1] = log_joinleaves_channel.name
+                else:
+                    self.channels[1] = 'None'
+                if self.defaults['log_kbm'][1]:
+                    log_kbm_channel = interaction.guild.get_channel(int(self.defaults["log_kbm"][1]))
+                    self.channels[2] = log_kbm_channel.name
+                else:
+                    self.channels[2] = 'None'
+                if self.defaults['log_strikes'][1]:
+                    log_strikes_channel = interaction.guild.get_channel(int(self.defaults["log_strikes"][1]))
+                    self.channels[3] = log_strikes_channel.name
+                else:
+                    self.channels[3] = 'None'
 
                 log_channel_select_view = discord.ui.View(disable_on_timeout=True)
                 log_channel_select_view.add_item(LogChannelSelect(self.bot, self.channels))
@@ -1881,16 +1894,40 @@ class Administration(commands.Cog):
                         value=f"{'Enabled' if document['fun'] else 'Disabled'}",
                         inline=False)
 
-        embed_text = 'Configured channel: '
-        if document['log_channel']:
-            logging_channel = ctx.guild.get_channel(int(document['log_channel']))
-            embed_text += f'{logging_channel.mention}\n'
+        log_info_list = {'log_messages': document['log_messages'],
+                         'log_joinleaves': document['log_joinleaves'],
+                         'log_kbm': document['log_kbm'],
+                         'log_strikes': document['log_strikes']}
+
+        if log_info_list["log_messages"][1]:
+            lm_channel = ctx.guild.get_channel(int(log_info_list["log_messages"][1]))
+            lm_channel = lm_channel.mention
         else:
-            embed_text += 'None\n'
-        embed_text += '\nLog messages: ' + f"{'Enabled' if document['log_messages'] else 'Disabled'}"
-        embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if document['log_joinleaves'] else 'Disabled'}"
-        embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if document['log_kbm'] else 'Disabled'}"
-        embed_text += '\nLog strikes: ' + f"{'Enabled' if document['log_strikes'] else 'Disabled'}"
+            lm_channel = 'None'
+        if log_info_list['log_joinleaves'][1]:
+            ljl_channel = ctx.guild.get_channel(int(log_info_list["log_joinleaves"][1]))
+            ljl_channel = ljl_channel.mention
+        else:
+            ljl_channel = 'None'
+        if log_info_list['log_kbm'][1]:
+            lk_channel = ctx.guild.get_channel(int(log_info_list["log_kbm"][1]))
+            lk_channel = lk_channel.mention
+        else:
+            lk_channel = 'None'
+        if log_info_list['log_strikes'][1]:
+            ls_channel = ctx.guild.get_channel(int(log_info_list["log_strikes"][1]))
+            ls_channel = ls_channel.mention
+        else:
+            ls_channel = 'None'
+
+        e_text = '\nLog messages: ' + f"{'Enabled' if log_info_list['log_messages'][0] else 'Disabled'} | "
+        e_text += f'{lm_channel}'
+        e_text += '\nLog member join/leaves: ' + f"{'Enabled' if log_info_list['log_joinleaves'][0] else 'Disabled'} | "
+        e_text += f'{ljl_channel}'
+        e_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if log_info_list['log_kbm'][0] else 'Disabled'} | "
+        e_text += f'{lk_channel}'
+        e_text += '\nLog strikes: ' + f"{'Enabled' if log_info_list['log_strikes'][0] else 'Disabled'} | "
+        e_text += f'{ls_channel}'
         embed.add_field(name='Logging',
                         value=f'{embed_text}',
                         inline=False)
