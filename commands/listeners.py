@@ -260,7 +260,7 @@ async def on_member_update(before, after):
                               value=f'{after.nick}#{after.discriminator}',
                               inline=False)
             content.add_field(name='ID',
-                              value=f'```ml\nUser = {after.author.id}```',
+                              value=f'```ml\nUser = {after.id}```',
                               inline=False)
             content.set_footer(text=time.ctime())
             await log_channel.send(embed=content)
