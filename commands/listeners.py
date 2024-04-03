@@ -266,6 +266,22 @@ async def on_member_update(before, after):
             await log_channel.send(embed=content)
 
 
+async def on_member_ban(guild, user):
+    document = await db.servers.find_one({'server_id': before.guild.id})
+    if document['log_kbm'][0] and int(document['log_kbm'][1]):
+        log_channel = guild.get_channel(int(document['log_kbm'][1]))
+        content = gen_embed(name=f'{user.name}#{user.discriminator}',
+                            icon_url=user.display_avatar.url,
+                            title="User Banned",
+                            content=f'{user.name}#{user.discriminator} {user.mention}',
+                            colour=0xe74c3c)
+        content.add_field(name='ID',
+                          value=f'```ml\nUser = {user.id}```',
+                          inline=False)
+        content.set_footer(text=time.ctime())
+        await log_channel.send(embed=content)
+
+
 async def on_application_command(context):
     log.info(f'{context.interaction.user.name}#{context.interaction.user.discriminator} ({context.interaction.user.id})'
              f' | {context.command.qualified_name} {context.selected_options}')
@@ -275,6 +291,8 @@ def setup(bot):
     bot.add_listener(on_guild_join)
     bot.add_listener(on_member_join)
     bot.add_listener(on_member_remove)
+    bot.add_listener(on_member_update)
+    bot.add_listener(on_member_ban)
     bot.add_listener(on_message_edit)
     bot.add_listener(on_message_delete)
     bot.add_listener(on_raw_message_delete)
