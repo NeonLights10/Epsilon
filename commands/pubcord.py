@@ -416,6 +416,7 @@ class Pubcord(commands.Cog):
         pubcord = self.bot.get_guild(432379300684103699)
         emoteserver = self.bot.get_guild(815821301700493323)
         pubcord_booster_role = pubcord.get_role(913239378598436966)
+        special_mem = [150677680768024576, 140488317333405707, 84308366574223360, 197608336286285824, 117645435061010438, 85992109936504832]
         for member in pubcord.premium_subscribers:
             if not member.get_role(913239378598436966):
                 log.info('Adding member to booster role - boosting main server')
@@ -438,6 +439,8 @@ class Pubcord(commands.Cog):
                 if emoteserver_member not in emoteserver.premium_subscribers:
                     if member not in pubcord.premium_subscribers:
                         boosting = False
+                        if member in special_mem:
+                            boosting = True
                         if not boosting:
                             log.info('Not boosting either server, removing')
                             roles = member.roles
@@ -446,6 +449,8 @@ class Pubcord(commands.Cog):
             else:
                 if member not in pubcord.premium_subscribers:
                     boosting = False
+                    if member in special_mem:
+                        boosting = True
                     if not boosting:
                         log.info('Not boosting either server, removing')
                         roles = member.roles
