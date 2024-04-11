@@ -434,7 +434,7 @@ class Pubcord(commands.Cog):
                     await pubcord_member.edit(roles=roles, reason="Boosting emote server")
 
         for member in pubcord_booster_role.members:
-            if member in special_mem:
+            if member.id in special_mem:
                 boosting = True
             else:
                 emoteserver_member = emoteserver.get_member(member.id)
