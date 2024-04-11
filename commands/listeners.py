@@ -188,7 +188,7 @@ async def on_member_join(member):
             log.info(f"Auto-assigned role to new member in {member.guild.name}")
         else:
             log.error(f"Could not find auto assign role for {member.guild.name}!")
-    if document['log_joinleaves'][0] and int(document['log_joinleaves'][1]):
+    if document['log_joinleaves'][0] is not None and document['log_joinleaves'][1] is not None:
         log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
         content = gen_embed(name=f'{member.name}#{member.discriminator}',
                             icon_url=member.display_avatar.url,
@@ -221,7 +221,7 @@ async def on_member_join(member):
 
 async def on_member_remove(member):
     document = await db.servers.find_one({"server_id": member.guild.id})
-    if document['log_joinleaves'][0] and int(document['log_joinleaves'][1]):
+    if document['log_joinleaves'][0] is not None and document['log_joinleaves'][1] is not None:
         log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
         content = gen_embed(name=f'{member.name}#{member.discriminator}',
                             icon_url=member.display_avatar.url,
@@ -245,7 +245,7 @@ async def on_member_remove(member):
 
 async def on_member_update(before, after):
     document = await db.servers.find_one({'server_id': before.guild.id})
-    if document['log_joinleaves'][0] and int(document['log_joinleaves'][1]):
+    if document['log_joinleaves'][0] is not None and document['log_joinleaves'][1] is not None:
         if not before.nick == after.nick:
             log_channel = before.guild.get_channel(int(document['log_joinleaves'][1]))
             content = gen_embed(name=f'{after.name}#{after.discriminator}',
@@ -267,8 +267,8 @@ async def on_member_update(before, after):
 
 
 async def on_member_ban(guild, user):
-    document = await db.servers.find_one({'server_id': before.guild.id})
-    if document['log_kbm'][0] and int(document['log_kbm'][1]):
+    document = await db.servers.find_one({'server_id': guild.id})
+    if document['log_kbm'][0] is not None and document['log_kbm'][1] is not None:
         log_channel = guild.get_channel(int(document['log_kbm'][1]))
         content = gen_embed(name=f'{user.name}#{user.discriminator}',
                             icon_url=user.display_avatar.url,
