@@ -272,6 +272,11 @@ async def on_ready():
 
     status = discord.Game(f'/help | {len(bot.guilds)} servers')
     await bot.change_presence(activity=status)
+    banner_file = open('banner.gif', 'rb')
+    banner = banner_file.read()
+    avatar_file = open('avatar.gif', 'rb')
+    avatar = avatar_file.read()
+    await bot.user.edit(avatar=avatar, banner=banner)
 
     log.info(f"Connected: {bot.user.id}/{bot.user.name}#{bot.user.discriminator}")
     owner = await bot.application_info()
