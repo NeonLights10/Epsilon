@@ -207,98 +207,102 @@ async def on_member_join(member):
             log.info(f"Auto-assigned role to new member in {member.guild.name}")
         else:
             log.error(f"Could not find auto assign role for {member.guild.name}!")
-    if document['log_joinleaves'][0] is not None and document['log_joinleaves'][1] is not None:
-        log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
-        content = gen_embed(name=f'{member.name}#{member.discriminator}',
-                            icon_url=member.display_avatar.url,
-                            title="Member joined",
-                            content=f'{member.name}#{member.discriminator} {member.mention}',
-                            colour=0x2ecc71)
-        content.add_field(name='Joined At',
-                          value=f'<t:{math.trunc(time.mktime(member.joined_at.timetuple()))}>',
-                          inline=False)
-        account_age = (datetime.datetime.now(datetime.timezone.utc) - member.created_at).days
-        content.add_field(name='Account Age',
-                          value=f'**{account_age}** days',
-                          inline=True)
-        content.add_field(name='Member Count',
-                          value=member.guild.member_count,
-                          inline=True)
-        query = {'server_id': member.guild.id, 'user_id': member.id}
-        results = db.warns.find(query)
-        results = await results.to_list(length=None)
-        results = len(results)
-        content.add_field(name='Previous Strikes',
-                          value=results,
-                          inline=True)
-        content.add_field(name='ID',
-                          value=f'```ml\nMember = {member.id}```',
-                          inline=False)
-        content.set_footer(text=time.ctime())
-        await log_channel.send(embed=content)
-
-
-async def on_member_remove(member):
-    document = await db.servers.find_one({"server_id": member.guild.id})
-    if document['log_joinleaves'][0] is not None and document['log_joinleaves'][1] is not None:
-        log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
-        content = gen_embed(name=f'{member.name}#{member.discriminator}',
-                            icon_url=member.display_avatar.url,
-                            title="Member left",
-                            content=f'{member.name}#{member.discriminator} {member.mention}',
-                            colour=0xe74c3c)
-        join_unix = math.trunc(time.mktime(member.joined_at.timetuple()))
-        content.add_field(name='Joined At',
-                          value=f'<t:{join_unix}> (<t:{join_unix}:R>)',
-                          inline=False)
-        create_unix = math.trunc(time.mktime(member.created_at.timetuple()))
-        content.add_field(name='Created At',
-                          value=f'<t:{create_unix}> (<t:{create_unix}:R>)',
-                          inline=False)
-        content.add_field(name='ID',
-                          value=f'```ml\nMember = {member.id}```',
-                          inline=False)
-        content.set_footer(text=time.ctime())
-        await log_channel.send(embed=content)
-
-
-async def on_member_update(before, after):
-    document = await db.servers.find_one({'server_id': before.guild.id})
-    if document['log_joinleaves'][0] is not None and document['log_joinleaves'][1] is not None:
-        if not before.nick == after.nick:
-            log_channel = before.guild.get_channel(int(document['log_joinleaves'][1]))
-            content = gen_embed(name=f'{after.name}#{after.discriminator}',
-                                icon_url=after.display_avatar.url,
-                                title="Member updated",
-                                content=f'{after.name}#{after.discriminator} {after.mention}',
-                                colour=0xFEE75C)
-            content.add_field(name='Previous name',
-                              value=f'{before.nick}#{before.discriminator}',
+    if document['log_joinleaves'][0]:
+        if msglog := int(document['log_joinleaves'][1]):
+            log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
+            content = gen_embed(name=f'{member.name}',
+                                icon_url=member.display_avatar.url,
+                                title="Member joined",
+                                content=f'{member.name} {member.mention}',
+                                colour=0x2ecc71)
+            content.add_field(name='Joined At',
+                              value=f'<t:{math.trunc(time.mktime(member.joined_at.timetuple()))}>',
                               inline=False)
-            content.add_field(name='Current name',
-                              value=f'{after.nick}#{after.discriminator}',
-                              inline=False)
+            account_age = (datetime.datetime.now(datetime.timezone.utc) - member.created_at).days
+            content.add_field(name='Account Age',
+                              value=f'**{account_age}** days',
+                              inline=True)
+            content.add_field(name='Member Count',
+                              value=member.guild.member_count,
+                              inline=True)
+            query = {'server_id': member.guild.id, 'user_id': member.id}
+            results = db.warns.find(query)
+            results = await results.to_list(length=None)
+            results = len(results)
+            content.add_field(name='Previous Strikes',
+                              value=results,
+                              inline=True)
             content.add_field(name='ID',
-                              value=f'```ml\nUser = {after.id}```',
+                              value=f'```ml\nMember = {member.id}```',
                               inline=False)
             content.set_footer(text=time.ctime())
             await log_channel.send(embed=content)
 
 
+async def on_member_remove(member):
+    document = await db.servers.find_one({"server_id": member.guild.id})
+    if document['log_joinleaves'][0]:
+        if msglog := int(document['log_joinleaves'][1]):
+            log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
+            content = gen_embed(name=f'{member.name}',
+                                icon_url=member.display_avatar.url,
+                                title="Member left",
+                                content=f'{member.name} {member.mention}',
+                                colour=0xe74c3c)
+            join_unix = math.trunc(time.mktime(member.joined_at.timetuple()))
+            content.add_field(name='Joined At',
+                              value=f'<t:{join_unix}> (<t:{join_unix}:R>)',
+                              inline=False)
+            create_unix = math.trunc(time.mktime(member.created_at.timetuple()))
+            content.add_field(name='Created At',
+                              value=f'<t:{create_unix}> (<t:{create_unix}:R>)',
+                              inline=False)
+            content.add_field(name='ID',
+                              value=f'```ml\nMember = {member.id}```',
+                              inline=False)
+            content.set_footer(text=time.ctime())
+            await log_channel.send(embed=content)
+
+
+async def on_member_update(before, after):
+    document = await db.servers.find_one({'server_id': before.guild.id})
+    if document['log_joinleaves'][0]:
+        if msglog := int(document['log_joinleaves'][1]):
+            if not before.nick == after.nick:
+                log_channel = before.guild.get_channel(int(document['log_joinleaves'][1]))
+                content = gen_embed(name=f'{after.name}',
+                                    icon_url=after.display_avatar.url,
+                                    title="Member updated",
+                                    content=f'{after.name} {after.mention}',
+                                    colour=0xFEE75C)
+                content.add_field(name='Previous name',
+                                  value=f'{before.name} ({before.nick})',
+                                  inline=False)
+                content.add_field(name='Current nickname',
+                                  value=f'{after.name} ({after.nick})',
+                                  inline=False)
+                content.add_field(name='ID',
+                                  value=f'```ml\nUser = {after.id}```',
+                                  inline=False)
+                content.set_footer(text=time.ctime())
+                await log_channel.send(embed=content)
+
+
 async def on_member_ban(guild, user):
     document = await db.servers.find_one({'server_id': guild.id})
-    if document['log_kbm'][0] is not None and document['log_kbm'][1] is not None:
-        log_channel = guild.get_channel(int(document['log_kbm'][1]))
-        content = gen_embed(name=f'{user.name}#{user.discriminator}',
-                            icon_url=user.display_avatar.url,
-                            title="User Banned",
-                            content=f'{user.name}#{user.discriminator} {user.mention}',
-                            colour=0xe74c3c)
-        content.add_field(name='ID',
-                          value=f'```ml\nUser = {user.id}```',
-                          inline=False)
-        content.set_footer(text=time.ctime())
-        await log_channel.send(embed=content)
+    if document['log_kbm'][0]:
+        if kbmlog := document['log_kbm'][1]:
+            log_channel = guild.get_channel(int(document['log_kbm'][1]))
+            content = gen_embed(name=f'{user.name}#{user.discriminator}',
+                                icon_url=user.display_avatar.url,
+                                title="User Banned",
+                                content=f'{user.name}#{user.discriminator} {user.mention}',
+                                colour=0xe74c3c)
+            content.add_field(name='ID',
+                              value=f'```ml\nUser = {user.id}```',
+                              inline=False)
+            content.set_footer(text=time.ctime())
+            await log_channel.send(embed=content)
 
 
 async def on_application_command(context):
