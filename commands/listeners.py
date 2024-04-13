@@ -24,7 +24,7 @@ async def on_guild_join(guild):
                                    '\nChange the command prefix and configure server settings using `/settings`!\n\n'
                                    'Source code: https://github.com/neon10lights/Epsilon\n'
                                    'Support: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\n'
-                                   'If you have feedback or need help, please DM Neon#5555 or join the server at '
+                                   'If you have feedback or need help, please DM .neonlights or join the server at '
                                    'https://discord.gg/AYTFJY8VhF'))
         await general.send(embed=embed)
         await general.send(embed=gen_embed(title='Thank you Kanon Supporters!',
