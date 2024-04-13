@@ -137,25 +137,6 @@ async def on_raw_message_delete(payload):
                         content = gen_embed(title=f'Message deleted in #{guild.get_channel(payload.channel_id).name}',
                                             content=f'```ml\nMessage ID = {payload.message_id}```')
                         await log_channel.send(embed=content)
-                    else:
-                        message = payload.cached_message
-                        log_channel = message.guild.get_channel(msglog)
-                        sent_time = math.trunc(time.mktime(message.created_at.timetuple()))
-                        content = gen_embed(name=f'{message.author.name} ({message.author.display_name})',
-                                            icon_url=message.author.display_avatar.url,
-                                            title=f'Message deleted in {message.channel.name}',
-                                            content=f'Message sent <t:{sent_time}>')
-                        content.add_field(name='Content',
-                                          value=message.clean_content,
-                                          inline=False)
-                        content.add_field(name='ID',
-                                          value=f'```ml\nUser = {message.author.id}\nMessage = {message.id}```',
-                                          inline=False)
-                        content.set_footer(text=time.ctime())
-                        if len(message.attachments) > 0:
-                            content.add_field(name="Attachment:", value="\u200b")
-                            content.set_image(url=message.attachments[0].proxy_url)
-                        await log_channel.send(embed=content)
         except TypeError:
             pass
         except Exception as e:
@@ -207,7 +188,8 @@ async def on_member_join(member):
             log.info(f"Auto-assigned role to new member in {member.guild.name}")
         else:
             log.error(f"Could not find auto assign role for {member.guild.name}!")
-    if document['log_joinleaves'][0]:
+    enabled = document['log_joinleaves'][0]
+    if enabled:
         if msglog := int(document['log_joinleaves'][1]):
             log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
             content = gen_embed(name=f'{member.name}',
@@ -241,7 +223,8 @@ async def on_member_join(member):
 
 async def on_member_remove(member):
     document = await db.servers.find_one({"server_id": member.guild.id})
-    if document['log_joinleaves'][0]:
+    enabled = document['log_joinleaves'][0]
+    if enabled:
         if msglog := int(document['log_joinleaves'][1]):
             log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
             content = gen_embed(name=f'{member.name}',
@@ -266,7 +249,8 @@ async def on_member_remove(member):
 
 async def on_member_update(before, after):
     document = await db.servers.find_one({'server_id': before.guild.id})
-    if document['log_joinleaves'][0]:
+    enabled = document['log_joinleaves'][0]
+    if enabled:
         if msglog := int(document['log_joinleaves'][1]):
             if not before.nick == after.nick:
                 log_channel = before.guild.get_channel(int(document['log_joinleaves'][1]))
@@ -290,7 +274,8 @@ async def on_member_update(before, after):
 
 async def on_member_ban(guild, user):
     document = await db.servers.find_one({'server_id': guild.id})
-    if document['log_kbm'][0]:
+    enabled = document['log_kbm'][0]
+    if enabled:
         if kbmlog := document['log_kbm'][1]:
             log_channel = guild.get_channel(int(document['log_kbm'][1]))
             content = gen_embed(name=f'{user.name}#{user.discriminator}',
