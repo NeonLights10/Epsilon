@@ -224,7 +224,7 @@ def gen_embed(name=None, icon_url=None, title=None, content=None):
 class EpsilonBot(bridge.AutoShardedBot):
 
     def __init__(self, command_prefix, intents, case_insensitive, debug_guilds=None):
-        super().__init__(max_messages=1000,
+        super().__init__(max_messages=5000,
                          command_prefix=command_prefix,
                          intents=intents,
                          case_insensitive=case_insensitive,
