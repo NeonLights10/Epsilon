@@ -383,8 +383,11 @@ class Pubcord(commands.Cog):
             view = self.views['432379300684103699']
             old_embed = view.children[0].content
             view.children[0].content = new_embed
-            if old_embed.image.url:
-                new_embed.set_image(url=old_embed.image.url)
+            try:
+                if old_embed.image.url:
+                    new_embed.set_image(url=old_embed.image.url)
+            except AttributeError:
+                pass
 
             document = await db.servers.find_one({"server_id": 432379300684103699})
             pubcord = self.bot.get_guild(432379300684103699)
