@@ -163,33 +163,33 @@ async def on_message_edit(before, after):
         # prevent error when "editing ephemerals"
         return
     try:
-        if msglog := int(document['log_messages'][1]):
-            try:
-                enabled = document['log_messages'][0]
-            except TypeError:
-                enabled = document['log_messages']
-            if enabled:
-                if not before.author.id == bot.user.id and before.author.bot is False:
-                    if not before.content == after.content:
-                        log_channel = before.guild.get_channel(msglog)
-                        content = gen_embed(name=f'{before.author.name} ({before.author.display_name})',
-                                            icon_url=before.author.display_avatar.url,
-                                            title=f'Message edited in #{before.channel.name}',
-                                            content=f'[Go to Message]({after.jump_url})')
-                        content.add_field(name='Previous',
-                                          value=before.clean_content,
-                                          inline=False)
-                        content.add_field(name='Current',
-                                          value=after.clean_content,
-                                          inline=False)
-                        content.add_field(name='ID',
-                                          value=f'```ml\nUser = {after.author.id}\nMessage = {after.id}```',
-                                          inline=False)
-                        content.set_footer(text=time.ctime())
-                        await log_channel.send(embed=content)
-    except Exception as e:
-        log.info(f'Error occurred while tracking message edits: {e}')
-        pass
+        msglog = int(document['log_messages'][1])
+    except TypeError:
+        return
+    if msglog:
+        try:
+            enabled = document['log_messages'][0]
+        except TypeError:
+            enabled = document['log_messages']
+        if enabled:
+            if not before.author.id == bot.user.id and before.author.bot is False:
+                if not before.content == after.content:
+                    log_channel = before.guild.get_channel(msglog)
+                    content = gen_embed(name=f'{before.author.name} ({before.author.display_name})',
+                                        icon_url=before.author.display_avatar.url,
+                                        title=f'Message edited in #{before.channel.name}',
+                                        content=f'[Go to Message]({after.jump_url})')
+                    content.add_field(name='Previous',
+                                      value=before.clean_content,
+                                      inline=False)
+                    content.add_field(name='Current',
+                                      value=after.clean_content,
+                                      inline=False)
+                    content.add_field(name='ID',
+                                      value=f'```ml\nUser = {after.author.id}\nMessage = {after.id}```',
+                                      inline=False)
+                    content.set_footer(text=time.ctime())
+                    await log_channel.send(embed=content)
 
 
 async def on_member_join(member):
