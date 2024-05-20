@@ -595,8 +595,8 @@ class Administration(commands.Cog):
                         await modrole_view.wait()
 
                         if modrole_view.value:
-                            self.embed.set_field_at(7,
-                                                    name='Auto Assign Role On Join',
+                            self.embed.set_field_at(8,
+                                                    name='Moderator Role',
                                                     value=modrole_view.value,
                                                     inline=False)
                         await self.currentmessage.edit(embed=self.embed,
@@ -1900,22 +1900,38 @@ class Administration(commands.Cog):
                          'log_kbm': document['log_kbm'],
                          'log_strikes': document['log_strikes']}
 
-        if log_info_list["log_messages"][1]:
+        try:
+            lm = log_info_list["log_messages"][1]
+        except TypeError:
+            lm = None
+        if lm:
             lm_channel = ctx.guild.get_channel(int(log_info_list["log_messages"][1]))
             lm_channel = lm_channel.mention
         else:
             lm_channel = 'None'
-        if log_info_list['log_joinleaves'][1]:
+        try:
+            ljl = log_info_list['log_joinleaves'][1]
+        except TypeError:
+            ljl = None
+        if ljl:
             ljl_channel = ctx.guild.get_channel(int(log_info_list["log_joinleaves"][1]))
             ljl_channel = ljl_channel.mention
         else:
             ljl_channel = 'None'
-        if log_info_list['log_kbm'][1]:
+        try:
+            lk = log_info_list['log_kbm'][1]
+        except TypeError:
+            lk = None
+        if lk:
             lk_channel = ctx.guild.get_channel(int(log_info_list["log_kbm"][1]))
             lk_channel = lk_channel.mention
         else:
             lk_channel = 'None'
-        if log_info_list['log_strikes'][1]:
+        try:
+            ls = log_info_list['log_strikes'][1]
+        except TypeError:
+            ls = None
+        if ls:
             ls_channel = ctx.guild.get_channel(int(log_info_list["log_strikes"][1]))
             ls_channel = ls_channel.mention
         else:

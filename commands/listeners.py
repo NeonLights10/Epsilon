@@ -63,7 +63,11 @@ async def on_message_delete(message):
 
     try:
         if msglog := int(document['log_messages'][1]):
-            if document['log_messages'][0]:
+            try:
+                enabled = document['log_messages'][0]
+            except TypeError:
+                enabled = document['log_messages']
+            if enabled:
                 if not message.author.id == bot.user.id and message.author.bot is False:
                     prefix = await get_prefix(bot, message)
                     if re.match(f'^{prefix}', message.content) is None:
@@ -95,7 +99,11 @@ async def on_bulk_message_delete(messages):
     document = await db.servers.find_one({"server_id": messages[0].guild.id})
     try:
         if msglog := int(document['log_messages'][1]):
-            if document['log_messages'][0]:
+            try:
+                enabled = document['log_messages'][0]
+            except TypeError:
+                enabled = document['log_messages']
+            if enabled:
                 for message in messages:
                     if not message.author.id == bot.user.id and message.author.bot is False:
                         prefix = await get_prefix(bot, message)
@@ -130,7 +138,11 @@ async def on_raw_message_delete(payload):
         document = await db.servers.find_one({"server_id": payload.guild_id})
         try:
             if msglog := int(document['log_messages'][1]):
-                if document['log_messages'][0]:
+                try:
+                    enabled = document['log_messages'][0]
+                except TypeError:
+                    enabled = document['log_messages']
+                if enabled:
                     if not payload.cached_message:
                         guild = bot.get_guild(payload.guild_id)
                         log_channel = guild.get_channel(msglog)
@@ -152,7 +164,11 @@ async def on_message_edit(before, after):
         return
     try:
         if msglog := int(document['log_messages'][1]):
-            if document['log_messages'][0]:
+            try:
+                enabled = document['log_messages'][0]
+            except TypeError:
+                enabled = document['log_messages']
+            if enabled:
                 if not before.author.id == bot.user.id and before.author.bot is False:
                     if not before.content == after.content:
                         log_channel = before.guild.get_channel(msglog)
@@ -171,8 +187,6 @@ async def on_message_edit(before, after):
                                           inline=False)
                         content.set_footer(text=time.ctime())
                         await log_channel.send(embed=content)
-    except TypeError:
-        pass
     except Exception as e:
         log.info(f'Error occurred while tracking message edits: {e}')
         pass
@@ -188,7 +202,10 @@ async def on_member_join(member):
             log.info(f"Auto-assigned role to new member in {member.guild.name}")
         else:
             log.error(f"Could not find auto assign role for {member.guild.name}!")
-    enabled = document['log_joinleaves'][0]
+    try:
+        enabled = document['log_joinleaves'][0]
+    except TypeError:
+        enabled = document['log_joinleaves']
     if enabled:
         if msglog := int(document['log_joinleaves'][1]):
             log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
@@ -223,7 +240,10 @@ async def on_member_join(member):
 
 async def on_member_remove(member):
     document = await db.servers.find_one({"server_id": member.guild.id})
-    enabled = document['log_joinleaves'][0]
+    try:
+        enabled = document['log_joinleaves'][0]
+    except TypeError:
+        enabled = document['log_joinleaves']
     if enabled:
         if msglog := int(document['log_joinleaves'][1]):
             log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
@@ -249,7 +269,10 @@ async def on_member_remove(member):
 
 async def on_member_update(before, after):
     document = await db.servers.find_one({'server_id': before.guild.id})
-    enabled = document['log_joinleaves'][0]
+    try:
+        enabled = document['log_joinleaves'][0]
+    except TypeError:
+        enabled = document['log_joinleaves']
     if enabled:
         if msglog := int(document['log_joinleaves'][1]):
             if not before.nick == after.nick:
@@ -274,7 +297,10 @@ async def on_member_update(before, after):
 
 async def on_member_ban(guild, user):
     document = await db.servers.find_one({'server_id': guild.id})
-    enabled = document['log_kbm'][0]
+    try:
+        enabled = document['log_kbm'][0]
+    except TypeError:
+        enabled = document['log_kbm']
     if enabled:
         if kbmlog := document['log_kbm'][1]:
             log_channel = guild.get_channel(int(document['log_kbm'][1]))
