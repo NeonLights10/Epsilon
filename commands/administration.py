@@ -1848,8 +1848,12 @@ class Administration(commands.Cog):
         embed = gen_embed(name='Settings',
                           content='You can configure the settings for Kanon Bot using the select dropdown below.')
 
+        try:
+            prefix_val = document['prefix']
+        except TypeError:
+            prefix_val = '%'
         embed.add_field(name='Prefix',
-                        value=f"{document['prefix'] or '%'}",
+                        value=f"{prefix_val}",
                         inline=False)
 
         embed_text = ', no configured channel\n(Default public updates OR system channel)'
@@ -1937,13 +1941,29 @@ class Administration(commands.Cog):
         else:
             ls_channel = 'None'
 
-        embed_text = '\nLog messages: ' + f"{'Enabled' if log_info_list['log_messages'][0] else 'Disabled'} | "
+        try:
+            elm = log_info_list['log_messages'][0]
+        except TypeError:
+            elm = log_info_list['log_messages']
+        try:
+            ejl = log_info_list['log_joinleaves'][0]
+        except TypeError:
+            ejl = log_info_list['log_joinleaves']
+        try:
+            ekbm = log_info_list['log_kbm'][0]
+        except TypeError:
+            ekbm = log_info_list['log_kbm']
+        try:
+            estr = log_info_list['log_strikes'][0]
+        except TypeError:
+            estr = log_info_list['log_strikes']
+        embed_text = '\nLog messages: ' + f"{'Enabled' if elm else 'Disabled'} | "
         embed_text += f'{lm_channel}'
-        embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if log_info_list['log_joinleaves'][0] else 'Disabled'} | "
+        embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if ejl else 'Disabled'} | "
         embed_text += f'{ljl_channel}'
-        embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if log_info_list['log_kbm'][0] else 'Disabled'} | "
+        embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if ekbm else 'Disabled'} | "
         embed_text += f'{lk_channel}'
-        embed_text += '\nLog strikes: ' + f"{'Enabled' if log_info_list['log_strikes'][0] else 'Disabled'} | "
+        embed_text += '\nLog strikes: ' + f"{'Enabled' if estr else 'Disabled'} | "
         embed_text += f'{ls_channel}'
         embed.add_field(name='Logging',
                         value=f'{embed_text}',
