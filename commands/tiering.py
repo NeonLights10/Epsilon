@@ -409,6 +409,31 @@ class Tiering(commands.Cog):
             title='New Tiering Members Guide',
             content=f'New Tiering Members Tips and Tricks guide posted in {dest_channel.mention}'),
             ephemeral=True)
+        
+    def verifyRoom(self, room):
+        print(room)
+        if re.search(r'^.*-[0-9x]{5}.*', room):
+            return True
+        else:
+            return False
+        
+    def splitRoom(self, room):
+        roomSplit = room.split('-')
+        
+        codeMatch = re.compile(r'^[0-9x]{5}$')
+        playerMatch = re.compile(r'^[0-4f]$')
+        
+        codeIdx = None
+        playerIdx = None
+        
+        ## Always assume first is name
+        for i in range(1, len(roomSplit)):
+            if codeMatch.match(roomSplit[i]):
+                codeIdx = i
+            if playerMatch.match(roomSplit[i]):
+                playerIdx = i
+                
+        return roomSplit, codeIdx, playerIdx
 
     @commands.command(name='room',
                       aliases=['rm'],
@@ -421,56 +446,59 @@ class Tiering(commands.Cog):
     async def room(self, ctx, room_num: Optional[convert_room], open_spots: Optional[convert_spot]):
         currentname = ctx.channel.name
         namesuffix = ""
-        if re.search(r'^[A-Za-z]\d-', currentname):
-            nameprefix = re.match(r"^[A-Za-z]\d-", currentname).group(0)
-        else:
+        
+        print('running Room')
+        if not self.verifyRoom(currentname):
             log.warning('Error: Invalid Channel')
             await ctx.send(embed=gen_embed(title='Invalid Channel',
                                            content=(f'This is not a valid tiering channel. Please match the format'
-                                                    ' g#-xxxxx to use this command.')))
+                                                    ' [name]-xxxxx to use this command.')))
             return
-        if re.search(r'-[\df]$', currentname):
-            namesuffix = re.search(r"-[\df]$", currentname).group(0)
-
+        
+        roomSplit, codeIdx, playerIdx = self.splitRoom(currentname)
+        
+        if codeIdx is None:
+            log.warning('Error: Invalid Channel')
+            await ctx.send(embed=gen_embed(title='Invalid Channel',
+                                           content=(f'This is not a valid tiering channel. Please match the format'
+                                                    ' [name]-xxxxx to use this command.')))
+            
         if room_num:
-            if open_spots:
-                open_spots = int(open_spots)
-                if 0 < open_spots <= 4:
-                    namesuffix = f'-{open_spots}'
-                elif open_spots == 0:
-                    namesuffix = '-f'
-                else:
-                    log.warning('Error: Invalid Input')
-                    await ctx.send(embed=gen_embed(title='Input Error',
-                                                   content=(f'That is not a valid option for this parameter. Open spots'
-                                                            ' must be a value from 0-4.')))
-                    return
-
-            await ctx.channel.edit(name=f'{nameprefix}{room_num}{namesuffix}')
-            await ctx.send(embed=gen_embed(title='room',
-                                           content=f'Changed room code to {room_num}'))
-        else:
-            if open_spots:
-                open_spots = int(open_spots)
-                if 0 < open_spots <= 4:
-                    namesuffix = f'-{open_spots}'
-                    nameprefix = re.search(r"(^[A-Za-z]\d-.+)(?![^-])(?<!-[\df]$)", currentname).group(0)
-                elif open_spots == 0:
-                    namesuffix = '-f'
-                    nameprefix = re.search(r"(^[A-Za-z]\d-.+)(?![^-])(?<!-[\df]$)", currentname).group(0)
-                else:
-                    log.warning('Error: Invalid Input')
-                    await ctx.send(embed=gen_embed(title='Input Error',
-                                                   content=(f'That is not a valid option for this parameter. Open spots'
-                                                            ' must be a value from 0-4.')))
-                    return
-                await ctx.channel.edit(name=f'{nameprefix}{namesuffix}')
-                await ctx.send(embed=gen_embed(title='room',
-                                               content=f'Changed open spots to {open_spots}'))
+            roomSplit[codeIdx] = str(room_num)
+            
+        if open_spots:
+            open_spots = int(open_spots)
+            if 0 < open_spots <= 4:
+                namesuffix = f'{open_spots}'
+            elif open_spots == 0:
+                namesuffix = 'f'
             else:
-                await ctx.channel.edit(name=f'{nameprefix}xxxxx')
-                await ctx.send(embed=gen_embed(title='room',
-                                               content=f'Closed room'))
+                log.warning('Error: Invalid Input')
+                await ctx.send(embed=gen_embed(title='Input Error',
+                                                content=(f'That is not a valid option for this parameter. Open spots'
+                                                        ' must be a value from 0-4.')))
+                return
+            
+            if playerIdx is None:
+                roomSplit.append(namesuffix)
+            else:
+                roomSplit[playerIdx] = namesuffix
+
+        if room_num or open_spots:
+            newName = "-".join(roomSplit)
+            if newName != currentname:
+                await ctx.channel.edit(name=newName)
+            await ctx.send(embed=gen_embed(title='room',
+                                            content=f'Changed room code to {room_num}'))
+        else:
+            roomSplit[codeIdx] = 'xxxxx'
+            if playerIdx:
+                roomSplit[playerIdx] = ''
+            roomSplit = [x for x in roomSplit if x]
+            newName = "-".join(roomSplit)
+            if newName != currentname:
+                await ctx.channel.edit(name=newName)
+            await ctx.send(embed=gen_embed(title='room', content=f'Closed room'))
 
     @discord.slash_command(name='room',
                            description=('Changes the room name. If no options are filled out, the room will close.'),
