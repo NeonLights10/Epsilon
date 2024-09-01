@@ -410,30 +410,42 @@ class Tiering(commands.Cog):
             content=f'New Tiering Members Tips and Tricks guide posted in {dest_channel.mention}'),
             ephemeral=True)
         
-    def verifyRoom(self, room):
-        print(room)
+    def verify_room(self, room):
+        """Checks if room matches the format [name]-xxxxx
+
+        Args:
+            room (str): The room name to check
+
+        Returns:
+            bool: True if the room matches the format, False otherwise
+        """
         if re.search(r'^.*-[0-9x]{5}.*', room):
             return True
         else:
             return False
         
-    def splitRoom(self, room):
-        roomSplit = room.split('-')
+    def split_room(self, room):
+        """Splits room code by '-' and returns the index of the code and player count (if present)
+
+        Args:
+            room (str): The room name
+        """
+        room_split = room.split('-')
         
         codeMatch = re.compile(r'^[0-9x]{5}$')
         playerMatch = re.compile(r'^[0-4f]$')
         
-        codeIdx = None
-        playerIdx = None
+        code_idx = None
+        player_idx = None
         
         ## Always assume first is name
-        for i in range(1, len(roomSplit)):
-            if codeMatch.match(roomSplit[i]):
-                codeIdx = i
-            if playerMatch.match(roomSplit[i]):
-                playerIdx = i
+        for i in range(1, len(room_split)):
+            if codeMatch.match(room_split[i]):
+                code_idx = i
+            if playerMatch.match(room_split[i]):
+                player_idx = i
                 
-        return roomSplit, codeIdx, playerIdx
+        return room_split, code_idx, player_idx
 
     @commands.command(name='room',
                       aliases=['rm'],
@@ -448,23 +460,23 @@ class Tiering(commands.Cog):
         namesuffix = ""
         
         print('running Room')
-        if not self.verifyRoom(currentname):
+        if not self.verify_room(currentname):
             log.warning('Error: Invalid Channel')
             await ctx.send(embed=gen_embed(title='Invalid Channel',
                                            content=(f'This is not a valid tiering channel. Please match the format'
                                                     ' [name]-xxxxx to use this command.')))
             return
         
-        roomSplit, codeIdx, playerIdx = self.splitRoom(currentname)
+        room_split, code_idx, player_idx = self.split_room(currentname)
         
-        if codeIdx is None:
+        if code_idx is None:
             log.warning('Error: Invalid Channel')
             await ctx.send(embed=gen_embed(title='Invalid Channel',
                                            content=(f'This is not a valid tiering channel. Please match the format'
                                                     ' [name]-xxxxx to use this command.')))
             
         if room_num:
-            roomSplit[codeIdx] = str(room_num)
+            room_split[code_idx] = str(room_num)
             
         if open_spots:
             open_spots = int(open_spots)
@@ -479,23 +491,23 @@ class Tiering(commands.Cog):
                                                         ' must be a value from 0-4.')))
                 return
             
-            if playerIdx is None:
-                roomSplit.append(namesuffix)
+            if player_idx is None:
+                room_split.append(namesuffix)
             else:
-                roomSplit[playerIdx] = namesuffix
+                room_split[player_idx] = namesuffix
 
         if room_num or open_spots:
-            newName = "-".join(roomSplit)
+            newName = "-".join(room_split)
             if newName != currentname:
                 await ctx.channel.edit(name=newName)
             await ctx.send(embed=gen_embed(title='room',
                                             content=f'Changed room code to {room_num}'))
         else:
-            roomSplit[codeIdx] = 'xxxxx'
-            if playerIdx:
-                roomSplit[playerIdx] = ''
-            roomSplit = [x for x in roomSplit if x]
-            newName = "-".join(roomSplit)
+            room_split[code_idx] = 'xxxxx'
+            if player_idx:
+                room_split[player_idx] = ''
+            room_split = [x for x in room_split if x]
+            newName = "-".join(room_split)
             if newName != currentname:
                 await ctx.channel.edit(name=newName)
             await ctx.send(embed=gen_embed(title='room', content=f'Closed room'))
