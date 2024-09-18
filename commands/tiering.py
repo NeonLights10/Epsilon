@@ -488,7 +488,7 @@ class Tiering(commands.Cog):
                 log.warning('Error: Invalid Input')
                 await ctx.send(embed=gen_embed(title='Input Error',
                                                 content=(f'That is not a valid option for this parameter. Open spots'
-                                                        ' must be a value from 0-4.')))
+                                                        " must be a value from 0-4 or 'f' (shorthand for full).")))
                 return
             
             if player_idx is None:
