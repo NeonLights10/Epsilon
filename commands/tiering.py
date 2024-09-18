@@ -459,7 +459,7 @@ class Tiering(commands.Cog):
         currentname = ctx.channel.name
         namesuffix = ""
         
-        print('running Room')
+        log.info(f'Running room in {ctx.guild.name}')
         if not self.verify_room(currentname):
             log.warning('Error: Invalid Channel')
             await ctx.send(embed=gen_embed(title='Invalid Channel',
