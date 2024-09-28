@@ -496,7 +496,7 @@ class Tiering(commands.Cog):
             else:
                 room_split[player_idx] = namesuffix
 
-        if room_num or open_spots:
+        if room_num is not None or open_spots is not None:
             newName = "-".join(room_split)
             if newName != currentname:
                 await ctx.channel.edit(name=newName)
@@ -565,7 +565,7 @@ class Tiering(commands.Cog):
             else:
                 room_split[player_idx] = namesuffix
 
-        if roomcode or spots:
+        if roomcode is not None or spots is not None:
             newName = "-".join(room_split)
             if newName != currentname:
                 await ctx.channel.edit(name=newName)
