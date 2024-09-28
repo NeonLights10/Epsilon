@@ -24,7 +24,7 @@ async def on_guild_join(guild):
                                    '\nChange the command prefix and configure server settings using `/settings`!\n\n'
                                    'Source code: https://github.com/neon10lights/Epsilon\n'
                                    'Support: https://www.patreon.com/kanonbot or https://ko-fi.com/neonlights\n'
-                                   'If you have feedback or need help, please DM Neon#5555 or join the server at '
+                                   'If you have feedback or need help, please DM .neonlights or join the server at '
                                    'https://discord.gg/AYTFJY8VhF'))
         await general.send(embed=embed)
         await general.send(embed=gen_embed(title='Thank you Kanon Supporters!',
@@ -62,39 +62,12 @@ async def on_message_delete(message):
         return
 
     try:
-        if msglog := int(document['log_channel']):
-            if not message.author.id == bot.user.id and message.author.bot is False:
-                prefix = await get_prefix(bot, message)
-                if re.match(f'^{prefix}', message.content) is None:
-                    log_channel = message.guild.get_channel(msglog)
-                    sent_time = math.trunc(time.mktime(message.created_at.timetuple()))
-                    content = gen_embed(name=f'{message.author.name} ({message.author.display_name})',
-                                        icon_url=message.author.display_avatar.url,
-                                        title=f'Message deleted in {message.channel.name}',
-                                        content=f'Message sent <t:{sent_time}>')
-                    content.add_field(name='Content',
-                                      value=message.clean_content,
-                                      inline=False)
-                    content.add_field(name='ID',
-                                      value=f'```ml\nUser = {message.author.id}\nMessage = {message.id}```',
-                                      inline=False)
-                    content.set_footer(text=time.ctime())
-                    if len(message.attachments) > 0:
-                        content.add_field(name="Attachment:", value="\u200b")
-                        content.set_image(url=message.attachments[0].proxy_url)
-                    await log_channel.send(embed=content)
-    except TypeError:
-        pass
-    except Exception as e:
-        log.info(f'Error occurred while tracking message deletion: {e}')
-        pass
-
-
-async def on_bulk_message_delete(messages):
-    document = await db.servers.find_one({"server_id": messages[0].guild.id})
-    try:
-        if msglog := int(document['log_channel']):
-            for message in messages:
+        if msglog := int(document['log_messages'][1]):
+            try:
+                enabled = document['log_messages'][0]
+            except TypeError:
+                enabled = document['log_messages']
+            if enabled:
                 if not message.author.id == bot.user.id and message.author.bot is False:
                     prefix = await get_prefix(bot, message)
                     if re.match(f'^{prefix}', message.content) is None:
@@ -102,7 +75,7 @@ async def on_bulk_message_delete(messages):
                         sent_time = math.trunc(time.mktime(message.created_at.timetuple()))
                         content = gen_embed(name=f'{message.author.name} ({message.author.display_name})',
                                             icon_url=message.author.display_avatar.url,
-                                            title=f'Message deleted in #{message.channel.name}',
+                                            title=f'Message deleted in {message.channel.name}',
                                             content=f'Message sent <t:{sent_time}>')
                         content.add_field(name='Content',
                                           value=message.clean_content,
@@ -115,7 +88,44 @@ async def on_bulk_message_delete(messages):
                             content.add_field(name="Attachment:", value="\u200b")
                             content.set_image(url=message.attachments[0].proxy_url)
                         await log_channel.send(embed=content)
-                        await asyncio.sleep(1)
+    except TypeError:
+        pass
+    except Exception as e:
+        log.info(f'Error occurred while tracking message deletion: {e}')
+        pass
+
+
+async def on_bulk_message_delete(messages):
+    document = await db.servers.find_one({"server_id": messages[0].guild.id})
+    try:
+        if msglog := int(document['log_messages'][1]):
+            try:
+                enabled = document['log_messages'][0]
+            except TypeError:
+                enabled = document['log_messages']
+            if enabled:
+                for message in messages:
+                    if not message.author.id == bot.user.id and message.author.bot is False:
+                        prefix = await get_prefix(bot, message)
+                        if re.match(f'^{prefix}', message.content) is None:
+                            log_channel = message.guild.get_channel(msglog)
+                            sent_time = math.trunc(time.mktime(message.created_at.timetuple()))
+                            content = gen_embed(name=f'{message.author.name} ({message.author.display_name})',
+                                                icon_url=message.author.display_avatar.url,
+                                                title=f'Message deleted in #{message.channel.name}',
+                                                content=f'Message sent <t:{sent_time}>')
+                            content.add_field(name='Content',
+                                              value=message.clean_content,
+                                              inline=False)
+                            content.add_field(name='ID',
+                                              value=f'```ml\nUser = {message.author.id}\nMessage = {message.id}```',
+                                              inline=False)
+                            content.set_footer(text=time.ctime())
+                            if len(message.attachments) > 0:
+                                content.add_field(name="Attachment:", value="\u200b")
+                                content.set_image(url=message.attachments[0].proxy_url)
+                            await log_channel.send(embed=content)
+                            await asyncio.sleep(1)
     except TypeError:
         pass
     except Exception as e:
@@ -127,13 +137,18 @@ async def on_raw_message_delete(payload):
     if payload.guild_id:
         document = await db.servers.find_one({"server_id": payload.guild_id})
         try:
-            if msglog := int(document['log_channel']):
-                if not payload.cached_message:
-                    guild = bot.get_guild(payload.guild_id)
-                    log_channel = guild.get_channel(msglog)
-                    content = gen_embed(title=f'Message deleted in #{guild.get_channel(payload.channel_id).name}',
-                                        content=f'```ml\nMessage ID = {payload.message_id}```')
-                    await log_channel.send(embed=content)
+            if msglog := int(document['log_messages'][1]):
+                try:
+                    enabled = document['log_messages'][0]
+                except TypeError:
+                    enabled = document['log_messages']
+                if enabled:
+                    if not payload.cached_message:
+                        guild = bot.get_guild(payload.guild_id)
+                        log_channel = guild.get_channel(msglog)
+                        content = gen_embed(title=f'Message deleted in #{guild.get_channel(payload.channel_id).name}',
+                                            content=f'```ml\nMessage ID = {payload.message_id}```')
+                        await log_channel.send(embed=content)
         except TypeError:
             pass
         except Exception as e:
@@ -148,7 +163,15 @@ async def on_message_edit(before, after):
         # prevent error when "editing ephemerals"
         return
     try:
-        if msglog := int(document['log_channel']):
+        msglog = int(document['log_messages'][1])
+    except TypeError:
+        return
+    if msglog:
+        try:
+            enabled = document['log_messages'][0]
+        except TypeError:
+            enabled = document['log_messages']
+        if enabled:
             if not before.author.id == bot.user.id and before.author.bot is False:
                 if not before.content == after.content:
                     log_channel = before.guild.get_channel(msglog)
@@ -167,11 +190,6 @@ async def on_message_edit(before, after):
                                       inline=False)
                     content.set_footer(text=time.ctime())
                     await log_channel.send(embed=content)
-    except TypeError:
-        pass
-    except Exception as e:
-        log.info(f'Error occurred while tracking message edits: {e}')
-        pass
 
 
 async def on_member_join(member):
@@ -184,79 +202,115 @@ async def on_member_join(member):
             log.info(f"Auto-assigned role to new member in {member.guild.name}")
         else:
             log.error(f"Could not find auto assign role for {member.guild.name}!")
-    if document['log_joinleaves'] and document['log_channel']:
-        log_channel = member.guild.get_channel(int(document['log_channel']))
-        content = gen_embed(name=f'{member.name}#{member.discriminator}',
-                            icon_url=member.display_avatar.url,
-                            title="Member joined",
-                            content=f'{member.name}#{member.discriminator} {member.mention}',
-                            colour=0x2ecc71)
-        content.add_field(name='Joined At',
-                          value=f'<t:{math.trunc(time.mktime(member.joined_at.timetuple()))}>',
-                          inline=False)
-        account_age = (datetime.datetime.now(datetime.timezone.utc) - member.created_at).days
-        content.add_field(name='Account Age',
-                          value=f'**{account_age}** days',
-                          inline=True)
-        content.add_field(name='Member Count',
-                          value=member.guild.member_count,
-                          inline=True)
-        query = {'server_id': member.guild.id, 'user_id': member.id}
-        results = db.warns.find(query)
-        results = await results.to_list(length=None)
-        results = len(results)
-        content.add_field(name='Previous Strikes',
-                          value=results,
-                          inline=True)
-        content.add_field(name='ID',
-                          value=f'```ml\nMember = {member.id}```',
-                          inline=False)
-        content.set_footer(text=time.ctime())
-        await log_channel.send(embed=content)
+    try:
+        enabled = document['log_joinleaves'][0]
+    except TypeError:
+        enabled = document['log_joinleaves']
+    if enabled:
+        if msglog := int(document['log_joinleaves'][1]):
+            log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
+            content = gen_embed(name=f'{member.name}',
+                                icon_url=member.display_avatar.url,
+                                title="Member joined",
+                                content=f'{member.name} {member.mention}',
+                                colour=0x2ecc71)
+            content.add_field(name='Joined At',
+                              value=f'<t:{math.trunc(time.mktime(member.joined_at.timetuple()))}>',
+                              inline=False)
+            account_age = (datetime.datetime.now(datetime.timezone.utc) - member.created_at).days
+            content.add_field(name='Account Age',
+                              value=f'**{account_age}** days',
+                              inline=True)
+            content.add_field(name='Member Count',
+                              value=member.guild.member_count,
+                              inline=True)
+            query = {'server_id': member.guild.id, 'user_id': member.id}
+            results = db.warns.find(query)
+            results = await results.to_list(length=None)
+            results = len(results)
+            content.add_field(name='Previous Strikes',
+                              value=results,
+                              inline=True)
+            content.add_field(name='ID',
+                              value=f'```ml\nMember = {member.id}```',
+                              inline=False)
+            content.set_footer(text=time.ctime())
+            await log_channel.send(embed=content)
 
 
 async def on_member_remove(member):
     document = await db.servers.find_one({"server_id": member.guild.id})
-    if document['log_joinleaves'] and document['log_channel']:
-        log_channel = member.guild.get_channel(int(document['log_channel']))
-        content = gen_embed(name=f'{member.name}#{member.discriminator}',
-                            icon_url=member.display_avatar.url,
-                            title="Member left",
-                            content=f'{member.name}#{member.discriminator} {member.mention}',
-                            colour=0xe74c3c)
-        join_unix = math.trunc(time.mktime(member.joined_at.timetuple()))
-        content.add_field(name='Joined At',
-                          value=f'<t:{join_unix}> (<t:{join_unix}:R>)',
-                          inline=False)
-        create_unix = math.trunc(time.mktime(member.created_at.timetuple()))
-        content.add_field(name='Joined At',
-                          value=f'<t:{create_unix}> (<t:{create_unix}:R>)',
-                          inline=False)
-        content.add_field(name='ID',
-                          value=f'```ml\nMember = {member.id}```',
-                          inline=False)
-        content.set_footer(text=time.ctime())
-        await log_channel.send(embed=content)
+    try:
+        enabled = document['log_joinleaves'][0]
+    except TypeError:
+        enabled = document['log_joinleaves']
+    if enabled:
+        if msglog := int(document['log_joinleaves'][1]):
+            log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
+            content = gen_embed(name=f'{member.name}',
+                                icon_url=member.display_avatar.url,
+                                title="Member left",
+                                content=f'{member.name} {member.mention}',
+                                colour=0xe74c3c)
+            join_unix = math.trunc(time.mktime(member.joined_at.timetuple()))
+            content.add_field(name='Joined At',
+                              value=f'<t:{join_unix}> (<t:{join_unix}:R>)',
+                              inline=False)
+            create_unix = math.trunc(time.mktime(member.created_at.timetuple()))
+            content.add_field(name='Created At',
+                              value=f'<t:{create_unix}> (<t:{create_unix}:R>)',
+                              inline=False)
+            content.add_field(name='ID',
+                              value=f'```ml\nMember = {member.id}```',
+                              inline=False)
+            content.set_footer(text=time.ctime())
+            await log_channel.send(embed=content)
 
 
 async def on_member_update(before, after):
     document = await db.servers.find_one({'server_id': before.guild.id})
-    if document['log_joinleaves'] and int(document['log_channel']):
-        if not before.nick == after.nick:
-            log_channel = before.guild.get_channel(int(document['log_channel']))
-            content = gen_embed(name=f'{after.name}#{after.discriminator}',
-                                icon_url=after.display_avatar.url,
-                                title="Member updated",
-                                content=f'{after.name}#{after.discriminator} {after.mention}',
-                                colour=0xFEE75C)
-            content.add_field(name='Previous name',
-                              value=f'{before.nick}#{before.discriminator}',
-                              inline=False)
-            content.add_field(name='Current name',
-                              value=f'{after.nick}#{after.discriminator}',
-                              inline=False)
+    try:
+        enabled = document['log_joinleaves'][0]
+    except TypeError:
+        enabled = document['log_joinleaves']
+    if enabled:
+        if msglog := int(document['log_joinleaves'][1]):
+            if not before.nick == after.nick:
+                log_channel = before.guild.get_channel(int(document['log_joinleaves'][1]))
+                content = gen_embed(name=f'{after.name}',
+                                    icon_url=after.display_avatar.url,
+                                    title="Member updated",
+                                    content=f'{after.name} {after.mention}',
+                                    colour=0xFEE75C)
+                content.add_field(name='Previous name',
+                                  value=f'{before.name} ({before.nick})',
+                                  inline=False)
+                content.add_field(name='Current nickname',
+                                  value=f'{after.name} ({after.nick})',
+                                  inline=False)
+                content.add_field(name='ID',
+                                  value=f'```ml\nUser = {after.id}```',
+                                  inline=False)
+                content.set_footer(text=time.ctime())
+                await log_channel.send(embed=content)
+
+
+async def on_member_ban(guild, user):
+    document = await db.servers.find_one({'server_id': guild.id})
+    try:
+        enabled = document['log_kbm'][0]
+    except TypeError:
+        enabled = document['log_kbm']
+    if enabled:
+        if kbmlog := document['log_kbm'][1]:
+            log_channel = guild.get_channel(int(document['log_kbm'][1]))
+            content = gen_embed(name=f'{user.name}#{user.discriminator}',
+                                icon_url=user.display_avatar.url,
+                                title="User Banned",
+                                content=f'{user.name}#{user.discriminator} {user.mention}',
+                                colour=0xe74c3c)
             content.add_field(name='ID',
-                              value=f'```ml\nUser = {after.author.id}```',
+                              value=f'```ml\nUser = {user.id}```',
                               inline=False)
             content.set_footer(text=time.ctime())
             await log_channel.send(embed=content)
@@ -271,6 +325,8 @@ def setup(bot):
     bot.add_listener(on_guild_join)
     bot.add_listener(on_member_join)
     bot.add_listener(on_member_remove)
+    bot.add_listener(on_member_update)
+    bot.add_listener(on_member_ban)
     bot.add_listener(on_message_edit)
     bot.add_listener(on_message_delete)
     bot.add_listener(on_raw_message_delete)

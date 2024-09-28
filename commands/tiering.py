@@ -82,7 +82,7 @@ class Tiering(commands.Cog):
         embed = gen_embed(
             title='Menuing',
             content='Spam the bottom right of your screen in between songs. See video for an example:')
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         await dest_channel.send(content='https://twitter.com/Binh_gbp/status/1106789316607410176')
         embed = gen_embed(
@@ -92,33 +92,33 @@ class Tiering(commands.Cog):
                      " your room's chat dest_channel when you finish the song and \"open\" when you're out of the room."
                      " Ideally whoever is swapping in should be spamming the room code to join as soon as they see"
                      " \"scores.\" If possible, being in VC with the tierers can greatly smooth out this process."))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Pins/Frames/Titles',
             content=('Pins/Frames/Titles - Please remove any and all existing pins as well as setting the default'
                      ' frame; these will slow down the room greatly with additional loading times. We would also prefer'
                      ' if you went down to one title before you join any rooms, but no need to leave if forgotten.'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Flame Sync',
             content=('Flame syncing will operate with the remake of the room every set of 90 🔥. If multiple sets'
                      ' are being done, a room maker should be designated. The flame check setting should now be turned'
                      ' OFF from now on.'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Skip Full Combo',
             content="Break combo somewhere in the song, it'll skip the FC animation and save a few seconds.")
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Rooming Guidelines',
             content=("**Starting with 3-4 people** can potentially be better than dealing with the chance of bad pubs"
                      " depending on the event.\n\nFor extremely competitive events, iOS and high end Android devices"
                      " are given priority."))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         await ctx.interaction.followup.send(embed=gen_embed(
             title='Efficiency Guide',
@@ -145,7 +145,7 @@ class Tiering(commands.Cog):
             title='Versus Live Tiering Info',
             content=('Graciously stolen from **Zia** & **Blur** and the **Play Act! Challenge*Audition** server,'
                      ' edited by **Neon**'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title="Marina's Gift Box Can Efficiency",
@@ -167,7 +167,7 @@ class Tiering(commands.Cog):
         embed.add_field(
             name='White',
             value='Neutral probability - **keep opening OR skip to next box**')
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title="Lazy Doormat Strategy",
@@ -186,7 +186,7 @@ class Tiering(commands.Cog):
                    "\nInitial: 86 / 114 / 218 / 341"
                    "\nKorekara: 59 / 104 / 170 / 296"
                    "\nKyu~Mai * Flower: 73 / 108 / 226 / 351```"))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         await ctx.interaction.followup.send(embed=gen_embed(
             title='VS Live Guide',
@@ -214,7 +214,7 @@ class Tiering(commands.Cog):
             content=('Graciously created by **Aris/Nio**, originally for PRSK, edited by **Neon**'
                      '\n***Disclaimer: This is not medical advice. This is for educational purposes only and is my'
                      " (aris') research and does not replace going to the doctor.***"))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title="What is Carpal Tunnel Syndrome/RSI?",
@@ -243,7 +243,7 @@ class Tiering(commands.Cog):
                      ' internet. If you have one you like, keep following it.\n\nTake off any wristwatches before'
                      ' playing - wearing them worsens carpal tunnel.\n\nGrab a jug of water or other drinks to keep'
                      ' hydration within arm’s reach.'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         await dest_channel.send(content='https://esportshealthcare.com/gamer-warm-up/')
         embed = gen_embed(
@@ -278,14 +278,14 @@ class Tiering(commands.Cog):
                      '**1-2 times a day**, run your hands gently under warm water. Move your hands up and down under'
                      ' the water.\n\n'
                      '**If your hands hurt, take breaks more often.**'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         await dest_channel.send(content='https://youtu.be/EiRC80FJbHU?t=85')
         embed = gen_embed(
             title="After Playing",
             content=('Below is a helpful guide for post-game stretches. Again, other guides for Gamer Stretches™'
                      ' probably exist on the internet. If you have one you like, keep following it.'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         await dest_channel.send(content='https://esportshealthcare.com/gamer-stretches/')
         await ctx.interaction.followup.send(embed=gen_embed(
@@ -326,14 +326,14 @@ class Tiering(commands.Cog):
                      ' to end. It is important to be confident and reliable in your ability to help everyone reach'
                      ' their goals, including those who are shooting for lower tiers. Being a good helper helps'
                      ' everyone, not just the high tierers.'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Importance of Menus',
             content=('It may seem negligible in the end, but when it comes down to it, getting in those extra songs'
                      ' per hour thanks to fast menu tapping can make a substantial difference in placement if we come'
                      ' down to the wire.'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Smooth Swapping',
@@ -347,7 +347,7 @@ class Tiering(commands.Cog):
                      ' **30 minutes before you need them** is the best way. If members of the server are present and'
                      ' unable to play, join the search to find a substitute! This is a team effort through and'
                      ' through.'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Why Should I Remove Pins/Frames/Titles?',
@@ -355,7 +355,7 @@ class Tiering(commands.Cog):
                      ' than others. While it’s an easy mistake to make, do your best to prepare in advance. Go into'
                      ' your profile NOW, as you read this, and remove everything. If you accidentally join with them'
                      ' on, you can remove them the next time you fill your flames.'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Flames, Rooms and Syncing',
@@ -367,7 +367,7 @@ class Tiering(commands.Cog):
                      ' players first and foremost, as is the purpose of servers like this one. T1, T2, and T3 ALWAYS'
                      ' have highest priority for entering rooms and deciding when flames will be re-synced.'
                      ' Please listen to them!'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Starting a Partially Filled Room',
@@ -376,7 +376,7 @@ class Tiering(commands.Cog):
                      ' the length of one song is enough to re-organize. Don’t wait, EP is EP! Just say you’re going'
                      ' again and let the players who are swapping in prepare. More songs per hour is always the correct'
                      ' choice!'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Being Asked to Play in a Different Room',
@@ -388,7 +388,7 @@ class Tiering(commands.Cog):
                      ' means that we hate you or are purposely ignoring your goals. Efficiency is key above all else,'
                      ' and we will try our best to make sure the other room is running smoothly as well!'
                      ' Don’t make trouble or argue, just do your best to swap out smoothly.'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         embed = gen_embed(
             title='Closing Words of Wisdom',
@@ -403,7 +403,7 @@ class Tiering(commands.Cog):
                      ' together to get the highest numbers the most times per hour until the event is over.'
                      ' We want **EVERYONE** to achieve their goals, we just need to remember that podium and T10 will'
                      ' need extra support. Most of all, remember to have fun doing it!'))
-        embed.set_footer(text=discord.Embed.Empty)
+        embed.remove_footer()
         await dest_channel.send(embed=embed)
         await ctx.interaction.followup.send(embed=gen_embed(
             title='New Tiering Members Guide',

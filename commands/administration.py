@@ -6,7 +6,6 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from typing import Union, Optional, List, SupportsInt
 
-import emoji as zemoji
 import validators
 import pymongo
 from bson.objectid import ObjectId
@@ -467,46 +466,69 @@ class Administration(commands.Cog):
                                     'log_joinleaves': server_document['log_joinleaves'],
                                     'log_kbm': server_document['log_kbm'],
                                     'log_strikes': server_document['log_strikes']}
-                        if server_document['log_channel']:
-                            log_channel = ctx.guild.get_channel(int(server_document['log_channel']))
-                            log_view = LogMenu(self.context, self.bot, log_channel, defaults)
-                            if (defaults['log_messages']
-                                    or defaults['log_joinleaves']
-                                    or defaults['log_kbm']
-                                    or defaults['log_strikes']):
-                                content = f'Enabled | Configured channel: {log_channel.mention}'
-                            else:
-                                content = f'Disabled | Configured channel: {log_channel.mention}'
+                        log_view = LogMenu(self.context, self.bot, defaults)
+
+                        if defaults["log_messages"][1]:
+                            log_message_channel = ctx.guild.get_channel(int(defaults["log_messages"][1]))
+                            log_message_channel = log_message_channel.mention
                         else:
-                            log_view = LogMenu(self.context, self.bot, None, defaults)
-                            content = f'Disabled | Configured channel: None'
+                            log_message_channel = 'None'
+                        if defaults['log_joinleaves'][1]:
+                            log_joinleaves_channel = ctx.guild.get_channel(int(defaults["log_joinleaves"][1]))
+                            log_joinleaves_channel = log_joinleaves_channel.mention
+                        else:
+                            log_joinleaves_channel = 'None'
+                        if defaults['log_kbm'][1]:
+                            log_kbm_channel = ctx.guild.get_channel(int(defaults["log_kbm"][1]))
+                            log_kbm_channel = log_kbm_channel.mention
+                        else:
+                            log_kbm_channel = 'None'
+                        if defaults['log_strikes'][1]:
+                            log_strikes_channel = ctx.guild.get_channel(int(defaults["log_strikes"][1]))
+                            log_strikes_channel = log_strikes_channel.mention
+                        else:
+                            log_strikes_channel = 'None'
+
+                        if (defaults['log_messages'][0]
+                                or defaults['log_joinleaves'][0]
+                                or defaults['log_kbm'][0]
+                                or defaults['log_strikes'][0]):
+                            content = (f'**Enabled**\nConfigured message log channel: {log_message_channel}'
+                                       f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
+                                       f'\nConfigured mod action log channel: {log_kbm_channel}'
+                                       f'\nConfigured strike log channel: {log_strikes_channel}')
+                        else:
+                            content = (f'**Disabled**\nConfigured message log channel: {log_message_channel}'
+                                       f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
+                                       f'\nConfigured mod action log channel: {log_kbm_channel}'
+                                       f'\nConfigured strike log channel: {log_strikes_channel}')
                         log_embed = gen_embed(title='Logging Settings',
                                               content=content)
                         enabled_content = ''
                         disabled_content = ''
-                        if (defaults['log_messages']
-                                and defaults['log_joinleaves']
-                                and defaults['log_kbm']
-                                and defaults['log_strikes']):
+                        if (defaults['log_messages'][0]
+                                and defaults['log_joinleaves'][0]
+                                and defaults['log_kbm'][0]
+                                and defaults['log_strikes'][0]):
                             disabled_content = 'None'
-                        if (not defaults['log_messages']
-                                and not defaults['log_joinleaves']
-                                and not defaults['log_kbm']
-                                and not defaults['log_strikes']):
+                        if (not defaults['log_messages'][0]
+                                and not defaults['log_joinleaves'][0]
+                                and not defaults['log_kbm'][0]
+                                and not defaults['log_strikes'][0]):
                             enabled_content = 'None'
-                        if defaults['log_messages']:
+                        if defaults['log_messages'][0]:
                             enabled_content += '・ Log message edits and deletion\n'
                         else:
                             disabled_content += '・ Log message edits and deletion\n'
-                        if defaults['log_joinleaves']:
+                        if defaults['log_joinleaves'][0]:
                             enabled_content += '・ Log member joins & leaves\n'
                         else:
                             disabled_content += '・ Log member joins & leaves\n'
-                        if defaults['log_kbm']:
+                        if defaults['log_kbm'][0]:
                             enabled_content += '・ Log kicks, bans, and timeouts/mutes\n'
                         else:
                             disabled_content += '・ Log kicks, bans, and timeouts/mutes\n'
-                        if defaults['log_strikes']:
+                        if defaults['log_strikes'][0]:
                             enabled_content += '・ Log strikes - which moderator assigned strike, message contents, ' \
                                                'etc.\n '
                         else:
@@ -573,8 +595,8 @@ class Administration(commands.Cog):
                         await modrole_view.wait()
 
                         if modrole_view.value:
-                            self.embed.set_field_at(7,
-                                                    name='Auto Assign Role On Join',
+                            self.embed.set_field_at(8,
+                                                    name='Moderator Role',
                                                     value=modrole_view.value,
                                                     inline=False)
                         await self.currentmessage.edit(embed=self.embed,
@@ -1277,7 +1299,7 @@ class Administration(commands.Cog):
             def __init__(self, bot, defaults):
                 self.bot = bot
                 options = []
-                if defaults['log_messages']:
+                if defaults['log_messages'][0]:
                     options.append(
                         discord.SelectOption(label='Messages',
                                              description='Log message edits and deletion',
@@ -1287,7 +1309,7 @@ class Administration(commands.Cog):
                         discord.SelectOption(label='Messages',
                                              description='Log message edits and deletion',
                                              default=False))
-                if defaults['log_joinleaves']:
+                if defaults['log_joinleaves'][0]:
                     options.append(
                         discord.SelectOption(label='Joins/Leaves',
                                              description='Log member joins & leaves',
@@ -1297,7 +1319,7 @@ class Administration(commands.Cog):
                         discord.SelectOption(label='Joins/Leaves',
                                              description='Log member joins & leaves',
                                              default=False))
-                if defaults['log_kbm']:
+                if defaults['log_kbm'][0]:
                     options.append(
                         discord.SelectOption(label='KBM',
                                              description='Log kicks, bans, and timeouts/mutes',
@@ -1307,7 +1329,7 @@ class Administration(commands.Cog):
                         discord.SelectOption(label='KBM',
                                              description='Log kicks, bans, and timeouts/mutes',
                                              default=False))
-                if defaults['log_strikes']:
+                if defaults['log_strikes'][0]:
                     options.append(
                         discord.SelectOption(label='Strikes',
                                              description='Log strikes',
@@ -1327,15 +1349,46 @@ class Administration(commands.Cog):
             async def callback(self, interaction: discord.Interaction):
                 await interaction.response.defer()
 
+        class LogChannelSelect(discord.ui.Select):
+            def __init__(self, bot, channels):
+                self.bot = bot
+                options = []
+                options.append(
+                    discord.SelectOption(label='Messages',
+                                         description=f'Configured Channel: {channels[0]}',
+                                         default=False))
+                options.append(
+                    discord.SelectOption(label='Joins/Leaves',
+                                         description=f'Configured Channel: {channels[1]}',
+                                         default=False))
+                options.append(
+                    discord.SelectOption(label='KBM',
+                                         description=f'Configured Channel: {channels[2]}',
+                                         default=False))
+                options.append(
+                    discord.SelectOption(label='Strikes',
+                                         description=f'Configured Channel: {channels[3]}',
+                                         default=False))
+                super().__init__(custom_id='logselect',
+                                 placeholder='Pick the option you wish to configure the channel for',
+                                 min_values=1,
+                                 max_values=1,
+                                 row=0,
+                                 options=options)
+
+            async def callback(self, interaction: discord.Interaction):
+                await interaction.response.defer()
+                self.view.stop()
+
         class LogMenu(discord.ui.View):
-            def __init__(self, og_context, bot, config_channel, defaults):
+            def __init__(self, og_context, bot, defaults):
                 super().__init__()
                 self.context = og_context
                 self.bot = bot
-                self.channel = config_channel
                 self.value = ''
                 self.select_values = None
                 self.defaults = defaults
+                self.channels = [None, None, None, None]
 
                 self.add_item(LogSelect(self.bot, defaults))
 
@@ -1357,44 +1410,66 @@ class Administration(commands.Cog):
                                row=1)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.defer()
-                post = {'log_messages': False,
-                        'log_joinleaves': False,
-                        'log_kbm': False,
-                        'log_strikes': False}
+                post = {'log_messages': [False, self.defaults['log_messages'][1]],
+                        'log_joinleaves': [False, self.defaults['log_joinleaves'][1]],
+                        'log_kbm': [False, self.defaults['log_kbm'][1]],
+                        'log_strikes': [False, self.defaults['log_strikes'][1]]}
                 for child in self.children:
                     if child.custom_id == 'logselect':
                         self.select_values = child.values
                         if len(self.select_values) == 0:
-                            if self.defaults['log_messages']:
-                                post['log_messages'] = True
-                            if self.defaults['log_joinleaves']:
-                                post['log_joinleaves'] = True
-                            if self.defaults['log_kbm']:
-                                post['log_kbm'] = True
-                            if self.defaults['log_strikes']:
-                                post['log_strikes'] = True
+                            if self.defaults['log_messages'][0]:
+                                post['log_messages'][0] = True
+                            if self.defaults['log_joinleaves'][0]:
+                                post['log_joinleaves'][0] = True
+                            if self.defaults['log_kbm'][0]:
+                                post['log_kbm'][0] = True
+                            if self.defaults['log_strikes'][0]:
+                                post['log_strikes'][0] = True
                 for option in self.select_values:
                     match option:
                         case 'Messages':
-                            post['log_messages'] = True
+                            post['log_messages'][0] = True
                         case 'Joins/Leaves':
-                            post['log_joinleaves'] = True
+                            post['log_joinleaves'][0] = True
                         case 'KBM':
-                            post['log_kbm'] = True
+                            post['log_kbm'][0] = True
                         case 'Strikes':
-                            post['log_strikes'] = True
+                            post['log_strikes'][0] = True
+
                 await db.servers.update_one({"server_id": interaction.guild_id},
                                             {"$set": post})
-                embed_text = 'Configured channel: '
-                if self.channel:
-                    embed_text += f'{self.channel.mention}\n'
+
+                if self.defaults["log_messages"][1]:
+                    log_message_channel = interaction.guild.get_channel(int(self.defaults["log_messages"][1]))
+                    log_message_channel = log_message_channel.mention
                 else:
-                    embed_text += 'None\n'
-                embed_text += '\nLog messages: ' + f"{'Enabled' if post['log_messages'] else 'Disabled'}"
-                embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if post['log_joinleaves'] else 'Disabled'}"
-                embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if post['log_kbm'] else 'Disabled'}"
-                embed_text += '\nLog strikes: ' + f"{'Enabled' if post['log_strikes'] else 'Disabled'}"
-                self.value = embed_text
+                    log_message_channel = 'None'
+                if self.defaults['log_joinleaves'][1]:
+                    log_joinleaves_channel = interaction.guild.get_channel(int(self.defaults["log_joinleaves"][1]))
+                    log_joinleaves_channel = log_joinleaves_channel.mention
+                else:
+                    log_joinleaves_channel = 'None'
+                if self.defaults['log_kbm'][1]:
+                    log_kbm_channel = interaction.guild.get_channel(int(self.defaults["log_kbm"][1]))
+                    log_kbm_channel = log_kbm_channel.mention
+                else:
+                    log_kbm_channel = 'None'
+                if self.defaults['log_strikes'][1]:
+                    log_strikes_channel = interaction.guild.get_channel(int(self.defaults["log_strikes"][1]))
+                    log_strikes_channel = log_strikes_channel.mention
+                else:
+                    log_strikes_channel = 'None'
+
+                e_text = '\nLog messages: ' + f"{'Enabled' if post['log_messages'] else 'Disabled'} | "
+                e_text += f'{log_message_channel}'
+                e_text += '\nLog member join/leaves: ' + f"{'Enabled' if post['log_joinleaves'] else 'Disabled'} | "
+                e_text += f'{log_joinleaves_channel}'
+                e_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if post['log_kbm'] else 'Disabled'} | "
+                e_text += f'{log_kbm_channel}'
+                e_text += '\nLog strikes: ' + f"{'Enabled' if post['log_strikes'] else 'Disabled'} | "
+                e_text += f'{log_strikes_channel}'
+                self.value = e_text
                 await self.end_interaction(interaction)
 
             # noinspection PyTypeChecker
@@ -1439,6 +1514,41 @@ class Administration(commands.Cog):
                         return await log_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
 
                 await interaction.response.defer()
+
+                if self.defaults["log_messages"][1]:
+                    log_message_channel = interaction.guild.get_channel(int(self.defaults["log_messages"][1]))
+                    self.channels[0] = log_message_channel.name
+                else:
+                    self.channels[0] = 'None'
+                if self.defaults['log_joinleaves'][1]:
+                    log_joinleaves_channel = interaction.guild.get_channel(int(self.defaults["log_joinleaves"][1]))
+                    self.channels[1] = log_joinleaves_channel.name
+                else:
+                    self.channels[1] = 'None'
+                if self.defaults['log_kbm'][1]:
+                    log_kbm_channel = interaction.guild.get_channel(int(self.defaults["log_kbm"][1]))
+                    self.channels[2] = log_kbm_channel.name
+                else:
+                    self.channels[2] = 'None'
+                if self.defaults['log_strikes'][1]:
+                    log_strikes_channel = interaction.guild.get_channel(int(self.defaults["log_strikes"][1]))
+                    self.channels[3] = log_strikes_channel.name
+                else:
+                    self.channels[3] = 'None'
+
+                log_channel_select_view = discord.ui.View(disable_on_timeout=True)
+                log_channel_select_view.add_item(LogChannelSelect(self.bot, self.channels))
+                initial_message = await interaction.followup.send(embed=gen_embed(
+                        title='Configure Channel',
+                        content='Please select which option you wish to configure.'),
+                        view=log_channel_select_view)
+                initial_timeout = await log_channel_select_view.wait()
+
+                if initial_timeout:
+                    log.info('Channel configuration view timed out')
+                    await initial_message.delete()
+                    return
+
                 new_log = await log_prompt(interaction.channel)
 
                 if new_log:
@@ -1457,25 +1567,59 @@ class Administration(commands.Cog):
                         await sent_message.delete()
                         return
                     await sent_message.delete()
+                    await initial_message.delete()
 
                     if view.value:
                         log.info('Workflow confirm')
-                        await db.servers.update_one({"server_id": interaction.guild_id},
-                                                    {"$set": {'log_channel': new_log_channel.id}})
+                        match log_channel_select_view.children[0].values[0]:
+                            case 'Messages':
+                                self.defaults['log_messages'][1] = new_log_channel.id
+                            case 'Joins/Leaves':
+                                self.defaults['log_joinleaves'][1] = new_log_channel.id
+                            case 'KBM':
+                                self.defaults['log_kbm'][1] = new_log_channel.id
+                            case 'Strikes':
+                                self.defaults['log_strikes'][1] = new_log_channel.id
 
-                        doc = await db.servers.find_one({"server_id": interaction.guild_id})
-                        log_messages = doc['log_messages']
-                        log_joinleaves = doc['log_joinleaves']
-                        log_kbm = doc['log_kbm']
-                        log_strikes = doc['log_strikes']
-                        if not log_messages and not log_joinleaves and not log_kbm and not log_strikes:
-                            interaction.message.embeds[0].description = ('Disabled | Configured Channel: '
-                                                                         f'{new_log_channel.mention}')
-                            self.channel = new_log_channel
+                        await db.servers.update_one({"server_id": interaction.guild_id},
+                                                    {"$set": self.defaults})
+
+                        if self.defaults["log_messages"][1]:
+                            log_message_channel = interaction.guild.get_channel(int(self.defaults["log_messages"][1]))
+                            log_message_channel = log_message_channel.mention
                         else:
-                            interaction.message.embeds[0].description = ('Enabled | Configured Channel: '
-                                                                         f'{new_log_channel.mention}')
-                            self.channel = new_log_channel
+                            log_message_channel = 'None'
+                        if self.defaults['log_joinleaves'][1]:
+                            log_joinleaves_channel = interaction.guild.get_channel(int(self.defaults["log_joinleaves"][1]))
+                            log_joinleaves_channel = log_joinleaves_channel.mention
+                        else:
+                            log_joinleaves_channel = 'None'
+                        if self.defaults['log_kbm'][1]:
+                            log_kbm_channel = interaction.guild.get_channel(int(self.defaults["log_kbm"][1]))
+                            log_kbm_channel = log_kbm_channel.mention
+                        else:
+                            log_kbm_channel = 'None'
+                        if self.defaults['log_strikes'][1]:
+                            log_strikes_channel = interaction.guild.get_channel(int(self.defaults["log_strikes"][1]))
+                            log_strikes_channel = log_strikes_channel.mention
+                        else:
+                            log_strikes_channel = 'None'
+
+                        if (self.defaults['log_messages'][0]
+                                or self.defaults['log_joinleaves'][0]
+                                or self.defaults['log_kbm'][0]
+                                or self.defaults['log_strikes'][0]):
+                            content = (f'*Enabled*\nConfigured message log channel: {log_message_channel}'
+                                       f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
+                                       f'\nConfigured mod action log channel: {log_kbm_channel}'
+                                       f'\nConfigured strike log channel: {log_strikes_channel}')
+                        else:
+                            content = (f'*Disabled*\nConfigured message log channel: {log_message_channel}'
+                                       f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
+                                       f'\nConfigured mod action log channel: {log_kbm_channel}'
+                                       f'\nConfigured strike log channel: {log_strikes_channel}')
+
+                        interaction.message.embeds[0].description = content
                         await interaction.message.edit(embed=interaction.message.embeds[0])
 
         ##########
@@ -1704,8 +1848,12 @@ class Administration(commands.Cog):
         embed = gen_embed(name='Settings',
                           content='You can configure the settings for Kanon Bot using the select dropdown below.')
 
+        try:
+            prefix_val = document['prefix']
+        except TypeError:
+            prefix_val = '%'
         embed.add_field(name='Prefix',
-                        value=f"{document['prefix'] or '%'}",
+                        value=f"{prefix_val}",
                         inline=False)
 
         embed_text = ', no configured channel\n(Default public updates OR system channel)'
@@ -1751,16 +1899,72 @@ class Administration(commands.Cog):
                         value=f"{'Enabled' if document['fun'] else 'Disabled'}",
                         inline=False)
 
-        embed_text = 'Configured channel: '
-        if document['log_channel']:
-            logging_channel = ctx.guild.get_channel(int(document['log_channel']))
-            embed_text += f'{logging_channel.mention}\n'
+        log_info_list = {'log_messages': document['log_messages'],
+                         'log_joinleaves': document['log_joinleaves'],
+                         'log_kbm': document['log_kbm'],
+                         'log_strikes': document['log_strikes']}
+
+        try:
+            lm = log_info_list["log_messages"][1]
+        except TypeError:
+            lm = None
+        if lm:
+            lm_channel = ctx.guild.get_channel(int(log_info_list["log_messages"][1]))
+            lm_channel = lm_channel.mention
         else:
-            embed_text += 'None\n'
-        embed_text += '\nLog messages: ' + f"{'Enabled' if document['log_messages'] else 'Disabled'}"
-        embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if document['log_joinleaves'] else 'Disabled'}"
-        embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if document['log_kbm'] else 'Disabled'}"
-        embed_text += '\nLog strikes: ' + f"{'Enabled' if document['log_strikes'] else 'Disabled'}"
+            lm_channel = 'None'
+        try:
+            ljl = log_info_list['log_joinleaves'][1]
+        except TypeError:
+            ljl = None
+        if ljl:
+            ljl_channel = ctx.guild.get_channel(int(log_info_list["log_joinleaves"][1]))
+            ljl_channel = ljl_channel.mention
+        else:
+            ljl_channel = 'None'
+        try:
+            lk = log_info_list['log_kbm'][1]
+        except TypeError:
+            lk = None
+        if lk:
+            lk_channel = ctx.guild.get_channel(int(log_info_list["log_kbm"][1]))
+            lk_channel = lk_channel.mention
+        else:
+            lk_channel = 'None'
+        try:
+            ls = log_info_list['log_strikes'][1]
+        except TypeError:
+            ls = None
+        if ls:
+            ls_channel = ctx.guild.get_channel(int(log_info_list["log_strikes"][1]))
+            ls_channel = ls_channel.mention
+        else:
+            ls_channel = 'None'
+
+        try:
+            elm = log_info_list['log_messages'][0]
+        except TypeError:
+            elm = log_info_list['log_messages']
+        try:
+            ejl = log_info_list['log_joinleaves'][0]
+        except TypeError:
+            ejl = log_info_list['log_joinleaves']
+        try:
+            ekbm = log_info_list['log_kbm'][0]
+        except TypeError:
+            ekbm = log_info_list['log_kbm']
+        try:
+            estr = log_info_list['log_strikes'][0]
+        except TypeError:
+            estr = log_info_list['log_strikes']
+        embed_text = '\nLog messages: ' + f"{'Enabled' if elm else 'Disabled'} | "
+        embed_text += f'{lm_channel}'
+        embed_text += '\nLog member join/leaves: ' + f"{'Enabled' if ejl else 'Disabled'} | "
+        embed_text += f'{ljl_channel}'
+        embed_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if ekbm else 'Disabled'} | "
+        embed_text += f'{lk_channel}'
+        embed_text += '\nLog strikes: ' + f"{'Enabled' if estr else 'Disabled'} | "
+        embed_text += f'{ls_channel}'
         embed.add_field(name='Logging',
                         value=f'{embed_text}',
                         inline=False)
@@ -2305,8 +2509,8 @@ class Administration(commands.Cog):
                                                 ephemeral=True)
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-        if document['log_channel'] and document['log_kbm']:
-            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+        if document['log_kbm'][0] and document['log_kbm'][1]:
+            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
             await log_channel.send(embed=gen_embed(title='Timeout User',
                                                    content=(f'{user.mention} has been put in timeout for'
                                                             f' {humanize_timedelta(timedelta=time_result)}.'
@@ -2327,8 +2531,8 @@ class Administration(commands.Cog):
         await user.remove_timeout(reason='Invoked by slash command')
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-        if document['log_channel'] and document['log_kbm']:
-            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+        if document['log_kbm'][0] and document['log_kbm'][1]:
+            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
             await log_channel.send(embed=gen_embed(title='Remove Timeout from User',
                                                    content=(f'{user.mention} has had their timeout removed by'
                                                             f' {ctx.interaction.user.mention}.')))
@@ -2381,8 +2585,8 @@ class Administration(commands.Cog):
             await ctx.guild.kick(user)
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-        if document['log_channel'] and document['log_kbm']:
-            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+        if  document['log_kbm'][0] and document['log_kbm'][1]:
+            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
             await log_channel.send(embed=
                                    gen_embed(title='Kick User',
                                              content=(f'{user.name}#{user.discriminator} has been kicked by'
@@ -2443,8 +2647,8 @@ class Administration(commands.Cog):
             await ctx.guild.ban(user, delete_message_seconds=days * 86400)
 
         document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-        if document['log_channel'] and document['log_kbm']:
-            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+        if document['log_kbm'][0] and document['log_kbm'][1]:
+            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
             await log_channel.send(embed=
                                    gen_embed(title='Ban User',
                                              content=(f'{user.name}#{user.discriminator} has been banned by'
@@ -2893,8 +3097,8 @@ class Administration(commands.Cog):
                     await ctx.interaction.followup.send(embed=embed)
 
                     document = await db.servers.find_one({"server_id": ctx.interaction.guild_id})
-                    if document['log_channel'] and document['log_strikes']:
-                        log_channel = ctx.guild.get_channel(int(document['log_channel']))
+                    if document['log_strikes'][0] and document['log_strikes'][1]:
+                        log_channel = ctx.guild.get_channel(int(document['log_strikes'][1]))
                         await log_channel.send(embed=embed)
 
                     valid_strikes = []  # potentially redundant but added as a safe measure
@@ -2934,8 +3138,8 @@ class Administration(commands.Cog):
                                             reason=(f'User has accumulated {max_strike} strikes and therefore is now'
                                                     ' banned from the server.'),
                                             delete_message_seconds=ban_delete_days * 86400)
-                        if document['log_channel'] and document['log_kbm']:
-                            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+                        if document['log_kbm'][0] and document['log_kbm'][1]:
+                            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
                             embed = gen_embed(title='Ban User',
                                               content=(f'{user.name}#{user.discriminator} (ID: {user.id} has been'
                                                        ' banned.\nReason: Accumulated maximum # of strikes'))
@@ -3000,8 +3204,8 @@ class Administration(commands.Cog):
                                     content=(f'{user.name}#{user.discriminator} has been image muted for'
                                              f' {humanize_timedelta(timedelta=image_mute_time)}')),
                                     ephemeral=True)
-                                if document['log_channel'] and document['log_kbm']:
-                                    log_channel = ctx.guild.get_channel(int(document['log_channel']))
+                                if document['log_kbm'][0] and document['log_kbm'][1]:
+                                    log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
                                     embed = gen_embed(
                                         title='Image Mute User',
                                         content=(
@@ -3054,8 +3258,8 @@ class Administration(commands.Cog):
                             content=(f'{user.name}#{user.discriminator} has been timed out for'
                                      f' {humanize_timedelta(timedelta=timeout_time)}')),
                             ephemeral=True)
-                        if document['log_channel'] and document['log_kbm']:
-                            log_channel = ctx.guild.get_channel(int(document['log_channel']))
+                        if document['log_kbm'][0] and document['log_kbm'][1]:
+                            log_channel = ctx.guild.get_channel(int(document['log_kbm'][1]))
                             embed = gen_embed(title='Timeout User',
                                               content=(f'{user.name}#{user.discriminator} has been timed out for'
                                                        f' {humanize_timedelta(timedelta=timeout_time)}'
