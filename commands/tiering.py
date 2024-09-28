@@ -490,7 +490,7 @@ class Tiering(commands.Cog):
                                                         " must be a value from 0-4 or 'f' (shorthand for full).")))
                 return
             
-            if player_idx is None and currentname[code_idx] != 'xxxxx':
+            if player_idx is None and room_split[code_idx] != 'xxxxx':
                 room_split.append(namesuffix)
             else:
                 room_split[player_idx] = namesuffix
