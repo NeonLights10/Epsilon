@@ -499,8 +499,9 @@ class Tiering(commands.Cog):
             newName = "-".join(room_split)
             if newName != currentname:
                 await ctx.channel.edit(name=newName)
+            roomTitle = f'{room_split[code_idx]}' + f'-{room_split[player_idx]}' if player_idx else ''
             await ctx.send(embed=gen_embed(title='room',
-                                            content=f'Changed room code to {room_num}'))
+                                            content=f'Changed room code to {roomTitle}'))
         else:
             room_split[code_idx] = 'xxxxx'
             if player_idx:
