@@ -479,10 +479,9 @@ class Tiering(commands.Cog):
             room_split[code_idx] = str(room_num)
             
         if open_spots:
-            open_spots = int(open_spots)
-            if 0 < open_spots <= 4:
+            if open_spots in ['1', '2', '3', '4']:
                 namesuffix = f'{open_spots}'
-            elif open_spots == 0:
+            elif open_spots in ['0', 'f', 'F']:
                 namesuffix = 'f'
             else:
                 log.warning('Error: Invalid Input')
@@ -491,7 +490,7 @@ class Tiering(commands.Cog):
                                                         " must be a value from 0-4 or 'f' (shorthand for full).")))
                 return
             
-            if player_idx is None:
+            if player_idx is None and currentname[code_idx] != 'xxxxx':
                 room_split.append(namesuffix)
             else:
                 room_split[player_idx] = namesuffix
