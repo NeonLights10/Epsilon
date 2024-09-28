@@ -492,6 +492,7 @@ class Tiering(commands.Cog):
             
             if player_idx is None and room_split[code_idx] != 'xxxxx':
                 room_split.append(namesuffix)
+                player_idx = len(room_split) - 1
             else:
                 room_split[player_idx] = namesuffix
 
@@ -499,7 +500,7 @@ class Tiering(commands.Cog):
             newName = "-".join(room_split)
             if newName != currentname:
                 await ctx.channel.edit(name=newName)
-            roomTitle = f'{room_split[code_idx]}' + f'-{room_split[player_idx]}' if player_idx else ''
+            roomTitle = f'{room_split[code_idx]}' + (f'-{room_split[player_idx]}' if player_idx else '')
             await ctx.send(embed=gen_embed(title='room',
                                             content=f'Changed room code to {roomTitle}'))
         else:
@@ -525,55 +526,61 @@ class Tiering(commands.Cog):
                                   required=False)):
         currentname = ctx.channel.name
         namesuffix = ""
-        if re.search(r'^[A-Za-z]\d-', currentname):
-            nameprefix = re.match(r"^[A-Za-z]\d-", currentname).group(0)
-        else:
+        
+        log.info(f'Running room in {ctx.guild.name}')
+        if not self.verify_room(currentname):
             log.warning('Error: Invalid Channel')
-            await ctx.interaction.response.send_message(embed=gen_embed(
-                title='Invalid Channel',
-                content=f'This is not a valid tiering channel. Please match the format g#-xxxxx to use this command.'),
-                ephemeral=True)
+            await ctx.reply(embed=gen_embed(title='Invalid Channel',
+                                           content=(f'This is not a valid tiering channel. Please match the format'
+                                                    ' [name]-xxxxx to use this command.')))
             return
-
-        await ctx.interaction.response.defer()
-        if re.search(r'-[\df]$', currentname):
-            namesuffix = re.search(r"-[\df]$", currentname).group(0)
-
+        
+        room_split, code_idx, player_idx = self.split_room(currentname)
+        
+        if code_idx is None:
+            log.warning('Error: Invalid Channel')
+            await ctx.reply(embed=gen_embed(title='Invalid Channel',
+                                           content=(f'This is not a valid tiering channel. Please match the format'
+                                                    ' [name]-xxxxx to use this command.')))
+            
         if roomcode:
-            if not re.search(r'^\d{5}$', roomcode):
-                await ctx.channel.edit(name=f'{nameprefix}xxxxx')
-                await ctx.interaction.followup.send(embed=gen_embed(title='Edit Room',
-                                                                    content=f'Closed room'))
+            room_split[code_idx] = str(roomcode)
+            
+        if spots is not None:
+            spots = str(spots)
+            if spots in ['1', '2', '3', '4']:
+                namesuffix = f'{spots}'
+            elif spots in ['0', 'f', 'F']:
+                namesuffix = 'f'
+            else:
+                log.warning('Error: Invalid Input')
+                await ctx.reply(embed=gen_embed(title='Input Error',
+                                                content=(f'That is not a valid option for this parameter. Open spots'
+                                                        " must be a value from 0-4 or 'f' (shorthand for full).")))
                 return
-            if spots:
-                if 0 < spots <= 4:
-                    namesuffix = f'-{spots}'
-                else:
-                    namesuffix = '-f'
-
-            new_room_title = f'{nameprefix}{roomcode}{namesuffix}'
-            await ctx.interaction.channel.edit(name=new_room_title)
-            await ctx.interaction.followup.send(embed=gen_embed(title='Edit Room',
-                                                                content=f'Changed name to {new_room_title}'))
-
-        elif spots:
-            if re.search(r'(-)(\d{5})(-)', currentname):
-                roomcode = re.match(r"(-)(\d{5})(-)", currentname).group(1)
+            
+            if player_idx is None and room_split[code_idx] != 'xxxxx':
+                room_split.append(namesuffix)
+                player_idx = len(room_split) - 1
             else:
-                roomcode = 'xxxxx'
+                room_split[player_idx] = namesuffix
 
-            if 0 < spots <= 4:
-                namesuffix = f'-{spots}'
-            else:
-                namesuffix = '-f'
-            new_room_title = f'{nameprefix}{roomcode}{namesuffix}'
-            await ctx.interaction.channel.edit(name=new_room_title)
-            await ctx.interaction.followup.send(embed=gen_embed(title='Edit Room',
-                                                                content=f'Changed open spots to {spots} spots'))
+        if roomcode or spots:
+            newName = "-".join(room_split)
+            if newName != currentname:
+                await ctx.channel.edit(name=newName)
+            roomTitle = f'{room_split[code_idx]}' + (f'-{room_split[player_idx]}' if player_idx else '')
+            await ctx.reply(embed=gen_embed(title='room',
+                                            content=f'Changed room code to {roomTitle}'))
         else:
-            await ctx.channel.edit(name=f'{nameprefix}xxxxx')
-            await ctx.interaction.followup.send(embed=gen_embed(title='Edit Room',
-                                                                content=f'Closed room'))
+            room_split[code_idx] = 'xxxxx'
+            if player_idx:
+                room_split[player_idx] = ''
+            room_split = [x for x in room_split if x]
+            newName = "-".join(room_split)
+            if newName != currentname:
+                await ctx.channel.edit(name=newName)
+            await ctx.reply(embed=gen_embed(title='room', content=f'Closed room'))
 
     @discord.slash_command(name='giftbox',
                            description='Helps you calculate the optimal pulls for getting small boost cans.')
