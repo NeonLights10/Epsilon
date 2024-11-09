@@ -291,7 +291,7 @@ class Pubcord(commands.Cog):
         # pubcord currently hardcoded, eventually expand feature (todo)
         document = await db.servers.find_one({"server_id": 432379300684103699})
         pubcord = self.bot.get_guild(432379300684103699)
-        channel = pubcord.get_channel(913958768105103390) # 913958768105103390
+        channel = pubcord.get_channel(913958768105103390)  # 913958768105103390
         if document['prev_message']:
             message_id = document['prev_message']
             try:
@@ -309,24 +309,16 @@ class Pubcord(commands.Cog):
             'content': newcontent_embed
         }
         gamecrash_embed = gen_embed(
-            title='Upcoming Event Schedule',
-            content=("Due to technical reasons and a longer preparation time for the required version update, "
-                     "certain affected events will be pushed back to a later date."))
-        gamecrash_embed.set_footer(text='Updated 4/1/24')
-        gamecrash_embed.add_field(name='April 4', value="<:HHWLogo:432981119437242388><:attrCool:432978841162612756> "
-                                                         " Challenge Live Event [Kokoro's Happy Summer Treasure!]("
-                                                         "<https://bestdori.com/info/events/232/Kokoro-s-Happy-Happy-Summer-Treasure>)",
-                                  inline=False)
-        gamecrash_embed.add_field(name='April 14', value="<:PopipaLogo:432981132414287872><:attrPowerful:432978890064134145> "
-                                                         "Medley Live Event [Poppin' western journey]("
-                                                         "<https://bestdori.com/info/events/233/Poppin-western-journey>)",
-                                  inline=False)
-        gamecrash_embed.add_field(name='April 24',
-                                  value="<:MorfonicaLogo:682986271462654054><:attrCool:432978841162612756> Challenge Live "
-                                        "Event [Auftakt of the Flickering Flames (tentative title)](<https://bestdori.com/info/events/234/Auftakt-of-the-Flickering-Flames>)",
+            title='Free Live Error Fix',
+            content=("If you can not play Free Live, __try changing your username/bio__ to something else. "
+                     "As soon as you change your name, you'll be able to play Free Live."))
+        gamecrash_embed.set_footer(text='This is current as of v7.6.0')
+        gamecrash_embed.add_field(name='Note:', value="Devs are aware of the root issue, and are looking into it now,"
+                                                      " but in the meantime, the issue stems from the new filters "
+                                                      "put into place in the v7.6.0 update. ",
                                   inline=False)
         gamecrash_content = {
-            'label': 'Upcoming Event Schedule',
+            'label': 'Free Live Error Fix',
             'style': discord.ButtonStyle.primary,
             'custom_id': f'{pubcord.id}:gamecrash',
             'content': gamecrash_embed
@@ -419,7 +411,8 @@ class Pubcord(commands.Cog):
         pubcord = self.bot.get_guild(432379300684103699)
         emoteserver = self.bot.get_guild(815821301700493323)
         pubcord_booster_role = pubcord.get_role(913239378598436966)
-        special_mem = [150677680768024576, 140488317333405707, 84308366574223360, 197608336286285824, 117645435061010438, 85992109936504832]
+        special_mem = [150677680768024576, 140488317333405707, 84308366574223360, 197608336286285824,
+                       117645435061010438, 85992109936504832]
         for member in pubcord.premium_subscribers:
             if not member.get_role(913239378598436966):
                 log.info('Adding member to booster role - boosting main server')
@@ -559,19 +552,19 @@ class Pubcord(commands.Cog):
     async def hololive(self,
                        ctx: discord.ApplicationContext):
         await ctx.respond(content=('<:hololive:1011477576558055465> <:hololive:1011477576558055465>'
-                                    ' ***THE HOLOLIVE COLLAB HAS:*** '
-                                    '<:hololive:1011477576558055465> <:hololive:1011477576558055465> \n'
-                                    '⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️\n'
-                                    '<a:siren:101147757820545115> ***__`NO EVENT, NO GACHA BANNER`__*** <a:siren:1011477577820545115>\n'
-                                    '⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️\n'
-                                    '**ONLY COSTUMES AND COVERS**\n'
-                                    '**AND SOME OTHER COOL COSMETIC THINGS**\n'
-                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                    '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
-                                    '<a:mc_fire:1011477578860736512>'))
+                                   ' ***THE HOLOLIVE COLLAB HAS:*** '
+                                   '<:hololive:1011477576558055465> <:hololive:1011477576558055465> \n'
+                                   '⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️\n'
+                                   '<a:siren:101147757820545115> ***__`NO EVENT, NO GACHA BANNER`__*** <a:siren:1011477577820545115>\n'
+                                   '⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️\n'
+                                   '**ONLY COSTUMES AND COVERS**\n'
+                                   '**AND SOME OTHER COOL COSMETIC THINGS**\n'
+                                   '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                   '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                   '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                   '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                   '<a:mc_fire:1011477578860736512> <a:mc_fire:1011477578860736512>'
+                                   '<a:mc_fire:1011477578860736512>'))
 
     @discord.slash_command(name='embedimage',
                            description='Set the embed image for the new content quicklink',
@@ -610,7 +603,7 @@ class Pubcord(commands.Cog):
                            description='Verify your account to access the server.',
                            guild_ids=[432379300684103699])
     async def verify(self,
-                         ctx: discord.ApplicationContext):
+                     ctx: discord.ApplicationContext):
         await ctx.interaction.response.defer(ephemeral=False)
         pubcord = self.bot.get_guild(432379300684103699)
         role = pubcord.get_role(719791739367325706)

@@ -31,7 +31,7 @@ class Tiering(commands.Cog):
     @staticmethod
     def convert_spot(argument):
         if re.search(r'^\d{5}$', argument):
-            log.warning('Bad Argument - Spots Open')
+            log.warning('Number of players not found, skipping')
             raise discord.ext.commands.BadArgument(
                 message="This is not a valid option. Open spots must be a single digit number.")
         elif re.search(r'^\d$', argument):
@@ -39,7 +39,7 @@ class Tiering(commands.Cog):
         elif re.search('^[Ff]$', argument):
             return "0"
         else:
-            log.warning('Bad Argument - Spots Open')
+            log.warning('Number of players not found, skipping')
             raise discord.ext.commands.BadArgument(
                 message="This is not a valid option. Open spots must be a single digit number.")
 
