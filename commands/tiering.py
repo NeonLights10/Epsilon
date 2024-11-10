@@ -539,7 +539,7 @@ class Tiering(commands.Cog):
         
         if code_idx is None:
             log.warning('Error: Invalid Channel')
-            await ctx.reply(embed=gen_embed(title='Invalid Channel',
+            await ctx.respond(embed=gen_embed(title='Invalid Channel',
                                            content=(f'This is not a valid tiering channel. Please match the format'
                                                     ' [name]-xxxxx to use this command.')))
             
@@ -554,7 +554,7 @@ class Tiering(commands.Cog):
                 namesuffix = 'f'
             else:
                 log.warning('Error: Invalid Input')
-                await ctx.reply(embed=gen_embed(title='Input Error',
+                await ctx.respond(embed=gen_embed(title='Input Error',
                                                 content=(f'That is not a valid option for this parameter. Open spots'
                                                         " must be a value from 0-4 or 'f' (shorthand for full).")))
                 return
@@ -570,7 +570,7 @@ class Tiering(commands.Cog):
             if newName != currentname:
                 await ctx.channel.edit(name=newName)
             roomTitle = f'{room_split[code_idx]}' + (f'-{room_split[player_idx]}' if player_idx else '')
-            await ctx.reply(embed=gen_embed(title='room',
+            await ctx.respond(embed=gen_embed(title='room',
                                             content=f'Changed room code to {roomTitle}'))
         else:
             room_split[code_idx] = 'xxxxx'
@@ -580,7 +580,7 @@ class Tiering(commands.Cog):
             newName = "-".join(room_split)
             if newName != currentname:
                 await ctx.channel.edit(name=newName)
-            await ctx.reply(embed=gen_embed(title='room', content=f'Closed room'))
+            await ctx.respond(embed=gen_embed(title='room', content=f'Closed room'))
 
     @discord.slash_command(name='giftbox',
                            description='Helps you calculate the optimal pulls for getting small boost cans.')
