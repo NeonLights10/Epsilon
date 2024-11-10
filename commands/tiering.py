@@ -526,6 +526,7 @@ class Tiering(commands.Cog):
                                   required=False)):
         currentname = ctx.channel.name
         namesuffix = ""
+        await ctx.interaction.response.defer()
         
         log.info(f'Running room in {ctx.guild.name}')
         if not self.verify_room(currentname):
