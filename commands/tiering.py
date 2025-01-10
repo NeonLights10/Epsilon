@@ -524,6 +524,17 @@ class Tiering(commands.Cog):
                                   min_value=0,
                                   max_value=4,
                                   required=False)):
+        
+        try:
+            roomcode = self.convert_room(roomcode)
+        except discord.ext.commands.BadArgument as e:
+            roomcode = None
+            
+        try:
+            spots = self.convert_spot(spots)
+        except discord.ext.commands.BadArgument as e:
+            spots = None
+        
         currentname = ctx.channel.name
         namesuffix = ""
         await ctx.interaction.response.defer()
