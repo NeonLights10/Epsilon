@@ -181,21 +181,21 @@ async def check_document(guild, id):
     else:
         pass
         # Changeable to update old documents whenever a new feature/config is added
-        document = await db.servers.find_one({"server_id": id})
-        if document['log_channel']:
-            post = {'log_messages': [document['log_messages'], document['log_channel']],
-                    'log_joinleaves': [document['log_joinleaves'], document['log_channel']],
-                    'log_kbm': [document['log_kbm'], document['log_channel']],
-                    'log_strikes': [document['log_strikes'], document['log_channel']]}
-            await db.servers.update_one({"server_id": id},
-                                        {"$set": post})
-        else:
-            post = {'log_messages': [document['log_messages'], None],
-                    'log_joinleaves': [document['log_joinleaves'], None],
-                    'log_kbm': [document['log_kbm'], None],
-                    'log_strikes': [document['log_strikes'], None]}
-            await db.servers.update_one({"server_id": id},
-                                        {"$set": post})
+        #document = await db.servers.find_one({"server_id": id})
+        #if document['log_channel']:
+        #    post = {'log_messages': [document['log_messages'], document['log_channel']],
+        #            'log_joinleaves': [document['log_joinleaves'], document['log_channel']],
+        #            'log_kbm': [document['log_kbm'], document['log_channel']],
+        #            'log_strikes': [document['log_strikes'], document['log_channel']]}
+        #    await db.servers.update_one({"server_id": id},
+        #                                {"$set": post})
+        #else:
+        #    post = {'log_messages': [document['log_messages'], None],
+        #            'log_joinleaves': [document['log_joinleaves'], None],
+        #            'log_kbm': [document['log_kbm'], None],
+        #            'log_strikes': [document['log_strikes'], None]}
+        #    await db.servers.update_one({"server_id": id},
+        #                                {"$set": post})
 
 ##########
 
