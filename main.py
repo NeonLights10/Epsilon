@@ -180,9 +180,17 @@ async def check_document(guild, id):
         log.info("Did not find one, creating document...")
         await initialize_document(guild, id)
     else:
-        pass
+        # pass
         # Changeable to update old documents whenever a new feature/config is added
         document = await db.servers.find_one({"server_id": id})
+        try:
+            if document['log_messages']:
+                pass
+        except KeyError:
+            post = {'log_messages': [False, None]}
+            await db.servers.update_one({"server_id": id},
+                                        {"$set": post})
+
         try:
             if document['log_channel']:
                 post = {'log_messages': [document['log_messages'], document['log_channel']],
@@ -200,10 +208,10 @@ async def check_document(guild, id):
                                             {"$set": post})
         except KeyError:
             post = {'log_channel': None,
-                    'log_messages': [document['log_messages'], None],
-                    'log_joinleaves': [document['log_joinleaves'], None],
-                    'log_kbm': [document['log_kbm'], None],
-                    'log_strikes': [document['log_strikes'], None]}
+                    'log_messages': [False, None],
+                    'log_joinleaves': [False, None],
+                    'log_kbm': [False, None],
+                    'log_strikes': [False, None]}
             await db.servers.update_one({"server_id": id},
                                         {"$set": post})
 
