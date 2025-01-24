@@ -62,7 +62,8 @@ async def on_message_delete(message):
         return
 
     try:
-        if msglog := int(document['log_messages'][1]):
+        if document['log_messages'][1]:
+            msglog = int(document['log_messages'][1])
             try:
                 enabled = document['log_messages'][0]
             except TypeError:
@@ -98,7 +99,8 @@ async def on_message_delete(message):
 async def on_bulk_message_delete(messages):
     document = await db.servers.find_one({"server_id": messages[0].guild.id})
     try:
-        if msglog := int(document['log_messages'][1]):
+        if document['log_messages'][1]:
+            msglog = int(document['log_messages'][1])
             try:
                 enabled = document['log_messages'][0]
             except TypeError:
@@ -137,7 +139,8 @@ async def on_raw_message_delete(payload):
     if payload.guild_id:
         document = await db.servers.find_one({"server_id": payload.guild_id})
         try:
-            if msglog := int(document['log_messages'][1]):
+            if document['log_messages'][1]:
+                msglog = int(document['log_messages'][1])
                 try:
                     enabled = document['log_messages'][0]
                 except TypeError:
@@ -207,7 +210,8 @@ async def on_member_join(member):
     except TypeError:
         enabled = document['log_joinleaves']
     if enabled:
-        if msglog := int(document['log_joinleaves'][1]):
+        if document['log_joinleaves'][1]:
+            msglog = int(document['log_joinleaves'][1])
             log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
             content = gen_embed(name=f'{member.name}',
                                 icon_url=member.display_avatar.url,
@@ -245,7 +249,8 @@ async def on_member_remove(member):
     except TypeError:
         enabled = document['log_joinleaves']
     if enabled:
-        if msglog := int(document['log_joinleaves'][1]):
+        if document['log_joinleaves'][1]:
+            msglog = int(document['log_joinleaves'][1])
             log_channel = member.guild.get_channel(int(document['log_joinleaves'][1]))
             content = gen_embed(name=f'{member.name}',
                                 icon_url=member.display_avatar.url,
@@ -274,7 +279,8 @@ async def on_member_update(before, after):
     except TypeError:
         enabled = document['log_joinleaves']
     if enabled:
-        if msglog := int(document['log_joinleaves'][1]):
+        if document['log_joinleaves'][1]:
+            msglog = int(document['log_joinleaves'][1])
             if not before.nick == after.nick:
                 log_channel = before.guild.get_channel(int(document['log_joinleaves'][1]))
                 content = gen_embed(name=f'{after.name}',
@@ -302,7 +308,8 @@ async def on_member_ban(guild, user):
     except TypeError:
         enabled = document['log_kbm']
     if enabled:
-        if kbmlog := document['log_kbm'][1]:
+        if document['log_kbm'][1]:
+            kbmlog = int(document['log_kbm'][1])
             log_channel = guild.get_channel(int(document['log_kbm'][1]))
             content = gen_embed(name=f'{user.name}#{user.discriminator}',
                                 icon_url=user.display_avatar.url,
