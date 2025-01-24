@@ -182,7 +182,7 @@ async def check_document(guild, id):
     else:
         pass
         # Changeable to update old documents whenever a new feature/config is added
-        #document = await db.servers.find_one({"server_id": id})
+        document = await db.servers.find_one({"server_id": id})
         #try:
         #    if document['log_messages']:
         #        pass
@@ -191,29 +191,29 @@ async def check_document(guild, id):
         #    await db.servers.update_one({"server_id": id},
         #                                {"$set": post})
 
-        #try:
-        #    if document['log_channel']:
-        #        post = {'log_messages': [document['log_messages'], document['log_channel']],
-        #                'log_joinleaves': [document['log_joinleaves'], document['log_channel']],
-        #                'log_kbm': [document['log_kbm'], document['log_channel']],
-        #                'log_strikes': [document['log_strikes'], document['log_channel']]}
-        #        await db.servers.update_one({"server_id": id},
-        #                                    {"$set": post})
-        #    else:
-        #        post = {'log_messages': [document['log_messages'], None],
-        #                'log_joinleaves': [document['log_joinleaves'], None],
-        #                'log_kbm': [document['log_kbm'], None],
-        #                'log_strikes': [document['log_strikes'], None]}
-        #        await db.servers.update_one({"server_id": id},
-        #                                    {"$set": post})
-        #except KeyError:
-        #    post = {'log_channel': None,
-        #            'log_messages': [False, None],
-        #            'log_joinleaves': [False, None],
-        #            'log_kbm': [False, None],
-        #            'log_strikes': [False, None]}
-        #    await db.servers.update_one({"server_id": id},
-        #                                {"$set": post})
+        try:
+            if document['log_channel']:
+                post = {'log_messages': [document['log_messages'][0][0][0], document['log_channel']],
+                        'log_joinleaves': [document['log_joinleaves'][0][0][0], document['log_channel']],
+                        'log_kbm': [document['log_kbm'][0][0][0], document['log_channel']],
+                        'log_strikes': [document['log_strikes'][0][0][0], document['log_channel']]}
+                await db.servers.update_one({"server_id": id},
+                                            {"$set": post})
+            else:
+                post = {'log_messages': [document['log_messages'][0][0], None],
+                        'log_joinleaves': [document['log_joinleaves'][0][0], None],
+                        'log_kbm': [document['log_kbm'][0][0], None],
+                        'log_strikes': [document['log_strikes'][0][0], None]}
+                await db.servers.update_one({"server_id": id},
+                                            {"$set": post})
+        except KeyError:
+            post = {'log_channel': None,
+                    'log_messages': [False, None],
+                    'log_joinleaves': [False, None],
+                    'log_kbm': [False, None],
+                    'log_strikes': [False, None]}
+            await db.servers.update_one({"server_id": id},
+                                        {"$set": post})
 
 ##########
 
