@@ -1414,31 +1414,35 @@ class Administration(commands.Cog):
                         'log_joinleaves': [False, self.defaults['log_joinleaves'][1]],
                         'log_kbm': [False, self.defaults['log_kbm'][1]],
                         'log_strikes': [False, self.defaults['log_strikes'][1]]}
+                valueset = False
                 for child in self.children:
                     if child.custom_id == 'logselect':
-                        self.select_values = child.values
-                        if len(self.select_values) == 0:
-                            if self.defaults['log_messages'][0]:
+                        if child.values:
+                            valueset = True
+                            self.select_values = child.values
+                            if len(self.select_values) == 0:
+                                if self.defaults['log_messages'][0]:
+                                    post['log_messages'][0] = True
+                                if self.defaults['log_joinleaves'][0]:
+                                    post['log_joinleaves'][0] = True
+                                if self.defaults['log_kbm'][0]:
+                                    post['log_kbm'][0] = True
+                                if self.defaults['log_strikes'][0]:
+                                    post['log_strikes'][0] = True
+                if valueset:
+                    for option in self.select_values:
+                        match option:
+                            case 'Messages':
                                 post['log_messages'][0] = True
-                            if self.defaults['log_joinleaves'][0]:
+                            case 'Joins/Leaves':
                                 post['log_joinleaves'][0] = True
-                            if self.defaults['log_kbm'][0]:
+                            case 'KBM':
                                 post['log_kbm'][0] = True
-                            if self.defaults['log_strikes'][0]:
+                            case 'Strikes':
                                 post['log_strikes'][0] = True
-                for option in self.select_values:
-                    match option:
-                        case 'Messages':
-                            post['log_messages'][0] = True
-                        case 'Joins/Leaves':
-                            post['log_joinleaves'][0] = True
-                        case 'KBM':
-                            post['log_kbm'][0] = True
-                        case 'Strikes':
-                            post['log_strikes'][0] = True
 
-                await db.servers.update_one({"server_id": interaction.guild_id},
-                                            {"$set": post})
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": post})
 
                 if self.defaults["log_messages"][1]:
                     log_message_channel = interaction.guild.get_channel(int(self.defaults["log_messages"][1]))
