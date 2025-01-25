@@ -192,22 +192,14 @@ async def check_document(guild, id):
         #                                {"$set": post})
 
         try:
-            if document['log_channel']:
-                if type(document['log_messages'][0]) is list:
-                    post = {'log_messages': document['log_messages'][0],
-                            'log_joinleaves': document['log_joinleaves'][0],
-                            'log_kbm': document['log_kbm'][0],
-                            'log_strikes': document['log_strikes'][0]}
-                    await db.servers.update_one({"server_id": id},
-                                                {"$set": post})
-            else:
-                if type(document['log_messages'][0]) is list:
-                    post = {'log_messages': [document['log_messages'][0], None],
-                            'log_joinleaves': [document['log_joinleaves'][0], None],
-                            'log_kbm': [document['log_kbm'][0], None],
-                            'log_strikes': [document['log_strikes'][0], None]}
-                    await db.servers.update_one({"server_id": id},
-                                                {"$set": post})
+            if type(document['log_messages'][0]) is list:
+                post = {'log_messages': document['log_messages'][0],
+                        'log_joinleaves': document['log_joinleaves'][0],
+                        'log_kbm': document['log_kbm'][0],
+                        'log_strikes': document['log_strikes'][0]}
+                await db.servers.update_one({"server_id": id},
+                                            {"$set": post})
+
         except KeyError:
             post = {'log_channel': None,
                     'log_messages': [False, None],
