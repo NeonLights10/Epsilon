@@ -1465,13 +1465,13 @@ class Administration(commands.Cog):
                 else:
                     log_strikes_channel = 'None'
 
-                e_text = '\nLog messages: ' + f"{'Enabled' if post['log_messages'] else 'Disabled'} | "
+                e_text = '\nLog messages: ' + f"{'Enabled' if post['log_messages'][0] else 'Disabled'} | "
                 e_text += f'{log_message_channel}'
-                e_text += '\nLog member join/leaves: ' + f"{'Enabled' if post['log_joinleaves'] else 'Disabled'} | "
+                e_text += '\nLog member join/leaves: ' + f"{'Enabled' if post['log_joinleaves'][0] else 'Disabled'} | "
                 e_text += f'{log_joinleaves_channel}'
-                e_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if post['log_kbm'] else 'Disabled'} | "
+                e_text += '\nLog kicks/bans/timeouts: ' + f"{'Enabled' if post['log_kbm'][0] else 'Disabled'} | "
                 e_text += f'{log_kbm_channel}'
-                e_text += '\nLog strikes: ' + f"{'Enabled' if post['log_strikes'] else 'Disabled'} | "
+                e_text += '\nLog strikes: ' + f"{'Enabled' if post['log_strikes'][0] else 'Disabled'} | "
                 e_text += f'{log_strikes_channel}'
                 self.value = e_text
                 await self.end_interaction(interaction)
