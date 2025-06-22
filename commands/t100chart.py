@@ -166,7 +166,7 @@ class Collection(commands.Cog):
     def is_owner():
         async def predicate(ctx) -> bool:
             if isinstance(ctx, discord.ApplicationContext):
-                allowed_users = [133048058756726784, 130829029577064448, 197608336286285824, 437121108756398101, 226216353357496320]
+                allowed_users = [133048058756726784, 130829029577064448, 197608336286285824, 437121108756398101, 226216353357496320, 347779179736989698]
                 if ctx.interaction.user.id in allowed_users:
                     return True
                 else:
