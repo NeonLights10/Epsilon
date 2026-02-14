@@ -2,6 +2,7 @@ import os
 import sys
 
 import asyncio
+import brotli
 import re
 import json
 import time
