@@ -392,13 +392,13 @@ class Administration(commands.Cog):
                         modmail_view = ModmailMenu(self.context, self.bot)
                         if server_document['modmail_channel']:
                             m_modmail_channel = ctx.guild.get_channel(int(server_document['modmail_channel']))
-                            m_button_channel = ctx.guild.get_channel(int(server_document['modmail_button_channel']))
+                            m_button_channel_mention = ctx.guild.get_channel(int(server_document['modmail_button_channel'])).mention if server_document['modmail_button_channel'] else "Not configured"
                             content = f'**Enabled** \nDestination channel: {m_modmail_channel.mention}'
-                            content += f'\nButton channel: {m_button_channel.mention}'
+                            content += f'\nButton channel: {m_button_channel_mention}'
                         else:
                             content = 'Disabled'
-                            modmail_view.children[1].disabled = True
                             modmail_view.children[2].disabled = True
+                            modmail_view.children[3].disabled = True
                         modmail_embed = gen_embed(title='Modmail Settings',
                                                   content=content)
                         self.currentmessage = await interaction.message.edit(embed=modmail_embed,
@@ -893,11 +893,9 @@ class Administration(commands.Cog):
                                                           'modmail_button_channel': None}})
                     interaction.message.embeds[0].description = '**Disabled**'
                     self.value = 'Disabled'
-                    self.children[1].disabled = True
                     self.children[2].disabled = True
+                    self.children[3].disabled = True
                 else:
-                    setup_phase1_success = False
-                    setup_phase2_success = False
                     log.info('Begin modmail configuration workflow')
 
                     channel_view1 = ChannelSelectView(interaction.user)
@@ -928,53 +926,16 @@ class Administration(commands.Cog):
 
                     if view.value:
                         log.info('Phase 1 workflow confirm')
-                        setup_phase1_success = True
-                    else:
-                        return
-
-                    channel_view2 = ChannelSelectView(interaction.user)
-                    select_message2 = await interaction.followup.send(embed=gen_embed(
-                        title='Configure modmail button channel',
-                        content='Please select the channel you would like to put the button.'),
-                        view=channel_view2)
-                    timed_out = await channel_view2.wait()
-                    if timed_out or channel_view2.value is None:
-                        await select_message2.delete()
-                        return
-                    new_button_channel = channel_view2.value
-                    await select_message2.delete()
-
-                    log.info('New modmail button entered, confirm workflow')
-                    view = Confirm()
-                    sent_message = await interaction.followup.send(embed=gen_embed(
-                        title='Confirmation',
-                        content=('Pleae verify the contents before confirming:\n'
-                                 f'**Selected Button Channel: {new_button_channel.mention}**')),
-                        view=view)
-                    button_timeout = await view.wait()
-                    if button_timeout:
-                        log.info('Confirmation view timed out')
-                        await sent_message.delete()
-                        return
-                    await sent_message.delete()
-
-                    if view.value:
-                        log.info('Phase 2 workflow confirm')
-                        setup_phase2_success = True
-                    else:
-                        return
-
-                    if setup_phase1_success and setup_phase2_success:
                         await db.servers.update_one({"server_id": interaction.guild_id},
-                                                    {"$set": {'modmail_channel': new_destination_channel.id,
-                                                              'modmail_button_channel': new_button_channel.id}})
+                                                    {"$set": {'modmail_channel': new_destination_channel.id}})
                         new_description = (f'**Enabled** \n Destination channel: {new_destination_channel.mention}'
-                                           f'\n Button channel: {new_button_channel.mention}')
+                                           f'\n Button channel: Not configured')
                         interaction.message.embeds[0].description = new_description
                         self.value = 'Enabled'
-                        self.children[1].disabled = False
                         self.children[2].disabled = False
-                        # TODO: run modmail button initialization
+                        self.children[3].disabled = False
+                    else:
+                        return
 
                 await interaction.message.edit(embed=interaction.message.embeds[0], view=self)
 
@@ -1016,11 +977,11 @@ class Administration(commands.Cog):
                     await db.servers.update_one({"server_id": interaction.guild_id},
                                                 {"$set": {'modmail_channel': new_destination_channel.id}})
                     doc = await db.servers.find_one({"server_id": interaction.guild_id})
-                    modmail_button_channel = interaction.guild.get_channel(int(doc['modmail_button_channel']))
+                    modmail_button_channel_mention = interaction.guild.get_channel(int(doc['modmail_button_channel'])).mention if doc['modmail_button_channel'] else "Not configured"
                     interaction.message.embeds[0].description = ('**Enabled** \nDestination channel:'
                                                                  f'{new_destination_channel.mention}'
-                                                                 f'\nButton channel:'
-                                                                 f'{modmail_button_channel.mention}')
+                                                                 f'\nButton channel: '
+                                                                 f'{modmail_button_channel_mention}')
                     await interaction.message.edit(embed=interaction.message.embeds[0])
 
             # noinspection PyTypeChecker
