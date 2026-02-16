@@ -867,7 +867,7 @@ class Administration(commands.Cog):
                 await interaction.response.defer()
 
                 doc = await db.servers.find_one({"server_id": interaction.guild_id})
-                if doc['modmail_channel']:
+                if doc['modmail_channel'] and doc['modmail_button_channel']:
                     prev_button_channel = interaction.guild.get_channel(int(doc['modmail_button_channel']))
                     if doc['prev_message_modmail']:
                         try:
