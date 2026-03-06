@@ -39,9 +39,13 @@ def unformat_name(name):
 class MonthlyPlayerView(discord.ui.DesignerView):
 
 
-    def __init__(self, player_pages):
-        super().__init__()
+    message = None
+
+
+    def __init__(self, player_pages, user_id):
+        super().__init__(timeout=300)
         self._player_pages = player_pages
+        self._user_id = user_id
         self._current_page = 0
         self._build()
 
@@ -119,7 +123,10 @@ class MonthlyPlayerView(discord.ui.DesignerView):
         ]
     
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction) -> bool: 
+        if self._user_id != interaction.user.id:
+            return False
+        
         cid = interaction.custom_id
         if cid == "first":
             self._current_page = 0
@@ -132,6 +139,18 @@ class MonthlyPlayerView(discord.ui.DesignerView):
         self._build()
         await interaction.response.edit_message(view=self, files=self.current_files())
         return False
+    
+
+    async def on_timeout(self):
+        for item in self.children:
+            if isinstance(item, discord.ui.Container):
+                for child in item.items:
+                    if isinstance(child, discord.ui.ActionRow):
+                        for button in child.children:
+                            button.disabled = True
+
+        await self.message.edit(view=self, files=self.current_files())
+        
 
 
 class Monthly(commands.Cog):
@@ -227,6 +246,10 @@ class Monthly(commands.Cog):
     async def find_monthly_ranking_id(self, year: int, month: int):  
         start = datetime(year, month, 1, tzinfo=timezone.utc)   
         end = start + relativedelta(months=1)  
+        # This may be a bit performance heavy, but necessary to get accurate result
+        # If it becomes an issue down the line, we can replace this with a different solution
+        # Either a pre-computed table for mapping monthly_ranking_id <==> year + month
+        # Or just hardcore the ID to be a constant (5 + month difference from month1)
         pipeline = [
             {
                 "$group": {
@@ -288,19 +311,17 @@ class Monthly(commands.Cog):
     async def get_monthly_ranking_data(self, ctx: discord.ApplicationContext, year: int, month: int, ranking_period: str):
         ranking_id = await self.find_monthly_ranking_id(year, month)
         if not ranking_id:
-            await ctx.interaction.followup.send(
+            await ctx.respond(
                 embed=gen_embed(title='No data available',
-                                content=f'{ranking_period} has no monthly ranking data available.'),
-                ephemeral=True)
-            return
+                                content=f'{ranking_period} has no monthly ranking data available.'))
+            return None, None, None
         
         fresh_ts, final_record = await self.get_highest_timestamp(ranking_id)
         if not fresh_ts:
-            await ctx.interaction.followup.send(
+            await ctx.respond(
                 embed=gen_embed(title='No data available',
-                                content=f'{ranking_period} has no monthly ranking data available.'),
-                ephemeral=True)
-            return
+                                content=f'{ranking_period} has no monthly ranking data available.'))
+            return None, None, None
         
         ranking_data = await self.fetch_ranking_entries(ranking_id, fresh_ts)
         player_data = await self.fetch_players([r['player_id'] for r in ranking_data])
@@ -313,7 +334,7 @@ class Monthly(commands.Cog):
         entries = [[r['rank'], r['points'], p_map[r['player_id']]['level'], r['player_id'], unformat_name(p_map[r['player_id']]['name'])] for r in ranking_data]
         table = tabulate(entries, tablefmt="plain", headers=["#", "Points", "Level", "ID", "Player"])
         output = ("```" + "  Ranking month: " + ranking_period + "\n  Last updated:  " + fresh_ts.strftime("%Y-%m-%d %H:%M:%S %Z%z") + "\n\n" + table + "```")
-        await ctx.interaction.followup.send(output)
+        await ctx.respond(output)
 
 
     async def get_profile_icon(self, player):
@@ -354,10 +375,9 @@ class Monthly(commands.Cog):
     async def cards_monthly_ranking(self, ctx: discord.ApplicationContext, ranking_period: str, fresh_ts: datetime, ranking_data: list, player_data: list):
         p_map = {p['id']: p for p in player_data}
         if len(ranking_data) == 0:
-            await ctx.interaction.followup.send(
+            await ctx.respond(
                 embed=gen_embed(title='No data available',
-                                content=f'{ranking_period} has no monthly ranking data available.'),
-                ephemeral=True)
+                                content=f'{ranking_period} has no monthly ranking data available.'))
             return
         
         max_rank = min(max([r['rank'] for r in ranking_data]), 10)
@@ -371,8 +391,12 @@ class Monthly(commands.Cog):
             player_obj = await self.cards_monthly_ranking_player_dict(rank, player, fresh_ts, titles_api)
             player_pages.append(player_obj)
 
-        view = MonthlyPlayerView(player_pages)
-        await ctx.interaction.followup.send(view=view, files=view.current_files())
+        view = MonthlyPlayerView(player_pages, ctx.author.id)
+        msg = await ctx.respond(view=view, files=view.current_files())
+        if isinstance(msg, (discord.Message, discord.WebhookMessage)):
+            view.message = msg
+        elif isinstance(msg, discord.Interaction):
+            view.message = await msg.original_response()
 
 
     async def format_monthly_ranking(self, ctx: discord.ApplicationContext, format: str, ranking_period: str, fresh_ts: datetime, ranking_data: list, player_data: list):
@@ -382,10 +406,9 @@ class Monthly(commands.Cog):
             case 'cards':
                 await self.cards_monthly_ranking(ctx, ranking_period, fresh_ts, ranking_data, player_data)
             case 2:
-                await ctx.interaction.followup.send(
+                await ctx.respond(
                     embed=gen_embed(title='Unknown format',
-                                    content=f'Output format {format} is not supported.'),
-                    ephemeral=True)
+                                    content=f'Output format {format} is not supported.'))
 
 
     month_commands = SlashCommandGroup('monthly', 'Monthly Ranking commands')
@@ -405,7 +428,8 @@ class Monthly(commands.Cog):
         now_ts = datetime.now(timezone.utc)
         ranking_period = datetime(now_ts.year, now_ts.month, 1, tzinfo=timezone.utc).strftime("%B %Y")   
         fresh_ts, ranking_data, player_data = await self.get_monthly_ranking_data(ctx, now_ts.year, now_ts.month, ranking_period)
-        await self.format_monthly_ranking(ctx, format, ranking_period, fresh_ts, ranking_data, player_data)
+        if ranking_data:
+            await self.format_monthly_ranking(ctx, format, ranking_period, fresh_ts, ranking_data, player_data)
 
 
     @month_commands.command(name='previous',
@@ -422,7 +446,41 @@ class Monthly(commands.Cog):
         ts = datetime.now(timezone.utc) - relativedelta(months=1)
         ranking_period = datetime(ts.year, ts.month, 1, tzinfo=timezone.utc).strftime("%B %Y")   
         fresh_ts, ranking_data, player_data = await self.get_monthly_ranking_data(ctx, ts.year, ts.month, ranking_period)
-        await self.format_monthly_ranking(ctx, format, ranking_period, fresh_ts, ranking_data, player_data)
+        if ranking_data:
+            await self.format_monthly_ranking(ctx, format, ranking_period, fresh_ts, ranking_data, player_data)
+
+
+    @month_commands.command(name='history',
+                          description='Returns monthly ranking top 10 and cutoffs for a specified month')
+    async def monthly_history(self,
+                  ctx: discord.ApplicationContext,
+                  year: Option(int, "Ranking Year", min_value=2026, max_value=2050,
+                                     required=True),
+                  month: Option(int, "Ranking Month",
+                                          choices=[OptionChoice('January', value=1),
+                                                   OptionChoice('February', value=2),
+                                                   OptionChoice('March', value=3),
+                                                   OptionChoice('April', value=4),
+                                                   OptionChoice('May', value=5),
+                                                   OptionChoice('June', value=6),
+                                                   OptionChoice('July', value=7),
+                                                   OptionChoice('August', value=8),
+                                                   OptionChoice('September', value=9),
+                                                   OptionChoice('October', value=10),
+                                                   OptionChoice('November', value=11),
+                                                   OptionChoice('December', value=12)],
+                                          required=True),
+                  format: Option(str, "Choose the output format for the ranking",
+                                          choices=[OptionChoice('Compact', value='table'),
+                                                   OptionChoice('Profiles', value='cards')],
+                                          required=False,
+                                          default='table')):
+        
+        await ctx.interaction.response.defer()
+        ranking_period = datetime(year, month, 1, tzinfo=timezone.utc).strftime("%B %Y")   
+        fresh_ts, ranking_data, player_data = await self.get_monthly_ranking_data(ctx, year, month, ranking_period)
+        if ranking_data:
+            await self.format_monthly_ranking(ctx, format, ranking_period, fresh_ts, ranking_data, player_data)
         
 
 def setup(bot):
