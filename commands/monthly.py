@@ -57,7 +57,7 @@ class MonthlyPlayerView(discord.ui.DesignerView):
         container = ui.Container(colour=discord.Colour.blurple())
         container.add_section(
             ui.TextDisplay(f"## {player['name']}"),
-            ui.TextDisplay(f"*({player['id']})*"),
+            ui.TextDisplay(f"-# ID: {player['id']}"),
             ui.TextDisplay(f"### Current Rank: {player['rank']}"),
             accessory=ui.Thumbnail(f"attachment://{player['profile_icon']}"),
         )
