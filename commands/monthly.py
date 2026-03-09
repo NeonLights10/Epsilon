@@ -30,6 +30,7 @@ from discord import default_permissions
 from formatting.embed import gen_embed
 
 from __main__ import log, db
+from commands.update import Update
 
 
 def unformat_name(name):
@@ -142,13 +143,7 @@ class MonthlyPlayerView(discord.ui.DesignerView):
     
 
     async def on_timeout(self):
-        for item in self.children:
-            if isinstance(item, discord.ui.Container):
-                for child in item.items:
-                    if isinstance(child, discord.ui.ActionRow):
-                        for button in child.children:
-                            button.disabled = True
-
+        self.disable_all_items()
         await self.message.edit(view=self, files=self.current_files())
         
 
@@ -166,7 +161,7 @@ class Monthly(commands.Cog):
 
 
     # taken from game.py and adjusted to fit the needs and new Pillow version; not an exact duplicate due to different format 
-    async def generate_band_and_titles_image(self, band: list, titles: list, titles_api):
+    async def generate_band_and_titles_image(self, dl_ctx: dict, band: list, titles: list, titles_api):
         icon_paths = []
         for band_member in sorted(band, key=lambda member: member['member_position']):
             icon_path = ""
@@ -175,10 +170,9 @@ class Monthly(commands.Cog):
             else:
                 icon_path = f"data/img/icons/full_icons/{band_member['member_id']}.png"
 
-            if path.exists(icon_path):
-                icon_paths.append(icon_path)
-            else: # use empty frame as placeholder
-                icon_paths.append("data/img/2star.png")
+            if not path.exists(icon_path):
+                await self.check_and_download_icon(dl_ctx, "data/img/icons/full_icons", band_member['member_id'])
+            icon_paths.append(icon_path)
 
         images = [Image.open(x) for x in icon_paths]
         widths, heights = zip(*(i.size for i in images))
@@ -195,26 +189,28 @@ class Monthly(commands.Cog):
             x_offset = 0
             for title_id in titles:
                 image_contents = []
-                title_info = titles_api[str(title_id)]
-                event_title = f"data/img/titles/en/{title_info['baseImageName'][1]}.png"
-                image_contents.append(event_title)
-                event = Image.open(image_contents[0])
-                event = event.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
-                new_im.paste(event, (x_offset, 250), event)
+                str_title = str(title_id)
+                if str_title in titles_api: # skip if there's no title
+                    title_info = titles_api[str_title]
+                    event_title = f"data/img/titles/en/{title_info['baseImageName'][1]}.png"
+                    image_contents.append(event_title)
+                    event = Image.open(image_contents[0])
+                    event = event.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
+                    new_im.paste(event, (x_offset, 250), event)
 
-                tier = title_info['rank'][1]
-                if tier != 'none' and tier != 'normal' and tier != 'extra':
-                    tier_title = f'data/img/titles/en/event_point_{tier}.png'
-                    image_contents.append(tier_title)
-                    tier = Image.open(image_contents[1])
-                    tier = tier.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
-                    new_im.paste(tier, (x_offset, 250), tier)
-                elif tier == 'normal' or tier == 'extra':
-                    tier_title = f'data/img/titles/en/try_clear_{tier}.png'
-                    image_contents.append(tier_title)
-                    tier = Image.open(image_contents[1])
-                    tier = tier.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
-                    new_im.paste(tier, (x_offset, 250), tier)
+                    tier = title_info['rank'][1]
+                    if tier != 'none' and tier != 'normal' and tier != 'extra':
+                        tier_title = f'data/img/titles/en/event_point_{tier}.png'
+                        image_contents.append(tier_title)
+                        tier = Image.open(image_contents[1])
+                        tier = tier.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
+                        new_im.paste(tier, (x_offset, 250), tier)
+                    elif tier == 'normal' or tier == 'extra':
+                        tier_title = f'data/img/titles/en/try_clear_{tier}.png'
+                        image_contents.append(tier_title)
+                        tier = Image.open(image_contents[1])
+                        tier = tier.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
+                        new_im.paste(tier, (x_offset, 250), tier)
                 x_offset += 525
         else:
             x_offset = 250
@@ -306,6 +302,20 @@ class Monthly(commands.Cog):
         return await db.players.find(
             {"id": {"$in": player_ids}}
         ).to_list(length=None)
+    
+
+    async def check_and_download_icon(self, dl_ctx: dict, icon_dir, icon_id):
+        if os.path.exists(os.path.join(icon_dir, f"{icon_id}.png")):
+            return
+        
+        if not dl_ctx['card_api']:
+            dl_ctx['card_api'] = await self.fetch_api("https://bestdori.com/api/cards/all.5.json")
+        if not dl_ctx['chara_api']:
+            dl_ctx['chara_api'] = await self.fetch_api("https://bestdori.com/api/characters/all.2.json")
+        
+        update_count = await Update.generate_card_icon(self.client, str(icon_id), dl_ctx['card_api'], dl_ctx['chara_api'])
+        if update_count > 0:
+            log.info(f'Downloaded {update_count} card images')
 
 
     async def get_monthly_ranking_data(self, ctx: discord.ApplicationContext, year: int, month: int, ranking_period: str):
@@ -337,27 +347,31 @@ class Monthly(commands.Cog):
         await ctx.respond(output)
 
 
-    async def get_profile_icon(self, player):
+    async def get_profile_icon(self, dl_ctx, player):
+        icon_id = None
         if 'profileCard' in player and 'cardId' in player['profileCard']:
-            card_id = player['profileCard']['cardId']
+            icon_id = player['profileCard']['cardId']
             if player['profileCard']['illustration'] == 'after_training':
-                profile_picture = f"{card_id}_trained.png"
+                profile_picture = f"{icon_id}_trained.png"
             else:
-                profile_picture = f"{card_id}.png"
+                profile_picture = f"{icon_id}.png"
         else:
             ab = player['activeBand']
             center = [card for card in ab if card['member_position'] == 3]
+            icon_id = center['member_id']
             if center['trainingStatus']:
-                profile_picture = f"{center['member_id']}_trained.png"
+                profile_picture = f"{icon_id}_trained.png"
             else:
-                profile_picture = f"{center['member_id']}.png"
+                profile_picture = f"{icon_id}.png"
+
+        await self.check_and_download_icon(dl_ctx, "data/img/icons/base_icons", icon_id)
 
         return profile_picture
 
 
-    async def cards_monthly_ranking_player_dict(self, rank: dict, player: dict, updated_on, titles_api):
-        icon_name = await self.get_profile_icon(player)
-        band_name, band_path = await self.generate_band_and_titles_image(player['activeBand'], player['titleIds'], titles_api)
+    async def cards_monthly_ranking_player_dict(self, dl_ctx: dict, rank: dict, player: dict, updated_on, titles_api):
+        icon_name = await self.get_profile_icon(dl_ctx, player)
+        band_name, band_path = await self.generate_band_and_titles_image(dl_ctx, player['activeBand'], player['titleIds'], titles_api)
 
         return {
             'id': player['id'],
@@ -383,12 +397,16 @@ class Monthly(commands.Cog):
         max_rank = min(max([r['rank'] for r in ranking_data]), 10)
         titles_api = await self.fetch_api('https://bestdori.com/api/degrees/all.3.json')
         player_pages = []
+        dl_ctx = {
+            'card_api': None,
+            'chara_api': None
+        }
 
         for i in range(1, max_rank + 1):
             ranks = [r for r in ranking_data if r['rank'] == i]
             rank = ranks[0]
             player = p_map[rank['player_id']]
-            player_obj = await self.cards_monthly_ranking_player_dict(rank, player, fresh_ts, titles_api)
+            player_obj = await self.cards_monthly_ranking_player_dict(dl_ctx, rank, player, fresh_ts, titles_api)
             player_pages.append(player_obj)
 
         view = MonthlyPlayerView(player_pages, ctx.author.id)
