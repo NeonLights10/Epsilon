@@ -85,13 +85,13 @@ class MonthlyPlayerView(discord.ui.DesignerView):
         row.add_button(
             label="<<",
             custom_id="first",
-            style=discord.ButtonStyle.blurple,
+            style=discord.ButtonStyle.gray,
             disabled=self._current_page == 0,
         )
         row.add_button(
             label="<",
             custom_id="prev",
-            style=discord.ButtonStyle.red,
+            style=discord.ButtonStyle.blurple,
             disabled=self._current_page == 0,
         )
         row.add_button(
@@ -103,13 +103,13 @@ class MonthlyPlayerView(discord.ui.DesignerView):
         row.add_button(
             label=">",
             custom_id="next",
-            style=discord.ButtonStyle.green,
+            style=discord.ButtonStyle.blurple,
             disabled=self._current_page == len(self._player_pages) - 1,
         )
         row.add_button(
             label=">>",
             custom_id="last",
-            style=discord.ButtonStyle.blurple,
+            style=discord.ButtonStyle.gray,
             disabled=self._current_page == len(self._player_pages) - 1,
         )
         return row
