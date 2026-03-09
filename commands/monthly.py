@@ -73,7 +73,7 @@ class MonthlyPlayerView(discord.ui.DesignerView):
         )
         container.add_separator()
 
-        container.add_text(f"**Updated on:** {player['updated_on']}")
+        container.add_text(f"-# **Updated on:** {player['updated_on']}")
         container.add_separator()
 
         container.add_item(self._build_page_row())
