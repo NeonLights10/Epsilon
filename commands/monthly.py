@@ -193,6 +193,7 @@ class Monthly(commands.Cog):
                 if str_title in titles_api: # skip if there's no title
                     title_info = titles_api[str_title]
                     event_title = f"data/img/titles/en/{title_info['baseImageName'][1]}.png"
+                    await self.check_and_download_title(event_title, title_info['baseImageName'][1])
                     image_contents.append(event_title)
                     event = Image.open(image_contents[0])
                     event = event.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
@@ -201,12 +202,14 @@ class Monthly(commands.Cog):
                     tier = title_info['rank'][1]
                     if tier != 'none' and tier != 'normal' and tier != 'extra':
                         tier_title = f'data/img/titles/en/event_point_{tier}.png'
+                        await self.check_and_download_title(tier_title, f"event_point_{tier}")
                         image_contents.append(tier_title)
                         tier = Image.open(image_contents[1])
                         tier = tier.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
                         new_im.paste(tier, (x_offset, 250), tier)
                     elif tier == 'normal' or tier == 'extra':
                         tier_title = f'data/img/titles/en/try_clear_{tier}.png'
+                        await self.check_and_download_title(tier_title, f"event_point_{tier}")
                         image_contents.append(tier_title)
                         tier = Image.open(image_contents[1])
                         tier = tier.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
@@ -217,6 +220,7 @@ class Monthly(commands.Cog):
             image_contents = []
             title_info = titles_api[str(titles[0])]
             event_title = f"data/img/titles/en/{title_info['baseImageName'][1]}.png"
+            await self.check_and_download_title(event_title, title_info['baseImageName'][1])
             image_contents.append(event_title)
             event = Image.open(image_contents[0])
             event = event.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
@@ -225,6 +229,7 @@ class Monthly(commands.Cog):
             tier = title_info['rank'][1]
             if tier != 'none':
                 tier_title = f'data/img/titles/en/event_point_{tier}.png'
+                await self.check_and_download_title(tier_title, f"event_point_{tier}")
                 image_contents.append(tier_title)
                 tier = Image.open(image_contents[1])
                 tier = tier.resize((368, 80), Image.Resampling.LANCZOS).convert("RGBA")
@@ -316,6 +321,13 @@ class Monthly(commands.Cog):
         update_count = await Update.generate_card_icon(self.client, str(icon_id), dl_ctx['card_api'], dl_ctx['chara_api'])
         if update_count > 0:
             log.info(f'Downloaded {update_count} card images')
+
+
+    async def check_and_download_title(self, title_path, title_id):
+        if os.path.exists(title_path):
+            return
+
+        await Update.save_title_img(self.client, 'en', f"{title_id}.png")
 
 
     async def get_monthly_ranking_data(self, ctx: discord.ApplicationContext, year: int, month: int, ranking_period: str):

@@ -610,9 +610,10 @@ class Update(commands.Cog):
     async def update_cards_loop(self):
         await self.update_card_icons()
 
-    async def save_title_img(self, server: str, title: str) -> bool:
+    @staticmethod
+    async def save_title_img(client, server: str, title: str) -> bool:
         if not os.path.isfile(f'data/img/titles/{server}/{title}'):
-            r = await self.client.get(f'https://bestdori.com/assets/{server}/thumb/degree_rip/{title}')
+            r = await client.get(f'https://bestdori.com/assets/{server}/thumb/degree_rip/{title}')
             im = Image.new("RGBA", (230, 50))
             image = Image.open(BytesIO(r.content))
             im.paste(image)
@@ -626,7 +627,7 @@ class Update(commands.Cog):
         titles_img_api = await self.fetch_api(f"https://bestdori.com/api/explorer/{server}/assets/thumb/degree.json")
         update_count = 0
         for title in titles_img_api:
-            if await self.save_title_img(server, title):
+            if await Update.save_title_img(self.client, server, title):
                 update_count += 1
         # await asyncio.gather(*[self.save_title_img(server, title) for title in titles_img_api])
         if update_count > 0:
