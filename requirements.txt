@@ -1,10 +1,11 @@
 pip
-#py-cord @ git+https://github.com/Pycord-Development/pycord@master#egg=py-cord
+py-cord @ git+https://github.com/Pycord-Development/pycord@master#egg=py-cord
 aiodns
-brotlipy
-cchardet
+Brotli
+charset_normalizer
 colorlog
-pymongo==4.16.10
+pymongo==4.16.0
+motor #will be deprecated soon
 psutil
 validators
 dnspython

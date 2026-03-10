@@ -366,8 +366,8 @@ class Administration(commands.Cog):
                         server_document = await db.servers.find_one({"server_id": interaction.guild_id})
                         modmail_view = ModmailMenu(self.context, self.bot)
                         if server_document['modmail_channel']:
-                            m_modmail_channel = ctx.guild.get_channel(int(server_document['modmail_channel']))
-                            m_button_channel = ctx.guild.get_channel(int(server_document['modmail_button_channel']))
+                            m_modmail_channel = await ctx.guild.fetch_channel(int(server_document['modmail_channel']))
+                            m_button_channel = await ctx.guild.fetch_channel(int(server_document['modmail_button_channel']))
                             content = f'**Enabled** \nDestination channel: {m_modmail_channel.mention}'
                             content += f'\nButton channel: {m_button_channel.mention}'
                         else:

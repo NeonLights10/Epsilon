@@ -1,22 +1,18 @@
 import os
 import sys
-
 import asyncio
-import brotli
 import re
 import json
 import time
 import gc
-
 import logging
 import colorlog
-
 import twitter
 
 import discord
 from discord.ext import bridge
 
-import motor.motor_asyncio
+import pymongo
 
 from formatting.constants import VERSION as BOTVERSION
 from formatting.constants import NAME
@@ -130,7 +126,7 @@ log.info('\n')
 log.info(f'Establishing connection to MongoDB database {databaseName}')
 
 # f"mongodb+srv://admin:{DBPASSWORD}@delphinium.jnxfw.mongodb.net/{databaseName}?retryWrites=true&w=majority"
-mclient = motor.motor_asyncio.AsyncIOMotorClient(
+mclient = pymongo.AsyncMongoClient(
     f"mongodb://admin:{DBPASSWORD}@104.131.182.231/{databaseName}?retryWrites=true&authSource=admin")
 mclient.get_io_loop = asyncio.get_running_loop
 
@@ -256,20 +252,21 @@ bot.remove_command('help')
 bot.load_extension("commands.help")
 bot.load_extension("commands.errorhandler")
 bot.load_extension("commands.listeners")
-bot.load_extension("commands.misc")
-bot.load_extension("commands.utility")
-bot.load_extension("commands.administration")
-bot.load_extension("commands.tiering")
+#bot.load_extension("commands.misc")
+#bot.load_extension("commands.utility")
+#bot.load_extension("commands.administration")
+#bot.load_extension("commands.tiering")
 bot.load_extension("commands.modmail")
-bot.load_extension("commands.reminder")
-bot.load_extension("commands.t100chart")
-bot.load_extension("commands.fun")
-bot.load_extension("commands.pubcord")
-bot.load_extension("commands.old")
-bot.load_extension("commands.event")
+#bot.load_extension("commands.reminder")
+#bot.load_extension("commands.t100chart")
+#bot.load_extension("commands.fun")
+#bot.load_extension("commands.pubcord")
+#bot.load_extension("commands.old")
+#bot.load_extension("commands.event")
 bot.load_extension("commands.update")
-bot.load_extension("commands.game")
-bot.load_extension("commands.custom")
+#bot.load_extension("commands.game")
+#bot.load_extension("commands.custom")
+bot.load_extension("commands.monthly")
 
 
 @bot.event
@@ -442,7 +439,7 @@ async def get_msgid(message, attempts=1, blacklist=None):
                     # Now let's doublecheck that we aren't mentioning ourselves or another bot, and that the messages
                     # has no embeds or attachments.
                     filter = f"(?:{'|'.join(FILTER)})"
-                    if (re.match('^%|^\^|^\$|^!|^\.|@|k!', msg.content) is None) and (
+                    if (re.match(r'^%|^\^|^\$|^!|^\.|@|k!', msg.content) is None) and (
                             re.match(f'<@!?{bot.user.id}>', msg.content) is None) and (len(msg.embeds) == 0) and (
                             msg.author.bot is False) and (re.match(filter, msg.content) is None):
                         log.info("Attempts taken:{}".format(attempts))

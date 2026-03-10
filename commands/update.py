@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 import time
 import datetime
@@ -19,8 +18,6 @@ from io import BytesIO
 from os import path
 from pathlib import Path
 import math
-import shutil
-import requests
 
 from formatting.embed import gen_embed
 from __main__ import log, db
@@ -36,8 +33,8 @@ def string_check(string: str):
     import re
     string = string.replace('```', '')
     string = string.replace("?", '')
-    string = re.sub('(\[(\w{6}|\w{2})\])', '', string)
-    string = re.sub('\[([CcIiBbSsUu]|(sup|sub){1})\]', '', string)
+    string = re.sub(r'(\[(\w{6}|\w{2})\])', '', string)
+    string = re.sub(r'\[([CcIiBbSsUu]|(sup|sub){1})\]', '', string)
     return string
 
 
@@ -82,7 +79,6 @@ class Update(commands.Cog):
 
     async def get_all_current_event(self):
         current_time = time.time() * 1000
-        current_event_id = ''
         api = await self.fetch_api('https://bestdori.com/api/events/all.5.json')
         event_ids = []
         for i in range(5):
