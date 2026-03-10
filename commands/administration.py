@@ -247,6 +247,31 @@ class Administration(commands.Cog):
                 self.value = False
                 self.stop()
 
+        class ChannelSelectView(discord.ui.View):
+            def __init__(self, context_user):
+                super().__init__(timeout=300)
+                self.value = None
+                self.context_user = context_user
+
+            async def interaction_check(self, interaction: discord.Interaction) -> bool:
+                return interaction.user == self.context_user
+
+            @discord.ui.channel_select(
+                placeholder="Select a channel...",
+                channel_types=[discord.ChannelType.text],
+                min_values=1,
+                max_values=1
+            )
+            async def channel_select_callback(self, select, interaction: discord.Interaction):
+                await interaction.response.defer()
+                self.value = select.values[0]
+                self.stop()
+
+            @discord.ui.button(label='Cancel', style=discord.ButtonStyle.red, row=1)
+            async def cancel(self, button, interaction: discord.Interaction):
+                await interaction.response.defer()
+                self.stop()
+
         class SettingsMenu(discord.ui.View):
             def __init__(self, context, start_embed, bot):
                 super().__init__()
@@ -367,13 +392,13 @@ class Administration(commands.Cog):
                         modmail_view = ModmailMenu(self.context, self.bot)
                         if server_document['modmail_channel']:
                             m_modmail_channel = ctx.guild.get_channel(int(server_document['modmail_channel']))
-                            m_button_channel = ctx.guild.get_channel(int(server_document['modmail_button_channel']))
+                            m_button_channel_mention = ctx.guild.get_channel(int(server_document['modmail_button_channel'])).mention if server_document['modmail_button_channel'] else "Not configured"
                             content = f'**Enabled** \nDestination channel: {m_modmail_channel.mention}'
-                            content += f'\nButton channel: {m_button_channel.mention}'
+                            content += f'\nButton channel: {m_button_channel_mention}'
                         else:
                             content = 'Disabled'
-                            modmail_view.children[1].disabled = True
                             modmail_view.children[2].disabled = True
+                            modmail_view.children[3].disabled = True
                         modmail_embed = gen_embed(title='Modmail Settings',
                                                   content=content)
                         self.currentmessage = await interaction.message.edit(embed=modmail_embed,
@@ -720,7 +745,7 @@ class Administration(commands.Cog):
                 self.stop()
 
             @discord.ui.button(label='Save & Exit',
-                               style=discord.ButtonStyle.gray,
+                               style=discord.ButtonStyle.green,
                                row=0)
             async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.defer()
@@ -748,7 +773,7 @@ class Administration(commands.Cog):
                     interaction.message.embeds[0].description = \
                         interaction.message.embeds[
                             0].description + f', configured in channel {announce_channel.mention}'
-                    self.value = self.value + f' | Configured channel: #{announcement_channel.mention}'
+                    self.value = self.value + f' | Configured channel: #{announce_channel.mention}'
                 else:
                     interaction.message.embeds[0].description = \
                         interaction.message.embeds[0].description + f', no channel set, using default settings.'
@@ -761,78 +786,49 @@ class Administration(commands.Cog):
                                style=discord.ButtonStyle.gray,
                                row=0)
             async def configure_announcement_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                async def announcement_prompt(listen_channel, attempts=1, prev_message=None):
-                    def check(m):
-                        return m.author == interaction.user and m.channel == listen_channel
-
-                    try:
-                        sent_prompt = await listen_channel.send(
-                            embed=gen_embed(title='Configure announcement channel',
-                                            content=('Please mention the channel you'
-                                                     ' would like to use for announcements.')))
-                    except discord.Forbidden:
-                        raise commands.BotMissingPermissions(['Send Messages'],
-                                                             'Forbidden 403 - could not send message to user.')
-
-                    try:
-                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
-                    except asyncio.TimeoutError:
-                        await sent_prompt.delete()
-                        await interaction.followup.send(
-                            embed=gen_embed(title='Announcement channel configuration',
-                                            content='Announcement channel configuration has been cancelled.'),
-                            ephemeral=True)
-                        return None
-                    if prev_message:
-                        await prev_message.delete()
-                    await sent_prompt.delete()
-                    if mmsg.channel_mentions:
-                        return mmsg
-                    else:
-                        sent_error = await interaction.followup.send(
-                            embed=gen_embed(title='Error',
-                                            content='No channel found. Please check that you mentioned the channel.')
-                        )
-                        await mmsg.delete()
-                        attempts += 1
-                        return await announcement_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
-
                 await interaction.response.defer()
-                new_announcement = await announcement_prompt(interaction.channel)
+                channel_view = ChannelSelectView(interaction.user)
+                select_message = await interaction.followup.send(embed=gen_embed(
+                    title='Configure announcement channel',
+                    content='Please select the channel you would like to use for announcements.'),
+                    view=channel_view)
+                timed_out = await channel_view.wait()
+                if timed_out or channel_view.value is None:
+                    await select_message.delete()
+                    return
+                new_announcement_channel = channel_view.value
+                await select_message.delete()
 
-                if new_announcement:
-                    log.info('New announcement channel entered, confirm workflow')
-                    view = Confirm()
-                    new_announcement_channel = new_announcement.channel_mentions[0]
-                    await new_announcement.delete()
-                    sent_message = await interaction.followup.send(embed=gen_embed(
-                        title='Confirmation',
-                        content=('Please verify the contents before confirming:\n'
-                                 f'**Selected Announcement Channel: {new_announcement_channel.mention}**')),
-                        view=view)
-                    announcement_timeout = await view.wait()
-                    if announcement_timeout:
-                        log.info('Confirmation view timed out')
-                        await sent_message.delete()
-                        return
+                log.info('New announcement channel entered, confirm workflow')
+                view = Confirm()
+                sent_message = await interaction.followup.send(embed=gen_embed(
+                    title='Confirmation',
+                    content=('Please verify the contents before confirming:\n'
+                             f'**Selected Announcement Channel: {new_announcement_channel.mention}**')),
+                    view=view)
+                announcement_timeout = await view.wait()
+                if announcement_timeout:
+                    log.info('Confirmation view timed out')
                     await sent_message.delete()
+                    return
+                await sent_message.delete()
 
-                    if view.value:
-                        log.info('Workflow confirm')
-                        await db.servers.update_one({"server_id": interaction.guild_id},
-                                                    {"$set": {'announcement_channel': new_announcement_channel.id}})
+                if view.value:
+                    log.info('Workflow confirm')
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'announcement_channel': new_announcement_channel.id}})
 
-                        doc = await db.servers.find_one({"server_id": interaction.guild_id})
-                        if doc['announcements']:
-                            interaction.message.embeds[0].description = ('Enabled, configured in channel '
-                                                                         f'{new_announcement_channel.mention}')
-                            self.value = f'Disabled | Configured channel: {new_announcement_channel.mention}'
-                        else:
-                            interaction.message.embeds[0].description = ('Disabled, configured in channel '
-                                                                         f'{new_announcement_channel.mention}')
-                            self.value = f'Enabled | Configured channel: {new_announcement_channel.mention}'
+                    doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                    if doc['announcements']:
+                        interaction.message.embeds[0].description = ('Enabled, configured in channel '
+                                                                     f'{new_announcement_channel.mention}')
+                        self.value = f'Disabled | Configured channel: {new_announcement_channel.mention}'
+                    else:
+                        interaction.message.embeds[0].description = ('Disabled, configured in channel '
+                                                                     f'{new_announcement_channel.mention}')
+                        self.value = f'Enabled | Configured channel: {new_announcement_channel.mention}'
 
-                        await interaction.message.edit(embed=interaction.message.embeds[0])
+                    await interaction.message.edit(embed=interaction.message.embeds[0])
 
         ##########
 
@@ -856,59 +852,6 @@ class Administration(commands.Cog):
                 await interaction.message.edit(view=view)
                 self.stop()
 
-            async def modmail_channel_prompt(self, interaction, listen_channel, scenario, attempts=1,
-                                             prev_message=None):
-                def check(m):
-                    return m.author == interaction.user and m.channel == listen_channel
-
-                sent_prompt = None
-                match scenario:
-                    case 1:
-                        try:
-                            sent_prompt = await listen_channel.send(
-                                embed=gen_embed(title='Configure modmail destination channel',
-                                                content='Plase mention the channel you would like to use for modmail.')
-                            )
-                        except discord.Forbidden:
-                            raise commands.BotMissingPermissions(['Send Messages'],
-                                                                 'Forbidden 403 - could not send message to user.')
-                    case 2:
-                        try:
-                            sent_prompt = await listen_channel.send(
-                                embed=gen_embed(title='Configure modmail button channel',
-                                                content='Plase mention the channel you would like to put the button.')
-                            )
-                        except discord.Forbidden:
-                            raise commands.BotMissingPermissions(['Send Messages'],
-                                                                 'Forbidden 403 - could not send message to user.')
-
-                try:
-                    mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
-                except asyncio.TimeoutError:
-                    await sent_prompt.delete()
-                    await interaction.followup.send(
-                        embed=gen_embed(title='Modmail channel configuration',
-                                        content='Modmail channel configuration has been cancelled.'),
-                        ephemeral=True)
-                    return None
-                if prev_message:
-                    await prev_message.delete()
-                await sent_prompt.delete()
-                if mmsg.channel_mentions:
-                    return mmsg
-                else:
-                    sent_error = await interaction.followup.send(
-                        embed=gen_embed(title='Error',
-                                        content='No channel found. Please check that you mentioned the channel.')
-                    )
-                    await mmsg.delete()
-                    attempts += 1
-                    return await self.modmail_channel_prompt(interaction,
-                                                             listen_channel,
-                                                             scenario,
-                                                             attempts=attempts,
-                                                             prev_message=sent_error)
-
             @discord.ui.button(label='Save & Exit',
                                style=discord.ButtonStyle.green,
                                row=0)
@@ -924,7 +867,7 @@ class Administration(commands.Cog):
                 await interaction.response.defer()
 
                 doc = await db.servers.find_one({"server_id": interaction.guild_id})
-                if doc['modmail_channel']:
+                if doc['modmail_channel'] and doc['modmail_button_channel']:
                     prev_button_channel = interaction.guild.get_channel(int(doc['modmail_button_channel']))
                     if doc['prev_message_modmail']:
                         try:
@@ -950,88 +893,25 @@ class Administration(commands.Cog):
                                                           'modmail_button_channel': None}})
                     interaction.message.embeds[0].description = '**Disabled**'
                     self.value = 'Disabled'
-                    self.children[1].disabled = True
                     self.children[2].disabled = True
+                    self.children[3].disabled = True
                 else:
-                    setup_phase1_success = False
-                    setup_phase2_success = False
                     log.info('Begin modmail configuration workflow')
 
-                    new_destination = await self.modmail_channel_prompt(interaction, interaction.channel, 1)
-                    if new_destination:
-                        log.info('New modmail dest entered, confirm workflow')
-                        view = Confirm()
-                        new_destination_channel = new_destination.channel_mentions[0]
-                        await new_destination.delete()
-                        sent_message = await interaction.followup.send(embed=gen_embed(
-                            title='Confirmation',
-                            content=('Pleae verify the contents before confirming:\n'
-                                     f'**Selected Modmail Destination: {new_destination_channel.mention}**')),
-                            view=view)
-                        destination_timeout = await view.wait()
-                        if destination_timeout:
-                            log.info('Confirmation view timed out')
-                            await sent_message.delete()
-                            return
-                        await sent_message.delete()
+                    channel_view1 = ChannelSelectView(interaction.user)
+                    select_message1 = await interaction.followup.send(embed=gen_embed(
+                        title='Configure modmail destination channel',
+                        content='Please select the channel you would like to use for modmail.'),
+                        view=channel_view1)
+                    timed_out = await channel_view1.wait()
+                    if timed_out or channel_view1.value is None:
+                        await select_message1.delete()
+                        return
+                    new_destination_channel = channel_view1.value
+                    await select_message1.delete()
 
-                        if view.value:
-                            log.info('Phase 1 workflow confirm')
-                            setup_phase1_success = True
-                        else:
-                            return
-
-                    new_button = await self.modmail_channel_prompt(interaction, interaction.channel, 2)
-                    if new_button:
-                        log.info('New modmail button entered, confirm workflow')
-                        view = Confirm()
-                        new_button_channel = new_button.channel_mentions[0]
-                        await new_button.delete()
-                        sent_message = await interaction.followup.send(embed=gen_embed(
-                            title='Confirmation',
-                            content=('Pleae verify the contents before confirming:\n'
-                                     f'**Selected Button Channel: {new_button_channel.mention}**')),
-                            view=view)
-                        button_timeout = await view.wait()
-                        if button_timeout:
-                            log.info('Confirmation view timed out')
-                            await sent_message.delete()
-                            return
-                        await sent_message.delete()
-
-                        if view.value:
-                            log.info('Phase 2 workflow confirm')
-                            setup_phase2_success = True
-                        else:
-                            return
-
-                    if setup_phase1_success and setup_phase2_success:
-                        await db.servers.update_one({"server_id": interaction.guild_id},
-                                                    {"$set": {'modmail_channel': new_destination_channel.id,
-                                                              'modmail_button_channel': new_button_channel.id}})
-                        new_description = (f'**Enabled** \n Destination channel: {new_destination_channel.mention}'
-                                           f'\n Button channel: {new_button_channel.mention}')
-                        interaction.message.embeds[0].description = new_description
-                        self.value = 'Enabled'
-                        self.children[1].disabled = False
-                        self.children[2].disabled = False
-                        # TODO: run modmail button initialization
-
-                await interaction.message.edit(embed=interaction.message.embeds[0], view=self)
-
-            # noinspection PyTypeChecker
-            @discord.ui.button(label='Configure Destination Channel',
-                               style=discord.ButtonStyle.gray,
-                               row=1)
-            async def configure_dest_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await interaction.response.defer()
-
-                new_destination = await self.modmail_channel_prompt(interaction, interaction.channel, 1)
-                if new_destination:
                     log.info('New modmail dest entered, confirm workflow')
                     view = Confirm()
-                    new_destination_channel = new_destination.channel_mentions[0]
-                    await new_destination.delete()
                     sent_message = await interaction.followup.send(embed=gen_embed(
                         title='Confirmation',
                         content=('Pleae verify the contents before confirming:\n'
@@ -1045,16 +925,64 @@ class Administration(commands.Cog):
                     await sent_message.delete()
 
                     if view.value:
-                        log.info('Workflow confirm')
+                        log.info('Phase 1 workflow confirm')
                         await db.servers.update_one({"server_id": interaction.guild_id},
                                                     {"$set": {'modmail_channel': new_destination_channel.id}})
-                        doc = await db.servers.find_one({"server_id": interaction.guild_id})
-                        modmail_button_channel = interaction.guild.get_channel(int(doc['modmail_button_channel']))
-                        interaction.message.embeds[0].description = ('**Enabled** \nDestination channel:'
-                                                                     f'{new_destination_channel.mention}'
-                                                                     f'\nButton channel:'
-                                                                     f'{modmail_button_channel.mention}')
-                        await interaction.message.edit(embed=interaction.message.embeds[0])
+                        new_description = (f'**Enabled** \n Destination channel: {new_destination_channel.mention}'
+                                           f'\n Button channel: Not configured')
+                        interaction.message.embeds[0].description = new_description
+                        self.value = 'Enabled'
+                        self.children[2].disabled = False
+                        self.children[3].disabled = False
+                    else:
+                        return
+
+                await interaction.message.edit(embed=interaction.message.embeds[0], view=self)
+
+            # noinspection PyTypeChecker
+            @discord.ui.button(label='Configure Destination Channel',
+                               style=discord.ButtonStyle.gray,
+                               row=1)
+            async def configure_dest_modmail_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await interaction.response.defer()
+
+                channel_view = ChannelSelectView(interaction.user)
+                select_message = await interaction.followup.send(embed=gen_embed(
+                    title='Configure modmail destination channel',
+                    content='Please select the channel you would like to use for modmail.'),
+                    view=channel_view)
+                timed_out = await channel_view.wait()
+                if timed_out or channel_view.value is None:
+                    await select_message.delete()
+                    return
+                new_destination_channel = channel_view.value
+                await select_message.delete()
+
+                log.info('New modmail dest entered, confirm workflow')
+                view = Confirm()
+                sent_message = await interaction.followup.send(embed=gen_embed(
+                    title='Confirmation',
+                    content=('Pleae verify the contents before confirming:\n'
+                             f'**Selected Modmail Destination: {new_destination_channel.mention}**')),
+                    view=view)
+                destination_timeout = await view.wait()
+                if destination_timeout:
+                    log.info('Confirmation view timed out')
+                    await sent_message.delete()
+                    return
+                await sent_message.delete()
+
+                if view.value:
+                    log.info('Workflow confirm')
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'modmail_channel': new_destination_channel.id}})
+                    doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                    modmail_button_channel_mention = interaction.guild.get_channel(int(doc['modmail_button_channel'])).mention if doc['modmail_button_channel'] else "Not configured"
+                    interaction.message.embeds[0].description = ('**Enabled** \nDestination channel:'
+                                                                 f'{new_destination_channel.mention}'
+                                                                 f'\nButton channel: '
+                                                                 f'{modmail_button_channel_mention}')
+                    await interaction.message.edit(embed=interaction.message.embeds[0])
 
             # noinspection PyTypeChecker
             @discord.ui.button(label='Configure Button Channel',
@@ -1064,35 +992,43 @@ class Administration(commands.Cog):
                                                        interaction: discord.Interaction):
                 await interaction.response.defer()
 
-                new_button = await self.modmail_channel_prompt(interaction, interaction.channel, 2)
-                if new_button:
-                    log.info('New modmail button entered, confirm workflow')
-                    view = Confirm()
-                    new_button_channel = new_button.channel_mentions[0]
-                    await new_button.delete()
-                    sent_message = await interaction.followup.send(embed=gen_embed(
-                        title='Confirmation',
-                        content=('Please verify the contents before confirming:\n'
-                                 f'**Selected Modmail Button Channel: {new_button_channel.mention}**')),
-                        view=view)
-                    button_timeout = await view.wait()
-                    if button_timeout:
-                        log.info('Confirmation view timed out')
-                        await sent_message.delete()
-                        return
-                    await sent_message.delete()
+                channel_view = ChannelSelectView(interaction.user)
+                select_message = await interaction.followup.send(embed=gen_embed(
+                    title='Configure modmail button channel',
+                    content='Please select the channel you would like to put the button.'),
+                    view=channel_view)
+                timed_out = await channel_view.wait()
+                if timed_out or channel_view.value is None:
+                    await select_message.delete()
+                    return
+                new_button_channel = channel_view.value
+                await select_message.delete()
 
-                    if view.value:
-                        log.info('Workflow confirm')
-                        await db.servers.update_one({"server_id": interaction.guild_id},
-                                                    {"$set": {'modmail_button_channel': new_button_channel.id}})
-                        doc = await db.servers.find_one({"server_id": interaction.guild_id})
-                        m_modmail_channel = interaction.guild.get_channel(int(doc['modmail_channel']))
-                        interaction.message.embeds[0].description = ('**Enabled** \nDestination channel:'
-                                                                     f'{m_modmail_channel.mention}'
-                                                                     f'\nButton channel:'
-                                                                     f'{new_button_channel.mention}')
-                        await interaction.message.edit(embed=interaction.message.embeds[0])
+                log.info('New modmail button entered, confirm workflow')
+                view = Confirm()
+                sent_message = await interaction.followup.send(embed=gen_embed(
+                    title='Confirmation',
+                    content=('Please verify the contents before confirming:\n'
+                             f'**Selected Modmail Button Channel: {new_button_channel.mention}**')),
+                    view=view)
+                button_timeout = await view.wait()
+                if button_timeout:
+                    log.info('Confirmation view timed out')
+                    await sent_message.delete()
+                    return
+                await sent_message.delete()
+
+                if view.value:
+                    log.info('Workflow confirm')
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": {'modmail_button_channel': new_button_channel.id}})
+                    doc = await db.servers.find_one({"server_id": interaction.guild_id})
+                    m_modmail_channel = interaction.guild.get_channel(int(doc['modmail_channel']))
+                    interaction.message.embeds[0].description = ('**Enabled** \nDestination channel:'
+                                                                 f'{m_modmail_channel.mention}'
+                                                                 f'\nButton channel:'
+                                                                 f'{new_button_channel.mention}')
+                    await interaction.message.edit(embed=interaction.message.embeds[0])
 
         ##########
 
@@ -1481,42 +1417,6 @@ class Administration(commands.Cog):
                                style=discord.ButtonStyle.gray,
                                row=1)
             async def configure_log_channel(self, button: discord.ui.Button, interaction: discord.Interaction):
-                async def log_prompt(listen_channel, attempts=1, prev_message=None):
-                    def check(m):
-                        return m.author == interaction.user and m.channel == listen_channel
-
-                    try:
-                        sent_prompt = await listen_channel.send(
-                            embed=gen_embed(title='Configure log channel',
-                                            content=('Please mention the channel you'
-                                                     ' would like to use for logging.')))
-                    except discord.Forbidden:
-                        raise commands.BotMissingPermissions(['Send Messages'],
-                                                             'Forbidden 403 - could not send message to user.')
-
-                    try:
-                        mmsg = await self.bot.wait_for('message', check=check, timeout=300.0)
-                    except asyncio.TimeoutError:
-                        await sent_prompt.delete()
-                        await interaction.followup.send(
-                            embed=gen_embed(title='Log channel configuration',
-                                            content='Log channel configuration has been cancelled.'),
-                            ephemeral=True)
-                        return None
-                    if prev_message:
-                        await prev_message.delete()
-                    await sent_prompt.delete()
-                    if mmsg.channel_mentions:
-                        return mmsg
-                    else:
-                        sent_error = await interaction.followup.send(
-                            embed=gen_embed(title='Error',
-                                            content='No channel found. Please check that you mentioned the channel.')
-                        )
-                        await mmsg.delete()
-                        attempts += 1
-                        return await log_prompt(listen_channel, attempts=attempts, prev_message=sent_error)
-
                 await interaction.response.defer()
 
                 if self.defaults["log_messages"][1]:
@@ -1553,78 +1453,86 @@ class Administration(commands.Cog):
                     await initial_message.delete()
                     return
 
-                new_log = await log_prompt(interaction.channel)
-
-                if new_log:
-                    log.info('New log channel entered, confirm workflow')
-                    view = Confirm()
-                    new_log_channel = new_log.channel_mentions[0]
-                    await new_log.delete()
-                    sent_message = await interaction.followup.send(embed=gen_embed(
-                        title='Confirmation',
-                        content=('Please verify the contents before confirming:\n'
-                                 f'**Selected Log Channel: {new_log_channel.mention}**')),
-                        view=view)
-                    log_timeout = await view.wait()
-                    if log_timeout:
-                        log.info('Confirmation view timed out')
-                        await sent_message.delete()
-                        return
-                    await sent_message.delete()
+                channel_view = ChannelSelectView(interaction.user)
+                select_message = await interaction.followup.send(embed=gen_embed(
+                    title='Configure log channel',
+                    content='Please select the channel you would like to use for logging.'),
+                    view=channel_view)
+                timed_out = await channel_view.wait()
+                if timed_out or channel_view.value is None:
+                    await select_message.delete()
                     await initial_message.delete()
+                    return
+                new_log_channel = channel_view.value
+                await select_message.delete()
 
-                    if view.value:
-                        log.info('Workflow confirm')
-                        match log_channel_select_view.children[0].values[0]:
-                            case 'Messages':
-                                self.defaults['log_messages'][1] = new_log_channel.id
-                            case 'Joins/Leaves':
-                                self.defaults['log_joinleaves'][1] = new_log_channel.id
-                            case 'KBM':
-                                self.defaults['log_kbm'][1] = new_log_channel.id
-                            case 'Strikes':
-                                self.defaults['log_strikes'][1] = new_log_channel.id
+                log.info('New log channel entered, confirm workflow')
+                view = Confirm()
+                sent_message = await interaction.followup.send(embed=gen_embed(
+                    title='Confirmation',
+                    content=('Please verify the contents before confirming:\n'
+                             f'**Selected Log Channel: {new_log_channel.mention}**')),
+                    view=view)
+                log_timeout = await view.wait()
+                if log_timeout:
+                    log.info('Confirmation view timed out')
+                    await sent_message.delete()
+                    return
+                await sent_message.delete()
+                await initial_message.delete()
 
-                        await db.servers.update_one({"server_id": interaction.guild_id},
-                                                    {"$set": self.defaults})
+                if view.value:
+                    log.info('Workflow confirm')
+                    match log_channel_select_view.children[0].values[0]:
+                        case 'Messages':
+                            self.defaults['log_messages'][1] = new_log_channel.id
+                        case 'Joins/Leaves':
+                            self.defaults['log_joinleaves'][1] = new_log_channel.id
+                        case 'KBM':
+                            self.defaults['log_kbm'][1] = new_log_channel.id
+                        case 'Strikes':
+                            self.defaults['log_strikes'][1] = new_log_channel.id
 
-                        if self.defaults["log_messages"][1]:
-                            log_message_channel = interaction.guild.get_channel(int(self.defaults["log_messages"][1]))
-                            log_message_channel = log_message_channel.mention
-                        else:
-                            log_message_channel = 'None'
-                        if self.defaults['log_joinleaves'][1]:
-                            log_joinleaves_channel = interaction.guild.get_channel(int(self.defaults["log_joinleaves"][1]))
-                            log_joinleaves_channel = log_joinleaves_channel.mention
-                        else:
-                            log_joinleaves_channel = 'None'
-                        if self.defaults['log_kbm'][1]:
-                            log_kbm_channel = interaction.guild.get_channel(int(self.defaults["log_kbm"][1]))
-                            log_kbm_channel = log_kbm_channel.mention
-                        else:
-                            log_kbm_channel = 'None'
-                        if self.defaults['log_strikes'][1]:
-                            log_strikes_channel = interaction.guild.get_channel(int(self.defaults["log_strikes"][1]))
-                            log_strikes_channel = log_strikes_channel.mention
-                        else:
-                            log_strikes_channel = 'None'
+                    await db.servers.update_one({"server_id": interaction.guild_id},
+                                                {"$set": self.defaults})
 
-                        if (self.defaults['log_messages'][0]
-                                or self.defaults['log_joinleaves'][0]
-                                or self.defaults['log_kbm'][0]
-                                or self.defaults['log_strikes'][0]):
-                            content = (f'*Enabled*\nConfigured message log channel: {log_message_channel}'
-                                       f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
-                                       f'\nConfigured mod action log channel: {log_kbm_channel}'
-                                       f'\nConfigured strike log channel: {log_strikes_channel}')
-                        else:
-                            content = (f'*Disabled*\nConfigured message log channel: {log_message_channel}'
-                                       f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
-                                       f'\nConfigured mod action log channel: {log_kbm_channel}'
-                                       f'\nConfigured strike log channel: {log_strikes_channel}')
+                    if self.defaults["log_messages"][1]:
+                        log_message_channel = interaction.guild.get_channel(int(self.defaults["log_messages"][1]))
+                        log_message_channel = log_message_channel.mention
+                    else:
+                        log_message_channel = 'None'
+                    if self.defaults['log_joinleaves'][1]:
+                        log_joinleaves_channel = interaction.guild.get_channel(int(self.defaults["log_joinleaves"][1]))
+                        log_joinleaves_channel = log_joinleaves_channel.mention
+                    else:
+                        log_joinleaves_channel = 'None'
+                    if self.defaults['log_kbm'][1]:
+                        log_kbm_channel = interaction.guild.get_channel(int(self.defaults["log_kbm"][1]))
+                        log_kbm_channel = log_kbm_channel.mention
+                    else:
+                        log_kbm_channel = 'None'
+                    if self.defaults['log_strikes'][1]:
+                        log_strikes_channel = interaction.guild.get_channel(int(self.defaults["log_strikes"][1]))
+                        log_strikes_channel = log_strikes_channel.mention
+                    else:
+                        log_strikes_channel = 'None'
 
-                        interaction.message.embeds[0].description = content
-                        await interaction.message.edit(embed=interaction.message.embeds[0])
+                    if (self.defaults['log_messages'][0]
+                            or self.defaults['log_joinleaves'][0]
+                            or self.defaults['log_kbm'][0]
+                            or self.defaults['log_strikes'][0]):
+                        content = (f'*Enabled*\nConfigured message log channel: {log_message_channel}'
+                                   f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
+                                   f'\nConfigured mod action log channel: {log_kbm_channel}'
+                                   f'\nConfigured strike log channel: {log_strikes_channel}')
+                    else:
+                        content = (f'*Disabled*\nConfigured message log channel: {log_message_channel}'
+                                   f'\nConfigured join/leave log channel: {log_joinleaves_channel}'
+                                   f'\nConfigured mod action log channel: {log_kbm_channel}'
+                                   f'\nConfigured strike log channel: {log_strikes_channel}')
+
+                    interaction.message.embeds[0].description = content
+                    await interaction.message.edit(embed=interaction.message.embeds[0])
 
         ##########
 
