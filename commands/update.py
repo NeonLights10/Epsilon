@@ -468,7 +468,8 @@ class Update(commands.Cog):
                                                           content='Cutoff tracking is not enabled for this channel!'),
                                                 ephemeral=True)
 
-    async def generate_card_icon(self, card_id: str, card_api: any, chara_api: any) -> int:
+    @staticmethod
+    async def generate_card_icon(client, card_id: str, card_api: any, chara_api: any) -> int:
         images_saved = 0
         try:
             folder = str(math.floor(int(card_id) / 50)).zfill(5)
@@ -510,9 +511,12 @@ class Update(commands.Cog):
                         url_list.append(trained_url)
                 for url in url_list:
                     if path.exists(full_icons_path):
+                        trained = True
                         full_icons_path = f"data/img/icons/full_icons/{card_id}_trained.png"
                         base_icons_path = f"data/img/icons/base_icons/{card_id}_trained.png"
-                    image = await self.client.get(url)
+                    else:
+                        trained = False
+                    image = await client.get(url)
                     try:
                         im = Image.new("RGBA", (180, 180))
                         image = Image.open(BytesIO(image.content))
@@ -526,17 +530,17 @@ class Update(commands.Cog):
                             star_png = "data/img/star2.png"
                         elif rarity == '3':
                             rarity_png = "data/img/3star.png"
-                            star_png = "data/img/star3.png"
-                        else:
+                            star_png = "data/img/star3_trained.png" if trained else "data/img/star3.png"  
+                        elif rarity == '4':
                             rarity_png = "data/img/4star.png"
-                            star_png = "data/img/star4.png"
+                            star_png = "data/img/star4_trained.png" if trained else "data/img/star4.png"  
+                        else:
+                            rarity_png = "data/img/5star.png"
+                            star_png = "data/img/star5_trained.png" if trained else "data/img/star5.png"  
                         rarity_bg = Image.open(rarity_png)
                         star_bg = Image.open(star_png)
-                        if rarity == '1':
-                            im.paste(star_bg, (5, 20), mask=star_bg)
-                        else:
-                            im.paste(star_bg, (5, 50), mask=star_bg)
                         im.paste(rarity_bg, mask=rarity_bg)
+                        im.paste(star_bg, (3, 47), mask=star_bg)
 
                         if attribute == 'powerful':
                             attr_png = "data/img/power2.png"
@@ -586,7 +590,7 @@ class Update(commands.Cog):
             filepath.mkdir(parents=True, exist_ok=True)
         update_count = 0
         for card_id in card_api:
-            update_count += await self.generate_card_icon(card_id, card_api, chara_api)
+            update_count += await Update.generate_card_icon(self.client, card_id, card_api, chara_api)
         if update_count > 0:
             log.info(f'Downloaded {update_count} card images')
         # await asyncio.gather(*[self.generate_card_icon(card_id, card_api, chara_api) for card_id in card_api])
@@ -602,9 +606,10 @@ class Update(commands.Cog):
     async def update_cards_loop(self):
         await self.update_card_icons()
 
-    async def save_title_img(self, server: str, title: str) -> bool:
+    @staticmethod
+    async def save_title_img(client, server: str, title: str) -> bool:
         if not os.path.isfile(f'data/img/titles/{server}/{title}'):
-            r = await self.client.get(f'https://bestdori.com/assets/{server}/thumb/degree_rip/{title}')
+            r = await client.get(f'https://bestdori.com/assets/{server}/thumb/degree_rip/{title}')
             im = Image.new("RGBA", (230, 50))
             image = Image.open(BytesIO(r.content))
             im.paste(image)
@@ -618,7 +623,7 @@ class Update(commands.Cog):
         titles_img_api = await self.fetch_api(f"https://bestdori.com/api/explorer/{server}/assets/thumb/degree.json")
         update_count = 0
         for title in titles_img_api:
-            if await self.save_title_img(server, title):
+            if await Update.save_title_img(self.client, server, title):
                 update_count += 1
         # await asyncio.gather(*[self.save_title_img(server, title) for title in titles_img_api])
         if update_count > 0:
