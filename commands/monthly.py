@@ -55,7 +55,7 @@ class MonthlyPlayerView(discord.ui.DesignerView):
         self.clear_items()
         player = self._player_pages[self._current_page]
 
-        container = ui.Container(colour=discord.Colour.blurple())
+        container = ui.Container(colour=0x1abc9c)
         container.add_section(
             ui.TextDisplay(f"## {player['name']}"),
             ui.TextDisplay(f"-# ID: {player['id']}"),
