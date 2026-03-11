@@ -276,7 +276,8 @@ class Monthly(commands.Cog):
             }
         ]
 
-        result = await db.monthlyRankings.aggregate(pipeline).to_list(length=1)
+        result = await db.monthlyRankings.aggregate(pipeline)
+        result = await result.to_list(length=1)
         return result[0]["_id"] if result else None
     
 
