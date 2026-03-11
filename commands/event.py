@@ -34,8 +34,8 @@ def string_check(string: str):
     import re
     string = string.replace('```', '')
     string = string.replace("?", '')
-    string = re.sub('(\[(\w{6}|\w{2})\])', '', string)
-    string = re.sub('\[([CcIiBbSsUu]|(sup|sub){1})\]', '', string)
+    string = re.sub(r'(\[(\w{6}|\w{2})\])', '', string)
+    string = re.sub(r'\[([CcIiBbSsUu]|(sup|sub){1})\]', '', string)
     return string
 
 
@@ -503,7 +503,7 @@ class Event(commands.Cog):
                 x = np.array(qualified_time_data).reshape((-1, 1))
                 y = np.array(qualified_ep_data)
                 model = LinearRegression().fit(x, y)
-                slope, intercept = model.coef_, model.intercept_
+                slope, intercept = model.coef_[0], model.intercept_
                 estimate = (intercept + slope + (event_rate * slope))
                 weights = [estimate * percent_into_event ** 2, percent_into_event ** 2]
                 data_point = {
