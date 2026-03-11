@@ -144,7 +144,9 @@ class MonthlyPlayerView(discord.ui.DesignerView):
 
     async def on_timeout(self):
         self.disable_all_items()
-        await self.message.edit(view=self, files=self.current_files())
+        # Do NOT pass files= here — re-uploading without an interaction
+        # breaks attachment:// references on some platforms.
+        await self.message.edit(view=self)
         
 
 
